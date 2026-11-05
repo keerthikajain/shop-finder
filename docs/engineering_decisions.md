@@ -41,3 +41,44 @@ Learning task: run the app, search `fan capacitor`, inspect each candidate and e
 
 ## Theme and evidence forms
 User explicitly requested the reference colours and dark mode. Adopted CSS theme overrides without changing the backend or provider models. Preference uses localStorage with failure fallback; API and staff keys are never stored there. Evidence checkbox is preparation only: saved record status remains authoritative, and unsaved technical changes disable verification. Browser accessibility and contrast remain acceptance tasks. User contribution: supplied visual reference and requested theme support.
+
+
+## Connected store workflow — 2026-11-05
+
+The owner approved moving from isolated catalogue workspaces to one mixed-product
+store, with setup, brand search, flexible locations and confirmed stock updates.
+Expanded multilingual work was explicitly deferred. The existing React/FastAPI/
+SQLite/Gnani architecture is retained; no new hosted database or model dependency.
+
+- Store settings are persisted once per installation. Enabling a product type is
+  a search/setup preference, not a separate organisation or authorisation boundary.
+- Identity is `(collection, sku)`. Selection and QR lookup carry both identifiers;
+  barcode uniqueness is checked across collections. Matching continues to reject
+  unexplained query words and contradictory variant specifications.
+- Optional location levels include floor. Blank floor preserves the previous six-
+  level QR hash so existing printed labels remain usable.
+- Stock belongs to a variant/location. `null` means not counted. All changes use
+  revision checks, user-bound expiring previews, SQLite `BEGIN IMMEDIATE` and an
+  append-only application audit event. A partial move preserves the total.
+- Metadata editing cannot change established quantities. Imports may supply a
+  recorded count explicitly; missing quantity mapping preserves matching counts.
+- The narrow stock speech grammar generates drafts. Database-generated readback
+  and explicit confirmation remain separate from transcription. No automatic
+  physical stock detection or arbitrary-language understanding is claimed.
+- Category graphics are lightweight SVG illustrations. The shelf drawing is made
+  from stored shelf identifiers, not an invented building plan. Mobile uses four
+  primary destinations plus More so owner controls remain reachable.
+
+The automated tests cover cross-type identity, imports, count semantics, replay,
+permission changes, restart persistence and simultaneous confirmations. A failed
+mixed import/search test exposed an old substring replacement joining “shirt
+Shirts”; normalization now requires whole-word T-shirt boundaries. Browser review
+uses API-generated fixtures because the managed preview runtime lacks Python.
+It verifies rendering, navigation, forms and theme; it is not a live voice or
+full-stack browser test. Final measured results are in `docs/store_validation.md`.
+
+Owner contribution: supplied the mixed-store workflow, requested brands and bulk
+imports, chose to defer multilingual expansion, and approved implementation. No
+field trial or independent implementation by the owner is asserted. Next hands-on
+task: import a sample sheet, move four units, and explain why searching/scanning
+must leave the quantities unchanged.
