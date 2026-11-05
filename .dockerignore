@@ -1,0 +1,11 @@
+.git
+.venv
+**/node_modules
+frontend/dist
+**/__pycache__
+**/*.sqlite3*
+**/*.db
+**/uploads
+**/.env*
+evaluation/results
+.openai

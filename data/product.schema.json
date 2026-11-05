@@ -1,0 +1,349 @@
+{
+  "$defs": {
+    "Compatibility": {
+      "additionalProperties": false,
+      "properties": {
+        "manufacturer": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Manufacturer",
+          "type": "string"
+        },
+        "model": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Model",
+          "type": "string"
+        },
+        "evidence": {
+          "$ref": "#/$defs/Evidence"
+        }
+      },
+      "required": [
+        "manufacturer",
+        "model",
+        "evidence"
+      ],
+      "title": "Compatibility",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Field",
+          "type": "string"
+        },
+        "source": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "checked_by": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Checked By",
+          "type": "string"
+        },
+        "checked_at": {
+          "format": "date-time",
+          "title": "Checked At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "field",
+        "source",
+        "checked_by",
+        "checked_at"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "Location": {
+      "additionalProperties": false,
+      "properties": {
+        "rack": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Rack",
+          "type": "string"
+        },
+        "shelf": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Shelf",
+          "type": "string"
+        },
+        "box": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Box",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rack",
+        "shelf",
+        "box"
+      ],
+      "title": "Location",
+      "type": "object"
+    },
+    "Verification": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "default": "unverified",
+          "enum": [
+            "unverified",
+            "verified",
+            "needs_review"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "verified_by": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Verified By"
+        },
+        "verified_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Verified At"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "title": "Evidence",
+          "type": "array"
+        }
+      },
+      "title": "Verification",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "pattern": "^[A-Za-z0-9-]{1,40}$",
+      "title": "Id",
+      "type": "string"
+    },
+    "shop_id": {
+      "maxLength": 500,
+      "minLength": 1,
+      "title": "Shop Id",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 500,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "aliases": {
+      "items": {
+        "maxLength": 500,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 20,
+      "title": "Aliases",
+      "type": "array"
+    },
+    "appliance_category": {
+      "enum": [
+        "washing_machine",
+        "refrigerator",
+        "fan",
+        "mixer_grinder",
+        "electric_iron",
+        "water_purifier"
+      ],
+      "title": "Appliance Category",
+      "type": "string"
+    },
+    "manufacturer": {
+      "anyOf": [
+        {
+          "maxLength": 500,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Manufacturer"
+    },
+    "model": {
+      "anyOf": [
+        {
+          "maxLength": 500,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Model"
+    },
+    "part_number": {
+      "anyOf": [
+        {
+          "maxLength": 500,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Part Number"
+    },
+    "part_number_kind": {
+      "default": "unknown",
+      "enum": [
+        "synthetic",
+        "manufacturer",
+        "unknown"
+      ],
+      "title": "Part Number Kind",
+      "type": "string"
+    },
+    "specifications": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "title": "Specifications",
+      "type": "object"
+    },
+    "dimensions": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "title": "Dimensions",
+      "type": "object"
+    },
+    "connector_type": {
+      "anyOf": [
+        {
+          "maxLength": 500,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Connector Type"
+    },
+    "compatibility": {
+      "items": {
+        "$ref": "#/$defs/Compatibility"
+      },
+      "title": "Compatibility",
+      "type": "array"
+    },
+    "location": {
+      "$ref": "#/$defs/Location"
+    },
+    "photo_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Photo Url"
+    },
+    "is_synthetic": {
+      "title": "Is Synthetic",
+      "type": "boolean"
+    },
+    "verification": {
+      "$ref": "#/$defs/Verification"
+    },
+    "provenance": {
+      "maxLength": 500,
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "shop_id",
+    "name",
+    "appliance_category",
+    "location",
+    "is_synthetic",
+    "verification",
+    "provenance",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "Product",
+  "type": "object"
+}

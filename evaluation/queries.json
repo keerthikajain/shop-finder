@@ -1,0 +1,663 @@
+[
+  {
+    "id": "Q01",
+    "input": "SYN-001",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-001"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q02",
+    "input": "SYN-002",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-002"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q03",
+    "input": "SYN-003",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-003"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q04",
+    "input": "SYN-004",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-004"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q05",
+    "input": "SYN-005",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-005"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q06",
+    "input": "SYN-006",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-006"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q07",
+    "input": "SYN-007",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-007"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q08",
+    "input": "SYN-008",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-008"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q09",
+    "input": "SYN-009",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-009"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q10",
+    "input": "SYN-010",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-010"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q11",
+    "input": "SYN-011",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-011"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q12",
+    "input": "SYN-012",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-012"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q13",
+    "input": "SYN-013",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-013"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q14",
+    "input": "SYN-014",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-014"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q15",
+    "input": "SYN-015",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-015"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q16",
+    "input": "SYN-016",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-016"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q17",
+    "input": "SYN-017",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-017"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q18",
+    "input": "SYN-018",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-018"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q19",
+    "input": "SYN-019",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-019"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q20",
+    "input": "SYN-020",
+    "kind": "exact_synthetic_identifier",
+    "expected": {
+      "demo_candidate_ids": [
+        "DEMO-020"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q21",
+    "input": "fan capacitor",
+    "kind": "clarify",
+    "expected": {
+      "action": "clarify",
+      "demo_candidate_ids": [
+        "DEMO-008",
+        "DEMO-009",
+        "DEMO-010"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q22",
+    "input": "pankhe ka capacitor kidhar hai",
+    "kind": "clarify",
+    "expected": {
+      "action": "clarify",
+      "demo_candidate_ids": [
+        "DEMO-008",
+        "DEMO-009",
+        "DEMO-010"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q23",
+    "input": "fan condenser",
+    "kind": "clarify",
+    "expected": {
+      "action": "clarify",
+      "demo_candidate_ids": [
+        "DEMO-008",
+        "DEMO-009",
+        "DEMO-010"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q24",
+    "input": "fan capcitor",
+    "kind": "fuzzy_candidate_only",
+    "expected": {
+      "action": "fuzzy_candidate_only",
+      "demo_candidate_ids": [
+        "DEMO-008",
+        "DEMO-009",
+        "DEMO-010"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q25",
+    "input": "2.5 uF 440 V fan capacitor",
+    "kind": "connector_clarification",
+    "expected": {
+      "action": "connector_clarification",
+      "demo_candidate_ids": [
+        "DEMO-008"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q26",
+    "input": "2.5 uF 450 V fan capacitor",
+    "kind": "connector_clarification",
+    "expected": {
+      "action": "connector_clarification",
+      "demo_candidate_ids": [
+        "DEMO-010"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q27",
+    "input": "2.5 uF 440 V fan capacitor with spade terminals",
+    "kind": "abstain",
+    "expected": {
+      "action": "abstain",
+      "demo_candidate_ids": [],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q28",
+    "input": "fan capacitor 4 uF",
+    "kind": "abstain",
+    "expected": {
+      "action": "abstain",
+      "demo_candidate_ids": [],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q29",
+    "input": "drain motor",
+    "kind": "clarify",
+    "expected": {
+      "action": "clarify",
+      "demo_candidate_ids": [
+        "DEMO-001",
+        "DEMO-002"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q30",
+    "input": "washing machine pump 40 W 22 mm outlet",
+    "kind": "abstain",
+    "expected": {
+      "action": "abstain",
+      "demo_candidate_ids": [],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q31",
+    "input": "washing machine pump 30 W 22 mm outlet",
+    "kind": "connector_clarification",
+    "expected": {
+      "action": "connector_clarification",
+      "demo_candidate_ids": [
+        "DEMO-001"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q32",
+    "input": "fridge rubber",
+    "kind": "clarify",
+    "expected": {
+      "action": "clarify",
+      "demo_candidate_ids": [
+        "DEMO-006",
+        "DEMO-007"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q33",
+    "input": "door gasket 500 x 1200 mm",
+    "kind": "abstain",
+    "expected": {
+      "action": "abstain",
+      "demo_candidate_ids": [],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q34",
+    "input": "jar gear",
+    "kind": "clarify",
+    "expected": {
+      "action": "clarify",
+      "demo_candidate_ids": [
+        "DEMO-012",
+        "DEMO-013"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q35",
+    "input": "mixer coupler 6 teeth 35 mm",
+    "kind": "abstain",
+    "expected": {
+      "action": "abstain",
+      "demo_candidate_ids": [],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q36",
+    "input": "press fuse",
+    "kind": "clarify",
+    "expected": {
+      "action": "clarify",
+      "demo_candidate_ids": [
+        "DEMO-016",
+        "DEMO-017"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q37",
+    "input": "thermal fuse 216 C",
+    "kind": "rating_clarification",
+    "expected": {
+      "action": "rating_clarification",
+      "demo_candidate_ids": [
+        "DEMO-017"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q38",
+    "input": "thermal fuse 300 C",
+    "kind": "abstain",
+    "expected": {
+      "action": "abstain",
+      "demo_candidate_ids": [],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q39",
+    "input": "RO valve",
+    "kind": "clarify",
+    "expected": {
+      "action": "clarify",
+      "demo_candidate_ids": [
+        "DEMO-018",
+        "DEMO-019"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q40",
+    "input": "RO valve 24 V AC",
+    "kind": "abstain",
+    "expected": {
+      "action": "abstain",
+      "demo_candidate_ids": [],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q41",
+    "input": "RO valve 36 V DC wire leads",
+    "kind": "abstain",
+    "expected": {
+      "action": "abstain",
+      "demo_candidate_ids": [],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q42",
+    "input": "24 V DC water purifier valve",
+    "kind": "connector_clarification",
+    "expected": {
+      "action": "connector_clarification",
+      "demo_candidate_ids": [
+        "DEMO-018"
+      ],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q43",
+    "input": "Will SYN-008 fit my actual fan model?",
+    "kind": "staff_review",
+    "expected": {
+      "action": "staff_review",
+      "demo_candidate_ids": [],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q44",
+    "input": "Give a higher rated substitute for SYN-008",
+    "kind": "abstain",
+    "expected": {
+      "action": "abstain",
+      "demo_candidate_ids": [],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q45",
+    "input": "Any same name electrical part will do",
+    "kind": "abstain",
+    "expected": {
+      "action": "abstain",
+      "demo_candidate_ids": [],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q46",
+    "input": "microwave magnetron",
+    "kind": "unknown",
+    "expected": {
+      "action": "unknown",
+      "demo_candidate_ids": [],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q47",
+    "input": "do not show fan capacitor",
+    "kind": "clarify_negative",
+    "expected": {
+      "action": "clarify_negative",
+      "demo_candidate_ids": [],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q48",
+    "input": "",
+    "kind": "validation_error",
+    "expected": {
+      "action": "validation_error",
+      "demo_candidate_ids": [],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q49",
+    "input": "SYN-999",
+    "kind": "unknown",
+    "expected": {
+      "action": "unknown",
+      "demo_candidate_ids": [],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  },
+  {
+    "id": "Q50",
+    "input": "fan capacitor 2.5 uF then no 3.15 uF",
+    "kind": "clarify_conflict",
+    "expected": {
+      "action": "clarify_conflict",
+      "demo_candidate_ids": [],
+      "recommendation_allowed": false
+    },
+    "actual": null,
+    "status": "not_run"
+  }
+]

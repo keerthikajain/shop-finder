@@ -1,0 +1,30 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> shop-finder@0.1.0 test
+> node --test tests/*.test.mjs
+
+✔ 48 kHz microphone becomes 16 kHz mono PCM WAV with correct duration (14.233537ms)
+✔ capture is capped at 28 seconds and empty input is rejected (43.219606ms)
+✔ all 20 synthetic catalogue fixtures render with exact IDs, provenance and connectors (68.425178ms)
+✔ capacitance values and dimensional precision keep their units (3.584609ms)
+✔ unselected panel does not invent a part or a location (0.718204ms)
+✔ catalogue content is escaped rather than interpreted as HTML (3.664129ms)
+✔ single result avoids duplicate panels; multiple matches retain Back navigation (6.225594ms)
+✔ staff forms expose add/remove controls and unit labels without JSON (5.194168ms)
+✔ Hindi interface retains identifiers and hides owner actions for staff (4.620342ms)
+✔ tour waits for input, matching results and selection without making provider calls (0.128444ms)
+✔ theme follows system changes only when system is selected (1.430008ms)
+✔ invalid or unavailable theme storage keeps the reference light theme (0.51648ms)
+✔ warehouse location displays all six levels and preserves leading-zero bin codes (10.814323ms)
+✔ Hindi labels do not translate identifiers or stored location names (1.131728ms)
+✔ specifications keep size systems and units visible (0.8679ms)
+✔ catalogue text cannot inject HTML into location or specification surfaces (3.559271ms)
+✔ logo is labelled for assistive technology (0.674238ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 520.036997

@@ -1,0 +1,785 @@
+[
+  {
+    "id": "DEMO-001",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Washing machine drain pump",
+    "aliases": [
+      "drain motor",
+      "paani nikalne ka pump"
+    ],
+    "appliance_category": "washing_machine",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-001",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "voltage_v": 230,
+      "supply": "AC",
+      "frequency_hz": 50,
+      "power_w": 30
+    },
+    "dimensions": {
+      "outlet_diameter_mm": 22
+    },
+    "connector_type": "2-pin keyed plug",
+    "compatibility": [],
+    "location": {
+      "rack": "A",
+      "shelf": "1",
+      "box": "1"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-002",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Washing machine drain pump",
+    "aliases": [
+      "drain motor",
+      "paani nikalne ka pump"
+    ],
+    "appliance_category": "washing_machine",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-002",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "voltage_v": 230,
+      "supply": "AC",
+      "frequency_hz": 50,
+      "power_w": 40
+    },
+    "dimensions": {
+      "outlet_diameter_mm": 24
+    },
+    "connector_type": "2 flat terminals",
+    "compatibility": [],
+    "location": {
+      "rack": "A",
+      "shelf": "2",
+      "box": "2"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-003",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Washing machine inlet valve",
+    "aliases": [
+      "inlet solenoid",
+      "paani valve"
+    ],
+    "appliance_category": "washing_machine",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-003",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "voltage_v": 230,
+      "supply": "AC",
+      "frequency_hz": 50
+    },
+    "dimensions": {
+      "inlet_thread_inch": 0.75
+    },
+    "connector_type": "2-pin keyed plug",
+    "compatibility": [],
+    "location": {
+      "rack": "A",
+      "shelf": "1",
+      "box": "3"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-004",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Washing machine drive belt",
+    "aliases": [
+      "machine belt",
+      "drum belt"
+    ],
+    "appliance_category": "washing_machine",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-004",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "profile": "poly-V",
+      "ribs": 5
+    },
+    "dimensions": {
+      "length_mm": 1195
+    },
+    "connector_type": null,
+    "compatibility": [],
+    "location": {
+      "rack": "A",
+      "shelf": "2",
+      "box": "4"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-005",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Refrigerator defrost timer",
+    "aliases": [
+      "fridge timer",
+      "defrost clock"
+    ],
+    "appliance_category": "refrigerator",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-005",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "voltage_v": 230,
+      "supply": "AC",
+      "frequency_hz": 50
+    },
+    "dimensions": {},
+    "connector_type": "4-pin keyed plug",
+    "compatibility": [],
+    "location": {
+      "rack": "B",
+      "shelf": "1",
+      "box": "5"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-006",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Refrigerator door gasket",
+    "aliases": [
+      "fridge rubber",
+      "door seal"
+    ],
+    "appliance_category": "refrigerator",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-006",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "profile": "magnetic push-fit"
+    },
+    "dimensions": {
+      "width_mm": 500,
+      "height_mm": 1100
+    },
+    "connector_type": null,
+    "compatibility": [],
+    "location": {
+      "rack": "B",
+      "shelf": "2",
+      "box": "6"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-007",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Refrigerator door gasket",
+    "aliases": [
+      "fridge rubber",
+      "door seal"
+    ],
+    "appliance_category": "refrigerator",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-007",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "profile": "magnetic push-fit"
+    },
+    "dimensions": {
+      "width_mm": 540,
+      "height_mm": 1200
+    },
+    "connector_type": null,
+    "compatibility": [],
+    "location": {
+      "rack": "B",
+      "shelf": "1",
+      "box": "7"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-008",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Fan run capacitor",
+    "aliases": [
+      "fan condenser",
+      "pankhe ka capacitor"
+    ],
+    "appliance_category": "fan",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-008",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "capacitance_uf": 2.5,
+      "voltage_v": 440,
+      "supply": "AC"
+    },
+    "dimensions": {},
+    "connector_type": "2 wire leads",
+    "compatibility": [],
+    "location": {
+      "rack": "B",
+      "shelf": "2",
+      "box": "8"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-009",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Fan run capacitor",
+    "aliases": [
+      "fan condenser",
+      "pankhe ka capacitor"
+    ],
+    "appliance_category": "fan",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-009",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "capacitance_uf": 3.15,
+      "voltage_v": 440,
+      "supply": "AC"
+    },
+    "dimensions": {},
+    "connector_type": "2 wire leads",
+    "compatibility": [],
+    "location": {
+      "rack": "C",
+      "shelf": "1",
+      "box": "9"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-010",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Fan run capacitor",
+    "aliases": [
+      "fan condenser",
+      "pankhe ka capacitor"
+    ],
+    "appliance_category": "fan",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-010",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "capacitance_uf": 2.5,
+      "voltage_v": 450,
+      "supply": "AC"
+    },
+    "dimensions": {},
+    "connector_type": "2 spade terminals",
+    "compatibility": [],
+    "location": {
+      "rack": "C",
+      "shelf": "2",
+      "box": "10"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-011",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Ceiling fan bearing",
+    "aliases": [
+      "fan bearing",
+      "pankhe ka bearing"
+    ],
+    "appliance_category": "fan",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-011",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "bearing_code": "6201-2RS"
+    },
+    "dimensions": {
+      "inner_diameter_mm": 12,
+      "outer_diameter_mm": 32,
+      "width_mm": 10
+    },
+    "connector_type": null,
+    "compatibility": [],
+    "location": {
+      "rack": "C",
+      "shelf": "1",
+      "box": "11"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-012",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Mixer grinder jar coupler",
+    "aliases": [
+      "mixer coupling",
+      "jar gear"
+    ],
+    "appliance_category": "mixer_grinder",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-012",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "teeth": 6,
+      "thread_direction": "left"
+    },
+    "dimensions": {
+      "outer_diameter_mm": 30
+    },
+    "connector_type": null,
+    "compatibility": [],
+    "location": {
+      "rack": "C",
+      "shelf": "2",
+      "box": "12"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-013",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Mixer grinder jar coupler",
+    "aliases": [
+      "mixer coupling",
+      "jar gear"
+    ],
+    "appliance_category": "mixer_grinder",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-013",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "teeth": 4,
+      "thread_direction": "left"
+    },
+    "dimensions": {
+      "outer_diameter_mm": 35
+    },
+    "connector_type": null,
+    "compatibility": [],
+    "location": {
+      "rack": "D",
+      "shelf": "1",
+      "box": "13"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-014",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Mixer grinder carbon brush pair",
+    "aliases": [
+      "motor brush",
+      "carbon set"
+    ],
+    "appliance_category": "mixer_grinder",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-014",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "quantity": 2
+    },
+    "dimensions": {
+      "width_mm": 6,
+      "depth_mm": 8,
+      "length_mm": 16
+    },
+    "connector_type": "copper lead with spring",
+    "compatibility": [],
+    "location": {
+      "rack": "D",
+      "shelf": "2",
+      "box": "14"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-015",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Electric iron thermostat",
+    "aliases": [
+      "iron temperature switch",
+      "press thermostat"
+    ],
+    "appliance_category": "electric_iron",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-015",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "voltage_v": 250,
+      "current_a": 10,
+      "supply": "AC"
+    },
+    "dimensions": {
+      "mounting_spacing_mm": 28
+    },
+    "connector_type": "2 spade terminals",
+    "compatibility": [],
+    "location": {
+      "rack": "D",
+      "shelf": "1",
+      "box": "15"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-016",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Electric iron thermal fuse",
+    "aliases": [
+      "press fuse",
+      "heat fuse"
+    ],
+    "appliance_category": "electric_iron",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-016",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "cutoff_c": 240,
+      "current_a": 10,
+      "voltage_v": 250,
+      "supply": "AC"
+    },
+    "dimensions": {},
+    "connector_type": "axial leads",
+    "compatibility": [],
+    "location": {
+      "rack": "D",
+      "shelf": "2",
+      "box": "16"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-017",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Electric iron thermal fuse",
+    "aliases": [
+      "press fuse",
+      "heat fuse"
+    ],
+    "appliance_category": "electric_iron",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-017",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "cutoff_c": 216,
+      "current_a": 10,
+      "voltage_v": 250,
+      "supply": "AC"
+    },
+    "dimensions": {},
+    "connector_type": "axial leads",
+    "compatibility": [],
+    "location": {
+      "rack": "E",
+      "shelf": "1",
+      "box": "17"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-018",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Water purifier inlet solenoid valve",
+    "aliases": [
+      "RO valve",
+      "water solenoid"
+    ],
+    "appliance_category": "water_purifier",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-018",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "voltage_v": 24,
+      "supply": "DC"
+    },
+    "dimensions": {
+      "tube_outer_diameter_inch": 0.25
+    },
+    "connector_type": "2 wire leads",
+    "compatibility": [],
+    "location": {
+      "rack": "E",
+      "shelf": "2",
+      "box": "18"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-019",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Water purifier inlet solenoid valve",
+    "aliases": [
+      "RO valve",
+      "water solenoid"
+    ],
+    "appliance_category": "water_purifier",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-019",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "voltage_v": 36,
+      "supply": "DC"
+    },
+    "dimensions": {
+      "tube_outer_diameter_inch": 0.25
+    },
+    "connector_type": "2-pin keyed plug",
+    "compatibility": [],
+    "location": {
+      "rack": "E",
+      "shelf": "1",
+      "box": "19"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  },
+  {
+    "id": "DEMO-020",
+    "shop_id": "DEMO-HOME-001",
+    "name": "Water purifier sediment cartridge",
+    "aliases": [
+      "sediment filter",
+      "RO prefilter"
+    ],
+    "appliance_category": "water_purifier",
+    "manufacturer": null,
+    "model": null,
+    "part_number": "SYN-020",
+    "part_number_kind": "synthetic",
+    "specifications": {
+      "filtration_micron": 5
+    },
+    "dimensions": {
+      "length_inch": 10
+    },
+    "connector_type": null,
+    "compatibility": [],
+    "location": {
+      "rack": "E",
+      "shelf": "2",
+      "box": "20"
+    },
+    "photo_url": null,
+    "is_synthetic": true,
+    "verification": {
+      "status": "unverified",
+      "verified_by": null,
+      "verified_at": null,
+      "evidence": []
+    },
+    "provenance": "Synthetic demonstration fixture; all ratings, dimensions, identifiers and locations are invented. Not for selecting or installing real parts.",
+    "created_at": "2026-10-24T08:00:00Z",
+    "updated_at": "2026-10-24T08:00:00Z"
+  }
+]
