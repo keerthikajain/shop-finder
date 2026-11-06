@@ -12,7 +12,7 @@ COPY backend/requirements.txt ./backend/requirements.txt
 RUN pip install --no-cache-dir -r backend/requirements.txt && useradd --uid 10001 --create-home appuser && mkdir /data && chown appuser /data
 COPY backend/app ./backend/app
 COPY data ./data
-COPY scripts/create_owner.py scripts/serve.py ./scripts/
+COPY scripts/create_owner.py scripts/serve.py scripts/backup_database.py ./scripts/
 COPY --from=web /build/frontend/dist ./frontend/dist
 USER appuser
 EXPOSE 8080

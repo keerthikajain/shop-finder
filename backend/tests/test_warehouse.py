@@ -151,3 +151,11 @@ def test_voice_response_uses_stored_locations_and_language(setup,monkeypatch):
  response=post(c,'/tasks/'+r['id']+'/speak')
  assert response.status_code==200 and response.headers['content-type']=='audio/wav'
  assert captured['language']=='hi-IN' and 'CLO-001' in captured['text'] and 'रैक A' in captured['text']
+
+def test_catalogue_segmentation_without_conjunctions(setup):
+ c,path=setup
+ for query in ('red dress loafer table fan','table fan red dress and loafer'):
+  task=search(c,query,'all')
+  assert len(task['lines'])==3,task
+  assert all(line['candidates'] for line in task['lines'])
+ assert not search(c,'red dress unknownthing','all')['lines'][0]['candidates']

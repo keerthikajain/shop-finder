@@ -89,3 +89,30 @@ def test_uploaded_photo_is_private_and_report_validation(setup):
  assert c.post('/api/reports',headers=H,json={'product_id':'missing','reason':'wrong_location'}).status_code==404
  assert c.post('/api/reports',headers=H,json={'product_id':'DEMO-008','reason':'other'}).status_code==422
  c.post('/api/auth/logout',headers=H);assert c.get(url).status_code==401
+
+def test_profile_is_private_persistent_and_cannot_change_role(setup):
+ c,path=setup;login(c,'worker')
+ payload={'display_name':'Warehouse Worker','phone':'+91 90000 00000','staff_code':'W-01'}
+ assert c.put('/api/auth/profile',headers=H,json={**payload,'role':'owner'}).status_code==422
+ r=c.put('/api/auth/profile',headers=H,json=payload)
+ assert r.status_code==200 and r.json()['role']=='staff'
+ assert c.get('/api/users').status_code==403
+ assert c.get('/api/auth/status').json()['user']['display_name']==payload['display_name']
+ c.post('/api/auth/logout',headers=H);login(c)
+ assert next(x for x in c.get('/api/users').json() if x['username']=='worker')['staff_code']=='W-01'
+
+def test_report_confirmation_resolution_and_staff_isolation(setup):
+ c,path=setup;login(c,'worker')
+ report=c.post('/api/warehouse/issues',headers=H,json={'collection':'clothing','sku':'TEST','reason':'Check the recorded shelf'}).json()
+ assert report['id'] and report['status']=='open'
+ url=f"/api/warehouse/issues/{report['id']}/resolve"
+ assert c.post(url,headers=H,json={'note':'Checked shelf'}).status_code==403
+ c.post('/api/auth/logout',headers=H);login(c)
+ assert c.post(url,headers=H,json={'note':'Checked shelf; location is correct.'}).status_code==200
+ assert c.post(url,headers=H,json={'note':'Overwrite previous resolution'}).status_code==409
+ c.post('/api/auth/logout',headers=H);login(c,'worker')
+ row=next(x for x in c.get('/api/warehouse/issues').json() if x['id']==report['id'])
+ assert row['resolved_at'] and row['resolved_by']=='owner' and row['status']=='resolved'
+ add_account(path,'otherworker',PW)
+ c.post('/api/auth/logout',headers=H);login(c,'otherworker')
+ assert not c.get('/api/warehouse/issues').json()

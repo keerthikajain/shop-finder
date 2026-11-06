@@ -107,6 +107,9 @@ def initialize_warehouse(path,demo=True):
   CREATE TABLE IF NOT EXISTS wh_pending(id TEXT PRIMARY KEY,kind TEXT,owner TEXT,expires REAL,payload TEXT);
   CREATE TABLE IF NOT EXISTS wh_tasks(id TEXT PRIMARY KEY,owner TEXT,created REAL,payload TEXT);
   CREATE TABLE IF NOT EXISTS wh_issues(id INTEGER PRIMARY KEY,collection TEXT,sku TEXT,reason TEXT,actor TEXT,at TEXT,status TEXT DEFAULT 'open',note TEXT DEFAULT '');''')
+  columns={row['name'] for row in c.execute('PRAGMA table_info(wh_issues)')}
+  for name in ('resolved_at','resolved_by'):
+   if name not in columns:c.execute(f"ALTER TABLE wh_issues ADD COLUMN {name} TEXT NOT NULL DEFAULT ''")
   from .store_operations import initialize_store
   initialize_store(c)
   if demo:
@@ -147,11 +150,36 @@ STOP=set('find where is are the a an i can do you have me please show need want 
 TRANSLATIONS={'नीली':'blue','नीला':'blue','सफेद':'white','काली':'black','काला':'black','लाल':'red','सूती':'cotton','वाट':'w','लीटर':'l','साइज़':'size','साइज':'size','एम':'m','एल':'l'}
 def normal_query(text):
  s=norm(text)
- replacements={'extra large':'xl','extra small':'xs','medium':'m','large':'l','small':'s','thirty two':'32','thirty four':'34','forty':'40','twenty':'20','one':'1','two':'2','three':'3','four':'4','five':'5','six':'6','seven':'7','eight':'8','nine':'9','एक':'1','दो':'2','तीन':'3','चार':'4','पांच':'5','पाँच':'5','छह':'6','सात':'7','आठ':'8','नौ':'9','बी':'b','सी':'c','tshirts':'tshirt','t-shirts':'tshirt','trainer':'trainers','sandal':'sandals','mixers':'mixer','kettles':'kettle','towels':'towel','boxes':'box'}
+ replacements={'extra large':'xl','extra small':'xs','medium':'m','large':'l','small':'s','thirty two':'32','thirty four':'34','forty':'40','twenty':'20','one':'1','two':'2','three':'3','four':'4','five':'5','six':'6','seven':'7','eight':'8','nine':'9','एक':'1','दो':'2','तीन':'3','चार':'4','पांच':'5','पाँच':'5','छह':'6','सात':'7','आठ':'8','नौ':'9','बी':'b','सी':'c','tshirts':'tshirt','t-shirts':'tshirt','trainer':'trainers','sandal':'sandals','mixers':'mixer','kettles':'kettle','loafer':'loafers','towels':'towel','boxes':'box'}
  for a,b in replacements.items():s=re.sub(r'(?<!\w)'+re.escape(a)+r'(?!\w)',b,s)
  for a,b in TRANSLATIONS.items():s=s.replace(a,b)
  return s
 def tokens(text):return {x for x in re.findall(r'[\w.\u0900-\u097F]+',normal_query(text)) if x not in STOP}
+def split_request(query,items,collection):
+ # Split only when the catalogue supports a unique complete segmentation.
+ chunks=[q.strip(' .?!') for q in re.split(r'\s+(?:and|aur|और)\s+|[,;\n]',query,flags=re.I) if q.strip(' .?!')]
+ result=[]
+ for chunk in chunks:
+  words=chunk.split()
+  if match(chunk,items,collection) or len(words)>40:
+   result.append(chunk);continue
+  solutions={len(words):[[]]}
+  for start in range(len(words)-1,-1,-1):
+   choices=[]
+   for end in range(start+1,len(words)+1):
+    phrase=' '.join(words[start:end])
+    candidates=match(phrase,items,collection) if end in solutions else []
+    modifiers={'blue','white','black','red','green','grey','brown','pink','beige','silver','clear','xs','s','m','l','xl','xxl'}
+    anchored=any(tokens(phrase)&(tokens(p['name'])-tokens(p.get('brand',''))-tokens(' '.join(p['specs'].values()))-modifiers) for p in candidates)
+    if end in solutions and anchored:
+     choices.extend([[phrase]+tail for tail in solutions[end] if len(tail)<10])
+   if choices:
+    minimum=min(map(len,choices))
+    solutions[start]=[choice for choice in choices if len(choice)==minimum][:2]
+  candidates=solutions.get(0,[])
+  result.extend(candidates[0] if len(candidates)==1 else [chunk])
+ return result
+
 def match(query,items,collection):
  if query.upper().startswith('ITEM:'):
   parts=query.split(':')
@@ -344,6 +372,8 @@ def install_warehouse(app,path):
   if not 1<=len(queries)<=10:raise HTTPException(422,'Ask for 1–10 items at a time.')
   with connect(path) as c:
    all_items=[p for p in rows(c,body.collection) if (not body.brand or norm(p.get('brand',''))==norm(body.brand)) and (not body.location or any(l['code']==body.location for l in p['placements']))];lines=[]
+   queries=split_request(body.query,all_items,body.collection)
+   if not 1<=len(queries)<=10:raise HTTPException(422,'Ask for 1–10 items at a time.')
    for q in queries:
     candidates=match(q,all_items,body.collection);p=candidates[0] if len(candidates)==1 else None
     available=[l for l in p['placements'] if not body.location or l['code']==body.location] if p else []
@@ -498,8 +528,10 @@ def install_warehouse(app,path):
  @app.post('/api/warehouse/issues')
  def issue(body:Issue,request:Request):
   u=identity(request)
-  with connect(path) as c:c.execute('INSERT INTO wh_issues(collection,sku,reason,actor,at) VALUES(?,?,?,?,?)',(body.collection,body.sku,body.reason,u['username'],now()))
-  return {'ok':True}
+  with connect(path) as c:
+   result=c.execute('INSERT INTO wh_issues(collection,sku,reason,actor,at) VALUES(?,?,?,?,?)',(body.collection,body.sku,body.reason,u['username'],now()))
+   report_id=result.lastrowid
+  return {'ok':True,'id':report_id,'status':'open'}
  @app.get('/api/warehouse/issues')
  def issues(request:Request,collection:str='all'):
   u=identity(request)
@@ -509,5 +541,6 @@ def install_warehouse(app,path):
   u=identity(request,True)
   with connect(path) as c:
    if not c.execute('SELECT 1 FROM wh_issues WHERE id=?',(iid,)).fetchone():raise HTTPException(404,'Report not found.')
-   c.execute('UPDATE wh_issues SET status=\'resolved\',note=? WHERE id=?',(u['username']+': '+body.note,iid))
+   result=c.execute("UPDATE wh_issues SET status='resolved',note=?,resolved_at=?,resolved_by=? WHERE id=? AND status='open'",(body.note,now(),u['username'],iid))
+   if result.rowcount!=1:raise HTTPException(409,'This report is already resolved. Refresh to see its resolution.')
   return {'ok':True}

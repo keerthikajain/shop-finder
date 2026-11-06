@@ -12,6 +12,9 @@ TTL=12*60*60
 def initialize_accounts(path):
  with connect(path) as c:
   c.execute("CREATE TABLE IF NOT EXISTS accounts(id TEXT PRIMARY KEY,username TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,role TEXT NOT NULL CHECK(role IN ('owner','staff')),language TEXT NOT NULL DEFAULT 'en',tour_done INTEGER NOT NULL DEFAULT 0,active INTEGER NOT NULL DEFAULT 1)")
+  columns={row['name'] for row in c.execute('PRAGMA table_info(accounts)')}
+  for name in ('display_name','phone','staff_code'):
+   if name not in columns:c.execute(f"ALTER TABLE accounts ADD COLUMN {name} TEXT NOT NULL DEFAULT ''")
   c.execute('CREATE TABLE IF NOT EXISTS account_sessions(digest TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES accounts(id),expires REAL NOT NULL)')
   c.execute('CREATE TABLE IF NOT EXISTS login_attempts(bucket TEXT NOT NULL,at REAL NOT NULL)')
 
@@ -22,7 +25,7 @@ def check_password(password,stored):
  salt,expected=stored.split(':')
  return hmac.compare_digest(expected,hashlib.pbkdf2_hmac('sha256',password.encode(),bytes.fromhex(salt),600000).hex())
 def digest(value):return hashlib.sha256(value.encode()).hexdigest()
-def public(row):return {k:row[k] for k in ['id','username','role','language','tour_done','active']}
+def public(row):return {k:row[k] for k in ['id','username','role','language','tour_done','active','display_name','phone','staff_code']}
 
 class Login(BaseModel):
  model_config=ConfigDict(extra='forbid')
@@ -35,6 +38,11 @@ class Preference(BaseModel):
  model_config=ConfigDict(extra='forbid')
  language:Literal['en','hi']
  tour_done:bool
+class Profile(BaseModel):
+ model_config=ConfigDict(extra='forbid',str_strip_whitespace=True)
+ display_name:str=Field(min_length=1,max_length=80)
+ phone:str=Field(default='',max_length=24,pattern=r'^[0-9+() .-]*$')
+ staff_code:str=Field(default='',max_length=40,pattern=r'^[A-Za-z0-9_. -]*$')
 class Password(BaseModel):
  old_password:str=Field(max_length=128)
  new_password:str=Field(min_length=12,max_length=128)
@@ -68,6 +76,10 @@ def install_accounts(app,path,required=True):
     owner_action=(route.startswith('/api/users') or (route=='/api/media' and request.method=='POST') or route.startswith('/api/unresolved') or (route.startswith('/api/products') and request.method!='GET'))
     if owner_action and user['role']!='owner':return JSONResponse({'detail':'Owner access required.'},403)
   response=await call_next(request)
+  response.headers['X-Content-Type-Options']='nosniff'
+  response.headers['X-Frame-Options']='DENY'
+  response.headers['Referrer-Policy']='same-origin'
+  response.headers['Permissions-Policy']='camera=(self), microphone=(self), geolocation=()'
   if request.url.path.startswith('/api/'):response.headers['Cache-Control']='no-store'
   return response
  @app.get('/api/auth/status')
@@ -100,6 +112,11 @@ def install_accounts(app,path,required=True):
  @app.put('/api/auth/preferences')
  def preferences(body:Preference,request:Request):
   with connect(path) as c:c.execute('UPDATE accounts SET language=?,tour_done=? WHERE id=?',(body.language,int(body.tour_done),request.state.user['id']))
+  return current(request)
+ @app.put('/api/auth/profile')
+ def profile(body:Profile,request:Request):
+  with connect(path) as c:
+   c.execute('UPDATE accounts SET display_name=?,phone=?,staff_code=? WHERE id=?',(body.display_name,body.phone,body.staff_code,request.state.user['id']))
   return current(request)
  @app.post('/api/auth/password')
  def password(body:Password,request:Request,response:Response):
