@@ -1,6 +1,20 @@
 import {createContext,useContext} from 'react';
 export const Locale=createContext('en');
 export const hindi={
+  "Find your next item.": "अपना अगला सामान खोजें।",
+  "Every category. One search.": "हर श्रेणी। एक खोज।",
+  "Your workspace, within reach.": "आपका कार्यस्थल, आपकी पहुँच में।",
+  "Find items. Know their place.": "सामान खोजें। उसकी जगह जानें।",
+  "Sign in to Shopfinder": "Shopfinder में साइन इन करें",
+  "Use your team account to continue.": "जारी रखने के लिए अपने टीम खाते का उपयोग करें।",
+  "Enter username": "उपयोगकर्ता नाम दर्ज करें",
+  "Enter password": "पासवर्ड दर्ज करें",
+  "Show password": "पासवर्ड दिखाएँ",
+  "Hide password": "पासवर्ड छिपाएँ",
+  "Show": "दिखाएँ",
+  "Hide": "छिपाएँ",
+  "Sign in": "साइन इन करें",
+  "Need access? Ask your workspace owner.": "खाता चाहिए? अपने कार्यस्थल के मालिक से पूछें।",
   "Welcome back": "आपका स्वागत है",
   "Log in to your shop account.": "अपने दुकान खाते में लॉग इन करें।",
   "App language": "ऐप की भाषा",
