@@ -1073,3 +1073,28 @@ body,.wh-app{
  .sf-more-copy small{font-size:10px}
  .sf-compact-app .sf-more-list>button{padding:10px;gap:9px}
 }
+
+
+/* Header clarity: the scanner belongs to Find/Catalogue/Locations and the More task list. */
+.sf-compact-app .wh-top-actions .sf-header-scan{display:inline-flex;gap:8px;align-items:center}
+.sf-compact-app .wh-top-actions .sf-header-scan span{display:inline}
+@media(max-width:700px){
+ .sf-compact-app .wh-topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+ .sf-compact-app .wh-mobile-brand{flex:0 1 auto;min-width:0;gap:7px}
+ .sf-compact-app .wh-mobile-brand strong{font-size:clamp(15px,4.6vw,20px);white-space:nowrap;letter-spacing:-.6px}
+ .sf-compact-app .wh-mobile-brand .sf-mark{width:30px;height:30px;flex:0 0 30px}
+ .sf-compact-app .wh-topbar .wh-breadcrumb{display:none}
+ .sf-compact-app .wh-top-actions{display:flex;align-items:center;gap:5px;min-width:0;flex:0 0 auto}
+ .sf-compact-app .wh-top-actions .sf-header-scan{width:40px;min-width:40px;height:40px;min-height:40px;padding:8px;justify-content:center}
+ .sf-compact-app .wh-top-actions .sf-header-scan span{display:none}
+ .sf-compact-app .wh-top-actions .sf-header-scan svg{width:21px;height:21px;flex-shrink:0}
+ .sf-compact-app .wh-top-actions .wh-icon-button{min-width:36px;min-height:36px;padding:6px}
+ .sf-compact-app .wh-top-actions #app-lang{width:42px;max-width:42px;min-width:0;padding:4px 2px;font-size:11px}
+ .sf-compact-app .wh-topbar.sf-topbar-more .wh-top-actions{margin-left:auto}
+ .sf-compact-app .sf-more-page{margin-top:0}
+}
+@media(max-width:350px){
+ .sf-compact-app .wh-topbar{padding:0 9px}
+ .sf-compact-app .wh-mobile-brand strong{font-size:15px}
+ .sf-compact-app .wh-top-actions{gap:3px}
+}
