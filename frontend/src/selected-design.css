@@ -1507,3 +1507,45 @@ body,.wh-app{
    color:var(--wh-text)!important;white-space:nowrap;
  }
 }
+
+
+/* Global workspace theme switch, deliberately absent from the login screen. */
+.sf-compact-app .wh-top-actions .sf-header-theme{
+ display:inline-flex;align-items:center;justify-content:center;
+ flex:0 0 auto;width:38px;height:38px;min-height:38px;
+ padding:8px;border:1px solid var(--wh-border);border-radius:10px;
+ background:var(--wh-surface);color:var(--wh-text);
+ cursor:pointer;
+}
+.sf-compact-app .wh-top-actions .sf-header-theme:hover{
+ border-color:var(--wh-accent);background:var(--wh-soft);
+}
+.sf-compact-app .wh-top-actions .sf-header-theme svg{width:19px;height:19px}
+.sf-compact-app .wh-top-actions .sf-header-theme:focus-visible{
+ outline:2px solid var(--wh-accent);outline-offset:2px;
+}
+/* Desktop/sidebar navigation already supplies every route.
+   The Back to More affordance is only necessary on mobile subpages. */
+@media (min-width:701px){
+ .sf-compact-app .sf-page-back{display:none!important}
+}
+@media (max-width:700px){
+ .sf-compact-app .wh-top-actions .sf-header-theme{
+   display:inline-flex!important;
+   width:38px;min-width:38px;max-width:38px;
+   height:38px;min-height:38px;padding:7px;
+   background:#36303f;border-color:#5a5265;color:#fff;
+   border-radius:9px;
+ }
+ .sf-compact-app .wh-top-actions{display:flex;align-items:center;gap:7px}
+ .sf-compact-app .wh-top-actions .sf-header-scan{margin:0}
+ .sf-compact-app .wh-topbar{min-width:0;gap:7px}
+ .sf-compact-app .wh-mobile-brand{min-width:0;flex:1 1 auto}
+}
+@media (max-width:350px){
+ .sf-compact-app .wh-top-actions{gap:5px}
+ .sf-compact-app .wh-top-actions .sf-header-theme{
+   width:36px;min-width:36px;max-width:36px;
+   height:36px;min-height:36px;
+ }
+}

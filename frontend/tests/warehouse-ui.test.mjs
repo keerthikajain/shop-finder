@@ -119,3 +119,20 @@ test('one-tap mobile Speak starts a Gnani recording from any section',async()=>{
  assert.match(src,/Voice unavailable\. Open text search/);
  assert.doesNotMatch(src,/if\(page!=='find'\)\{navigate\('find'\);return\}/);
 });
+
+test('secondary Back is available only in phone layout while desktop uses the sidebar',async()=>{
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ const jsx=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(jsx,/\['import','business','review','settings'\]\.includes\(page\)&&<button className="sf-more-back sf-page-back"/);
+ assert.match(css,/@media \(min-width:701px\)\{\s*\.sf-compact-app \.sf-page-back\{display:none!important\}/);
+ assert.match(css,/@media \(max-width:700px\)/);
+});
+test('authenticated header exposes working light and dark theme toggle on desktop and mobile',async()=>{
+ const jsx=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(jsx,/className="wh-icon-button sf-header-theme"/);
+ assert.match(jsx,/aria-pressed=\{theme==='dark'\}/);
+ assert.match(jsx,/onClick=\{\(\)=>TH\(theme==='dark'\?'light':'dark'\)\}/);
+ assert.match(css,/\.sf-compact-app \.wh-top-actions \.sf-header-theme\{/);
+ assert.match(css,/display:inline-flex!important/);
+});
