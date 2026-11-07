@@ -73,8 +73,7 @@ async def transcribe_details(data,language,*,output_style='transcribe',enhanced=
             raise HTTPException(502,'Gnani returned a truncated transcript. Record a shorter request.')
         detected=payload.get('detected_language_code')
         if detected not in ('en-IN','hi-IN'):detected=None
-        search_language=(detected if language in ('auto','hi-en') and detected else
-                         'hi-en' if language in ('auto','hi-en') else language)
+        search_language=(detected or 'hi-en') if language=='auto' else language
         return {'transcript':transcript.strip(),'model':model,'detected_language_code':detected,
                 'search_language':search_language,'output_style':output_style}
     except (ValueError,TypeError,KeyError):
