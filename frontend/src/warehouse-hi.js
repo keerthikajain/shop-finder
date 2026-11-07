@@ -34,5 +34,9 @@ export const warehouseHindi={
 'Verified location saved and shown in future searches.':'पुष्टि की गई जगह सहेज ली गई है। आगे की खोज में दिखेगी।',
 'Back to previous page':'पिछले पेज पर जाएँ',
 'No recorded match. Try another name or SKU. No report is created unless you send one.':'कोई दर्ज सामान नहीं मिला। दूसरा नाम या कोड आज़माएँ। जब तक आप रिपोर्ट न भेजें, कोई रिपोर्ट नहीं बनेगी।',
-'Report missing item':'नहीं मिले सामान की रिपोर्ट करें'
+'Report missing item':'नहीं मिले सामान की रिपोर्ट करें',
+'Manage tools, reports and workspace settings.':'उपकरण, रिपोर्ट और कार्यक्षेत्र सेटिंग्स प्रबंधित करें।',
+'Training catalogue — synthetic records':'परीक्षण के लिए काल्पनिक उत्पाद रिकॉर्ड',
+'Gnani configured. Verify microphone and speech playback before release.':'Gnani कॉन्फ़िगर है। जारी करने से पहले माइक्रोफ़ोन और बोली गई प्रतिक्रिया जाँचें।',
+'Gnani voice is not configured. Search and import still work without it.':'Gnani वॉइस कॉन्फ़िगर नहीं है। खोज और आयात इसके बिना भी चलते हैं।'
 };
