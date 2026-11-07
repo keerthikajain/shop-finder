@@ -55,3 +55,20 @@ test('mobile discovery cards use compact two-column layout with a smaller image'
  assert.match(css,/\.sf-find-page \.sf-catalogue-card\{\s*display:grid;grid-template-columns:104px minmax\(0,1fr\)/);
  assert.match(css,/\.sf-find-page \.sf-catalogue-card>\.sf-product-art\{[\s\S]*?height:112px/);
 });
+
+test('Find filters use labelled two-column controls on narrow phones',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(src,/aria-controls="wh-packs"/);
+ assert.ok(src.includes("filtersOpen?'is-open':''"));
+ assert.match(css,/\.sf-compact-app\.sf-find-page #wh-packs\.sf-search-filters\.is-open\{display:grid\}/);
+ assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+});
+test('mobile Speak remains contained by bottom nav and catalogue is still accessible',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(src,/className="sf-view-catalogue"/);
+ assert.match(src,/onClick=\{\(\)=>navigate\('catalogue'\)\}/);
+ assert.match(css,/\.sf-compact-app \.wh-sidebar nav \.sf-mobile-speak>span\{/);
+ assert.match(css,/top:57px;bottom:auto/);
+});
