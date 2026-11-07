@@ -6,7 +6,7 @@ services:
     environment:
       GNANI_ENABLED: ${GNANI_ENABLED:-false}
       GNANI_API_KEY: ${GNANI_API_KEY:-}
-      SHOP_FINDER_SEED_DEMO: ${SHOP_FINDER_SEED_DEMO:-true}
+      SHOP_FINDER_SEED_DEMO: ${SHOP_FINDER_SEED_DEMO:-false}
       SHOP_FINDER_SECURE_COOKIE: ${SHOP_FINDER_SECURE_COOKIE:-false}
     volumes:
       - shopfinder_data:/data

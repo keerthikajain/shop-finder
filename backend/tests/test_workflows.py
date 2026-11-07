@@ -10,7 +10,7 @@ from app.services import voice
 def client(tmp_path,monkeypatch):
     monkeypatch.setenv('SHOP_FINDER_STAFF_TOKEN','a'*32)
     monkeypatch.delenv('GNANI_ENABLED',raising=False)
-    with TestClient(create_app(tmp_path/'db.sqlite3',auth_required=False)) as c:yield c
+    with TestClient(create_app(tmp_path/'db.sqlite3',seed_demo=True,auth_required=False)) as c:yield c
 H={'X-Staff-Token':'a'*32}
 
 def test_clarification_preserves_candidates_and_rejects_conflicts(client):

@@ -71,7 +71,7 @@ def test_settings_permissions_revision_persistence_and_search_scope(setup):
     assert response.status_code == 200, response.text
     assert len(c.get('/api/warehouse/items').json()) == 16
     assert c.put('/api/warehouse/settings', headers=H, json=body).status_code == 409
-    with TestClient(create_app(path)) as restarted:
+    with TestClient(create_app(path,seed_demo=True)) as restarted:
         login(restarted)
         assert restarted.get('/api/warehouse/settings').json()['name'] == 'Central warehouse'
     login(c, 'staff')
@@ -194,7 +194,7 @@ def test_concurrent_confirmations_do_not_double_apply(setup):
     a = stock(c, p, 'receive', 1).json()['token']; b = stock(c, p, 'remove', 1).json()['token']
     cookies = dict(c.cookies)
     def confirm(token):
-        with TestClient(create_app(path)) as worker:
+        with TestClient(create_app(path,seed_demo=True)) as worker:
             worker.cookies.update(cookies)
             return post(worker, '/stock/' + token + '/confirm').status_code
     with ThreadPoolExecutor(max_workers=2) as pool:

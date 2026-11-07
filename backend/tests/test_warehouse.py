@@ -11,7 +11,7 @@ PW='warehouse-test-password'
 @pytest.fixture
 def setup(tmp_path):
  path=tmp_path/'warehouse.sqlite3'
- with TestClient(create_app(path)) as c:
+ with TestClient(create_app(path,seed_demo=True)) as c:
   add_account(path,'owner',PW,role='owner');add_account(path,'staff',PW)
   login(c);yield c,path
 def login(c,name='owner'):
@@ -124,7 +124,7 @@ def test_multiple_locations_require_choice_and_imports_persist(setup):
  locations=t['lines'][0]['candidates'][0]['placements']
  result=post(c,'/tasks/'+t['id']+'/choose',{'line':0,'sku':'CLO-001','location':locations[1]['code']})
  assert result.json()['lines'][0]['location']['bin']=='99'
- with TestClient(create_app(path)) as restarted:
+ with TestClient(create_app(path,seed_demo=True)) as restarted:
   login(restarted);assert len(next(x for x in items(restarted) if x['sku']=='CLO-001')['placements'])==2
 
 def test_demo_flag_cannot_be_silently_changed(setup):
@@ -228,3 +228,21 @@ def test_location_feedback_does_not_allow_stale_or_ambiguous_items(setup):
  p['name']='Revised item name'
  assert save(c,p,p['revision']).status_code==200
  assert post(c,f"/tasks/{t['id']}/location-check",{'line':0}).status_code==409
+
+def test_clean_new_install_does_not_seed_synthetic_inventory_by_default(tmp_path, monkeypatch):
+ monkeypatch.delenv('SHOP_FINDER_SEED_DEMO',raising=False)
+ path=tmp_path/'production-fresh.sqlite3'
+ with TestClient(create_app(path)) as app_client:
+  add_account(path,'owner',PW,role='owner')
+  login(app_client)
+  response=app_client.get('/api/warehouse/items')
+  assert response.status_code==200
+  assert response.json()==[]
+  assert app_client.get('/api/warehouse/meta').json()['collections'][0]['count']==0
+ # Opt-in synthetic test mode is additive and existing records survive a clean restart.
+ with TestClient(create_app(path,seed_demo=True)) as test_client:
+  login(test_client)
+  assert len(test_client.get('/api/warehouse/items').json())==32
+ with TestClient(create_app(path)) as restarted:
+  login(restarted)
+  assert len(restarted.get('/api/warehouse/items').json())==32

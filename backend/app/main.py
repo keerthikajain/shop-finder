@@ -31,7 +31,7 @@ from .schemas import Product, Category
 
 def create_app(db_path=None, seed_demo=None, *, auth_required=True):
     path = Path(db_path or os.environ.get('SHOP_FINDER_DB', DEFAULT_DB))
-    demo = seed_demo if seed_demo is not None else os.environ.get('SHOP_FINDER_SEED_DEMO','true').lower() == 'true'
+    demo = seed_demo if seed_demo is not None else os.environ.get('SHOP_FINDER_SEED_DEMO','false').lower() == 'true'
     @asynccontextmanager
     async def lifespan(app):
         initialize(path)

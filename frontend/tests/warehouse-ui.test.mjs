@@ -149,3 +149,17 @@ test('account actions are grouped and logout is separate from staff creation',as
  assert.match(css,/\.sf-account-panel \.sf-account-footer/);
  assert.match(css,/grid-template-columns:minmax\(0,1fr\);gap:14px/);
 });
+
+test('production workspace chrome avoids status placeholders and broken account route',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.doesNotMatch(src,/>\{t\(voice\?'Voice configured':'Text mode'\)\}</);
+ assert.match(src,/className="sf-sidebar-account" onClick=\{\(\)=>navigate\('settings'\)\}/);
+ assert.match(src,/page==='more'\?'More':nav.find/);
+ assert.match(src,/items\.some\(i=>i\.synthetic\)&&<small>/);
+});
+test('empty fresh catalogue offers a real owner import route',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/!items\.length&&<div className="wh-panel">/);
+ assert.match(src,/t\('Your catalogue starts here\.'\)/);
+ assert.match(src,/onClick=\{\(\)=>navigate\('import'\)\}/);
+});

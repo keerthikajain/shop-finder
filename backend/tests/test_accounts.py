@@ -8,7 +8,7 @@ PW='a-test-password-only-123'
 @pytest.fixture
 def setup(tmp_path):
  path=tmp_path/'accounts.sqlite3'
- with TestClient(create_app(path)) as c:
+ with TestClient(create_app(path,seed_demo=True)) as c:
   add_account(path,'owner',PW,role='owner');add_account(path,'worker',PW,language='hi')
   yield c,path
 
@@ -47,13 +47,13 @@ def test_preferences_persist_and_language_validation(setup):
  c,path=setup;login(c)
  assert c.put('/api/auth/preferences',headers=H,json={'language':'hi','tour_done':True}).status_code==200
  assert c.put('/api/auth/preferences',headers=H,json={'language':'xx','tour_done':True}).status_code==422
- with TestClient(create_app(path)) as other:
+ with TestClient(create_app(path,seed_demo=True)) as other:
   assert login(other).json()['language']=='hi'
   assert other.get('/api/auth/status').json()['user']['tour_done']==1
 
 def test_owner_manages_staff_revokes_sessions(setup):
  c,path=setup
- with TestClient(create_app(path)) as worker:
+ with TestClient(create_app(path,seed_demo=True)) as worker:
   login(worker,'worker');token=worker.cookies.get(COOKIE)
  login(c)
  created=c.post('/api/users',headers=H,json={'username':'newstaff','password':PW,'language':'hi'});assert created.status_code==200 and created.json()['role']=='staff'
