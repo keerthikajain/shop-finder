@@ -1,6 +1,8 @@
-# Shop Finder — voice workspace for stockrooms
+# Shop Finder — voice-first warehouse locator
 
-A working local pilot for finding items in clothing outlets, footwear stockrooms, appliance warehouses and home-essentials stores. React + FastAPI + SQLite, with Gnani transcription and spoken replies.
+An owner-managed warehouse locator with an authenticated staff workspace, persistent catalogue, verified storage locations, voice recognition (Gnani Prisma), and spoken answers (Gnani Timbre). Built with React, FastAPI and SQLite.
+
+**Release scope:** one organisation and a single persistent application instance. The source is deployable, but a public HTTPS deployment and live Gnani/device acceptance are not yet verified. New databases start empty by default; synthetic records must be enabled explicitly or imported for isolated testing.
 
 See [the current workflow](docs/store_workflow.md) for setup, import rules, stock semantics and a demonstration sequence.
 
@@ -20,7 +22,7 @@ See [the current workflow](docs/store_workflow.md) for setup, import rules, stoc
 - Owners add/edit records and preview/confirm location corrections. Staff can search, scan and report issues. Accounts, preferences, records, reports and change history persist in SQLite.
 - Gnani integration reuses the existing server-only key. Voice searches speak the database-backed response when enabled; replay remains available. Hinglish is experimental.
 
-Demo records are explicit synthetic fixtures, inserted once. Screens and responses read the database; they do not use fixed result cards or fake analytics. Product names and location identifiers are preserved as entered rather than translated automatically.
+Demo fixtures are available only by explicit opt-in or import. Screens and responses read the database; they do not use fixed result cards or fake analytics. Previously seeded records remain intact after upgrading, and their synthetic status remains visible; switching the seed flag off does not erase saved items.
 
 ## Run on Windows in VS Code
 
@@ -35,7 +37,7 @@ npm ci --prefix frontend
 
 On first launch, create your owner username and a password of at least 12 characters. Password typing is hidden. Answer `y` to enable Gnani and paste your working key at the hidden prompt. It is not saved. Open the local address printed by Vite (usually `http://127.0.0.1:5173`).
 
-For a text-only demonstration, answer `n`; search/import/editing still work. Complete Business setup, then keep All product types selected and click the mixed-item example request. Click Account to create staff accounts or change the app language. Choose voice language independently near Speak.
+If Gnani is not configured, answer `n`; typed search and catalogue management remain available, and the voice button must not pretend to record. Complete **Business setup** and import a verified catalogue. Open **More → Settings** to manage account details or staff access; voice language is selected separately near Speak. For isolated end-to-end testing, use the separately supplied synthetic appliance-parts import workbook rather than turning on automatic sample-data seeding.
 
 ## Upgrade without losing your accounts
 
@@ -66,8 +68,8 @@ A Dockerfile, Compose file and production static-file entry point are included. 
 
 The app needs its own Python backend; uploading only `frontend/dist` to a static host will not provide accounts, data or voice services. Postman is optional for API debugging and is not a database.
 
+**Production gate:** set `SHOP_FINDER_SEED_DEMO=false`, use a private `GNANI_API_KEY` only on the backend, enable `SHOP_FINDER_SECURE_COOKIE=true` behind HTTPS, attach a persistent `/data` volume, provision the first owner securely, verify database backup/restore, and test voice/camera on the actual deployment before sharing it with reviewers. Do not delete or replace an existing database just to clear synthetic entries.
+
 ## Current validation
 
-The connected-store release passes 109 backend tests and 19 frontend tests, and the
-production frontend builds. See [validation and remaining checks](docs/store_validation.md).
-These results do not establish live Gnani accuracy or public deployment.
+Run the current automated suite before each release. Refer to [release checks](docs/release_checklist.md) for manual deployment, import, voice and browser validation. Passing tests does not establish live Gnani accuracy or production readiness.
