@@ -41,3 +41,17 @@ test('More offers scan as a task without unrelated filters or setup banners',asy
  assert.ok(src.includes("meta&&!['find','account','business','more'].includes(page)"));
  assert.ok(src.includes("!meta.settings.configured&&!['business','more'].includes(page)"));
 });
+
+test('mobile Find navigation keeps a compact label while desktop keeps the full label',async()=>{
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(source,/className="sf-nav-desktop-label"/);
+ assert.match(source,/className="sf-nav-mobile-label"/);
+ assert.match(source,/t\(id==='find'\?'Find':name\)/);
+ assert.match(css,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+});
+test('mobile discovery cards use compact two-column layout with a smaller image',async()=>{
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(css,/\.sf-find-page \.sf-catalogue-card\{\s*display:grid;grid-template-columns:104px minmax\(0,1fr\)/);
+ assert.match(css,/\.sf-find-page \.sf-catalogue-card>\.sf-product-art\{[\s\S]*?height:112px/);
+});
