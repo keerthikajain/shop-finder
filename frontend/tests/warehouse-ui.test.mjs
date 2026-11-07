@@ -38,8 +38,8 @@ test('More offers scan as a task without unrelated filters or setup banners',asy
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.ok(src.includes("['find','catalogue','locations'].includes(page)&&<button type=\"button\" className=\"sf-header-scan\""));
  assert.ok(src.includes("onClick={()=>D({type:'lookup'})}><span className=\"sf-more-icon\"><Glyph name=\"scan\"/>"));
- assert.ok(src.includes("meta&&!['find','account','business','more'].includes(page)"));
- assert.ok(src.includes("!meta.settings.configured&&!['business','more'].includes(page)"));
+ assert.ok(src.includes("meta&&!['find','account','business','more','settings'].includes(page)"));
+ assert.ok(src.includes("!meta.settings.configured&&!['business','more','settings'].includes(page)"));
 });
 
 test('mobile Find navigation keeps a compact label while desktop keeps the full label',async()=>{
