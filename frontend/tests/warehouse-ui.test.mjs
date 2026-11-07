@@ -174,3 +174,11 @@ test('Grocery Warehouse appears in the business setup and has its own imagery',a
  assert.match(business,/collections.map\(c=><label key=\{c.id\}/);
  assert.match(css,/grid-template-columns:repeat\(auto-fit,minmax\(155px,1fr\)\)/);
 });
+
+test('item editor and spreadsheet importer expose the multilingual alias workflow',async()=>{
+ const source=await readFile(new URL('../src/warehouse-manage.jsx',import.meta.url),'utf8');
+ assert.match(source,/Other names in English, Hindi and Hinglish/);
+ assert.match(source,/Add the names workers actually say/);
+ assert.match(source,/aliases:aliases\.split\(','\)/);
+ assert.match(source,/separate with \|/);
+});

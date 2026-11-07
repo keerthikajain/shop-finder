@@ -5,6 +5,8 @@ It normalizes BOTH user transcripts and saved product names/aliases.
 Unknown content must still fail to match rather than guess a shelf.
 """
 import re
+import unicodedata
+from .warehouse_multilingual_terms import TERMS, FILLERS
 
 # Longest phrases first; whole-token replacement prevents "tea" inside "steamer".
 SYNONYMS = {
@@ -102,7 +104,7 @@ aur and
 का की के को से पर में यह ये वह वो मुझे इसका इस की कहाँ रखा हुआ हैं
 और सामान उत्पाद प्रोडक्ट चीज चीज़ कितने किसमें
 size uk colour color power capacity brand w l
-""".split())
+""".split()) | FILLERS
 
 _DEVANAGARI = '\u0900-\u097f'
 # Match a whole Devanagari/Latin phrase, never part of another word.
@@ -110,11 +112,12 @@ _BOUNDARY = r'[\w' + _DEVANAGARI + r']'
 _RULES = [
     (re.compile(r'(?<!' + _BOUNDARY + r')' + re.escape(src) +
                 r'(?!' + _BOUNDARY + r')', re.IGNORECASE), dst)
-    for src, dst in sorted(SYNONYMS.items(), key=lambda p: (-len(p[0]), p[0]))
+    for src, dst in sorted({**TERMS, **SYNONYMS}.items(), key=lambda p: (-len(p[0]), p[0]))
 ]
 
 def normal_query(text):
-    text = str(text).casefold().translate(str.maketrans('०१२३४५६७८९', '0123456789'))
+    text = unicodedata.normalize('NFKC', str(text)).casefold().translate(str.maketrans('०१२३४५६७८९', '0123456789'))
+    text = re.sub(r'[\u200b-\u200d\ufeff]', '', text)
     text = re.sub(r'\bt[- ]shirt\b', 'tshirt', text)
     text = re.sub(r'[।?!,:;()\[\]{}]', ' ', text)
     for pattern, replacement in _RULES:

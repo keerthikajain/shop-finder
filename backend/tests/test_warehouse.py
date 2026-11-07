@@ -426,3 +426,139 @@ def test_brown_loafers_search_still_works_across_all_enabled_categories(setup):
  line=result.json()['lines'][0]
  assert line['selected'] and line['selected']['collection']=='footwear'
  assert line['selected']['sku']=='SHO-006'
+
+
+# Systematic multilingual coverage: all four preloaded product catalogues,
+# not just one observed Hindi query. Each candidate is checked against the
+# entire category and both language modes, including distinct size/colour specs.
+MULTILINGUAL_FIXTURE_QUERIES = {
+ 'CLO-001': ('नीली टीशर्ट साइज़ एम','neeli t shirt size m'),
+ 'CLO-002': ('नीली टीशर्ट साइज़ एल','neeli t shirt size l'),
+ 'CLO-003': ('सफेद टीशर्ट साइज़ एम','safed t shirt size m'),
+ 'CLO-004': ('काली जीन्स साइज़ 32','kali jeans size 32'),
+ 'CLO-005': ('काली जीन्स साइज़ 34','kali jeans size 34'),
+ 'CLO-006': ('हरी हुडी साइज़ एल','hari hoodie size l'),
+ 'CLO-007': ('बेज ट्राउजर्स साइज़ 32','beige trousers size 32'),
+ 'CLO-008': ('लाल ड्रेस साइज़ एस','lal dress size s'),
+ 'SHO-001': ('सफेद ट्रेनर्स साइज़ 7','safed trainers size 7'),
+ 'SHO-002': ('सफेद ट्रेनर्स साइज़ 8','safed trainers size 8'),
+ 'SHO-003': ('काली सैंडल साइज़ 6','kali sandals size 6'),
+ 'SHO-004': ('काली सैंडल साइज़ 7','kali sandals size 7'),
+ 'SHO-005': ('नीले रनिंग शूज साइज़ 9','neele running shoes size 9'),
+ 'SHO-006': ('ब्राउन लोफर्स साइज़ 8','brown loafers size 8'),
+ 'SHO-007': ('गुलाबी चप्पल साइज़ 5','gulabi chappal size 5'),
+ 'SHO-008': ('ग्रे ट्रेनर्स साइज़ 6','grey trainers size 6'),
+ 'APP-001': ('मिक्सर ग्राइंडर 750 वाट','mixer grinder 750 watt'),
+ 'APP-002': ('मिक्सर ग्राइंडर 500 वाट','mixer grinder 500 watt'),
+ 'APP-003': ('इलेक्ट्रिक केतली 1500 वाट','electric ketli 1500 watt'),
+ 'APP-004': ('इलेक्ट्रिक केतली 1800 वाट','electric ketli 1800 watt'),
+ 'APP-005': ('स्टीम इस्त्री 1200 वाट','steam istri 1200 watt'),
+ 'APP-006': ('टेबल पंखा 55 वाट','table pankha 55 watt'),
+ 'APP-007': ('टोस्टर 800 वाट','toaster 800 watt'),
+ 'APP-008': ('राइस कुकर 700 वाट','rice cooker 700 watt'),
+ 'HOM-001': ('स्टोरेज बॉक्स 20 लीटर','storage box 20 litre'),
+ 'HOM-002': ('स्टोरेज बॉक्स 40 लीटर','storage box 40 litre'),
+ 'HOM-003': ('सूती तौलिया','sooti toliya'),
+ 'HOM-004': ('स्टील पानी की बोतल एक लीटर','steel water bottle 1 litre'),
+ 'HOM-005': ('डिनर प्लेट सेट','dinner plate set'),
+ 'HOM-006': ('लॉन्ड्री बास्केट','laundry basket'),
+ 'HOM-007': ('सूती चादर','sooti chadar'),
+ 'HOM-008': ('कुशन कवर','cushion cover'),
+}
+
+@pytest.mark.parametrize('sku',MULTILINGUAL_FIXTURE_QUERIES)
+def test_every_catalogue_item_matches_hindi_and_hinglish_with_variant_safety(sku):
+ products=list(demo_items())
+ item=next(p for p in products if p['sku']==sku)
+ group=[p for p in products if p['collection']==item['collection']]
+ # Corpus-level comparison catches an unintended second SKU for the same phrase.
+ for text in MULTILINGUAL_FIXTURE_QUERIES[sku]:
+  results=match(text,group,item['collection'])
+  assert [p['sku'] for p in results]==[sku],(sku,text,[p['sku'] for p in results])
+
+def test_imported_unfamiliar_item_requires_owner_provided_language_alias():
+ products=[dict(sku='CUSTOM-01',collection='home',name='Ash gourd storage jar',
+   category='Jars',brand='Local Manufacturer',
+   aliases=['पेठा रखने का मर्तबान','petha rakhne ka martbaan'],
+   barcode='TEST-CUSTOM-01',specs={'size':'large'},
+   placements=[{'rack':'B','shelf':'02','bin':'04'}])]
+ for phrase in ['पेठा रखने का मर्तबान','petha rakhne ka martbaan']:
+  assert [p['sku'] for p in match(phrase,products,'home')]==['CUSTOM-01']
+ assert match('साबुत राई का जार',products,'home')==[]
+
+def test_multilingual_request_does_not_guess_unmatched_product_or_variant():
+ products=list(demo_items())
+ for text in ['नीली टीशर्ट साइज़ XXL','गलत ब्राउन लोफर्स 9','टेबल पंखा 999 वाट','नीली टीशर्ट waterproof']:
+  result=match(text,products,'all')
+  assert not result,(text,[p['sku'] for p in result])
+
+
+# The complete 40-item grocery pilot, in both modes. This is a stand-in
+# for imported names/aliases and tests the matching algorithm against the
+# FULL catalogue, not one selected item. Physical placements are never inferred.
+GROCERY_VOICE_CORPUS = [
+ ('Sona masoori rice 5 kg bag','सोना मसूरी चावल 5 किलो','sona masoori chawal 5 kilo','sona masoori'),
+ ('Basmati rice 5 kg bag','बासमती चावल 5 किलो','basmati chawal 5 kilo','basmati'),
+ ('Basmati rice 10 kg bag','बासमती चावल 10 किलो','basmati chawal 10 kilo','basmati'),
+ ('Whole wheat atta 5 kg','गेहूं का आटा 5 किलो','gehun ka atta 5 kilo','wheat flour'),
+ ('Maida flour 1 kg','मैदा 1 किलो','maida 1 kilo','refined flour'),
+ ('Rava semolina 1 kg','सूजी 1 किलो','suji 1 kilo','sooji'),
+ ('Poha flattened rice 1 kg','पोहा 1 किलो','poha 1 kilo','avalakki'),
+ ('Rolled oats 1 kg','ओट्स 1 किलो','oats 1 kilo','rolled oats'),
+ ('Toor dal 1 kg','तूर दाल 1 किलो','toor dal 1 kilo','arhar dal'),
+ ('Toor dal 5 kg','तूर दाल 5 किलो','toor dal 5 kilo','arhar dal'),
+ ('Moong dal 1 kg','मूंग दाल 1 किलो','moong dal 1 kilo','yellow moong'),
+ ('Urad dal 1 kg','उड़द दाल 1 किलो','urad dal 1 kilo','black gram'),
+ ('Chana dal 1 kg','चना दाल 1 किलो','chana dal 1 kilo','split chickpea'),
+ ('Kabuli chana 1 kg','काबुली चना 1 किलो','kabuli chana 1 kilo','chickpeas'),
+ ('Rajma red kidney beans 1 kg','राजमा 1 किलो','rajma 1 kilo','kidney beans'),
+ ('White sugar 1 kg','सफेद चीनी 1 किलो','safed cheeni 1 kilo','cheeni'),
+ ('Iodised salt 1 kg','आयोडीन नमक 1 किलो','namak 1 kilo','iodised salt'),
+ ('Turmeric powder 200 g','हल्दी पाउडर 200 ग्राम','haldi powder 200 gram','haldi'),
+ ('Red chilli powder 200 g','लाल मिर्च पाउडर 200 ग्राम','lal mirch powder 200 gram','mirchi'),
+ ('Coriander powder 200 g','धनिया पाउडर 200 ग्राम','dhania powder 200 gram','dhania'),
+ ('Cumin seeds 100 g','जीरा दाना 100 ग्राम','jeera 100 gram','jeera'),
+ ('Black pepper 100 g','काली मिर्च 100 ग्राम','kali mirch 100 gram','kali mirch'),
+ ('Garam masala 100 g','गरम मसाला 100 ग्राम','garam masala 100 gram','mixed spice'),
+ ('Tea leaves 500 g','चाय पत्ती 500 ग्राम','chai patti 500 gram','tea powder'),
+ ('Instant coffee 100 g jar','इंस्टेंट कॉफी 100 ग्राम','instant coffee 100 gram','coffee'),
+ ('Packaged drinking water 1 L','पानी की बोतल एक लीटर','pani ki botal ek litre','water bottle'),
+ ('Packaged drinking water 500 mL','पानी की बोतल आधा लीटर','pani ki botal 500 ml','water bottle'),
+ ('Mango fruit drink 1 L','आम का जूस एक लीटर','aam ka juice ek litre','mango juice'),
+ ('Sunflower cooking oil 1 L','सूरजमुखी का तेल एक लीटर','surajmukhi ka tel ek litre','sunflower oil'),
+ ('Mustard cooking oil 1 L','सरसों का तेल एक लीटर','sarson ka tel ek litre','mustard oil'),
+ ('Instant noodles pack 70 g','इंस्टेंट नूडल्स 70 ग्राम','instant noodles 70 gram','noodles'),
+ ('Salted potato chips 100 g','आलू चिप्स 100 ग्राम','aloo chips 100 gram','chips'),
+ ('Masala namkeen 200 g','मसाला नमकीन 200 ग्राम','masala namkeen 200 gram','mixture'),
+ ('Marie biscuits 250 g','मारी बिस्कुट 250 ग्राम','marie biscuits 250 gram','tea biscuits'),
+ ('Oat cookies 200 g','ओट्स कुकीज़ 200 ग्राम','oats cookies 200 gram','oat biscuits'),
+ ('Dishwashing liquid 500 mL','बर्तन धोने का साबुन 500 मिलीलीटर','bartan dhone ka sabun 500 ml','dish liquid'),
+ ('Laundry detergent powder 1 kg','कपड़े धोने का पाउडर 1 किलो','kapde dhone ka powder 1 kilo','washing powder'),
+ ('Floor cleaner 1 L','फर्श क्लीनर एक लीटर','farsh cleaner ek litre','floor cleaning liquid'),
+ ('Kitchen tissue rolls 2 pack','किचन टिशू रोल्स दो पैक','kitchen tissue rolls 2 pack','paper towels'),
+ ('Garbage bags 30-count roll','कचरे के बैग 30 रोल','kachre ke bag 30 roll','bin liners'),
+]
+
+def test_all_40_grocery_products_can_be_found_in_both_language_modes():
+ assert len(GROCERY_VOICE_CORPUS)==40
+ import re
+ products=[]
+ for index,(name,hindi,hinglish,alias) in enumerate(GROCERY_VOICE_CORPUS,1):
+  qty=re.search(r'(\d+(?:\.\d+)?)[\s-]*(?:kg|g|ml|l|pack|count)',name,re.I)
+  size=(qty.group(0) if qty else '')
+  products.append({'collection':'grocery','sku':f'GRC-{index:03d}',
+    'name':name,'category':'Grocery products','brand':'Warehouse test',
+    'aliases':[alias],'barcode':f'TEST-GRC-{index:03d}',
+    'specs':({'size':size,'capacity_l':'1'} if re.search(r'\b1\s*L\b',name) else {'size':size}) if size else {},
+    'placements':[{'facility':'Warehouse','rack':'A','shelf':'02','bin':str(index).zfill(2)}]})
+ for index,(name,hindi,hinglish,_) in enumerate(GROCERY_VOICE_CORPUS,1):
+  sku=f'GRC-{index:03d}'
+  for transcript in (hindi,hinglish):
+   results=match(transcript,products,'grocery')
+   assert [p['sku'] for p in results]==[sku],(sku,transcript,[p['sku'] for p in results])
+
+def test_unrecognised_translated_product_never_invents_location():
+ products=list(demo_items())
+ for request in ['लेज़र प्रिंटर मशीन', 'mujhe unknown titanium device chahiye',
+                 'ब्लैक जीन्स 55', 'चावल 50 किलो']:
+  assert match(request,products,'all')==[]
