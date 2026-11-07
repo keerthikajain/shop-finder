@@ -81,6 +81,10 @@ export default function WarehouseApp({user,preferences,logout}){
       <button type="button" onClick={()=>{navigate('find');TOUR(0)}}><span className="sf-more-icon"><Glyph name="help"/></span><span className="sf-more-copy"><strong>{t('Quick walkthrough')}</strong><small>{t('Learn how to find and confirm items')}</small></span><Glyph name="arrow"/></button>
     </div>
   </div>
+  <div className="sf-more-group sf-more-preferences"><h3>{t('Preferences')}</h3>
+    <div className="sf-more-preference-row"><label htmlFor="sf-more-language">{t('App language')}</label><select id="sf-more-language" aria-label={t('App language')} disabled={busy} value={user.language} onChange={e=>run(()=>preferences({language:e.target.value}))}><option value="en">English</option><option value="hi">हिन्दी</option></select></div>
+    <div className="sf-more-preference-row"><span>{t('Appearance')}</span><button type="button" onClick={()=>TH(theme==='dark'?'light':'dark')}><Glyph name={theme==='dark'?'sun':'moon'}/>{t(theme==='dark'?'Light mode':'Dark mode')}</button></div>
+  </div>
   <button type="button" className="sf-more-logout" disabled={busy} onClick={()=>run(logout)}><Glyph name="logout"/>{t('Log out')}</button>
 </section>}
  {page==='account'&&<AccountSettings {...{user,preferences,logout}}/>}
