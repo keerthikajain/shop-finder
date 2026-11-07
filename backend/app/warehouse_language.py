@@ -95,7 +95,7 @@ aur and
 का की के को से पर में यह ये वह वो मुझे इसका इस की कहाँ रखा हुआ हैं
 और सामान उत्पाद प्रोडक्ट चीज चीज़ कितने किसमें
 size uk colour color power capacity brand
-""".split()) - {'size', 'uk', 'colour', 'color', 'power', 'capacity', 'brand'}
+""".split())
 
 _DEVANAGARI = '\u0900-\u097f'
 # Match a whole Devanagari/Latin phrase, never part of another word.
