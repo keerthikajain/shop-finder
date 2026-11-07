@@ -22,7 +22,7 @@ test('mobile More is a page with an explicit back path, not a blocking dialog',a
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(source,/onClick=\{\(\)=>navigate\('more'\)\}/);
  assert.match(source,/page==='more'&&<section className="sf-more-page"/);
- assert.match(source,/navigate\(moreReturn.current\)/);
+ assert.match(source,/function goBack\(\)\{navigate\(pageHistory.current.pop\(\)\|\|'find',true\)\}/);
  assert.doesNotMatch(source,/modal\?\.type==='menu'/);
 });
 test('mobile More keeps role-restricted tasks and direct access to primary sections',async()=>{
@@ -71,4 +71,25 @@ test('mobile Speak remains contained by bottom nav and catalogue is still access
  assert.match(src,/onClick=\{\(\)=>navigate\('catalogue'\)\}/);
  assert.match(css,/\.sf-compact-app \.wh-sidebar nav \.sf-mobile-speak>span\{/);
  assert.match(css,/top:57px;bottom:auto/);
+});
+
+test('secondary pages share one Back control and in-app history',async()=>{
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(source,/page!=='find'&&<button className="sf-more-back sf-page-back"/);
+ assert.match(source,/onClick=\{goBack\}/);
+ assert.match(source,/function navigate\(p,fromBack=false\)/);
+ assert.match(source,/pageHistory.current.push\(page\)/);
+ assert.match(source,/window.scrollTo\(0,0\)/);
+ assert.doesNotMatch(source,/moreReturn.current/);
+});
+test('catalogue stays the same accessible table with responsive card styling',async()=>{
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const styles=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(source,/<section className="wh-panel wh-catalogue">/);
+ assert.match(source,/<div className="wh-table-wrap"><table>/);
+ assert.match(source,/aria-label=\{t\('Open'\)\+' '\+p.sku\}/);
+ assert.match(styles,/\.sf-compact-app \.wh-catalogue \.wh-table-wrap tr\{/);
+ assert.match(styles,/grid-template-columns:minmax\(0,1fr\) auto/);
+ assert.match(styles,/\.sf-compact-app \.wh-catalogue \.wh-table-wrap td:nth-child\(2\)/);
+ assert.match(styles,/\.sf-compact-app \.wh-catalogue \.wh-table-wrap \.wh-specs>span/);
 });
