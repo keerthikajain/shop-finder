@@ -246,3 +246,95 @@ def test_clean_new_install_does_not_seed_synthetic_inventory_by_default(tmp_path
  with TestClient(create_app(path)) as restarted:
   login(restarted)
   assert len(restarted.get('/api/warehouse/items').json())==32
+
+
+@pytest.fixture
+def grocery_catalogue(setup):
+ """A real CSV import, not hardcoded search results or Gnani mocks."""
+ c,_=setup
+ records=[
+  ['GRC-002','Basmati rice 5 kg bag','basmati|long grain rice|बासमती चावल','5 kg'],
+  ['GRC-003','Basmati rice 10 kg bag','basmati|long grain rice|बासमती चावल','10 kg'],
+  ['GRC-009','Toor dal 1 kg','tur dal|arhar dal|तूर दाल','1 kg'],
+  ['GRC-024','Tea leaves 500 g','chai patti|चाय पत्ती','500 g'],
+  ['GRC-017','White sugar 1 kg','cheeni|चीनी','1 kg'],
+  ['GRC-027','Packaged drinking water 500 mL','water bottle|पानी की बोतल','500 ml'],
+ ]
+ headers=['sku','collection','name','brand','category','barcode','aliases',
+          'synthetic','facility','zone','aisle','rack','shelf','bin','quantity','size']
+ out=io.StringIO()
+ w=csv.writer(out);w.writerow(headers)
+ for n,(sku,name,aliases,size) in enumerate(records,1):
+  w.writerow([sku,'home',name,'Warehouse Test', 'Grocery', 'TEST-'+sku,aliases,
+              'true','Grocery Test Warehouse','Dry Goods','A01','R01','02',
+              str(n).zfill(2),'20',size])
+ result=c.post('/api/warehouse/imports?collection=home&filename=groceries.csv',
+               headers=H,content=out.getvalue().encode('utf-8'))
+ assert result.status_code==200,result.text
+ uploaded=result.json()
+ mapping={k:k for k in headers if k in uploaded['fields']}
+ preview=post(c,f"/imports/{uploaded['token']}/preview",{'mapping':mapping})
+ assert preview.status_code==200,preview.text
+ assert preview.json()['counts']['create']==len(records),preview.text
+ assert not preview.json()['errors'],preview.json()['errors']
+ confirmed=post(c,f"/imports/{preview.json()['token']}/confirm")
+ assert confirmed.status_code==200,confirmed.text
+ return c
+
+@pytest.mark.parametrize('language,query,sku',[
+ ('en-IN','where is basmati rice 5 kg','GRC-002'),
+ ('hi-IN','मुझे बासमती चावल पाँच किलो कहाँ मिलेगा','GRC-002'),
+ ('hi-en','mujhe basmati chawal 5 kilo kidhar hai','GRC-002'),
+ ('hi-IN','बासमती चावल ५ किलो चाहिए','GRC-002'),
+ ('hi-en','basmati chawal das kilo kahan rakha hai','GRC-003'),
+ ('hi-IN','तूर दाल एक किलो कहाँ है','GRC-009'),
+ ('hi-en','toor daal ek kilo kidhar milega','GRC-009'),
+ ('en-IN','tea leaves 500 g','GRC-024'),
+ ('hi-IN','चाय पत्ती 500 ग्राम कहाँ रखी है','GRC-024'),
+ ('hi-en','chai patti 500 gram kidhar hai','GRC-024'),
+ ('hi-IN','चीनी एक किलो कहाँ है','GRC-017'),
+ ('hi-en','cheeni ek kilo kidhar rakhi hai','GRC-017'),
+ ('hi-IN','पानी की 500 मिलीलीटर बोतल','GRC-027'),
+ ('hi-en','pani ki 500 ml bottle','GRC-027'),
+])
+def test_grocery_import_matches_english_hindi_hinglish_same_sku(grocery_catalogue,language,query,sku):
+ c=grocery_catalogue
+ response=post(c,'/search',{'collection':'home','query':query,'language':language})
+ assert response.status_code==200,response.text
+ lines=response.json()['lines']
+ assert len(lines)==1,lines
+ assert [p['sku'] for p in lines[0]['candidates']]==[sku],lines[0]
+ assert lines[0]['selected']['sku']==sku
+ assert lines[0]['location']['rack']=='R01'
+ assert response.json()['language']==language
+
+@pytest.mark.parametrize('language,query',[
+ ('en-IN','basmati rice'),('hi-IN','बासमती चावल'),
+ ('hi-en','basmati chawal kidhar hai')
+])
+def test_ambiguous_basmati_pack_requires_clarification(grocery_catalogue,language,query):
+ c=grocery_catalogue
+ line=post(c,'/search',{'collection':'home','query':query,'language':language}).json()['lines'][0]
+ assert {p['sku'] for p in line['candidates']}=={'GRC-002','GRC-003'}
+ assert line['selected'] is None
+ assert line['location'] is None
+
+@pytest.mark.parametrize('query',[
+ 'बासमती चावल आठ किलो', 'basmati chawal 8 kilo',
+ 'बासमती चावल एक्स्ट्रा स्पेशल', 'pani 750 ml bottle',
+])
+def test_unsupported_hindi_or_hinglish_detail_must_not_guess(grocery_catalogue,query):
+ c=grocery_catalogue
+ line=post(c,'/search',{'collection':'home','query':query,'language':'hi-en'}).json()['lines'][0]
+ assert not line['candidates']
+ assert line['selected'] is None
+
+def test_multilingual_multiple_items_keep_independent_locations(grocery_catalogue):
+ c=grocery_catalogue
+ response=post(c,'/search',{'collection':'home',
+                           'query':'तूर दाल १ किलो और चाय पत्ती ५०० ग्राम',
+                           'language':'hi-IN'})
+ assert response.status_code==200,response.text
+ lines=response.json()['lines']
+ assert [line['selected']['sku'] for line in lines]==['GRC-009','GRC-024']
+ assert c.get('/api/warehouse/issues?collection=home').json()==[]
