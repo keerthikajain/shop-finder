@@ -11,7 +11,7 @@ PW='warehouse-test-password'
 @pytest.fixture
 def setup(tmp_path):
  path=tmp_path/'warehouse.sqlite3'
- with TestClient(create_app(path)) as c:
+ with TestClient(create_app(path,seed_demo=True)) as c:
   add_account(path,'owner',PW,role='owner');add_account(path,'staff',PW)
   login(c);yield c,path
 def login(c,name='owner'):
@@ -124,7 +124,7 @@ def test_multiple_locations_require_choice_and_imports_persist(setup):
  locations=t['lines'][0]['candidates'][0]['placements']
  result=post(c,'/tasks/'+t['id']+'/choose',{'line':0,'sku':'CLO-001','location':locations[1]['code']})
  assert result.json()['lines'][0]['location']['bin']=='99'
- with TestClient(create_app(path)) as restarted:
+ with TestClient(create_app(path,seed_demo=True)) as restarted:
   login(restarted);assert len(next(x for x in items(restarted) if x['sku']=='CLO-001')['placements'])==2
 
 def test_demo_flag_cannot_be_silently_changed(setup):
