@@ -12,7 +12,7 @@ from app.services.language import normalize_query,followup_constraints
 def client(tmp_path,monkeypatch):
     monkeypatch.setenv('SHOP_FINDER_STAFF_TOKEN','t'*32)
     monkeypatch.delenv('GNANI_ENABLED',raising=False)
-    with TestClient(create_app(tmp_path/'language.sqlite3',auth_required=False)) as c:yield c
+    with TestClient(create_app(tmp_path/'language.sqlite3',seed_demo=True,auth_required=False)) as c:yield c
 H={'X-Staff-Token':'t'*32}
 
 @pytest.mark.parametrize('query', ['fan capacitor','पंखे का कैपेसिटर कहाँ है','pankhe ka capacitor kidhar hai'])
