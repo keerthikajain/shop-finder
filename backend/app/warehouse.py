@@ -154,16 +154,10 @@ def get_pending(c,token,kind,user):
  if not r:raise HTTPException(410,'Preview expired or already applied. Create a new preview.')
  return json.loads(r['payload'])
 
-# Small, explicit vocabulary. Unsupported requests stay unresolved rather than inventing answers.
-STOP=set('find where is are the a an i can do you have me please show need want get locate in stock size uk colour color power capacity of for mujhe chahiye kahan kahaan kaha hai hain brand aur मुझे खोजो चाहिए चाहिये कहाँ है हैं और दिखाओ साइज वाट लीटर w l'.split())
-TRANSLATIONS={'नीली':'blue','नीला':'blue','सफेद':'white','काली':'black','काला':'black','लाल':'red','सूती':'cotton','वाट':'w','लीटर':'l','साइज़':'size','साइज':'size','एम':'m','एल':'l'}
-def normal_query(text):
- s=norm(text)
- replacements={'extra large':'xl','extra small':'xs','medium':'m','large':'l','small':'s','thirty two':'32','thirty four':'34','forty':'40','twenty':'20','one':'1','two':'2','three':'3','four':'4','five':'5','six':'6','seven':'7','eight':'8','nine':'9','एक':'1','दो':'2','तीन':'3','चार':'4','पांच':'5','पाँच':'5','छह':'6','सात':'7','आठ':'8','नौ':'9','बी':'b','सी':'c','tshirts':'tshirt','t-shirts':'tshirt','trainer':'trainers','sandal':'sandals','mixers':'mixer','kettles':'kettle','loafer':'loafers','towels':'towel','boxes':'box'}
- for a,b in replacements.items():s=re.sub(r'(?<!\w)'+re.escape(a)+r'(?!\w)',b,s)
- for a,b in TRANSLATIONS.items():s=s.replace(a,b)
- return s
-def tokens(text):return {x for x in re.findall(r'[\w.\u0900-\u097F]+',normal_query(text)) if x not in STOP}
+# Normalize transcripts and saved aliases with the same bounded Hindi/Hinglish vocabulary.
+# Unknown modifiers still abstain; do not infer SKUs or locations.
+from .warehouse_language import normal_query,tokens
+
 def split_request(query,items,collection):
  # Split only when the catalogue supports a unique complete segmentation.
  chunks=[q.strip(' .?!') for q in re.split(r'\s+(?:and|aur|और)\s+|[,;\n]',query,flags=re.I) if q.strip(' .?!')]
