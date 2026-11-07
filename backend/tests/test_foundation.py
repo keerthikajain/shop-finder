@@ -15,7 +15,7 @@ def records(): return json.loads(SEED.read_text())
 
 @pytest.fixture
 def client(tmp_path):
-    with TestClient(create_app(tmp_path/'test.sqlite3',auth_required=False)) as c: yield c
+    with TestClient(create_app(tmp_path/'test.sqlite3',seed_demo=True,auth_required=False)) as c: yield c
 
 def test_health_and_schema(client):
     assert client.get('/api/health').json()['product_count'] == 20
