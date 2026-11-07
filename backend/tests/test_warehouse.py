@@ -426,3 +426,68 @@ def test_brown_loafers_search_still_works_across_all_enabled_categories(setup):
  line=result.json()['lines'][0]
  assert line['selected'] and line['selected']['collection']=='footwear'
  assert line['selected']['sku']=='SHO-006'
+
+
+# Systematic multilingual coverage: all four preloaded product catalogues,
+# not just one observed Hindi query. Each candidate is checked against the
+# entire category and both language modes, including distinct size/colour specs.
+MULTILINGUAL_FIXTURE_QUERIES = {
+ 'CLO-001': ('नीली टीशर्ट साइज़ एम','neeli t shirt size m'),
+ 'CLO-002': ('नीली टीशर्ट साइज़ एल','neeli t shirt size l'),
+ 'CLO-003': ('सफेद टीशर्ट साइज़ एम','safed t shirt size m'),
+ 'CLO-004': ('काली जीन्स साइज़ 32','kali jeans size 32'),
+ 'CLO-005': ('काली जीन्स साइज़ 34','kali jeans size 34'),
+ 'CLO-006': ('हरी हुडी साइज़ एल','hari hoodie size l'),
+ 'CLO-007': ('बेज ट्राउजर्स साइज़ 32','beige trousers size 32'),
+ 'CLO-008': ('लाल ड्रेस साइज़ एस','lal dress size s'),
+ 'SHO-001': ('सफेद ट्रेनर्स साइज़ 7','safed trainers size 7'),
+ 'SHO-002': ('सफेद ट्रेनर्स साइज़ 8','safed trainers size 8'),
+ 'SHO-003': ('काली सैंडल साइज़ 6','kali sandals size 6'),
+ 'SHO-004': ('काली सैंडल साइज़ 7','kali sandals size 7'),
+ 'SHO-005': ('नीले रनिंग शूज साइज़ 9','neele running shoes size 9'),
+ 'SHO-006': ('ब्राउन लोफर्स साइज़ 8','brown loafers size 8'),
+ 'SHO-007': ('गुलाबी चप्पल साइज़ 5','gulabi chappal size 5'),
+ 'SHO-008': ('ग्रे ट्रेनर्स साइज़ 6','grey trainers size 6'),
+ 'APP-001': ('मिक्सर ग्राइंडर 750 वाट','mixer grinder 750 watt'),
+ 'APP-002': ('मिक्सर ग्राइंडर 500 वाट','mixer grinder 500 watt'),
+ 'APP-003': ('इलेक्ट्रिक केतली 1500 वाट','electric ketli 1500 watt'),
+ 'APP-004': ('इलेक्ट्रिक केतली 1800 वाट','electric ketli 1800 watt'),
+ 'APP-005': ('स्टीम इस्त्री 1200 वाट','steam istri 1200 watt'),
+ 'APP-006': ('टेबल पंखा 55 वाट','table pankha 55 watt'),
+ 'APP-007': ('टोस्टर 800 वाट','toaster 800 watt'),
+ 'APP-008': ('राइस कुकर 700 वाट','rice cooker 700 watt'),
+ 'HOM-001': ('स्टोरेज बॉक्स 20 लीटर','storage box 20 litre'),
+ 'HOM-002': ('स्टोरेज बॉक्स 40 लीटर','storage box 40 litre'),
+ 'HOM-003': ('सूती तौलिया','sooti toliya'),
+ 'HOM-004': ('स्टील पानी की बोतल एक लीटर','steel water bottle 1 litre'),
+ 'HOM-005': ('डिनर प्लेट सेट','dinner plate set'),
+ 'HOM-006': ('लॉन्ड्री बास्केट','laundry basket'),
+ 'HOM-007': ('सूती चादर','sooti chadar'),
+ 'HOM-008': ('कुशन कवर','cushion cover'),
+}
+
+@pytest.mark.parametrize('sku',MULTILINGUAL_FIXTURE_QUERIES)
+def test_every_catalogue_item_matches_hindi_and_hinglish_with_variant_safety(sku):
+ products=list(demo_items())
+ item=next(p for p in products if p['sku']==sku)
+ group=[p for p in products if p['collection']==item['collection']]
+ # Corpus-level comparison catches an unintended second SKU for the same phrase.
+ for text in MULTILINGUAL_FIXTURE_QUERIES[sku]:
+  results=match(text,group,item['collection'])
+  assert [p['sku'] for p in results]==[sku],(sku,text,[p['sku'] for p in results])
+
+def test_imported_unfamiliar_item_requires_owner_provided_language_alias():
+ products=[dict(sku='CUSTOM-01',collection='home',name='Ash gourd storage jar',
+   category='Jars',brand='Local Manufacturer',
+   aliases=['पेठा रखने का मर्तबान','petha rakhne ka martbaan'],
+   barcode='TEST-CUSTOM-01',specs={'size':'large'},
+   placements=[{'rack':'B','shelf':'02','bin':'04'}])]
+ for phrase in ['पेठा रखने का मर्तबान','petha rakhne ka martbaan']:
+  assert [p['sku'] for p in match(phrase,products,'home')]==['CUSTOM-01']
+ assert match('साबुत राई का जार',products,'home')==[]
+
+def test_multilingual_request_does_not_guess_unmatched_product_or_variant():
+ products=list(demo_items())
+ for text in ['नीली टीशर्ट साइज़ XXL','गलत ब्राउन लोफर्स 9','टेबल पंखा 999 वाट','नीली टीशर्ट waterproof']:
+  result=match(text,products,'all')
+  assert not result,(text,[p['sku'] for p in result])
