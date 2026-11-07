@@ -38,5 +38,12 @@ export const warehouseHindi={
 'Manage tools, reports and workspace settings.':'उपकरण, रिपोर्ट और कार्यक्षेत्र सेटिंग्स प्रबंधित करें।',
 'Training catalogue — synthetic records':'परीक्षण के लिए काल्पनिक उत्पाद रिकॉर्ड',
 'Gnani configured. Verify microphone and speech playback before release.':'Gnani कॉन्फ़िगर है। जारी करने से पहले माइक्रोफ़ोन और बोली गई प्रतिक्रिया जाँचें।',
-'Gnani voice is not configured. Search and import still work without it.':'Gnani वॉइस कॉन्फ़िगर नहीं है। खोज और आयात इसके बिना भी चलते हैं।'
+'Gnani voice is not configured. Search and import still work without it.':'Gnani वॉइस कॉन्फ़िगर नहीं है। खोज और आयात इसके बिना भी चलते हैं।',
+'Voice search is unavailable. You can still type a request.':'आवाज़ से खोज अभी उपलब्ध नहीं है। आप लिखकर खोज सकते हैं।',
+'Your catalogue':'आपकी उत्पाद सूची',
+'Your catalogue starts here.':'आपकी उत्पाद सूची यहाँ से शुरू होती है।',
+'Import a spreadsheet or add your first item to start finding products.':'सामान खोजने के लिए स्प्रेडशीट आयात करें या पहला उत्पाद जोड़ें।',
+'Ask the owner to add or import products and recorded locations.':'मालिक से उत्पाद और उनकी दर्ज जगहें जोड़ने या आयात करने को कहें।',
+'Explore your catalogue':'अपनी उत्पाद सूची देखें',
+'Get your catalogue ready':'अपनी उत्पाद सूची तैयार करें'
 };
