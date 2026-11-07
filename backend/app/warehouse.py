@@ -42,7 +42,7 @@ class Location(Strict):
   return self
 class Item(Strict):
  sku:str=Field(pattern=r'^[A-Za-z0-9][A-Za-z0-9_.-]{0,39}$')
- collection:Literal['clothing','footwear','appliances','home']
+ collection:Literal['clothing','footwear','appliances','home','grocery']
  name:str=Field(min_length=2,max_length=120)
  category:str=Field(min_length=1,max_length=60)
  brand:str=Field(default='',max_length=80)
@@ -65,7 +65,7 @@ class SaveItem(Strict):
  revision:int=Field(ge=0)
  reason:str=Field(min_length=3,max_length=300)
 class Query(Strict):
- collection:Literal['all','clothing','footwear','appliances','home']='all'
+ collection:Literal['all','clothing','footwear','appliances','home','grocery']='all'
  brand:str=Field(default='',max_length=80)
  location:str=Field(default='',max_length=50)
  query:str=Field(min_length=1,max_length=600)
@@ -309,7 +309,7 @@ def import_preview(c,raw,mapping):
   v={k:row.get(mapping.get(k,''),'').strip() for k in fields}
   try:
    collection=v['collection'].lower() or scope
-   if collection not in COLLECTION_MAP:raise ValueError('Product type must be clothing, footwear, appliances or home.')
+   if collection not in COLLECTION_MAP:raise ValueError('Product type must be one of: '+', '.join(COLLECTION_MAP)+'.')
    if scope!='all' and collection!=scope:raise ValueError('Product type does not match the selected import filter.')
    if v['synthetic'].lower() not in ('','true','false','yes','no','1','0'):raise ValueError('Sample status must be true or false.')
    quantity=int(v['quantity']) if v['quantity'] else None
