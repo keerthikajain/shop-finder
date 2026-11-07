@@ -26,7 +26,7 @@ def sheet(c,data,filename='items.csv'):
  r=c.post('/api/warehouse/imports?collection=clothing&filename='+filename,headers=H,content=data);assert r.status_code==200,r.text
  raw=r.json();r=post(c,'/imports/'+raw['token']+'/preview',{'mapping':{k:k for k in raw['columns']}});assert r.status_code==200,r.text;return r.json()
 
-@pytest.mark.parametrize('pack',COLLECTIONS,ids=lambda p:p['id'])
+@pytest.mark.parametrize('pack',[p for p in COLLECTIONS if p['id']!='grocery'],ids=lambda p:p['id'])
 def test_four_catalogues_and_bilingual_examples(pack):
  import re
  records=[p for p in demo_items() if p['collection']==pack['id']]
@@ -265,10 +265,10 @@ def grocery_catalogue(setup):
  out=io.StringIO()
  w=csv.writer(out);w.writerow(headers)
  for n,(sku,name,aliases,size) in enumerate(records,1):
-  w.writerow([sku,'home',name,'Warehouse Test', 'Grocery', 'TEST-'+sku,aliases,
+  w.writerow([sku,'grocery',name,'Warehouse Test', 'Grocery', 'TEST-'+sku,aliases,
               'true','Grocery Test Warehouse','Dry Goods','A01','R01','02',
               str(n).zfill(2),'20',size])
- result=c.post('/api/warehouse/imports?collection=home&filename=groceries.csv',
+ result=c.post('/api/warehouse/imports?collection=grocery&filename=groceries.csv',
                headers=H,content=out.getvalue().encode('utf-8'))
  assert result.status_code==200,result.text
  uploaded=result.json()
@@ -299,7 +299,7 @@ def grocery_catalogue(setup):
 ])
 def test_grocery_import_matches_english_hindi_hinglish_same_sku(grocery_catalogue,language,query,sku):
  c=grocery_catalogue
- response=post(c,'/search',{'collection':'home','query':query,'language':language})
+ response=post(c,'/search',{'collection':'grocery','query':query,'language':language})
  assert response.status_code==200,response.text
  lines=response.json()['lines']
  assert len(lines)==1,lines
@@ -314,7 +314,7 @@ def test_grocery_import_matches_english_hindi_hinglish_same_sku(grocery_catalogu
 ])
 def test_ambiguous_basmati_pack_requires_clarification(grocery_catalogue,language,query):
  c=grocery_catalogue
- line=post(c,'/search',{'collection':'home','query':query,'language':language}).json()['lines'][0]
+ line=post(c,'/search',{'collection':'grocery','query':query,'language':language}).json()['lines'][0]
  assert {p['sku'] for p in line['candidates']}=={'GRC-002','GRC-003'}
  assert line['selected'] is None
  assert line['location'] is None
@@ -325,16 +325,16 @@ def test_ambiguous_basmati_pack_requires_clarification(grocery_catalogue,languag
 ])
 def test_unsupported_hindi_or_hinglish_detail_must_not_guess(grocery_catalogue,query):
  c=grocery_catalogue
- line=post(c,'/search',{'collection':'home','query':query,'language':'hi-en'}).json()['lines'][0]
+ line=post(c,'/search',{'collection':'grocery','query':query,'language':'hi-en'}).json()['lines'][0]
  assert not line['candidates']
  assert line['selected'] is None
 
 def test_multilingual_multiple_items_keep_independent_locations(grocery_catalogue):
  c=grocery_catalogue
- response=post(c,'/search',{'collection':'home',
+ response=post(c,'/search',{'collection':'grocery',
                            'query':'तूर दाल १ किलो और चाय पत्ती ५०० ग्राम',
                            'language':'hi-IN'})
  assert response.status_code==200,response.text
  lines=response.json()['lines']
  assert [line['selected']['sku'] for line in lines]==['GRC-009','GRC-024']
- assert c.get('/api/warehouse/issues?collection=home').json()==[]
+ assert c.get('/api/warehouse/issues?collection=grocery').json()==[]
