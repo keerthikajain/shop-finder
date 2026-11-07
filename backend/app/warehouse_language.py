@@ -94,7 +94,7 @@ aur and
 बताओ दिखाओ ढूंढो खोजो जरा ज़रा किस कहाँपर रखा रखी रखे रखेगा
 का की के को से पर में यह ये वह वो मुझे इसका इस की कहाँ रखा हुआ हैं
 और सामान उत्पाद प्रोडक्ट चीज चीज़ कितने किसमें
-size uk colour color power capacity brand
+size uk colour color power capacity brand w l
 """.split())
 
 _DEVANAGARI = '\u0900-\u097f'
