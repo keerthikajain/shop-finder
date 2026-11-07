@@ -1210,3 +1210,25 @@ body,.wh-app{
  .sf-compact-app .wh-sidebar nav .sf-nav-mobile-label{font-size:9px}
  .sf-find-page .wh-section-title h2{font-size:17px}
 }
+
+
+/* Mobile preferences are in More: no hidden or clipped header actions. */
+.sf-compact-app .sf-more-preferences{display:none}
+@media(max-width:700px){
+ .sf-compact-app .wh-top-actions .wh-icon-button,
+ .sf-compact-app .wh-top-actions #app-lang,
+ .sf-compact-app .wh-top-actions label[for=app-lang]{display:none}
+ .sf-compact-app .wh-top-actions{flex:0 0 auto;margin-left:auto}
+ .sf-compact-app .sf-more-preferences{display:block}
+ .sf-more-preference-row{
+   display:flex;align-items:center;justify-content:space-between;
+   flex-wrap:wrap;gap:10px;margin:8px 0;padding:10px 12px;
+   border:1px solid var(--wh-border);border-radius:11px;
+   background:var(--wh-surface)
+ }
+ .sf-more-preference-row>label,.sf-more-preference-row>span{
+   color:var(--wh-text);font-size:13px;font-weight:650
+ }
+ .sf-more-preference-row select{width:auto;min-width:130px;max-width:55%;min-height:40px;margin:0}
+ .sf-more-preference-row button{min-height:40px;padding:8px 12px;font-size:12px;gap:7px}
+}
