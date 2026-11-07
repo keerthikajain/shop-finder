@@ -22,7 +22,7 @@ test('mobile More is a page with an explicit back path, not a blocking dialog',a
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(source,/onClick=\{\(\)=>navigate\('more'\)\}/);
  assert.match(source,/page==='more'&&<section className="sf-more-page"/);
- assert.match(source,/function goBack\(\)\{navigate\(pageHistory.current.pop\(\)\|\|'find',true\)\}/);
+ assert.match(source,/function goBack\(\)\{navigate\('more'\)\}/);
  assert.doesNotMatch(source,/modal\?\.type==='menu'/);
 });
 test('mobile More keeps role-restricted tasks and direct access to primary sections',async()=>{
@@ -30,7 +30,7 @@ test('mobile More keeps role-restricted tasks and direct access to primary secti
  assert.match(source,/owner&&<button type="button" onClick=\{\(\)=>navigate\('import'\)\}/);
  assert.match(source,/owner&&<button type="button" onClick=\{\(\)=>navigate\('business'\)\}/);
  assert.match(source,/onClick=\{\(\)=>navigate\('review'\)\}/);
- assert.match(source,/onClick=\{\(\)=>navigate\('account'\)\}/);
+ assert.match(source,/onClick=\{\(\)=>navigate\('settings'\)\}/);
  assert.match(source,/className="sf-mobile-more"/);
 });
 
@@ -38,8 +38,8 @@ test('More offers scan as a task without unrelated filters or setup banners',asy
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.ok(src.includes("['find','catalogue','locations'].includes(page)&&<button type=\"button\" className=\"sf-header-scan\""));
  assert.ok(src.includes("onClick={()=>D({type:'lookup'})}><span className=\"sf-more-icon\"><Glyph name=\"scan\"/>"));
- assert.ok(src.includes("meta&&!['find','account','business','more'].includes(page)"));
- assert.ok(src.includes("!meta.settings.configured&&!['business','more'].includes(page)"));
+ assert.ok(src.includes("meta&&!['find','account','business','more','settings'].includes(page)"));
+ assert.ok(src.includes("!meta.settings.configured&&!['business','more','settings'].includes(page)"));
 });
 
 test('mobile Find navigation keeps a compact label while desktop keeps the full label',async()=>{
@@ -73,12 +73,12 @@ test('mobile Speak remains contained by bottom nav and catalogue is still access
  assert.match(css,/top:57px;bottom:auto/);
 });
 
-test('secondary pages share one Back control and in-app history',async()=>{
+test('only pages opened from More have Back to More, not bottom navigation pages',async()=>{
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(source,/page!=='find'&&<button className="sf-more-back sf-page-back"/);
+ assert.match(source,/\['import','business','review','settings'\]\.includes\(page\)&&<button className="sf-more-back sf-page-back"/);
  assert.match(source,/onClick=\{goBack\}/);
- assert.match(source,/function navigate\(p,fromBack=false\)/);
- assert.match(source,/pageHistory.current.push\(page\)/);
+ assert.match(source,/function navigate\(p\)/);
+ assert.doesNotMatch(source,/pageHistory.current.push/);
  assert.match(source,/window.scrollTo\(0,0\)/);
  assert.doesNotMatch(source,/moreReturn.current/);
 });
@@ -92,4 +92,21 @@ test('catalogue stays the same accessible table with responsive card styling',as
  assert.match(styles,/grid-template-columns:minmax\(0,1fr\) auto/);
  assert.match(styles,/\.sf-compact-app \.wh-catalogue \.wh-table-wrap td:nth-child\(2\)/);
  assert.match(styles,/\.sf-compact-app \.wh-catalogue \.wh-table-wrap \.wh-specs>span/);
+});
+
+test('location feedback is explicit and keeps no-answer searches out of review',async()=>{
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(source,/\/tasks\/'\+task.id\+'\/location-check'/);
+ assert.match(source,/className="sf-location-yes"/);
+ assert.match(source,/className="sf-location-wrong"/);
+ assert.match(source,/location_report_open/);
+ assert.match(source,/kind:location\?'wrong_location':'general'/);
+});
+test('More includes Settings with language, appearance and account controls',async()=>{
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(source,/page==='settings'&&<section className="sf-settings-page"/);
+ assert.match(source,/id="sf-settings-language"/);
+ assert.match(source,/showLanguage=\{false\}/);
+ assert.match(source,/t\('Appearance'\)/);
+ assert.doesNotMatch(source,/page==='account'&&<AccountSettings/);
 });

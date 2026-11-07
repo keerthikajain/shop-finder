@@ -99,6 +99,11 @@ class Issue(Strict):
  collection:str=Field(max_length=40)
  sku:str=Field(default='',max_length=40)
  reason:str=Field(min_length=3,max_length=400)
+ kind:Literal['general','wrong_location']='general'
+ location_code:str=Field(default='',max_length=50)
+ suggested_location:str=Field(default='',max_length=200)
+class LocationCheck(Strict):
+ line:int=Field(ge=0,le=9)
 class Resolve(Strict):note:str=Field(min_length=3,max_length=300)
 
 def initialize_warehouse(path,demo=True):
@@ -107,10 +112,13 @@ def initialize_warehouse(path,demo=True):
   CREATE TABLE IF NOT EXISTS wh_events(id INTEGER PRIMARY KEY,collection TEXT,sku TEXT,action TEXT,actor TEXT,at TEXT,before_json TEXT,after_json TEXT,reason TEXT);
   CREATE TABLE IF NOT EXISTS wh_pending(id TEXT PRIMARY KEY,kind TEXT,owner TEXT,expires REAL,payload TEXT);
   CREATE TABLE IF NOT EXISTS wh_tasks(id TEXT PRIMARY KEY,owner TEXT,created REAL,payload TEXT);
-  CREATE TABLE IF NOT EXISTS wh_issues(id INTEGER PRIMARY KEY,collection TEXT,sku TEXT,reason TEXT,actor TEXT,at TEXT,status TEXT DEFAULT 'open',note TEXT DEFAULT '');''')
+  CREATE TABLE IF NOT EXISTS wh_issues(id INTEGER PRIMARY KEY,collection TEXT,sku TEXT,reason TEXT,actor TEXT,at TEXT,status TEXT DEFAULT 'open',note TEXT DEFAULT '');
+  CREATE TABLE IF NOT EXISTS wh_location_checks(id INTEGER PRIMARY KEY,task_id TEXT NOT NULL,line_index INTEGER NOT NULL,collection TEXT NOT NULL,sku TEXT NOT NULL,location_code TEXT NOT NULL,revision INTEGER NOT NULL,actor TEXT NOT NULL,at TEXT NOT NULL,UNIQUE(task_id,line_index));''')
   columns={row['name'] for row in c.execute('PRAGMA table_info(wh_issues)')}
-  for name in ('resolved_at','resolved_by'):
-   if name not in columns:c.execute(f"ALTER TABLE wh_issues ADD COLUMN {name} TEXT NOT NULL DEFAULT ''")
+  for name in ('resolved_at','resolved_by','kind','location_code','suggested_location'):
+   if name not in columns:
+    default='general' if name=='kind' else ''
+    c.execute(f"ALTER TABLE wh_issues ADD COLUMN {name} TEXT NOT NULL DEFAULT '{default}'")
   from .store_operations import initialize_store
   initialize_store(c)
   if demo:
@@ -231,6 +239,11 @@ def speak_task(task):
   elif line['candidates']:parts.append((f"{line['query']}: कृपया सही आकार या प्रकार चुनें।" if hi else f"{line['query']}: choose the size or variant before going to a location."))
   else:parts.append((f"{line['query']}: सूची में नहीं मिला।" if hi else f"{line['query']}: no matching catalogue record."))
  return ' '.join(parts)[:2400]
+def location_status(c,p,l):
+ if not p or not l:return {'last_confirmed_at':None,'location_report_open':False}
+ match=c.execute('SELECT at FROM wh_location_checks WHERE collection=? AND sku=? AND location_code=? AND revision=? ORDER BY id DESC LIMIT 1',(p['collection'],p['sku'],l['code'],p['revision'])).fetchone()
+ open_report=c.execute("SELECT 1 FROM wh_issues WHERE collection=? AND sku=? AND kind='wrong_location' AND location_code=? AND status='open' LIMIT 1",(p['collection'],p['sku'],l['code'])).fetchone()
+ return {'last_confirmed_at':match['at'] if match else None,'location_report_open':bool(open_report)}
 def task_get(c,tid,u):
  r=c.execute('SELECT * FROM wh_tasks WHERE id=? AND owner=?',(tid,u['id'])).fetchone()
  if not r or time.time()-r['created']>86400:raise HTTPException(404,'Search session expired. Search again.')
@@ -380,8 +393,8 @@ def install_warehouse(app,path):
     candidates=match(q,all_items,body.collection);p=candidates[0] if len(candidates)==1 else None
     available=[l for l in p['placements'] if not body.location or l['code']==body.location] if p else []
     l=available[0] if len(available)==1 else None
-    lines.append({'query':q,'candidates':candidates,'selected':p if l else None,'location':l,'product_scanned':False,'complete':False,'confirmation':None})
-    if not candidates:c.execute('INSERT INTO wh_issues(collection,sku,reason,actor,at) VALUES(?,?,?,?,?)',(body.collection,'','No match: '+q,u['username'],now()))
+    lines.append({'query':q,'candidates':candidates,'selected':p if l else None,'location':l,'product_scanned':False,'complete':False,'confirmation':None,'location_feedback':None,**location_status(c,p,l)})
+    # A search result, including no match, never creates a report by itself.
    tid=secrets.token_urlsafe(24);t={'id':tid,'collection':body.collection,'language':body.language,'query':body.query,'lines':lines};t['spoken_text']=speak_task(t)
    c.execute('DELETE FROM wh_tasks WHERE created<?',(time.time()-86400,));c.execute('INSERT INTO wh_tasks VALUES(?,?,?,?)',(tid,u['id'],time.time(),encode(t)))
    return t
@@ -400,7 +413,7 @@ def install_warehouse(app,path):
    if len(choices)!=1:raise HTTPException(422,'Choose a catalogue and SKU from the matching candidates.')
    p=public(item_row(c,choices[0]['collection'],body.sku));l=next((l for l in p['placements'] if l['code']==body.location),None)
    if not l:raise HTTPException(409,'Location changed. Search again.')
-   line.update(selected=p,location=l,product_scanned=False,complete=False,confirmation=None);return task_put(c,t)
+   line.update(selected=p,location=l,product_scanned=False,complete=False,confirmation=None,location_feedback=None,**location_status(c,p,l));return task_put(c,t)
  @app.post('/api/warehouse/tasks/{tid}/clarify')
  def clarify(tid:str,body:Clarify,request:Request):
   u=identity(request)
@@ -413,7 +426,24 @@ def install_warehouse(app,path):
    candidates=exact or match(line['query']+' '+body.reply,current,t['collection'])
    if not candidates:raise HTTPException(422,'That detail does not match the available choices. Select a variant or search again.')
    p=candidates[0] if len(candidates)==1 else None;l=p['placements'][0] if p and len(p['placements'])==1 else None
-   line.update(candidates=candidates,selected=p if l else None,location=l,product_scanned=False,complete=False,confirmation=None)
+   line.update(candidates=candidates,selected=p if l else None,location=l,product_scanned=False,complete=False,confirmation=None,location_feedback=None,**location_status(c,p,l))
+   return task_put(c,t)
+ @app.post('/api/warehouse/tasks/{tid}/location-check')
+ def location_check(tid:str,body:LocationCheck,request:Request):
+  """Explicit positive acknowledgement. No report, stock change, or permanent guarantee."""
+  u=identity(request)
+  with connect(path) as c:
+   c.execute('BEGIN IMMEDIATE')
+   t=task_get(c,tid,u);line,p=current_line(c,t,body.line)
+   location=line['location']
+   if not any(l['code']==location['code'] for l in p['placements']):raise HTTPException(409,'Location changed. Search again.')
+   existing=c.execute('SELECT at,actor FROM wh_location_checks WHERE task_id=? AND line_index=?',(tid,body.line)).fetchone()
+   if existing:
+    at,actor=existing['at'],existing['actor']
+   else:
+    at,actor=now(),u['username']
+    c.execute('INSERT INTO wh_location_checks(task_id,line_index,collection,sku,location_code,revision,actor,at) VALUES(?,?,?,?,?,?,?,?)',(tid,body.line,p['collection'],p['sku'],location['code'],p['revision'],actor,at))
+   line.update(location_feedback={'status':'correct','at':at,'actor':actor},last_confirmed_at=at)
    return task_put(c,t)
  @app.post('/api/warehouse/tasks/{tid}/scan')
  def scan(tid:str,body:Scan,request:Request):
@@ -468,7 +498,11 @@ def install_warehouse(app,path):
   with connect(path) as c:
    c.execute('BEGIN IMMEDIATE');b=get_pending(c,token,'move',u);p=json.loads(item_row(c,b['collection'],b['sku'])['payload'])
    p['placements']=[{**b['destination'],'quantity':l.get('quantity')} if loc_code(l)==b['source'] else l for l in p['placements']]
-   Item(**p);result=write(c,p,b['revision'],u['username'],b['reason'],'move');c.execute('DELETE FROM wh_pending WHERE id=?',(token,));return result
+   Item(**p);result=write(c,p,b['revision'],u['username'],b['reason'],'move')
+   # A verified move resolves open reports about the exact prior placement; other reports remain open.
+   new_place=next(l for l in result['placements'] if l['code']==loc_code(b['destination']))
+   c.execute("UPDATE wh_issues SET status='resolved',note=?,resolved_at=?,resolved_by=? WHERE status='open' AND kind='wrong_location' AND collection=? AND sku=? AND location_code=?",('Verified new location: '+loc_text(new_place),now(),u['username'],b['collection'],b['sku'],b['source']))
+   c.execute('DELETE FROM wh_pending WHERE id=?',(token,));return result
  @app.post('/api/warehouse/imports')
  async def upload(request:Request,collection:str,filename:str):
   u=identity(request,True)
@@ -531,7 +565,14 @@ def install_warehouse(app,path):
  def issue(body:Issue,request:Request):
   u=identity(request)
   with connect(path) as c:
-   result=c.execute('INSERT INTO wh_issues(collection,sku,reason,actor,at) VALUES(?,?,?,?,?)',(body.collection,body.sku,body.reason,u['username'],now()))
+   c.execute('BEGIN IMMEDIATE')
+   if body.kind=='wrong_location':
+    if not body.sku or not body.location_code:raise HTTPException(422,'Choose an exact item and recorded location to report.')
+    p=public(item_row(c,body.collection,body.sku))
+    if not any(l['code']==body.location_code for l in p['placements']):raise HTTPException(409,'Location changed. Search again before reporting.')
+    existing=c.execute("SELECT id FROM wh_issues WHERE collection=? AND sku=? AND kind='wrong_location' AND location_code=? AND status='open' LIMIT 1",(body.collection,body.sku,body.location_code)).fetchone()
+    if existing:return {'ok':True,'id':existing['id'],'status':'open','already_reported':True}
+   result=c.execute('INSERT INTO wh_issues(collection,sku,reason,actor,at,kind,location_code,suggested_location) VALUES(?,?,?,?,?,?,?,?)',(body.collection,body.sku,body.reason,u['username'],now(),body.kind,body.location_code,body.suggested_location))
    report_id=result.lastrowid
   return {'ok':True,'id':report_id,'status':'open'}
  @app.get('/api/warehouse/issues')
