@@ -159,3 +159,16 @@ def test_catalogue_segmentation_without_conjunctions(setup):
   assert len(task['lines'])==3,task
   assert all(line['candidates'] for line in task['lines'])
  assert not search(c,'red dress unknownthing','all')['lines'][0]['candidates']
+
+def test_warehouse_photo_persists_and_rejects_external_urls(setup):
+ c,path=setup;p=items(c)[0]
+ media=c.post('/api/media',headers={**H,'Content-Type':'image/png'},content=b'\x89PNG\r\n\x1a\nphoto-fixture').json()['url']
+ p['photo_url']=media
+ result=save(c,p,p['revision']);assert result.status_code==200,result.text
+ saved=next(x for x in items(c) if x['sku']==p['sku'])
+ assert saved['photo_url']==media
+ saved['photo_url']='https://external.example/tracking.png'
+ assert save(c,saved,saved['revision']).status_code==422
+ login(c,'staff')
+ assert c.post('/api/media',headers=H,content=b'bad').status_code==403
+ assert c.get(media).status_code==200
