@@ -1395,3 +1395,86 @@ body,.wh-app{
  .sf-compact-app .wh-catalogue .wh-table-item .wh-art{flex-basis:49px;width:49px;min-width:49px;height:54px}
  .sf-compact-app .wh-catalogue .wh-table-item b{font-size:13px}
 }
+
+
+/* Voice-first operational flow and consistent concise secondary pages. */
+.sf-compact-app:not(.sf-find-page) .wh-page-heading{display:none}
+.sf-compact-app .sf-compact-page-title{padding:5px 0 16px;min-width:0}
+.sf-compact-app .sf-compact-page-title h1{
+ margin:0;color:var(--wh-text);
+ font-size:clamp(19px,2.2vw,26px);font-weight:750;
+ letter-spacing:-.5px;line-height:1.25;
+}
+.sf-compact-app .sf-settings-page{
+ display:grid;gap:17px;max-width:900px;margin:0 auto 24px;min-width:0;
+}
+.sf-compact-app .sf-settings-preferences{
+ display:block;margin:0;padding:18px;
+ background:var(--wh-surface);border:1px solid var(--wh-border);
+ border-radius:13px;
+}
+.sf-compact-app .sf-settings-preferences h2{font-size:17px;margin:0 0 14px}
+.sf-compact-app .sf-settings-preferences .sf-more-preference-row{
+ display:flex;align-items:center;justify-content:space-between;
+ flex-wrap:wrap;gap:10px;padding:11px 12px;margin:8px 0;
+ border-radius:10px;border:1px solid var(--wh-border);background:var(--wh-input)
+}
+.sf-settings-preferences select{width:min(180px,55%);min-height:40px}
+.sf-settings-preferences .sf-more-preference-row>label,
+.sf-settings-preferences .sf-more-preference-row>span{font-size:13px;font-weight:600}
+.sf-compact-app .sf-settings-page .editor-panel{min-width:0;max-width:100%}
+.sf-find-page .wh-ask .wh-voice:not(.small){font-weight:750;letter-spacing:.1px}
+.sf-find-page .sf-location-check{
+ border:1px solid var(--wh-border);border-radius:10px;
+ background:var(--wh-input);padding:12px;margin:12px 0 8px;
+ display:grid;gap:10px;min-width:0;
+}
+.sf-find-page .sf-location-check-intro{display:grid;gap:4px;min-width:0}
+.sf-find-page .sf-location-check-intro strong{
+ font-size:12px;font-weight:700;color:var(--wh-text);line-height:1.4;
+}
+.sf-find-page .sf-location-check-intro small{font-size:11px;color:var(--wh-muted);line-height:1.5;overflow-wrap:anywhere}
+.sf-find-page .sf-location-check-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.sf-find-page .sf-location-check-actions>button{
+ display:flex;align-items:center;justify-content:center;gap:7px;
+ width:100%;min-width:0;min-height:43px;padding:8px 7px;
+ line-height:1.2;font-size:12px;border-radius:9px;
+ font-weight:650;white-space:normal;text-align:center;
+}
+.sf-find-page .sf-location-check-actions button svg{width:17px;height:17px;flex-shrink:0}
+.sf-find-page .sf-location-check-actions .sf-location-yes{
+ background:var(--wh-mint);color:var(--wh-green);
+ border:1px solid #9ec9ae;
+}
+.sf-find-page .sf-location-check-actions .sf-location-wrong{
+ background:var(--wh-surface);border:1px solid var(--wh-border);
+ color:var(--wh-text);
+}
+.sf-find-page .sf-location-check-actions button:disabled{opacity:.6;cursor:default}
+.sf-report-flow{display:grid;gap:10px}
+.sf-report-flow p{margin:2px 0 8px;line-height:1.5}
+.sf-report-flow form{display:grid;gap:12px;min-width:0}
+.sf-report-flow textarea{min-height:85px}
+.sf-report-flow input,.sf-report-flow textarea{width:100%;min-width:0}
+.sf-compact-app .wh-review-row .sf-review-correct{
+ display:inline-flex;gap:7px;align-items:center;min-height:42px;
+ padding:9px 12px;color:var(--wh-accent);
+ border:1px solid var(--wh-border);border-radius:9px;
+}
+@media(max-width:700px){
+ .sf-compact-app .sf-compact-page-title{padding:0 0 12px}
+ .sf-compact-app .sf-compact-page-title h1{font-size:20px}
+ .sf-compact-app .sf-settings-page{gap:12px}
+ .sf-compact-app .sf-settings-preferences{padding:12px}
+ .sf-find-page .sf-location-check{margin:9px 0 8px;padding:10px}
+ .sf-find-page .sf-location-check-actions{gap:7px}
+ .sf-find-page .sf-location-check-actions>button{font-size:11px;padding:7px 6px}
+ .sf-find-page .wh-task-footer{margin-top:8px}
+ .sf-find-page .wh-task-footer>div{display:flex;flex-wrap:wrap}
+ .sf-find-page .wh-composer-actions .wh-voice{
+   box-shadow:0 2px 10px #5e23ae20;
+ }
+}
+@media(max-width:340px){
+ .sf-find-page .sf-location-check-actions{grid-template-columns:1fr}
+}
