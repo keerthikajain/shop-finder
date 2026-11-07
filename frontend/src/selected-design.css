@@ -1027,3 +1027,49 @@ body,.wh-app{
  .login-shell .login-card .sf-login-language select{width:122px}
  .login-shell .login-card .sf-password-field button{padding:5px 8px;font-size:12px}
 }
+
+
+/* Mobile More is a full workspace page, not a modal. Navigation stays available. */
+.sf-compact-app .sf-more-page{width:min(100%,720px);margin:0 auto 48px;min-width:0}
+.sf-more-back{display:inline-flex;align-items:center;gap:9px;border:0!important;background:transparent!important;color:var(--wh-accent)!important;padding:10px 0!important;min-height:44px;box-shadow:none!important;font-size:13px;font-weight:650}
+.sf-more-back svg{transform:rotate(180deg);width:18px;height:18px;flex-shrink:0}
+.sf-more-intro{margin:4px 0 25px}
+.sf-more-intro .wh-eyebrow{display:block;margin-bottom:8px}
+.sf-more-intro h2{font-size:clamp(26px,4vw,34px);letter-spacing:-1px;margin:0 0 5px;color:var(--wh-text)}
+.sf-more-intro p{font-size:13px;line-height:1.6;color:var(--wh-muted);margin:0}
+.sf-more-group{margin:20px 0 25px}
+.sf-more-group h3{font-size:12px;color:var(--wh-muted);font-weight:700;letter-spacing:.3px;margin:0 0 10px}
+.sf-more-list{display:grid;gap:9px}
+.sf-compact-app .sf-more-list>button{
+ display:flex;align-items:center;justify-content:flex-start;text-align:left;
+ width:100%;min-width:0;min-height:74px;gap:14px;
+ border:1px solid var(--wh-border);border-radius:13px;
+ background:var(--wh-surface);color:var(--wh-text);padding:12px 15px;
+ box-shadow:var(--wh-shadow);
+}
+.sf-more-list>button:hover:not(:disabled){border-color:var(--wh-accent);background:var(--wh-soft)}
+.sf-more-icon{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;background:var(--wh-soft);color:var(--wh-accent);border-radius:11px}
+.sf-more-icon svg{width:21px;height:21px}
+.sf-more-copy{display:grid;gap:4px;min-width:0;flex:1}
+.sf-more-copy strong{font-size:14px;font-weight:700;overflow-wrap:anywhere}
+.sf-more-copy small{font-size:11px;line-height:1.45;color:var(--wh-muted);font-weight:400;overflow-wrap:anywhere}
+.sf-more-list>button>svg:last-child{width:17px;height:17px;flex-shrink:0;color:var(--wh-muted)}
+.sf-compact-app .sf-more-logout{width:100%;min-height:48px;justify-content:center;gap:10px;background:var(--wh-surface);border:1px solid var(--wh-border);color:var(--wh-text);border-radius:11px}
+.sf-compact-app .sf-more-logout svg{width:18px;height:18px}
+@media(max-width:700px){
+ .sf-compact-app .sf-more-page{padding:2px 0 calc(24px + env(safe-area-inset-bottom))}
+ .sf-compact-app .wh-main-wrap main:has(>.sf-more-page)>.wh-page-heading{display:none}
+ .sf-more-intro{margin:6px 0 22px}
+ .sf-more-list{gap:8px}
+ .sf-compact-app .sf-more-list>button{padding:11px 12px;min-height:70px;gap:11px}
+ .sf-more-icon{width:40px;height:40px;flex-basis:40px}
+ .sf-more-group{margin:18px 0 24px}
+ .sf-compact-app .wh-sidebar nav .sf-mobile-more[aria-current=page]{
+   color:var(--sf-ref-violet);background:transparent;box-shadow:none;
+ }
+}
+@media(max-width:350px){
+ .sf-more-copy strong{font-size:13px}
+ .sf-more-copy small{font-size:10px}
+ .sf-compact-app .sf-more-list>button{padding:10px;gap:9px}
+}
