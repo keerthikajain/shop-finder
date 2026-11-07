@@ -383,3 +383,46 @@ def test_grocery_category_is_distinct_and_enabled_by_owner(setup):
  assert len(c.get('/api/warehouse/items?collection=grocery').json())==1
  assert len(c.get('/api/warehouse/items?collection=home').json())==8
  assert c.get('/api/warehouse/export?collection=grocery').status_code==200
+
+@pytest.mark.parametrize('language,utterance',[
+ ('hi-IN','ब्राउन लोफर्स कहाँ हैं'),
+ ('hi-IN','ब्राउन लोफर कहाँ है'),
+ ('hi-IN','भूरे लोफर्स कहाँ रखे हैं'),
+ ('hi-IN','मुझे ब्राउन लोफर्स साइज़ आठ चाहिए'),
+ ('hi-en','brown lofers kidhar hain'),
+ ('hi-en','mujhe brown loafers size 8 chahiye'),
+ ('en-IN','where are the brown loafers'),
+])
+def test_brown_loafers_voice_transcripts_find_same_verified_item(setup,language,utterance):
+ c,_=setup
+ response=post(c,'/search',{'collection':'footwear','query':utterance,'language':language})
+ assert response.status_code==200,response.text
+ lines=response.json()['lines']
+ assert len(lines)==1,lines
+ assert [p['sku'] for p in lines[0]['candidates']]==['SHO-006'],lines[0]
+ assert lines[0]['selected']['sku']=='SHO-006'
+ assert lines[0]['location'] and lines[0]['location']['rack']
+ assert c.get('/api/warehouse/issues?collection=footwear').json()==[]
+
+@pytest.mark.parametrize('utterance',[
+ 'ब्राउन लोफर्स साइज़ 9 कहाँ हैं',
+ 'brown loafers size 9 kidhar hain',
+ 'नीले लोफर्स कहाँ हैं',
+ 'ब्राउन लोफर्स वाटरप्रूफ कहाँ हैं',
+])
+def test_footwear_speech_does_not_guess_wrong_variant(setup,utterance):
+ c,_=setup
+ result=post(c,'/search',{'collection':'footwear','query':utterance,'language':'hi-IN'})
+ assert result.status_code==200,result.text
+ line=result.json()['lines'][0]
+ assert line['candidates']==[]
+ assert line['selected'] is None
+ assert line['location'] is None
+
+def test_brown_loafers_search_still_works_across_all_enabled_categories(setup):
+ c,_=setup
+ result=post(c,'/search',{'collection':'all','query':'ब्राउन लोफर्स कहाँ हैं','language':'hi-IN'})
+ assert result.status_code==200,result.text
+ line=result.json()['lines'][0]
+ assert line['selected'] and line['selected']['collection']=='footwear'
+ assert line['selected']['sku']=='SHO-006'
