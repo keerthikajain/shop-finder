@@ -83,7 +83,7 @@ TERMS = {
     'सूजी':'rava', 'सुजी':'rava', 'sooji':'rava',
     'रवा':'rava', 'राव':'rava',
     'पोहा':'poha', 'अवलक्की':'poha', 'avalakki':'poha',
-    'ओट्स':'oats', 'ओट':'oat', 'ओटमील':'oats',
+    'ओट्स':'oat', 'ओट':'oat', 'ओटमील':'oat', 'oats':'oat',
     'पीली मूंग दाल':'yellow moong dal', 'येलो मूंग':'yellow moong',
     'पीला':'yellow', 'पीली':'yellow', 'पीले':'yellow',
     'अड़हर':'toor', 'अरहर':'toor', 'तूर':'toor',
