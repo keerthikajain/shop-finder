@@ -20,7 +20,7 @@ DEFAULTS = {'name': '', 'business_type': 'warehouse', 'collections': list(COLLEC
 class Settings(Strict):
     name: str = Field(min_length=2, max_length=80)
     business_type: Literal['warehouse', 'outlet', 'retail', 'stockroom']
-    collections: list[str] = Field(min_length=1, max_length=4)
+    collections: list[str] = Field(min_length=1, max_length=5)
     location_fields: list[str] = Field(min_length=1, max_length=7)
     custom_fields: dict[str, list[str]] = Field(default_factory=dict)
     staff_stock: bool = False
@@ -44,7 +44,7 @@ class Settings(Strict):
         return self
 
 class StockChange(Strict):
-    collection: Literal['clothing', 'footwear', 'appliances', 'home']
+    collection: Literal['clothing', 'footwear', 'appliances', 'home', 'grocery']
     sku: str = Field(min_length=1, max_length=40)
     revision: int = Field(ge=1)
     operation: Literal['receive', 'remove', 'move', 'count']
