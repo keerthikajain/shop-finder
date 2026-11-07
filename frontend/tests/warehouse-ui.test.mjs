@@ -136,3 +136,16 @@ test('authenticated header exposes working light and dark theme toggle on deskto
  assert.match(css,/\.sf-compact-app \.wh-top-actions \.sf-header-theme\{/);
  assert.match(css,/display:inline-flex!important/);
 });
+
+test('account actions are grouped and logout is separate from staff creation',async()=>{
+ const src=await readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(src,/className="sf-account-form sf-profile-form"/);
+ assert.match(src,/className="sf-account-form sf-password-form"/);
+ assert.match(src,/className="sf-account-form sf-staff-create-form"/);
+ assert.match(src,/className="sf-account-footer"/);
+ assert.match(src,/className="secondary sf-account-logout"/);
+ assert.match(css,/\.sf-account-panel \.sf-account-form-actions/);
+ assert.match(css,/\.sf-account-panel \.sf-account-footer/);
+ assert.match(css,/grid-template-columns:minmax\(0,1fr\);gap:14px/);
+});
