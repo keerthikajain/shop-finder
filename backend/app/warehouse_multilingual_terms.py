@@ -153,6 +153,7 @@ TERMS = {
     'साइज़':'size', 'साईज':'size', 'साइज':'size', 'नंबर':'size',
     'नम्बर':'size', 'आकार':'size',
     'वाट':'w', 'वॉट':'w', 'किलोवाट':'kw',
+    'एस':'s', 'ऐस':'s', 'एम':'m', 'एल':'l', 'एक्सएल':'xl', 'एक्स एस':'xs',
     # Hinglish equivalents and common phonetic spellings.
     'neela':'blue', 'neeli':'blue', 'neele':'blue',
     'safed':'white', 'sufed':'white', 'kala':'black', 'kali':'black',
