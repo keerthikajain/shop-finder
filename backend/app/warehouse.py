@@ -48,12 +48,13 @@ class Item(Strict):
  brand:str=Field(default='',max_length=80)
  aliases:list[str]=Field(default_factory=list,max_length=20)
  barcode:str=Field(default='',max_length=100)
+ photo_url:str=Field(default='',pattern=r'^(?:/api/media/[a-f0-9]{64}\.(?:png|jpg))?$')
  specs:dict[str,str]=Field(default_factory=dict,max_length=12)
  placements:list[Location]=Field(min_length=1,max_length=20)
  synthetic:bool=False
  @model_validator(mode='after')
  def valid(self):
-  if any(k in {'sku','collection','name','brand','category','barcode','aliases','synthetic','revision','quantity',*LOCATION_FIELDS} for k in self.specs):raise ValueError('Specifications cannot replace product or location fields.')
+  if any(k in {'sku','collection','name','brand','category','barcode','photo_url','aliases','synthetic','revision','quantity',*LOCATION_FIELDS} for k in self.specs):raise ValueError('Specifications cannot replace product or location fields.')
   if any(not re.fullmatch(r'[a-z][a-z0-9_]{0,39}',k) for k in self.specs):raise ValueError('Specification keys must use lowercase letters, numbers and underscores.')
   if any(not v.strip() or len(v)>80 for v in self.specs.values()):raise ValueError('Specification values must be 1–80 characters.')
   if any(not a.strip() or len(a)>100 for a in self.aliases):raise ValueError('Aliases must be 1–100 characters.')
@@ -328,6 +329,7 @@ def import_preview(c,raw,mapping):
   other=c.execute('SELECT sku FROM wh_items WHERE barcode=? AND NOT (collection=? AND sku=?)',(p['barcode'],*key)).fetchone() if p['barcode'] else None
   if other:errors.append({'row':0,'message':f"Barcode already belongs to {other['sku']}."})
   if before:
+   p['photo_url']=before.get('photo_url','')
    if 'synthetic' not in mapping:p['synthetic']=before['synthetic']
    if before['synthetic']!=p['synthetic']:errors.append({'row':0,'message':f"{p['sku']}: sample status cannot be changed by reimport."})
    if 'brand' not in mapping:p['brand']=before['brand']
