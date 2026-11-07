@@ -56,18 +56,20 @@ def wav(seconds=1):
     with wave.open(b,'wb') as w:w.setnchannels(1);w.setsampwidth(2);w.setframerate(16000);w.writeframes(b'\0\0'*16000*seconds)
     return b.getvalue()
 
-@pytest.mark.parametrize('language,provider_language,selected_voice',[('en-IN','en-IN','Kaveri'),('hi-IN','hi-IN','Nalini'),('hi-en','hi-IN','Poorvi')])
+@pytest.mark.parametrize('language,provider_language,selected_voice',[('en-IN','en-IN','Kaveri'),('hi-IN','hi-IN','Nalini'),('hi-en','indic-auto','Poorvi')])
 def test_provider_contracts_and_session_bound_reply(client,monkeypatch,language,provider_language,selected_voice):
     calls=[]
     async def fake(endpoint,**kwargs):
         calls.append((endpoint,kwargs))
-        if endpoint=='/stt/v3':return httpx.Response(200,json={'success':True,'transcript':'fan capacitor','model':'prisma-v2.5'})
+        if endpoint=='/stt/v3':return httpx.Response(200,json={'success':True,'transcript':'fan capacitor','model':'prisma-v3.0'})
         return httpx.Response(200,content=wav())
     monkeypatch.setattr(voice,'call',fake)
     r=client.post('/api/voice/transcribe?language='+language,headers=H,content=wav())
     assert r.status_code==200 and r.json()['stt_ms']>=0
     assert calls[0][1]['data']['language_code']==provider_language
-    assert 'model' not in calls[0][1]['data'] # documented v2.5 default, do not request v3
+    assert calls[0][1]['data']['model']=='prisma-v3.0'
+    assert calls[0][1]['data']['format']=='transcribe'
+    if language=='hi-en':assert calls[0][1]['data']['multi_lang_codes']=='hi-IN,en-IN'
     result=client.post('/api/search',json={'query':'SYN-008','language':language}).json()
     assert client.post('/api/voice/speak/'+result['session_id']).status_code==401
     audio=client.post('/api/voice/speak/'+result['session_id'],headers=H)
@@ -82,8 +84,55 @@ def test_bad_language_and_overlong_audio_rejected(client):
     assert client.post('/api/voice/transcribe',content=wav(31),headers=H).status_code==422
 
 def test_empty_or_wrong_model_transcript_is_not_silently_used(monkeypatch):
-    for data in [{'success':True,'transcript':' '},{'success':True,'transcript':'fan','model':'prisma-v3.0'}]:
+    for data in [{'success':True,'transcript':' '},{'success':True,'transcript':'fan','model':'prisma-v2.5'}]:
         async def fake(*args,**kwargs):return httpx.Response(200,json=data)
         monkeypatch.setattr(voice,'call',fake)
         with pytest.raises(Exception) as error:asyncio.run(voice.transcribe(wav(),'hi-IN'))
         assert error.value.status_code==502
+
+def test_prisma_v3_auto_detect_and_codestyle_contract(client,monkeypatch):
+ calls=[]
+ async def fake(endpoint,**kwargs):
+  calls.append(kwargs)
+  return httpx.Response(200,json={'success':True,'transcript':'basmati rice 5 kg',
+     'model':'prisma-v3.0','detected_language_code':'hi-IN'})
+ monkeypatch.setattr(voice,'call',fake)
+ response=client.post('/api/voice/transcribe?language=auto&style=codemix&enhanced=true&collection=grocery',
+                      headers=H,content=wav())
+ assert response.status_code==200,response.text
+ j=response.json()
+ assert j['transcript']=='basmati rice 5 kg'
+ assert j['model']=='prisma-v3.0' and j['detected_language_code']=='hi-IN'
+ assert j['search_language']=='hi-IN'
+ form=calls[0]['data']
+ assert form['model']=='prisma-v3.0'
+ assert form['language_code']=='indic-auto'
+ assert form['format']=='codemix' and form['multi_lang_codes']=='hi-IN,en-IN'
+ assert 'topic' in form
+
+def test_prisma_v3_hints_are_bounded_and_styles_validated():
+ from app.services.voice import _stt_options
+ options,model=_stt_options('hi-en','transcribe',True,
+               ['Brown loafers','ब्राउन लोफर्स','Brown loafers']+['Product '+str(i) for i in range(200)])
+ assert model=='prisma-v3.0'
+ assert options['language_code']=='indic-auto'
+ assert len(__import__('json').loads(options['keywords']))==80
+ assert 'Brown loafers' in options['keywords']
+ with pytest.raises(Exception) as e:_stt_options('auto','invalid style')
+ assert e.value.status_code==422
+
+def test_prisma_v25_explicit_rollback_blocks_v3_only_features(monkeypatch):
+ monkeypatch.setenv('GNANI_STT_MODEL','prisma-v2.5')
+ form,model=voice._stt_options('hi-IN','transcribe')
+ assert model=='prisma-v2.5' and 'model' not in form
+ assert form['language_code']=='hi-IN'
+ with pytest.raises(Exception) as e:voice._stt_options('auto')
+ assert e.value.status_code==422
+
+def test_v3_truncated_audio_is_rejected(monkeypatch):
+ async def fake(endpoint,**kwargs):
+  return httpx.Response(200,json={'success':True,'transcript':'item',
+                                  'model':'prisma-v3.0','truncated':True})
+ monkeypatch.setattr(voice,'call',fake)
+ with pytest.raises(Exception) as e:asyncio.run(voice.transcribe(wav(),'hi-IN'))
+ assert e.value.status_code==502
