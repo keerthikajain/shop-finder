@@ -544,7 +544,7 @@ def test_all_40_grocery_products_can_be_found_in_both_language_modes():
  import re
  products=[]
  for index,(name,hindi,hinglish,alias) in enumerate(GROCERY_VOICE_CORPUS,1):
-  qty=re.search(r'(\d+(?:\.\d+)?)\s*(?:kg|g|ml|l|pack|count)',name,re.I)
+  qty=re.search(r'(\d+(?:\.\d+)?)[\s-]*(?:kg|g|ml|l|pack|count)',name,re.I)
   size=(qty.group(0) if qty else '')
   products.append({'collection':'grocery','sku':f'GRC-{index:03d}',
     'name':name,'category':'Grocery products','brand':'Warehouse test',
