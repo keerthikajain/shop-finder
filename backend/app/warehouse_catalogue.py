@@ -4,6 +4,7 @@ COLLECTIONS = [
  {'id':'footwear','name':'Footwear stockroom','hi':'जूते का स्टॉकरूम','subtitle':'Find the right pair.','icon':'shoe','fields':['size_uk','colour','material'],'example':'White trainers size 7 and black sandals size 6','hint':'सफेद जूते 7 और काली सैंडल 6'},
  {'id':'appliances','name':'Appliance warehouse','hi':'घरेलू उपकरण गोदाम','subtitle':'From the shelf to the shop floor.','icon':'appliance','fields':['power_w','capacity_l','colour'],'example':'Mixer 750 W and kettle 1.5 L','hint':'मिक्सर 750 वाट और केतली 1.5 लीटर'},
  {'id':'home','name':'Home essentials','hi':'घर की ज़रूरी चीज़ें','subtitle':'Small things. Easy to find.','icon':'box','fields':['capacity_l','material','colour','size'],'example':'Storage box 20 L and cotton towel','hint':'स्टोरेज बॉक्स 20 लीटर और सूती तौलिया'},
+ {'id':'grocery','name':'Grocery Warehouse','hi':'किराना गोदाम','subtitle':'Know the aisle, rack and shelf for every pack.','icon':'grocery','fields':['size','material','capacity_l','colour'],'example':'Basmati rice 5 kg and toor dal 1 kg','hint':'बासमती चावल पाँच किलो और तूर दाल एक किलो'},
 ]
 COLLECTION_MAP={c['id']:c for c in COLLECTIONS}
 LOCATION_FIELDS=['facility','floor','zone','aisle','rack','shelf','bin']
