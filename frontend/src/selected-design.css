@@ -1315,3 +1315,83 @@ body,.wh-app{
  .sf-compact-app.sf-find-page .wh-results .wh-section-title h2{font-size:16px}
  .sf-compact-app .wh-sidebar nav button:not(.sf-mobile-speak){font-size:9px}
 }
+
+
+/* Shared secondary-page navigation. Matches More without a second Back button. */
+.sf-compact-app .sf-page-back{
+ display:inline-flex;align-items:center;gap:8px;
+ margin:4px 0 15px;padding:8px 0;
+ min-height:40px;max-width:100%;
+ font-size:12px;line-height:1.3;white-space:normal;
+}
+.sf-compact-app .wh-main-wrap main{min-width:0}
+.sf-compact-app .wh-catalogue .wh-table-wrap{max-width:100%}
+
+/* Catalogue uses the same data and actions on both viewports;
+   the native table becomes readable cards rather than a clipped wide table. */
+@media(max-width:700px){
+ .sf-compact-app .sf-page-back{margin:0 0 13px;min-height:44px}
+ .sf-compact-app .wh-main-wrap main{width:100%;min-width:0;max-width:100%;overflow-x:clip}
+ .sf-compact-app .wh-catalogue{width:100%;min-width:0;max-width:100%;padding:12px;border-radius:13px}
+ .sf-compact-app .wh-catalogue .wh-toolbar{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+ .sf-compact-app .wh-catalogue .wh-toolbar>.wh-filter{flex:1 1 100%;width:100%;min-width:0;max-width:100%}
+ .sf-compact-app .wh-catalogue .wh-toolbar>.wh-filter input{width:100%;min-width:0}
+ .sf-compact-app .wh-catalogue .wh-toolbar select{flex:1 1 110px;min-width:0;max-width:100%}
+ .sf-compact-app .wh-catalogue .wh-toolbar .wh-button,
+ .sf-compact-app .wh-catalogue .wh-toolbar>button{flex:1 1 112px;min-width:0;max-width:100%;white-space:normal}
+ .sf-compact-app .wh-catalogue .wh-table-wrap{
+   width:100%;max-width:100%;min-width:0;
+   margin:12px 0 0;overflow:visible
+ }
+ .sf-compact-app .wh-catalogue .wh-table-wrap table,
+ .sf-compact-app .wh-catalogue .wh-table-wrap tbody{
+   display:block;width:100%;min-width:0;max-width:100%;
+   border-collapse:separate
+ }
+ .sf-compact-app .wh-catalogue .wh-table-wrap thead{display:none}
+ .sf-compact-app .wh-catalogue .wh-table-wrap tbody{
+   display:grid;grid-template-columns:minmax(0,1fr);
+   gap:10px
+ }
+ .sf-compact-app .wh-catalogue .wh-table-wrap tr{
+   display:grid;grid-template-columns:minmax(0,1fr) auto;
+   width:100%;min-width:0;max-width:100%;
+   gap:9px 10px;align-items:start;
+   border:1px solid var(--wh-border);border-radius:12px;
+   background:var(--wh-surface);padding:12px;
+   overflow:hidden
+ }
+ .sf-compact-app .wh-catalogue .wh-table-wrap td{
+   box-sizing:border-box;display:block;
+   min-width:0!important;max-width:100%;width:auto;
+   border:0;padding:0;overflow-wrap:anywhere;
+   white-space:normal
+ }
+ .sf-compact-app .wh-catalogue .wh-table-wrap td:nth-child(1){grid-column:1;grid-row:1}
+ .sf-compact-app .wh-catalogue .wh-table-wrap td:nth-child(2){grid-column:1/-1;grid-row:2}
+ .sf-compact-app .wh-catalogue .wh-table-wrap td:nth-child(3){grid-column:1/-1;grid-row:3;font-size:11px;line-height:1.5;color:var(--wh-green)}
+ .sf-compact-app .wh-catalogue .wh-table-wrap td:nth-child(4){grid-column:1/-1;grid-row:4;font-size:10px;color:var(--wh-muted)}
+ .sf-compact-app .wh-catalogue .wh-table-wrap td:nth-child(5){grid-column:2;grid-row:1;align-self:start}
+ .sf-compact-app .wh-catalogue .wh-table-wrap td:nth-child(5)>button{width:36px;min-width:36px;height:36px;min-height:36px;padding:8px}
+ .sf-compact-app .wh-catalogue .wh-table-item{display:flex;align-items:center;gap:10px;min-width:0!important;max-width:100%;width:100%}
+ .sf-compact-app .wh-catalogue .wh-table-item .wh-art{flex:0 0 60px;width:60px;height:62px;min-width:60px;border-radius:9px}
+ .sf-compact-app .wh-catalogue .wh-table-item .wh-art svg{width:44px;height:44px}
+ .sf-compact-app .wh-catalogue .wh-table-item>div:last-child{flex:1;min-width:0}
+ .sf-compact-app .wh-catalogue .wh-table-item b{display:block;font-size:14px;line-height:1.25;overflow-wrap:anywhere}
+ .sf-compact-app .wh-catalogue .wh-table-item small{font-size:10px;max-width:100%;overflow-wrap:anywhere}
+ .sf-compact-app .wh-catalogue .wh-table-wrap .wh-specs{display:flex;flex-wrap:wrap;min-width:0;max-width:100%;gap:5px}
+ .sf-compact-app .wh-catalogue .wh-table-wrap .wh-specs>span{flex:0 1 auto;min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.35;font-size:10px}
+ .sf-compact-app .wh-catalogue .wh-table-wrap td:nth-child(3)>b{display:block;max-width:100%;overflow-wrap:anywhere}
+ .sf-compact-app .wh-catalogue .wh-table-wrap td:nth-child(3)>small{display:block}
+ .sf-compact-app .wh-catalogue .wh-table-footer{display:flex;flex-direction:column;align-items:flex-start;gap:6px;font-size:11px}
+ .sf-compact-app .wh-sidebar{left:0;right:0;width:100%;max-width:100%;min-width:0;overflow:visible}
+ .sf-compact-app .wh-sidebar nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:100%;max-width:100%;min-width:0;overflow:visible}
+ .sf-compact-app .wh-sidebar nav>button{min-width:0;max-width:100%;width:100%;white-space:nowrap}
+ .sf-compact-app .wh-main-wrap{padding-bottom:calc(105px + env(safe-area-inset-bottom))}
+}
+@media(max-width:340px){
+ .sf-compact-app .wh-catalogue{padding:9px}
+ .sf-compact-app .wh-catalogue .wh-table-wrap tr{padding:9px;column-gap:6px}
+ .sf-compact-app .wh-catalogue .wh-table-item .wh-art{flex-basis:49px;width:49px;min-width:49px;height:54px}
+ .sf-compact-app .wh-catalogue .wh-table-item b{font-size:13px}
+}
