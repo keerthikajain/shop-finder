@@ -549,7 +549,7 @@ def test_all_40_grocery_products_can_be_found_in_both_language_modes():
   products.append({'collection':'grocery','sku':f'GRC-{index:03d}',
     'name':name,'category':'Grocery products','brand':'Warehouse test',
     'aliases':[alias],'barcode':f'TEST-GRC-{index:03d}',
-    'specs':{'size':size} if size else {},
+    'specs':({'size':size,'capacity_l':'1'} if re.search(r'\b1\s*L\b',name) else {'size':size}) if size else {},
     'placements':[{'facility':'Warehouse','rack':'A','shelf':'02','bin':str(index).zfill(2)}]})
  for index,(name,hindi,hinglish,_) in enumerate(GROCERY_VOICE_CORPUS,1):
   sku=f'GRC-{index:03d}'
