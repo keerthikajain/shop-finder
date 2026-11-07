@@ -110,3 +110,12 @@ test('More includes Settings with language, appearance and account controls',asy
  assert.match(source,/t\('Appearance'\)/);
  assert.doesNotMatch(source,/page==='account'&&<AccountSettings/);
 });
+
+test('one-tap mobile Speak starts a Gnani recording from any section',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/id==='locations'&&\(voice\?<VoiceButton nav enabled=\{!busy\}/);
+ assert.match(src,/if\(page!=='find'\)navigate\('find'\)/);
+ assert.match(src,/Q\(text\);VQ\(true\);taskVoice.current=true/);
+ assert.match(src,/Voice unavailable\. Open text search/);
+ assert.doesNotMatch(src,/if\(page!=='find'\)\{navigate\('find'\);return\}/);
+});
