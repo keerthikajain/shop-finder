@@ -24,3 +24,27 @@ jobs:
       - run: python -m pytest backend/tests -q
       - run: npm test --prefix frontend
       - run: npm run build --prefix frontend
+
+  container-smoke:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production Docker image
+        run: docker build --tag shop-finder:ci .
+      - name: Verify clean production startup
+        run: |
+          docker run --rm -d --name shop-finder-ci -e SHOP_FINDER_SEED_DEMO=false -e GNANI_ENABLED=false -p 127.0.0.1:18080:8080 shop-finder:ci
+          trap 'docker logs shop-finder-ci; docker stop shop-finder-ci' EXIT
+          for i in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:18080/api/health > /tmp/shopfinder-health.json; then break; fi
+            sleep 2
+          done
+          python - <<'PY'
+          import json
+          with open('/tmp/shopfinder-health.json',encoding='utf-8') as file:
+              result=json.load(file)
+          assert result['status']=='ok',result
+          assert result['voice_status']=='disabled',result
+          print('Production container started and health endpoint is responsive')
+          PY
