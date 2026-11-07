@@ -228,3 +228,17 @@ def test_location_feedback_does_not_allow_stale_or_ambiguous_items(setup):
  p['name']='Revised item name'
  assert save(c,p,p['revision']).status_code==200
  assert post(c,f"/tasks/{t['id']}/location-check",{'line':0}).status_code==409
+
+def test_clean_new_install_does_not_seed_synthetic_inventory_by_default(tmp_path, monkeypatch):
+ monkeypatch.delenv('SHOP_FINDER_SEED_DEMO',raising=False)
+ path=tmp_path/'production-fresh.sqlite3'
+ with TestClient(create_app(path,auth_required=False)) as app_client:
+  response=app_client.get('/api/warehouse/items')
+  assert response.status_code==200
+  assert response.json()==[]
+  assert app_client.get('/api/warehouse/meta').json()['collections'][0]['count']==0
+ # Test data is opt-in only, while a previously saved database is never cleared.
+ with TestClient(create_app(path,seed_demo=True,auth_required=False)) as test_client:
+  assert len(test_client.get('/api/warehouse/items').json())==32
+ with TestClient(create_app(path,auth_required=False)) as restarted:
+  assert len(restarted.get('/api/warehouse/items').json())==32
