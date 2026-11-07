@@ -163,3 +163,14 @@ test('empty fresh catalogue offers a real owner import route',async()=>{
  assert.match(src,/t\('Your catalogue starts here\.'\)/);
  assert.match(src,/onClick=\{\(\)=>navigate\('import'\)\}/);
 });
+
+
+test('Grocery Warehouse appears in the business setup and has its own imagery',async()=>{
+ const catalogue=await readFile(new URL('../src/warehouse-ui.jsx',import.meta.url),'utf8');
+ const business=await readFile(new URL('../src/store-workflow.jsx',import.meta.url),'utf8');
+ const css=await readFile(new URL('../src/store-workflow.css',import.meta.url),'utf8');
+ assert.match(catalogue,/collection==='grocery'/);
+ assert.match(catalogue,/grocery:<><path/);
+ assert.match(business,/collections.map\(c=><label key=\{c.id\}/);
+ assert.match(css,/grid-template-columns:repeat\(auto-fit,minmax\(155px,1fr\)\)/);
+});

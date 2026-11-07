@@ -49,7 +49,7 @@ def create_app(db_path=None, seed_demo=None, *, auth_required=True):
     def health():
         products = list_products(path)
         return {'status':'ok','database':'sqlite','product_count':len(products),
-                'scope':'home_appliance_spare_parts','voice_status':'configured-unvalidated' if voice.ready() else 'disabled'}
+                'scope':'single_organisation_warehouse_locator','voice_status':'configured-unvalidated' if voice.ready() else 'disabled'}
 
     @app.get('/api/products', response_model=list[Product])
     def products(category: Category | None = None):
