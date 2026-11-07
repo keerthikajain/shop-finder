@@ -115,7 +115,7 @@ test('one-tap mobile Speak starts a Gnani recording from any section',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/id==='locations'&&\(voice\?<VoiceButton nav enabled=\{!busy\}/);
  assert.match(src,/if\(page!=='find'\)navigate\('find'\)/);
- assert.match(src,/Q\(text\);VQ\(true\);taskVoice.current=true/);
+ assert.match(src,/Q\(text\);DSL\(detected\);VQ\(true\);taskVoice.current=true/);
  assert.match(src,/Voice unavailable\. Open text search/);
  assert.doesNotMatch(src,/if\(page!=='find'\)\{navigate\('find'\);return\}/);
 });
@@ -181,4 +181,15 @@ test('item editor and spreadsheet importer expose the multilingual alias workflo
  assert.match(source,/Add the names workers actually say/);
  assert.match(source,/aliases:aliases\.split\(','\)/);
  assert.match(source,/separate with \|/);
+});
+
+test('Prisma V3 speech choices include server-controlled auto language and transcript styles',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/value="auto">Auto-detect/);
+ assert.match(src,/value="codemix"/);
+ assert.match(src,/value="transliterate"/);
+ assert.match(src,/sf-enhanced-detection/);
+ assert.match(src,/URLSearchParams\(\{language,style,enhanced:String\(enhanced\),collection\}\)/);
+ assert.match(src,/onText\(r\.transcript,r\.search_language,r\)/);
+ assert.match(src,/language:language==='auto'\?\(detectedSearchLanguage\|\|'hi-en'\):language/);
 });
