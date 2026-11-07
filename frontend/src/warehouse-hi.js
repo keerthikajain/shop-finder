@@ -32,5 +32,7 @@ export const warehouseHindi={
 'Recorded shelf code':'दर्ज शेल्फ कोड',
 'Verify and update location':'जाँचकर जगह बदलें',
 'Verified location saved and shown in future searches.':'पुष्टि की गई जगह सहेज ली गई है। आगे की खोज में दिखेगी।',
-'Back to previous page':'पिछले पेज पर जाएँ'
+'Back to previous page':'पिछले पेज पर जाएँ',
+'No recorded match. Try another name or SKU. No report is created unless you send one.':'कोई दर्ज सामान नहीं मिला। दूसरा नाम या कोड आज़माएँ। जब तक आप रिपोर्ट न भेजें, कोई रिपोर्ट नहीं बनेगी।',
+'Report missing item':'नहीं मिले सामान की रिपोर्ट करें'
 };
