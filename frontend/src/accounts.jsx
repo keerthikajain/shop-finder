@@ -1,6 +1,5 @@
 import React,{useState,useEffect} from 'react';
 import {Mark,Glyph} from './warehouse-ui.jsx';
-import {getThemePreference,resolveTheme} from './theme.js';
 import {Locale,useT} from './locale.js';
 export async function request(path,options={}){
  const r=await fetch('/api'+path,{signal:AbortSignal.timeout(45000),...options,headers:{'Content-Type':'application/json','X-Shop-Request':'1',...options.headers}});
@@ -17,19 +16,11 @@ export function AccountGate({children}){
 export function Login({ready,configured,language,L,error,busy,onSubmit}){
  const t=useT();
  const [showPassword,setShowPassword]=useState(false);
- const [theme,setTheme]=useState(()=>{try{return getThemePreference(globalThis.localStorage)}catch{return 'light'}});
- useEffect(()=>{
-  const media=matchMedia('(prefers-color-scheme: dark)');
-  const apply=()=>document.documentElement.dataset.theme=resolveTheme(theme,media.matches);
-  apply();
-  try{localStorage.setItem('shop-finder-theme',theme)}catch{}
-  media.addEventListener('change',apply);
-  return()=>media.removeEventListener('change',apply);
- },[theme]);
+ // Keep sign-in neutral and consistent; theme preference applies inside the signed-in workspace.
+ useEffect(()=>{document.documentElement.dataset.theme='light'},[]);
  return <main className="login-shell">
   <header className="sf-login-header">
    <div className="wh-brand"><Mark/><span>shopfinder</span></div>
-   <button type="button" className="sf-login-theme" aria-label={t(theme==='dark'?'Light mode':'Dark mode')} onClick={()=>setTheme(theme==='dark'?'light':'dark')}><Glyph name={theme==='dark'?'sun':'moon'}/></button>
   </header>
   <div className="sf-login-layout">
    <section className="sf-login-art" aria-label={t('Your workspace, within reach.')}>
