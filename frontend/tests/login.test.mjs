@@ -32,3 +32,17 @@ test('Hindi login translates new labels while retaining credential field names',
  assert.match(html,/name="username"/);assert.match(html,/पासवर्ड दिखाएँ/);
  assert.doesNotMatch(html,/Use your team account/);
 });
+
+test('sign-in is deliberately theme-neutral without a theme toggle',()=>{
+ const html=render();
+ assert.doesNotMatch(html,/sf-login-theme|aria-label="(?:Light mode|Dark mode)"/);
+ assert.match(html,/class="sf-login-header"/);
+ assert.match(html,/class="sf-login-layout"/);
+});
+test('sign-in keeps language and accessible password visibility controls',()=>{
+ const html=render();
+ assert.match(html,/class="sf-login-language"/);
+ assert.match(html,/value="hi"/);
+ assert.match(html,/aria-controls="login-password"/);
+ assert.match(html,/aria-pressed="false"/);
+});
