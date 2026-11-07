@@ -43,7 +43,7 @@ def test_multi_item_ambiguity_no_guess_and_clarification(setup):
  r=post(c,f"/tasks/{t['id']}/clarify",{'line':0,'reply':'size M'})
  assert r.status_code==200,r.text
  assert r.json()['lines'][0]['selected']['sku']=='CLO-001'
- assert c.get('/api/warehouse/issues?collection=clothing').json()[0]['reason']=='No match: purple toaster'
+ assert c.get('/api/warehouse/issues?collection=clothing').json()==[] # no automatic reports from searches
 
 def test_hard_constraints_and_unknown_words_not_ignored(setup):
  c,_=setup
@@ -172,3 +172,59 @@ def test_warehouse_photo_persists_and_rejects_external_urls(setup):
  login(c,'staff')
  assert c.post('/api/media',headers=H,content=b'bad').status_code==403
  assert c.get(media).status_code==200
+
+def test_location_check_is_explicit_repeatable_and_not_a_report(setup):
+ c,path=setup
+ t=search(c,'CLO-001')
+ assert t['lines'][0]['location_feedback'] is None
+ assert t['lines'][0]['last_confirmed_at'] is None
+ assert c.get('/api/warehouse/issues').json()==[]
+ result=post(c,f"/tasks/{t['id']}/location-check",{'line':0})
+ assert result.status_code==200,result.text
+ line=result.json()['lines'][0]
+ assert line['location_feedback']['status']=='correct'
+ assert line['last_confirmed_at']
+ assert post(c,f"/tasks/{t['id']}/location-check",{'line':0}).json()['lines'][0]['location_feedback']==line['location_feedback']
+ assert c.get('/api/warehouse/issues').json()==[]
+ with connect(path) as db:
+  assert db.execute('SELECT count(*) FROM wh_location_checks').fetchone()[0]==1
+ t2=search(c,'CLO-001')
+ assert t2['lines'][0]['last_confirmed_at']==line['last_confirmed_at']
+ assert t2['lines'][0]['complete'] is False
+
+def test_wrong_location_report_only_on_submit_and_owner_move_resolves(setup):
+ c,_=setup
+ t=search(c,'CLO-001')
+ line=t['lines'][0]
+ src=line['location']
+ assert c.get('/api/warehouse/issues').json()==[]
+ payload={'kind':'wrong_location','collection':'clothing','sku':line['selected']['sku'],'location_code':src['code'],'reason':'Item not on the recorded shelf','suggested_location':'Rack Z'}
+ issue=post(c,'/issues',payload)
+ assert issue.status_code==200,issue.text
+ assert issue.json()['status']=='open'
+ assert post(c,'/issues',payload).json()['already_reported'] is True
+ assert len(c.get('/api/warehouse/issues').json())==1
+ assert search(c,'CLO-001')['lines'][0]['location_report_open'] is True
+ p=line['selected'];destination={k:v for k,v in src.items() if k!='code'}
+ destination['rack']='Z'
+ preview=post(c,'/moves/preview',{'collection':'clothing','sku':p['sku'],'revision':p['revision'],'source':src['code'],'destination':destination,'reason':'Physically verified new shelf'})
+ assert preview.status_code==200,preview.text
+ moved=post(c,'/moves/'+preview.json()['token']+'/confirm')
+ assert moved.status_code==200,moved.text
+ issues=c.get('/api/warehouse/issues').json()
+ assert len(issues)==1 and issues[0]['status']=='resolved'
+ assert 'Verified new location' in issues[0]['note']
+ new=search(c,'CLO-001')['lines'][0]
+ assert new['location']['rack']=='Z'
+ assert new['last_confirmed_at'] is None
+ assert new['location_report_open'] is False
+
+def test_location_feedback_does_not_allow_stale_or_ambiguous_items(setup):
+ c,_=setup
+ ambiguous=search(c,'blue T-shirt')
+ assert post(c,f"/tasks/{ambiguous['id']}/location-check",{'line':0}).status_code==409
+ t=search(c,'CLO-001')
+ p=t['lines'][0]['selected']
+ p['name']='Revised item name'
+ assert save(c,p,p['revision']).status_code==200
+ assert post(c,f"/tasks/{t['id']}/location-check",{'line':0}).status_code==409
