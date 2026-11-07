@@ -13,13 +13,13 @@ This document separates **automated verification** from checks that require a ho
 
 ## Import test
 
-The supplied test pack is `shop_finder_appliance_import_test.xlsx` (or matching CSV). The pack has 24 **synthetic** home-appliance spare-parts records, with unique SKUs/barcodes, aliases and recorded warehouse locations. Product compatibility is **not** verified.
+The supplied test pack is `shop_finder_grocery_warehouse_native_import.xlsx` (or matching CSV). The pack contains 40 **synthetic grocery/household warehouse records**, with unique SKUs, fictitious internal barcodes, Hindi/English aliases, and assigned aisles/racks/shelves/bins. Food items and cleaning supplies are stored in different recorded zones. No live inventory or food-safety claims are made.
 
-1. Log in as the owner and complete Business setup. Enable **Appliance warehouse** as a product type.
-2. Go to **Import items** and choose the file. Choose **Appliance warehouse** or **All product types**.
-3. Confirm mapping for SKU, collection (for All), name, brand, category, barcode, aliases, synthetic, facility, floor, zone, aisle, rack, shelf, bin, quantity, power_w, capacity_l and colour.
-4. Preview. On an empty catalogue expect **24 create / 0 update** with **no errors**. Confirm to save.
-5. Reload and verify the 24 records and zero-padded location bins. Search for `APP-P001`, `inlet valve`, `refrigerator thermostat`, `mixer grinder coupler` and `fan capacitor`; use unambiguous SKUs for exact locations.
+1. Log in as the owner and complete Business setup. Enable **Grocery Warehouse** as a product type.
+2. Go to **Import items** and choose the file. Choose **Grocery Warehouse** or **All product types**.
+3. Confirm mapping for SKU, collection (for All), name, brand, category, barcode, aliases, synthetic, facility, floor, zone, aisle, rack, shelf, bin, quantity, size, material and capacity_l.
+4. Preview. On an empty catalogue expect **40 create / 0 update** with **no errors**. Confirm to save.
+5. Reload and verify the 40 records and zero-padded location bins. Search for `GRC-002`, `basmati rice 5 kg`, `toor dal 1 kg`, `chai patti` and `dishwashing liquid`; use unambiguous SKUs for exact locations.
 6. Repeat with voice after enabling Gnani; transcription must be reviewed before the search.
 7. Check the optional **Yes, here** and **Wrong location** result actions. Silence must create no report. Wrong creates an explicit report. Owner verifies a new shelf via the guarded Move editor; only then do future results change.
 8. Test an invalid duplicate barcode, a malformed row, an old revision and missing mandatory values in a **separate copy**. The app must reject those changes before committing.
