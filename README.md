@@ -73,3 +73,12 @@ The app needs its own Python backend; uploading only `frontend/dist` to a static
 ## Current validation
 
 Run the current automated suite before each release. Refer to [release checks](docs/release_checklist.md) for manual deployment, import, voice and browser validation. Passing tests does not establish live Gnani accuracy or production readiness.
+
+
+## Grocery Warehouse category
+
+Business setup now offers **Grocery Warehouse** alongside Clothing outlet, Footwear stockroom, Appliance warehouse and Home essentials. It is stored as `collection=grocery`, with separate catalogue filtering, search, owner-managed stock operations and import/export. Supported fields include pack size (`size`), packaging (`material`), volume (`capacity_l`) and colour.
+
+For synthetic grocery testing, use `shop_finder_grocery_warehouse_native_import.xlsx` or the matching CSV supplied with the project handoff. All 40 records must have `collection=grocery`. In the app, sign in as the owner, open **Business setup**, select **Grocery Warehouse**, save, and import the spreadsheet under Grocery Warehouse (or All product types with the collection column mapped). Preview before confirming.
+
+**Existing Home essentials data is not automatically migrated.** If a previous grocery test workbook was imported as `home`, those saved records still belong to Home essentials. Review existing records before importing the new grocery workbook to avoid duplicate-looking results in whole-store searches; use the Grocery Warehouse filter for isolated verification. Do not discard real Home essentials records.
