@@ -33,3 +33,11 @@ test('mobile More keeps role-restricted tasks and direct access to primary secti
  assert.match(source,/onClick=\{\(\)=>navigate\('account'\)\}/);
  assert.match(source,/className="sf-mobile-more"/);
 });
+
+test('More offers scan as a task without unrelated filters or setup banners',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.ok(src.includes("['find','catalogue','locations'].includes(page)&&<button type=\"button\" className=\"sf-header-scan\""));
+ assert.ok(src.includes("onClick={()=>D({type:'lookup'})}><span className=\"sf-more-icon\"><Glyph name=\"scan\"/>"));
+ assert.ok(src.includes("meta&&!['find','account','business','more'].includes(page)"));
+ assert.ok(src.includes("!meta.settings.configured&&!['business','more'].includes(page)"));
+});
