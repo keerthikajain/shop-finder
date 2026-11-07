@@ -1,0 +1,4 @@
+sku,collection,name,brand,category,barcode,aliases,synthetic,facility,floor,zone,aisle,rack,shelf,bin,quantity,power_w,capacity_l,colour
+EX-APP-001,appliances,Mixer grinder,Hearth,Kitchen,EXAMPLE-APP-001,mixer|मिक्सर|मिक्सी,true,Demo Hub,,Appliances,1,A,1,01,12,750,1.5,white
+EX-APP-002,appliances,Mixer grinder,Hearth,Kitchen,EXAMPLE-APP-002,mixer|मिक्सर|मिक्सी,true,Demo Hub,,Appliances,1,A,2,02,16,500,1,white
+EX-APP-003,appliances,Electric kettle,Hearth,Kitchen,EXAMPLE-APP-003,kettle|केतली,true,Demo Hub,,Appliances,1,B,1,03,20,1500,1.5,silver

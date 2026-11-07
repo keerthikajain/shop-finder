@@ -36,6 +36,6 @@ A hosting account/provider, access to deploy the project, and your API key enter
 
 ## Scale boundary
 
-One installation currently represents one organisation; its authorised owner and staff share its catalogue. This is not a multi-tenant SaaS. Business workspaces are catalogue types, not separate customer security boundaries. Do not onboard unrelated companies into one installation.
+One installation currently represents one organisation; its authorised owner and staff share its catalogue. This is not a multi-tenant SaaS. Product types are catalogue filters, not separate customer security boundaries. Business setup is shared by all accounts in this installation. Do not onboard unrelated companies into one installation.
 
-For larger rollout, add organisation-scoped database access, migrations, PostgreSQL, background imports, pagination/search indexes, backup monitoring, structured logging and measured load tests. This version does not provide ERP synchronisation, live stock decrement, warehouse floor-plan routing, SSO, offline voice or arbitrary language support. It records locations and confirmations, not a stock ledger.
+For larger rollout, add organisation-scoped database access, migrations, PostgreSQL, background imports, pagination/search indexes, backup monitoring, structured logging and measured load tests. This version does not provide ERP synchronisation, automatic stock sensing, warehouse floor-plan routing, SSO, offline voice or arbitrary language support. It records locations, confirmations and explicit stock changes with before/after audit history. Counts update only from confirmed operations or reviewed imports; they are not automatically synchronised with sales or physical movement.

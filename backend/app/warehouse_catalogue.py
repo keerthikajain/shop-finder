@@ -6,7 +6,7 @@ COLLECTIONS = [
  {'id':'home','name':'Home essentials','hi':'घर की ज़रूरी चीज़ें','subtitle':'Small things. Easy to find.','icon':'box','fields':['capacity_l','material','colour','size'],'example':'Storage box 20 L and cotton towel','hint':'स्टोरेज बॉक्स 20 लीटर और सूती तौलिया'},
 ]
 COLLECTION_MAP={c['id']:c for c in COLLECTIONS}
-LOCATION_FIELDS=['facility','zone','aisle','rack','shelf','bin']
+LOCATION_FIELDS=['facility','floor','zone','aisle','rack','shelf','bin']
 FIELD_LABELS={'size':'Size','size_uk':'Size (UK)','colour':'Colour','material':'Material','power_w':'Power (W)','capacity_l':'Capacity (L)'}
 
 def demo_items():
@@ -51,4 +51,4 @@ def demo_items():
   prefix={'clothing':'CLO','footwear':'SHO','appliances':'APP','home':'HOM'}[group]
   for i,(name,aliases,category,specs) in enumerate(rows,1):
    p={'facility':'Demo Hub','zone':{'clothing':'Apparel','footwear':'Footwear','appliances':'Appliances','home':'Home'}[group],'aisle':str(1+(i-1)//4),'rack':chr(65+(i-1)//2),'shelf':str(1+(i-1)%2),'bin':f'{i:02}'}
-   yield {'sku':f'{prefix}-{i:03}','collection':group,'name':name,'aliases':aliases,'category':category,'specs':specs,'barcode':f'DEMO-{prefix}-{i:03}','placements':[p],'synthetic':True}
+   yield {'sku':f'{prefix}-{i:03}','collection':group,'name':name,'aliases':aliases,'category':category,'brand':{'clothing':'Everyday','footwear':'Northline','appliances':'Hearth','home':'Nest'}[group],'specs':specs,'barcode':f'DEMO-{prefix}-{i:03}','placements':[p],'synthetic':True}

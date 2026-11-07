@@ -1,5 +1,6 @@
 import React,{useState,useEffect} from 'react';
-import {Mark} from './warehouse-ui.jsx';
+import {Mark,Glyph} from './warehouse-ui.jsx';
+import {getThemePreference,resolveTheme} from './theme.js';
 import {Locale,useT} from './locale.js';
 export async function request(path,options={}){
  const r=await fetch('/api'+path,{signal:AbortSignal.timeout(45000),...options,headers:{'Content-Type':'application/json','X-Shop-Request':'1',...options.headers}});
@@ -13,14 +14,51 @@ export function AccountGate({children}){
  async function logout(){await request('/auth/logout',{method:'POST'});setUser(null)}
  return <Locale.Provider value={user?.language||language}>{user?children({user,preferences,logout}):<Login {...{ready,configured,language,L,error,busy}} onSubmit={async e=>{e.preventDefault();const data=new FormData(e.currentTarget);B(true);E('');try{const next=await request('/auth/login',{method:'POST',body:JSON.stringify({username:data.get('username'),password:data.get('password')})});setUser(next);L(next.language)}catch(err){E(err.message)}finally{B(false)}}}/>}</Locale.Provider>;
 }
-function Login({ready,configured,language,L,error,busy,onSubmit}){
- const t=useT();return <main className="login-shell"><section className="glass login-card"><div className="wh-brand"><Mark large/><span>shopfinder<small>VOICE WORKSPACE</small></span></div><h1>{t('Welcome back')}</h1><p>{t('Log in to your warehouse workspace.')}</p><label>{t('App language')}<select value={language} onChange={e=>L(e.target.value)}><option value="en">English</option><option value="hi">हिन्दी</option></select></label>{!ready?<p>{t('Loading…')}</p>:!configured?<p role="status">{t('Run scripts/start_local.py in the terminal to create the first owner account.')}</p>:<form onSubmit={onSubmit}><label>{t('Username')}<input name="username" autoComplete="username" required maxLength={80}/></label><label>{t('Password')}<input name="password" type="password" autoComplete="current-password" required maxLength={128}/></label><button className="primary full-width" disabled={busy}>{t(busy?'Working…':'Log in')}</button></form>}{error&&<p className="error" role="alert">{t(error)}</p>}<p className="quiet">{t('Staff accounts are created by the owner.')}</p></section></main>;
+export function Login({ready,configured,language,L,error,busy,onSubmit}){
+ const t=useT();
+ const [showPassword,setShowPassword]=useState(false);
+ const [theme,setTheme]=useState(()=>{try{return getThemePreference(globalThis.localStorage)}catch{return 'light'}});
+ useEffect(()=>{
+  const media=matchMedia('(prefers-color-scheme: dark)');
+  const apply=()=>document.documentElement.dataset.theme=resolveTheme(theme,media.matches);
+  apply();
+  try{localStorage.setItem('shop-finder-theme',theme)}catch{}
+  media.addEventListener('change',apply);
+  return()=>media.removeEventListener('change',apply);
+ },[theme]);
+ return <main className="login-shell">
+  <header className="sf-login-header">
+   <div className="wh-brand"><Mark/><span>shopfinder</span></div>
+   <button type="button" className="sf-login-theme" aria-label={t(theme==='dark'?'Light mode':'Dark mode')} onClick={()=>setTheme(theme==='dark'?'light':'dark')}><Glyph name={theme==='dark'?'sun':'moon'}/></button>
+  </header>
+  <div className="sf-login-layout">
+   <section className="sf-login-art" aria-label={t('Your workspace, within reach.')}>
+    <img src="/art/workspace-login.webp" width="1254" height="1254" alt=""/>
+    <div><h2>{t('Your workspace, within reach.')}</h2><p>{t('Find items. Know their place.')}</p></div>
+   </section>
+   <section className="glass login-card">
+    <span className="sf-login-kicker">{t('Welcome back')}</span>
+    <h1>{t('Sign in to Shopfinder')}</h1>
+    <p>{t('Use your team account to continue.')}</p>
+    <label className="sf-login-language">{t('App language')}<select value={language} onChange={e=>L(e.target.value)}><option value="en">English</option><option value="hi">हिन्दी</option></select></label>
+    {!ready?<p role="status">{t('Loading…')}</p>:!configured?<p role="status">{t('Run scripts/start_local.py in the terminal to create the first owner account.')}</p>:<form onSubmit={onSubmit} aria-busy={busy}>
+     <label>{t('Username')}<input name="username" autoComplete="username" placeholder={t('Enter username')} required maxLength={80}/></label>
+     <label htmlFor="login-password">{t('Password')}</label>
+     <div className="sf-password-field"><input id="login-password" name="password" type={showPassword?'text':'password'} autoComplete="current-password" placeholder={t('Enter password')} required maxLength={128}/><button type="button" aria-controls="login-password" aria-label={t(showPassword?'Hide password':'Show password')} aria-pressed={showPassword} onClick={()=>setShowPassword(!showPassword)}>{t(showPassword?'Hide':'Show')}</button></div>
+     <button className="primary full-width sf-signin" disabled={busy}>{t(busy?'Working…':'Sign in')}<Glyph name="arrow"/></button>
+    </form>}
+    {error&&<p className="error" role="alert">{t(error)}</p>}
+    <p className="quiet">{t('Need access? Ask your workspace owner.')}</p>
+   </section>
+  </div>
+ </main>;
 }
+
 export function AccountSettings({user,preferences,logout}){
  const t=useT(),[users,U]=useState([]),[message,M]=useState(''),[busy,B]=useState(false);
  const load=async()=>U(await request('/users'));
  useEffect(()=>{if(user.role==='owner')load().catch(e=>M(e.message))},[user.role]);
  async function task(fn){B(true);M('');try{await fn()}catch(e){M(e.message)}finally{B(false)}}
- return <section className="glass editor-panel"><h2>{t('My account')}</h2><p>{user.username} · {t(user.role)}</p><label>{t('App language')}<select value={user.language} disabled={busy} onChange={e=>task(()=>preferences({language:e.target.value}))}><option value="en">English</option><option value="hi">हिन्दी</option></select></label><p>{t('App language changes menus and guidance. Voice language is chosen separately on Ask.')}</p><form onSubmit={e=>{e.preventDefault();const form=e.currentTarget,data=new FormData(form);task(async()=>{await request('/auth/password',{method:'POST',body:JSON.stringify({old_password:data.get('old'),new_password:data.get('new')})});window.dispatchEvent(new Event('session-expired'))})}}><h3>{t('Change password')}</h3><div className="formgrid"><label>{t('Current password')}<input type="password" name="old" autoComplete="current-password" required/></label><label>{t('New password (12+ characters)')}<input type="password" name="new" autoComplete="new-password" minLength={12} maxLength={128} required/></label></div><button disabled={busy}>{t('Change password and log out')}</button></form>
- {user.role==='owner'&&<><h2>{t('Staff accounts')}</h2><form onSubmit={e=>{e.preventDefault();const form=e.currentTarget,data=new FormData(form);task(async()=>{await request('/users',{method:'POST',body:JSON.stringify({username:data.get('username'),password:data.get('password'),language:data.get('language')})});form.reset();await load();M('Staff account created.')})}}><div className="formgrid"><label>{t('Username')}<input name="username" pattern="[A-Za-z0-9_.-]+" required maxLength={80}/></label><label>{t('Password (12+ characters)')}<input name="password" type="password" autoComplete="new-password" minLength={12} maxLength={128} required/></label><label>{t('App language')}<select name="language"><option value="en">English</option><option value="hi">हिन्दी</option></select></label></div><button className="primary" disabled={busy}>{t('Create staff account')}</button></form>{users.filter(u=>u.role==='staff').map(u=><article className="evidence-row" key={u.id}><b>{u.username}</b> · {t(u.active?'Active':'Disabled')}<div className="actions"><button disabled={busy} onClick={()=>task(async()=>{await request('/users/'+u.id,{method:'PATCH',body:JSON.stringify({active:!u.active})});await load()})}>{t(u.active?'Disable access':'Enable access')}</button></div><form onSubmit={e=>{e.preventDefault();const form=e.currentTarget,data=new FormData(form);task(async()=>{await request('/users/'+u.id,{method:'PATCH',body:JSON.stringify({password:data.get('password')})});form.reset();M('Password reset. Existing sessions closed.')})}}><label>{t('New password (12+ characters)')}<input name="password" type="password" autoComplete="new-password" minLength={12} maxLength={128} required/></label><button disabled={busy}>{t('Reset staff password')}</button></form></article>)}</>}{message&&<p role="status">{t(message)}</p>}<button className="secondary" disabled={busy} onClick={()=>task(logout)}>{t('Log out')}</button></section>;
+ return <section className="glass editor-panel"><h2>{t('My account')}</h2><p>{user.username} · {t(user.role)}</p><form onSubmit={e=>{e.preventDefault();const data=new FormData(e.currentTarget);task(async()=>{await request('/auth/profile',{method:'PUT',body:JSON.stringify(Object.fromEntries(data))});await preferences({});M('Profile saved.')})}}><h3>My profile</h3><p>Your phone number is optional and visible only to you and the workspace owner.</p><div className="formgrid"><label>Full name<input name="display_name" defaultValue={user.display_name||''} autoComplete="name" required maxLength={80}/></label><label>Phone number (optional)<input name="phone" type="tel" autoComplete="tel" defaultValue={user.phone||''} maxLength={24}/></label><label>Staff reference (optional)<input name="staff_code" defaultValue={user.staff_code||''} maxLength={40}/></label></div><button disabled={busy}>Save profile</button></form><label>{t('App language')}<select value={user.language} disabled={busy} onChange={e=>task(()=>preferences({language:e.target.value}))}><option value="en">English</option><option value="hi">हिन्दी</option></select></label><p>{t('App language changes menus and guidance. Voice language is chosen separately on Ask.')}</p><form onSubmit={e=>{e.preventDefault();const form=e.currentTarget,data=new FormData(form);task(async()=>{await request('/auth/password',{method:'POST',body:JSON.stringify({old_password:data.get('old'),new_password:data.get('new')})});window.dispatchEvent(new Event('session-expired'))})}}><h3>{t('Change password')}</h3><div className="formgrid"><label>{t('Current password')}<input type="password" name="old" autoComplete="current-password" required/></label><label>{t('New password (12+ characters)')}<input type="password" name="new" autoComplete="new-password" minLength={12} maxLength={128} required/></label></div><button disabled={busy}>{t('Change password and log out')}</button></form>
+ {user.role==='owner'&&<><h2>{t('Staff accounts')}</h2><form onSubmit={e=>{e.preventDefault();const form=e.currentTarget,data=new FormData(form);task(async()=>{await request('/users',{method:'POST',body:JSON.stringify({username:data.get('username'),password:data.get('password'),language:data.get('language')})});form.reset();await load();M('Staff account created.')})}}><div className="formgrid"><label>{t('Username')}<input name="username" pattern="[A-Za-z0-9_.-]+" required maxLength={80}/></label><label>{t('Password (12+ characters)')}<input name="password" type="password" autoComplete="new-password" minLength={12} maxLength={128} required/></label><label>{t('App language')}<select name="language"><option value="en">English</option><option value="hi">हिन्दी</option></select></label></div><button className="primary" disabled={busy}>{t('Create staff account')}</button></form>{users.filter(u=>u.role==='staff').map(u=><article className="evidence-row" key={u.id}><b>{u.display_name||u.username}</b> <small>{u.username} · {u.staff_code} · {u.phone}</small> · {t(u.active?'Active':'Disabled')}<div className="actions"><button disabled={busy} onClick={()=>task(async()=>{await request('/users/'+u.id,{method:'PATCH',body:JSON.stringify({active:!u.active})});await load()})}>{t(u.active?'Disable access':'Enable access')}</button></div><form onSubmit={e=>{e.preventDefault();const form=e.currentTarget,data=new FormData(form);task(async()=>{await request('/users/'+u.id,{method:'PATCH',body:JSON.stringify({password:data.get('password')})});form.reset();M('Password reset. Existing sessions closed.')})}}><label>{t('New password (12+ characters)')}<input name="password" type="password" autoComplete="new-password" minLength={12} maxLength={128} required/></label><button disabled={busy}>{t('Reset staff password')}</button></form></article>)}</>}{message&&<p role="status">{t(message)}</p>}<button className="secondary" disabled={busy} onClick={()=>task(logout)}>{t('Log out')}</button></section>;
 }

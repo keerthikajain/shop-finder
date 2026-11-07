@@ -1,0 +1,401 @@
+/* Shared visual system for the approved login and operational workspace. */
+:root{
+  --wh-bg:#faf9f6;
+  --wh-surface:#fff;
+  --wh-chrome:#fff;
+  --wh-text:#25242a;
+  --wh-muted:#69666e;
+  --wh-border:#dcdadf;
+  --wh-accent:#7035c6;
+  --wh-soft:#f0e9fa;
+  --wh-green:#31552d;
+  --wh-mint:#dfebd5;
+  --wh-input:#fff;
+  --wh-shadow:0 3px 12px #25242a05}
+
+[data-theme=dark]{
+  --wh-bg:#19181d;
+  --wh-surface:#242329;
+  --wh-chrome:#242329;
+  --wh-text:#f7f5fa;
+  --wh-muted:#c0bbc7;
+  --wh-border:#48444e;
+  --wh-accent:#c5a4ff;
+  --wh-soft:#392d4a;
+  --wh-green:#c4e4b6;
+  --wh-mint:#30402d;
+  --wh-input:#29272f}
+
+body,.wh-app{
+  background:var(--wh-bg);
+  font-family:Inter,Arial,Helvetica,sans-serif}
+.wh-app{
+  background-image:none}
+.wh-sidebar{
+  background:#242329;
+  backdrop-filter:none;
+  color:#fff;
+  border:0}
+.wh-sidebar .wh-brand,.wh-sidebar .wh-org b{
+  color:#fff}
+.wh-sidebar small,.wh-sidebar .wh-nav-label,.wh-sidebar .wh-brand-note{
+  color:#c4bfcf}
+.wh-sidebar nav button,.wh-sidebar-bottom>button{
+  color:#e6e2eb}
+.wh-sidebar nav button[aria-current=page]{
+  background:#7035c6;
+  color:white}
+.wh-sidebar nav button:hover:not(:disabled),.wh-sidebar-bottom>button:hover:not(:disabled){
+  background:#3d354b;
+  color:white}
+.wh-active-dot{
+  background:white}
+.wh-brand small{
+  letter-spacing:1.4px}
+.wh-brand>span{
+  font-weight:750}
+.wh-topbar{
+  background:var(--wh-surface);
+  backdrop-filter:none;
+  height:64px}
+.wh-breadcrumb{
+  font-size:13px}
+.wh-main-wrap main{
+  padding-top:24px}
+.wh-page-heading h1{
+  font-weight:750;
+  font-size:clamp(27px,2.7vw,38px)}
+.wh-page-heading .wh-eyebrow{
+  display:none}
+.wh-panel{
+  border-radius:10px;
+  box-shadow:var(--wh-shadow)}
+.wh-ask{
+  background:var(--wh-surface)}
+.wh-ask:before{
+  display:none}
+.wh-app .primary,.wh-modal .primary,.login-card .primary{
+  background:#7035c6;
+  border-color:#7035c6;
+  color:white;
+  box-shadow:none}
+.wh-app .primary:hover:not(:disabled),.wh-modal .primary:hover:not(:disabled),.login-card .primary:hover:not(:disabled){
+  background:#5925aa;
+  color:white}
+.wh-ask textarea{
+  min-height:64px;
+  font-size:16px;
+  padding:12px}
+.wh-panel-title{
+  margin-bottom:12px}
+.wh-ask-bottom{
+  margin-top:12px}
+.wh-example{
+  padding-top:12px;
+  margin-top:12px}
+.wh-find-top{
+  grid-template-columns:minmax(0,1fr) 250px}
+.wh-place{
+  background:var(--wh-mint);
+  border:0;
+  border-radius:8px}
+.wh-place-bins>div{
+  background:transparent;
+  border:0}
+.wh-place-bins b{
+  color:var(--wh-green)}
+.wh-task{
+  padding:18px}
+.wh-task-heading{
+  flex-wrap:wrap;
+  gap:10px}
+.wh-task-heading>.sf-product-art{
+  width:100%;
+  min-width:0;
+  flex-basis:100%;
+  height:160px;
+  border-radius:8px;
+  background:var(--wh-input)}
+.wh-task-heading>.sf-product-art svg{
+  height:140px;
+  width:140px}
+.wh-task-heading h3{
+  font-size:19px}
+.wh-task-footer,.wh-task-footer>div{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px}
+.wh-status{
+  margin-left:auto}
+.wh-task-list{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+  align-items:start}
+.wh-task-list>.wh-task:only-child{
+  grid-column:1/-1}
+.wh-route{
+  position:sticky;
+  top:16px}
+.wh-specs{
+  flex-wrap:wrap}
+.wh-work-grid{
+  grid-template-columns:minmax(0,1fr) 280px;
+  align-items:start}
+.wh-discovery-card{
+  border-radius:10px}
+.wh-discovery-card .sf-product-art{
+  width:110px;
+  height:120px}
+.wh-app button,.wh-modal button{
+  border-radius:8px}
+.wh-app .sf-product-art{
+  box-shadow:none}
+
+.login-shell{
+  display:block;
+  min-height:100dvh;
+  padding:24px 5vw;
+  background:var(--wh-bg);
+  color:var(--wh-text)}
+.sf-login-header{
+  max-width:1200px;
+  margin:auto;
+  padding-bottom:20px;
+  border-bottom:1px solid var(--wh-border)}
+.sf-login-header .wh-brand>span{
+  font-size:28px}
+.sf-login-layout{
+  max-width:1120px;
+  min-height:calc(100dvh - 130px);
+  margin:auto;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:70px;
+  align-items:center}
+.sf-login-art img{
+  display:block;
+  width:100%;
+  max-height:470px;
+  object-fit:contain;
+  border-radius:12px}
+.sf-login-art h2{
+  font-family:inherit;
+  font-size:26px;
+  letter-spacing:-.7px;
+  margin:16px 0 8px}
+.sf-login-art p{
+  color:var(--wh-muted)}
+.login-shell .login-card{
+  width:100%;
+  max-width:450px;
+  margin:0;
+  padding:20px 0;
+  background:none;
+  border:0;
+  box-shadow:none;
+  backdrop-filter:none;
+  border-radius:0}
+.login-card h1{
+  font-family:inherit;
+  font-size:32px;
+  line-height:1.2;
+  letter-spacing:-1px;
+  margin:10px 0}
+.login-card p{
+  color:var(--wh-muted);
+  font-size:14px}
+.sf-login-kicker{
+  text-transform:uppercase;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:1.4px;
+  color:var(--wh-muted)}
+.login-card label{
+  display:block;
+  color:var(--wh-text);
+  font-size:14px;
+  margin:18px 0}
+.login-card input,.login-card select{
+  width:100%;
+  margin-top:8px;
+  min-height:46px;
+  background:var(--wh-input);
+  color:var(--wh-text);
+  border:1px solid var(--wh-border);
+  border-radius:8px;
+  padding:10px 12px;
+  box-shadow:none}
+.login-card button{
+  min-height:46px;
+  border-radius:8px}
+.login-card .quiet{
+  font-size:12px;
+  margin-top:20px}
+.login-card :focus-visible{
+  outline:3px solid var(--wh-accent);
+  outline-offset:3px}
+
+@media(max-width:1150px){
+  .wh-task-list{
+  grid-template-columns:1fr}
+.wh-find-top{
+  grid-template-columns:1fr}
+.wh-session-card{
+  display:none}
+.sf-login-layout{
+  gap:35px}
+}
+
+@media(max-width:850px){
+  .wh-work-grid{
+  grid-template-columns:1fr}
+.wh-route{
+  position:static}
+.sf-login-layout{
+  gap:24px}
+.sf-login-art h2{
+  font-size:21px}
+}
+
+@media(max-width:700px){
+  .wh-sidebar{
+  background:var(--wh-surface);
+  color:var(--wh-text)}
+.wh-sidebar nav button{
+  color:var(--wh-muted)}
+.wh-sidebar nav button[aria-current=page]{
+  background:var(--wh-soft);
+  color:var(--wh-accent)}
+.wh-task-heading>.sf-product-art{
+  height:150px;
+  flex-basis:100%;
+  width:100%}
+.sf-login-layout{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  min-height:0;
+  padding:20px 0}
+.sf-login-art{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:14px}
+.sf-login-art img{
+  width:130px;
+  height:130px;
+  flex-shrink:0}
+.sf-login-art h2{
+  font-size:19px}
+.sf-login-art p{
+  display:none}
+.login-shell .login-card{
+  padding:8px 0 24px;
+  max-width:450px}
+.login-card h1{
+  font-size:27px}
+.wh-task-list{
+  grid-template-columns:1fr}
+.sf-login-header .wh-brand>span{
+  font-size:24px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .login-shell *,.wh-app *{
+  animation:none!important;
+  transition:none!important}
+}
+
+
+.sf-login-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between}
+
+.sf-login-theme{
+  background:transparent;
+  color:var(--wh-text);
+  border:1px solid var(--wh-border);
+  border-radius:8px;
+  min-width:44px;
+  min-height:44px;
+  display:grid;
+  place-items:center}
+
+.login-card .sf-login-language{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  margin:22px 0}
+
+.login-card .sf-login-language select{
+  width:130px;
+  min-height:40px;
+  margin:0}
+
+.login-card label[for=login-password]{
+  margin-bottom:8px}
+
+.sf-password-field{
+  position:relative}
+
+.login-card .sf-password-field input{
+  margin:0;
+  padding-right:70px}
+
+.sf-password-field button{
+  position:absolute;
+  right:5px;
+  top:3px;
+  min-height:40px;
+  border:0;
+  background:transparent;
+  color:var(--wh-text);
+  padding:6px 12px}
+
+.login-card .sf-signin{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  margin-top:30px;
+  min-height:50px}
+
+.login-card .quiet{
+  text-align:center;
+  font-size:13px}
+
+.wh-task-list>.wh-task{
+  min-width:0}
+
+.wh-task-heading>div:not(.sf-product-art){
+  min-width:0;
+  overflow-wrap:anywhere}
+
+.wh-task-heading>.sf-product-art{
+  display:grid;
+  place-items:center;
+  flex-grow:0;
+  flex-shrink:0}
+
+@media(min-width:701px){
+  .wh-sidebar .wh-org{
+  border-color:#4d4955}
+.wh-sidebar-bottom{
+  border-color:#4d4955}
+}
+
+@media(max-width:700px){
+  .sf-login-header{
+  padding-bottom:14px}
+.sf-login-art>div{
+  min-width:0}
+.wh-task-heading>.sf-product-art{
+  flex-basis:100%;
+  min-width:0}
+.sf-login-theme{
+  flex-shrink:0}
+}
+

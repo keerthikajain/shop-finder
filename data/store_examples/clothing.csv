@@ -1,0 +1,4 @@
+sku,collection,name,brand,category,barcode,aliases,synthetic,facility,floor,zone,aisle,rack,shelf,bin,quantity,size,colour,material
+EX-CLO-001,clothing,Blue T-shirt,Everyday,T-shirts,EXAMPLE-CLO-001,t shirt|tee|नीली टीशर्ट|टीशर्ट|neeli tshirt,true,Demo Hub,,Apparel,1,A,1,01,12,M,blue,cotton
+EX-CLO-002,clothing,Blue T-shirt,Everyday,T-shirts,EXAMPLE-CLO-002,t shirt|tee|नीली टीशर्ट|टीशर्ट,true,Demo Hub,,Apparel,1,A,2,02,16,L,blue,cotton
+EX-CLO-003,clothing,White T-shirt,Everyday,T-shirts,EXAMPLE-CLO-003,t shirt|सफेद टीशर्ट,true,Demo Hub,,Apparel,1,B,1,03,20,M,white,cotton

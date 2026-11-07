@@ -1,1 +1,16 @@
-{"name":"Shop Finder Voice Workspace","short_name":"Shop Finder","start_url":"/","display":"standalone","background_color":"#f7f6fb","theme_color":"#6244c5","icons":[{"src":"/logo.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]}
+{
+  "name": "Shop Finder Voice Workspace",
+  "short_name": "Shop Finder",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf9f6",
+  "theme_color": "#7035c6",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
