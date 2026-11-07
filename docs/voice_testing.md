@@ -52,3 +52,32 @@ Use the same speaker and microphone for comparison. Repeat in quiet and moderate
 - Search answers use stored catalogue records only. Correct location feedback means *checked on one visit*, not a permanent guarantee. Silence means *no feedback*, never a verified confirmation.
 - New location reports are reviewed; only an authorised, explicitly confirmed location move updates the actual placement. A location change is distinct from stock movement.
 - Public release requires persistent storage, HTTPS, controlled credentials, backups, and a separate security review. Follow `docs/release_checklist.md`.
+
+## Prisma V3 Speech-to-Text integration (validated contract, live acceptance required)
+
+Shop Finder's recording control uses **Prisma V3.0** by default on the authenticated server endpoint `POST /api/voice/transcribe`. It records up to 28 seconds as 16 kHz PCM WAV and submits to Gnani's REST `POST /stt/v3` endpoint. This is **record-then-transcribe** (not a real-time WebSocket or live captions). The API key stays in backend environment variables and never goes to the browser.
+
+Supported settings in the Find interface:
+
+| Option | Gnani REST form field | What it does |
+| --- | --- | --- |
+| English | `language_code=en-IN` | English-only expectation |
+| Hindi | `language_code=hi-IN` | Hindi-only expectation |
+| Hinglish | `language_code=indic-auto` | Auto-detect spoken Hindi/English; preserve Hinglish reply mode |
+| Auto-detect | `language_code=indic-auto` | Detect Hindi or English, use detected language for the search/reply |
+| English/Hindi detection hints | `multi_lang_codes=hi-IN,en-IN` | Preferred languages for a short recording (a hint, not a limit) |
+| Readable numbers | `format=transcribe` | Prefer normalized quantities like 5 kg |
+| Code-mixed | `format=codemix` | Keep English terms in Latin script |
+| As spoken | `format=verbatim` | Preserve spoken wording |
+| Latin letters | `format=transliterate` | Use Latin transcription |
+| Catalogue accuracy hints | `keywords` JSON array | Up to 80 actual product names, brands and aliases from the user's selected warehouse catalogue |
+| General context | `topic` | Short general warehouse topic, without customer/location data |
+
+Output formats and candidate-language hint semantics follow Gnani's public `gnani-vachana` SDK form builder. The transcript remains editable and never changes the selected SKU or shelf without the app's own matching/confirmation. On Auto mode, the response's supported `detected_language_code` is mapped into the search language; the two-step check remains.
+
+**Rollback:** set `GNANI_STT_MODEL=prisma-v2.5` on the server to use the documented old profile. This disables V3-only controls; restart the backend after changing it. No automatic retry on a different STT model occurs after a failed request.
+
+**Limits:** the screenshot's real-time playback/partial live transcription is a *separate* `/stt/v3/stream` WebSocket feature. Shop Finder does not yet implement that stream; test it separately before describing it as built. Enhanced language detection and product hints improve the input context but **do not guarantee** that Hindi, Hinglish, names or sizes are recognized perfectly.
+
+Manual acceptance: speak the same product in English, Hindi and Hinglish; inspect the raw transcript and detected language, compare exact SKU/variant/location, record timings and provider errors. Run with a genuine server-side key and real microphone. No provider audio test is performed in CI.
+

@@ -6,6 +6,7 @@ from .database import connect,get_product,list_products
 from .schemas import Product,Verification
 from .services.matching import search
 from .services import voice
+from .warehouse import rows as warehouse_rows
 from .services.language import LANGUAGES, response_text, followup_constraints
 
 class Resolve(BaseModel):
@@ -131,15 +132,35 @@ def install(app,path,SearchRequest,Constraints):
         return {'status':'resolved'}
 
     @app.post('/api/voice/transcribe',dependencies=[Depends(staff)])
-    async def transcribe(request:Request,language:str='en-IN'):
-        if language not in LANGUAGES:raise HTTPException(422,'Language not enabled.')
+    async def transcribe(request:Request,language:str='en-IN',style:str='transcribe',enhanced:bool=True,collection:str='all'):
+        if language not in (*LANGUAGES,'auto'):raise HTTPException(422,'Language not enabled.')
+        if style not in ('verbatim','transcribe','codemix','transliterate'):
+            raise HTTPException(422,'Transcript style not supported.')
+        if collection not in ('all','clothing','footwear','appliances','home','grocery'):
+            raise HTTPException(422,'Unknown product type.')
         data=bytearray()
         async for chunk in request.stream():
             data.extend(chunk)
             if len(data)>6_000_000:raise HTTPException(413,'Audio too large.')
+        # Inventory context remains on the authenticated backend. Only bounded product
+        # names and aliases are provided as STT accuracy hints, never shelf locations.
+        keywords=[]
+        if voice.stt_model()=='prisma-v3.0':
+            with connect(path) as c:
+                candidates=warehouse_rows(c,collection)
+            for item in candidates:
+                for name in [item['name'],item.get('brand',''),*item.get('aliases',[])]:
+                    name=str(name).strip()
+                    if name and name not in keywords and '<|' not in name and '|>' not in name:
+                        keywords.append(name)
+                    if len(keywords)>=80:break
+                if len(keywords)>=80:break
         started=time.perf_counter()
-        transcript=await voice.transcribe(bytes(data),language)
-        return {'transcript':transcript,'provider':'Gnani Prisma v2.5','language':language,'stt_ms':round((time.perf_counter()-started)*1000,2),'experimental':language=='hi-en'}
+        result=await voice.transcribe_details(bytes(data),language,output_style=style,
+                                               enhanced=enhanced,keywords=keywords)
+        return {**result,'provider':'Gnani '+('Prisma V3.0' if result['model']=='prisma-v3.0' else 'Prisma V2.5'),
+                'language':language,'stt_ms':round((time.perf_counter()-started)*1000,2),
+                'experimental':language in ('hi-en','auto')}
 
     @app.post('/api/voice/speak/{session_id}',dependencies=[Depends(staff)])
     async def speak(session_id:str,request:Request):

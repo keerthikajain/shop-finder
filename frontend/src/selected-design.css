@@ -1635,3 +1635,42 @@ body,.wh-app{
    width:100%;min-height:44px;
  }
 }
+
+
+/* Prisma V3 output style and auto-detection controls, without crowding search. */
+.sf-compact-app .sf-prisma-options{
+ display:flex;align-items:center;justify-content:flex-start;
+ flex-wrap:wrap;gap:10px 16px;min-width:0;
+}
+.sf-compact-app .sf-prisma-options>label{
+ display:inline-flex;gap:8px;align-items:center;
+ font-size:11px;color:var(--wh-muted);font-weight:550;
+}
+.sf-compact-app .sf-prisma-options select{
+ min-width:120px;max-width:155px;min-height:34px;
+ padding:5px 22px 5px 9px;border:1px solid var(--wh-border);
+ border-radius:8px;background:var(--wh-surface);color:var(--wh-text);
+ font-size:11px;
+}
+.sf-compact-app .sf-prisma-options .sf-enhanced-detection{
+ flex:0 1 auto;line-height:1.4;
+}
+.sf-compact-app .sf-prisma-options .sf-enhanced-detection input{
+ width:16px;height:16px;margin:0;accent-color:var(--wh-accent);
+}
+@media (max-width:700px){
+ .sf-compact-app .wh-ask-bottom{
+  display:flex;align-items:flex-start;flex-wrap:wrap;gap:8px 12px;
+ }
+ .sf-compact-app .sf-prisma-options{width:100%;gap:8px 12px}
+ .sf-compact-app .sf-prisma-options>label:first-child{
+  justify-content:space-between;max-width:100%;width:100%;
+ }
+ .sf-compact-app .sf-prisma-options select{max-width:min(200px,55%);width:50%}
+ .sf-compact-app .sf-prisma-options .sf-enhanced-detection{
+  width:auto;
+ }
+ .sf-compact-app .wh-ask-bottom>small{
+  display:block;width:100%;line-height:1.4;
+ }
+}

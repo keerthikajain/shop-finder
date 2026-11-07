@@ -358,7 +358,7 @@ def install_warehouse(app,path):
   with connect(path) as c:
    settings=get_settings(c)
    packs=[{**p,'count':c.execute('SELECT count(*) FROM wh_items WHERE collection=?',(p['id'],)).fetchone()[0]} for p in COLLECTIONS]
-  return {'collections':packs,'location_fields':LOCATION_FIELDS,'field_labels':FIELD_LABELS,'voice':voice.ready(),'settings':settings}
+  return {'collections':packs,'location_fields':LOCATION_FIELDS,'field_labels':FIELD_LABELS,'voice':voice.ready(),'stt_model':voice.stt_model(),'settings':settings}
  @app.get('/api/warehouse/items')
  def items(request:Request,collection:str='all'):
   identity(request)
