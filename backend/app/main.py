@@ -48,10 +48,14 @@ def create_app(db_path=None, seed_demo=None, *, auth_required=True):
     install_warehouse(app,path)
 
     @app.get('/api/health')
-    def health():
-        products = list_products(path)
-        return {'status':'ok','database':'sqlite','product_count':len(products),
-                'scope':'single_organisation_warehouse_locator','voice_status':'configured-unvalidated' if voice.ready() else 'disabled'}
+    def health(request: Request):
+        result = {'status':'ok','voice_status':'configured-unvalidated' if voice.ready() else 'disabled'}
+        # Public uptime monitors only need health status; do not disclose
+        # catalogue size or database technology to unauthenticated visitors.
+        if not auth_required or getattr(request.state,'user',None):
+            result.update({'database':'sqlite','product_count':len(list_products(path)),
+                           'scope':'single_organisation_warehouse_locator'})
+        return result
 
     @app.get('/api/products', response_model=list[Product])
     def products(category: Category | None = None):
