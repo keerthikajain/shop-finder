@@ -59,32 +59,73 @@
 }
 
 /* Find: keep voice-language choice compact; don't reserve a full button's width. */
+.sf-compact-app.sf-find-page .wh-composer-actions {
+  align-items: center;
+  gap: 9px;
+}
+
 .sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice-lang {
+  position: relative;
   box-sizing: border-box;
-  flex: 0 0 126px;
-  width: 126px;
+  display: flex;
+  align-items: center;
+  align-self: center;
+  flex: 0 0 132px;
+  width: 132px;
   min-width: 0;
-  max-width: 126px;
+  max-width: 132px;
+  height: 44px;
   margin: 0;
+}
+
+/* Use one arrow instead of the native select arrow drifting between browsers. */
+.sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice-lang::after {
+  content: "";
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-right: 1.8px solid currentColor;
+  border-bottom: 1.8px solid currentColor;
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+  color: var(--wh-text);
 }
 
 .sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice-lang > select {
   box-sizing: border-box;
   display: block;
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 1 1 100%;
   width: 100%;
   min-width: 0;
   max-width: 100%;
   height: 44px;
   min-height: 44px;
   margin: 0;
-  padding: 0 25px 0 9px;
+  padding: 0 29px 0 12px !important;
   overflow: hidden;
   text-overflow: ellipsis;
   border: 1px solid var(--wh-border) !important;
   border-radius: 9px !important;
   background: var(--wh-surface) !important;
   color: var(--wh-text);
+  font-family: inherit;
   font-size: 12px !important;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice-lang > select:focus-visible {
+  outline: 2px solid var(--wh-accent);
+  outline-offset: 2px;
+}
+
+.sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice-lang > select:hover {
+  border-color: var(--wh-accent) !important;
 }
 
 /* Mobile: input + mic on row one; language + Find on row two.
@@ -121,13 +162,15 @@
   }
 
   .sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice-lang {
-    display: block;
+    display: flex;
     grid-column: 1;
     grid-row: 2;
     justify-self: stretch;
+    align-self: stretch;
     width: 100%;
     min-width: 0;
     max-width: none;
+    height: 46px;
     margin: 0;
   }
 
@@ -178,8 +221,11 @@
   }
 
   .sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice-lang > select {
-    padding-left: 7px;
-    padding-right: 20px;
+    padding-left: 8px !important;
+    padding-right: 24px !important;
     font-size: 11px !important;
+  }
+  .sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice-lang::after {
+    right: 10px;
   }
 }
