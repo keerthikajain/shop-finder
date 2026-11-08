@@ -50,7 +50,7 @@ test('sign-in keeps language and accessible password visibility controls',()=>{
 test('login has server-verified owner/staff role choices and staff join mode',()=>{
  const html=render();
  assert.match(html,/name="role" value="owner"/);
- assert.match(html,/name="role" value="staff"/);
+ assert.match(html,/name="role"[^>]*value="staff"/);
  assert.match(html,/aria-label="Account access"/);
  assert.match(html,/Join as staff/);
 });
