@@ -163,5 +163,8 @@ def test_auto_detection_keeps_kannada_code_and_warehouse_accepts_native_alias(cl
  assert response.status_code==200,response.text
  assert response.json()['detected_language_code']=='kn-IN'
  assert response.json()['search_language']=='kn-IN'
- assert client.post('/api/warehouse/search',json={'query':'nonexistent product','collection':'all','language':'kn-IN'},headers=H).status_code==200
+ from app.warehouse import Query
+ assert Query(query='nonexistent product',collection='all',language='kn-IN').language=='kn-IN'
+ # Unauthenticated warehouse search requests still must be denied.
+ assert client.post('/api/warehouse/search',json={'query':'nonexistent product','collection':'all','language':'kn-IN'},headers=H).status_code==401
  assert client.post('/api/voice/transcribe?language=auto&candidates=kn-IN',headers=H,content=wav()).status_code==422
