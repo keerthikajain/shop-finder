@@ -2,6 +2,7 @@
 import argparse
 import os
 import sqlite3
+if os.name=='posix':os.umask(0o077)
 from pathlib import Path
 
 def backup(source, destination):

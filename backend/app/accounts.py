@@ -1,5 +1,6 @@
 """Local accounts, revocable sessions and owner-managed staff access."""
 import hashlib,hmac,secrets,time,sqlite3,os
+from urllib.parse import urlsplit
 from typing import Literal
 from fastapi import HTTPException,Request,Response
 from fastapi.responses import JSONResponse
@@ -17,6 +18,8 @@ def initialize_accounts(path):
    if name not in columns:c.execute(f"ALTER TABLE accounts ADD COLUMN {name} TEXT NOT NULL DEFAULT ''")
   c.execute('CREATE TABLE IF NOT EXISTS account_sessions(digest TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES accounts(id),expires REAL NOT NULL)')
   c.execute('CREATE TABLE IF NOT EXISTS login_attempts(bucket TEXT NOT NULL,at REAL NOT NULL)')
+  c.execute('CREATE TABLE IF NOT EXISTS api_rate_limits(bucket TEXT NOT NULL,at REAL NOT NULL)')
+  c.execute('CREATE INDEX IF NOT EXISTS api_rate_bucket_time ON api_rate_limits(bucket,at)')
 
 def hash_password(password):
  salt=secrets.token_hex(16)
@@ -25,6 +28,90 @@ def check_password(password,stored):
  salt,expected=stored.split(':')
  return hmac.compare_digest(expected,hashlib.pbkdf2_hmac('sha256',password.encode(),bytes.fromhex(salt),600000).hex())
 def digest(value):return hashlib.sha256(value.encode()).hexdigest()
+
+# Throttle expensive provider and mutating endpoints per authenticated account.
+# A persistent SQLite bucket works across the single-worker deployments this
+# application supports. Login failure throttling remains separate below.
+RATE_RULES=(
+ ('/api/voice/',20),
+ ('/api/warehouse/tasks/',120),
+ ('/api/warehouse/search',120),
+ ('/api/search',120),
+ ('/api/warehouse/imports',12),
+ ('/api/warehouse/stock/',120),
+ ('/api/warehouse/moves/',60),
+ ('/api/warehouse/items',60),
+ ('/api/warehouse/settings',30),
+ ('/api/auth/profile',30),
+ ('/api/users',30),
+ ('/api/auth/password',20),
+ ('/api/media',20),
+ ('/api/warehouse/issues',60),
+ ('/api/reports',60),
+)
+def rate_bucket(route):
+ if route.endswith('/speak'):
+  return '/api/voice/speak',20
+ for prefix,limit in RATE_RULES:
+  if route.startswith(prefix):
+   return prefix,limit
+ return None
+
+def enforce_rate(path,uid,route):
+ rule=rate_bucket(route)
+ if not rule:return
+ prefix,limit=rule
+ now=time.time()
+ bucket=digest(uid+':'+prefix)
+ # BEGIN IMMEDIATE serializes limit checks and inserts between app workers.
+ with connect(path) as c:
+  c.execute('BEGIN IMMEDIATE')
+  c.execute('DELETE FROM api_rate_limits WHERE at<?',(now-60,))
+  count=c.execute('SELECT count(*) FROM api_rate_limits WHERE bucket=?',(bucket,)).fetchone()[0]
+  if count>=limit:raise HTTPException(429,'Too many requests. Try again in one minute.')
+  c.execute('INSERT INTO api_rate_limits(bucket,at) VALUES (?,?)',(bucket,now))
+
+SECURITY_HEADERS={
+ 'X-Content-Type-Options':'nosniff',
+ 'X-Frame-Options':'DENY',
+ 'Referrer-Policy':'same-origin',
+ 'Cross-Origin-Resource-Policy':'same-origin',
+ 'X-Permitted-Cross-Domain-Policies':'none',
+ 'Permissions-Policy':'camera=(self), microphone=(self), geolocation=()',
+ 'Content-Security-Policy':("default-src 'self'; base-uri 'none'; object-src 'none'; "
+  "frame-ancestors 'none'; form-action 'self'; script-src 'self'; "
+  "style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; "
+  "font-src 'self' data:; connect-src 'self' ws: wss:; media-src 'self' blob:"),
+}
+
+def apply_security_headers(response,request):
+ for key,value in SECURITY_HEADERS.items():response.headers[key]=value
+ if request.url.path.startswith('/api/'):response.headers['Cache-Control']='no-store'
+ if request.url.scheme=='https' or os.getenv('SHOP_FINDER_SECURE_COOKIE')=='true':
+  response.headers['Strict-Transport-Security']='max-age=31536000'
+ return response
+
+def body_within_limit(request):
+ value=request.headers.get('content-length')
+ if value is None:return True
+ try:
+  size=int(value)
+ except ValueError:return False
+ route=request.url.path
+ limit=(6_000_000 if route=='/api/voice/transcribe' else
+        4_000_000 if route=='/api/warehouse/imports' else
+        3_000_000 if route=='/api/media' else 1_000_000)
+ return 0<=size<=limit
+
+def origin_valid(request):
+ origin=request.headers.get('origin')
+ if origin:
+  try:
+   parsed=urlsplit(origin)
+   if parsed.scheme not in ('http','https') or parsed.netloc.lower()!=request.headers.get('host','').lower() or parsed.path not in ('','/') or parsed.query or parsed.fragment:return False
+  except ValueError:return False
+ if request.headers.get('sec-fetch-site','').lower()=='cross-site':return False
+ return True
 def public(row):return {k:row[k] for k in ['id','username','role','language','tour_done','active','display_name','phone','staff_code']}
 
 class Login(BaseModel):
@@ -68,20 +155,32 @@ def install_accounts(app,path,required=True):
  @app.middleware('http')
  async def protect(request,call_next):
   if required and request.url.path.startswith('/api/'):
-   if request.method not in ('GET','HEAD','OPTIONS') and request.headers.get('X-Shop-Request')!='1':return JSONResponse({'detail':'Request header required.'},403)
+   if request.method not in ('GET','HEAD','OPTIONS') and not body_within_limit(request):
+    return apply_security_headers(JSONResponse({'detail':'Request body exceeds its limit or has an invalid size.'},413),request)
+   if request.method not in ('GET','HEAD','OPTIONS'):
+    if request.headers.get('X-Shop-Request')!='1' or not origin_valid(request):
+     return apply_security_headers(JSONResponse({'detail':'Request origin or header not allowed.'},403),request)
    user=current(request);request.state.user=user
    if request.url.path not in ('/api/health','/api/auth/login','/api/auth/status'):
-    if not user:return JSONResponse({'detail':'Please log in.'},401)
+    if not user:
+     return apply_security_headers(JSONResponse({'detail':'Please log in.'},401),request)
     route=request.url.path
-    owner_action=(route.startswith('/api/users') or (route=='/api/media' and request.method=='POST') or route.startswith('/api/unresolved') or (route.startswith('/api/products') and request.method!='GET'))
-    if owner_action and user['role']!='owner':return JSONResponse({'detail':'Owner access required.'},403)
+    warehouse_owner=(
+     (route in ('/api/warehouse/settings','/api/warehouse/items') and request.method in ('PUT','PATCH','DELETE'))
+     or route.startswith('/api/warehouse/imports')
+     or route.startswith('/api/warehouse/moves/')
+     or route=='/api/warehouse/history'
+     or (route.startswith('/api/warehouse/issues/') and route.endswith('/resolve'))
+    )
+    owner_action=(route.startswith('/api/users') or (route=='/api/media' and request.method=='POST') or route.startswith('/api/unresolved') or (route.startswith('/api/products') and request.method!='GET') or warehouse_owner)
+    if owner_action and user['role']!='owner':
+     return apply_security_headers(JSONResponse({'detail':'Owner access required.'},403),request)
+    if request.method not in ('GET','HEAD','OPTIONS'):
+     try:enforce_rate(path,user['id'],route)
+     except HTTPException as error:
+      return apply_security_headers(JSONResponse({'detail':error.detail},error.status_code,headers={'Retry-After':'60'}),request)
   response=await call_next(request)
-  response.headers['X-Content-Type-Options']='nosniff'
-  response.headers['X-Frame-Options']='DENY'
-  response.headers['Referrer-Policy']='same-origin'
-  response.headers['Permissions-Policy']='camera=(self), microphone=(self), geolocation=()'
-  if request.url.path.startswith('/api/'):response.headers['Cache-Control']='no-store'
-  return response
+  return apply_security_headers(response,request)
  @app.get('/api/auth/status')
  def status(request:Request):
   with connect(path) as c:configured=bool(c.execute('SELECT 1 FROM accounts WHERE role=\'owner\'').fetchone())
@@ -92,7 +191,12 @@ def install_accounts(app,path,required=True):
   with connect(path) as c:
    c.execute('DELETE FROM login_attempts WHERE at<?',(now-900,))
    for bucket in buckets:
-    if c.execute('SELECT count(*) FROM login_attempts WHERE bucket=?',(bucket,)).fetchone()[0]>=10:raise HTTPException(429,'Too many attempts. Try again in 15 minutes.')
+    # A shared reverse-proxy IP can represent multiple real staff users.
+    # Keep the per-username limit strict without making ten mistakes
+    # against random accounts lock out an entire warehouse.
+    limit=10 if bucket.startswith('user:') else 100
+    if c.execute('SELECT count(*) FROM login_attempts WHERE bucket=?',(bucket,)).fetchone()[0]>=limit:
+     raise HTTPException(429,'Too many attempts. Try again in 15 minutes.')
    row=c.execute('SELECT * FROM accounts WHERE username=?',(name,)).fetchone()
   valid=check_password(body.password,row['password_hash'] if row else dummy)
   if not row or not row['active'] or not valid:

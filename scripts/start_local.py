@@ -1,5 +1,6 @@
 """Run after installing dependencies. Secrets remain in the child environment."""
 import os,secrets,getpass,subprocess,sys,shutil,importlib.util
+if os.name=='posix':os.umask(0o077)
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 if importlib.util.find_spec('uvicorn') is None:

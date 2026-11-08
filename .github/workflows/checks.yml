@@ -47,4 +47,20 @@ jobs:
           assert result['status']=='ok',result
           assert result['voice_status']=='disabled',result
           print('Production container started and health endpoint is responsive')
+          from urllib.request import urlopen
+          from urllib.error import HTTPError
+          base='http://127.0.0.1:18080'
+          for sensitive_path in ('/.env','/.git/config','/backend/app/accounts.py',
+                                 '/data/shop_finder.sqlite3','/openapi.json','/docs'):
+              try:
+                  with urlopen(base+sensitive_path,timeout=5) as response:
+                      status=response.status
+              except HTTPError as error:
+                  status=error.code
+              assert status==404,(sensitive_path,status)
+          with urlopen(base+'/api/health',timeout=5) as response:
+              assert "script-src 'self'" in response.headers.get('Content-Security-Policy','')
+              assert response.headers.get('X-Frame-Options')=='DENY'
+              assert response.headers.get('Cache-Control')=='no-store'
+          print('Sensitive files are not served; security headers are present.')
           PY

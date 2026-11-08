@@ -1,4 +1,4 @@
-import hashlib,re
+import hashlib,re,os
 from typing import Literal
 from pathlib import Path
 from fastapi import Request,HTTPException
@@ -32,9 +32,13 @@ def install_reports(app,path):
   if data.startswith(b'\x89PNG\r\n\x1a\n'):ext='png'
   elif data.startswith(b'\xff\xd8\xff'):ext='jpg'
   else:raise HTTPException(422,'Use a PNG or JPEG photo.')
-  directory=Path(path).parent/'photos';directory.mkdir(exist_ok=True)
+  directory=Path(path).parent/'photos'
+  directory.mkdir(mode=0o700,parents=True,exist_ok=True)
+  if os.name=='posix':os.chmod(directory,0o700)
   name=hashlib.sha256(data).hexdigest()+'.'+ext
-  (directory/name).write_bytes(data)
+  target=directory/name
+  target.write_bytes(data)
+  if os.name=='posix':os.chmod(target,0o600)
   return {'url':'/api/media/'+name}
  @app.get('/api/media/{name}')
  def photo(name:str):
