@@ -52,7 +52,7 @@ test('login has server-verified owner/staff role choices and staff join mode',()
  assert.match(html,/name="role" value="owner"/);
  assert.match(html,/name="role"[^>]*value="staff"/);
  assert.match(html,/aria-label="Account access"/);
- assert.match(html,/Join as staff/);
+ assert.match(html,/One-time invite/);
 });
 
 test('staff self-registration and manager role are available without changing default login',()=>{
