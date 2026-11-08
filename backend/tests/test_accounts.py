@@ -116,3 +116,61 @@ def test_report_confirmation_resolution_and_staff_isolation(setup):
  add_account(path,'otherworker',PW)
  c.post('/api/auth/logout',headers=H);login(c,'otherworker')
  assert not c.get('/api/warehouse/issues').json()
+
+def test_owner_invite_allows_one_staff_registration_without_role_escalation(setup):
+ c,path=setup
+ login(c)
+ invite=c.post('/api/users/invitations',headers=H)
+ assert invite.status_code==201,invite.text
+ result=invite.json()
+ code=result['code']
+ assert len(code)>=24 and result['expires_at']>time.time()
+ listed=c.get('/api/users/invitations').json()
+ assert listed and 'code' not in listed[0]
+ with connect(path) as db:
+  assert db.execute('SELECT code_digest FROM staff_invitations WHERE id=?',(result['id'],)).fetchone()[0]!=code
+ c.post('/api/auth/logout',headers=H)
+ bad=c.post('/api/auth/join',headers=H,json={'code':code,'username':'newworker','password':PW,'role':'owner'})
+ assert bad.status_code==422
+ assert c.get('/api/users/invitations').status_code==401
+ created=c.post('/api/auth/join',headers=H,json={'code':code,'username':'newworker','password':PW})
+ assert created.status_code==201,created.text
+ assert created.json()['role']=='staff'
+ assert c.post('/api/auth/join',headers=H,json={'code':code,'username':'anotherworker','password':PW}).status_code==400
+ assert c.post('/api/auth/login',headers=H,json={'username':'newworker','password':PW,'role':'owner'}).status_code==401
+ logged=c.post('/api/auth/login',headers=H,json={'username':'newworker','password':PW,'role':'staff'})
+ assert logged.status_code==200
+ assert c.get('/api/users').status_code==403
+ assert c.post('/api/users/invitations',headers=H).status_code==403
+ c.post('/api/auth/logout',headers=H)
+ with TestClient(create_app(path,seed_demo=True)) as restart:
+  assert restart.post('/api/auth/login',headers=H,json={'username':'newworker','password':PW}).status_code==200
+
+def test_invitation_expiration_revoke_and_nonowner_blocked(setup):
+ c,path=setup
+ login(c)
+ old=c.post('/api/users/invitations',headers=H).json()
+ with connect(path) as db:db.execute('UPDATE staff_invitations SET expires_at=? WHERE id=?',(time.time()-1,old['id']))
+ assert c.post('/api/auth/join',headers=H,json={'code':old['code'],'username':'late','password':PW}).status_code==400
+ fresh=c.post('/api/users/invitations',headers=H).json()
+ assert c.delete('/api/users/invitations/'+fresh['id'],headers=H).status_code==200
+ assert c.post('/api/auth/join',headers=H,json={'code':fresh['code'],'username':'revoked','password':PW}).status_code==400
+ audits=c.get('/api/users/audit').json()
+ assert old['code'] not in str(audits) and fresh['code'] not in str(audits)
+ c.post('/api/auth/logout',headers=H)
+ login(c,'worker')
+ assert c.post('/api/users/invitations',headers=H).status_code==403
+ assert c.get('/api/users/audit').status_code==403
+
+def test_invitation_registration_rate_limit(setup):
+ c,path=setup
+ for i in range(20):
+  assert c.post('/api/auth/join',headers=H,json={'code':'a'*43,'username':f'worker{i}','password':PW}).status_code==400
+ assert c.post('/api/auth/join',headers=H,json={'code':'a'*43,'username':'nextworker','password':PW}).status_code==429
+
+def test_logout_remains_idempotent_and_invalidates_all_sessions(setup):
+ c,path=setup
+ login(c)
+ assert c.post('/api/auth/logout',headers=H).status_code==200
+ assert c.post('/api/auth/logout',headers=H).status_code==200
+ assert c.get('/api/users').status_code==401
