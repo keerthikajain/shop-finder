@@ -28,7 +28,7 @@ test('busy and failed sign-in states remain accessible and error content is esca
  assert.match(html,/role="alert"/);assert.match(html,/&lt;script&gt;/);
 });
 test('Hindi login translates new labels while retaining credential field names',()=>{
- const html=render({},'hi');assert.match(html,/Shopfinder में साइन इन करें/);
+ const html=render({},'hi');assert.match(html,/शॉप फाइंडर में साइन इन करें/);
  assert.match(html,/name="username"/);assert.match(html,/पासवर्ड दिखाएँ/);
  assert.doesNotMatch(html,/Use your team account/);
 });
