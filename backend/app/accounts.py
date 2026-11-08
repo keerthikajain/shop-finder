@@ -142,7 +142,14 @@ def install_accounts(app,path,required=True):
     if not user:
      return apply_security_headers(JSONResponse({'detail':'Please log in.'},401),request)
     route=request.url.path
-    owner_action=(route.startswith('/api/users') or (route=='/api/media' and request.method=='POST') or route.startswith('/api/unresolved') or (route.startswith('/api/products') and request.method!='GET'))
+    warehouse_owner=(
+     (route in ('/api/warehouse/settings','/api/warehouse/items') and request.method in ('PUT','PATCH','DELETE'))
+     or route.startswith('/api/warehouse/imports')
+     or route.startswith('/api/warehouse/moves/')
+     or route=='/api/warehouse/history'
+     or (route.startswith('/api/warehouse/issues/') and route.endswith('/resolve'))
+    )
+    owner_action=(route.startswith('/api/users') or (route=='/api/media' and request.method=='POST') or route.startswith('/api/unresolved') or (route.startswith('/api/products') and request.method!='GET') or warehouse_owner)
     if owner_action and user['role']!='owner':
      return apply_security_headers(JSONResponse({'detail':'Owner access required.'},403),request)
     if request.method not in ('GET','HEAD','OPTIONS'):
