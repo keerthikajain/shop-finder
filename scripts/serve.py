@@ -1,5 +1,6 @@
 """Single-process production entry point; HTTPS is terminated by the host."""
 import os,sys
+if os.name=='posix':os.umask(0o077)
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'backend'))
 os.environ['SHOP_FINDER_SERVE_WEB']='true'
