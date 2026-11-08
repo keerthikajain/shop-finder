@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
 from app.accounts import add_account
+from app.services import voice
 from app.main import create_app
 from app.streaming import provider_headers, MAX_BYTES, FRAME_BYTES
 

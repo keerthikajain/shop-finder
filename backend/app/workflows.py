@@ -148,8 +148,8 @@ def install(app,path,SearchRequest,Constraints):
         keywords=[]
         if voice.stt_model()=='prisma-v3.0':
             with connect(path) as c:
-                candidates=warehouse_rows(c,collection)
-            for item in candidates:
+                catalogue_items=warehouse_rows(c,collection)
+            for item in catalogue_items:
                 for name in [item['name'],item.get('brand',''),*item.get('aliases',[])]:
                     name=str(name).strip()
                     if name and name not in keywords and '<|' not in name and '|>' not in name:
