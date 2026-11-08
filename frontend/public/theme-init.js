@@ -1,0 +1,1 @@
+try{const t=localStorage.getItem('shop-finder-theme');document.documentElement.dataset.theme=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'}catch{/* Storage may be unavailable; use CSS defaults. */}
