@@ -1674,3 +1674,18 @@ body,.wh-app{
   display:block;width:100%;line-height:1.4;
  }
 }
+
+/* Optional live V3 speech segment mode. Recorded voice remains default. */
+.sf-compact-app .sf-prisma-options .sf-live-mode{
+ display:inline-flex;gap:7px;align-items:center;min-height:34px;
+ padding:3px 8px;border:1px solid var(--wh-border);border-radius:8px;
+ background:var(--wh-surface);color:var(--wh-text);white-space:normal;
+}
+.sf-compact-app .sf-prisma-options .sf-live-mode input{
+ width:17px;height:17px;accent-color:var(--wh-accent);
+}
+@media(max-width:700px){
+ .sf-compact-app .sf-prisma-options .sf-live-mode{
+  width:100%;justify-content:flex-start;
+ }
+}

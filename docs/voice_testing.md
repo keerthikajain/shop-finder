@@ -81,3 +81,38 @@ Output formats and candidate-language hint semantics follow Gnani's public `gnan
 
 Manual acceptance: speak the same product in English, Hindi and Hinglish; inspect the raw transcript and detected language, compare exact SKU/variant/location, record timings and provider errors. Run with a genuine server-side key and real microphone. No provider audio test is performed in CI.
 
+
+
+## Optional live Prisma V3 speech segments — secure WebSocket
+
+The Find panel offers a **Live speech segments** toggle for signed-in Prisma V3
+users. It is **off by default**; record-then-transcribe REST remains available.
+Live audio is sent during recording and completed VAD *speech segments* can
+appear before recording ends; Gnani does not promise word-by-word interim
+hypotheses. The worker still reviews/edit the transcript before searching.
+Nothing automatically changes stock or a saved location.
+
+The browser sends 16 kHz mono, 16-bit raw PCM in 1,024-byte frames to Shop
+Finder's authenticated, same-origin /api/voice/live WebSocket. The server
+checks the account session, Origin, length and audio frame sizes. It connects
+to Gnani's V3 streaming endpoint with a backend-only key; the browser never
+receives the provider credential. Up to 80 catalogue product names/aliases
+are passed as provider keyword hints. No shelf locations or account details.
+
+The local Vite /api proxy supports WebSocket upgrades. On public HTTPS,
+configure the reverse proxy to preserve Host and Origin and forward Upgrade
+and Connection headers, and keep idle WebSocket timeout above 45 seconds.
+Use secure cookies and a persistent server. This pilot is not load-tested.
+
+Live acceptance still required:
+1. Test English, Hindi and Hinglish on real hardware with a valid V3 key.
+2. Confirm segments appear before Stop (when provider VAD finalizes them)
+   and that a full editable transcript is returned after Stop.
+3. Switch Live off and re-test the existing recorded REST voice mode.
+4. Test microphone denial, session expiration, disconnected network and
+   unknown product. Show actionable failures without fabricated results.
+5. Repeat on the public HTTPS URL, and record timing and accuracy separately.
+
+When live streaming is unavailable, **turn off Live speech segments** and
+continue using the tested record-then-transcribe path. Passing mocked API
+tests is not proof that your account's live streaming is enabled.

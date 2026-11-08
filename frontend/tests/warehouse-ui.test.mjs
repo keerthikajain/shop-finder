@@ -193,3 +193,20 @@ test('Prisma V3 speech choices include server-controlled auto language and trans
  assert.match(src,/onText\(r\.transcript,r\.search_language,r\)/);
  assert.match(src,/language:language==='auto'\?\(detectedSearchLanguage\|\|'hi-en'\):language/);
 });
+
+test('Prisma V3 live voice is opt-in and retains recorded voice fallback',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const recording=await readFile(new URL('../src/recording.js',import.meta.url),'utf8');
+ const vite=await readFile(new URL('../vite.config.js',import.meta.url),'utf8');
+ assert.match(src,/liveMode,LM/);
+ assert.match(src,/checked=\{liveMode\}/);
+ assert.match(src,/startLiveRecording\(/);
+ assert.match(src,/startRecording\(/);
+ assert.match(src,/onPartial\?\.\(text,detected\)/);
+ assert.match(src,/live=\{prismaV3&&liveMode\}/);
+ assert.match(recording,/new WebSocket\(url\)/);
+ assert.match(recording,/location\.host\+'\/api\/voice\/live/);
+ assert.match(recording,/socket\.send\(bytes\)/);
+ assert.doesNotMatch(recording,/GNANI_API_KEY/);
+ assert.match(vite,/ws:true/);
+});
