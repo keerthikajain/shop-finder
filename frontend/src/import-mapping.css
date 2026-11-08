@@ -1,0 +1,31 @@
+/* Contextual Excel mapping, scoped to the import workspace. */
+.wh-import-main{min-width:0}
+.sf-import-guided{display:grid;gap:14px;margin:16px 0}
+.sf-import-progress{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:14px 16px;border:1px solid var(--wh-border);border-radius:12px;background:var(--wh-input)}
+.sf-import-progress strong{display:block;font-size:14px;color:var(--wh-text)}
+.sf-import-progress small{display:block;margin-top:4px;font-size:11px;color:var(--wh-muted);line-height:1.5}
+.sf-import-progress button{flex-shrink:0;min-height:38px;font-size:11px;color:var(--wh-accent);background:var(--wh-surface);border:1px solid var(--wh-border)}
+.sf-import-issues{padding:12px 14px;border:1px solid #dcb676;border-radius:10px;background:color-mix(in srgb,#f0b354 10%,var(--wh-surface));font-size:12px;line-height:1.5}
+.sf-import-issues strong{color:var(--wh-text)}
+.sf-import-issues p{margin:6px 0;color:var(--wh-text)}
+.sf-import-section{min-width:0;border:1px solid var(--wh-border);border-radius:12px;overflow:hidden;background:var(--wh-surface)}
+.sf-import-section-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;text-align:left;gap:16px;min-height:66px;padding:13px 16px;background:var(--wh-input);border:0;border-radius:0;color:var(--wh-text)}
+.sf-import-section-toggle>span:first-child{flex:1;min-width:0}
+.sf-import-section-toggle strong{font-size:14px;display:block}
+.sf-import-section-toggle small{font-size:11px;display:block;line-height:1.4;margin-top:4px;color:var(--wh-muted);font-weight:400}
+.sf-import-section-toggle>span:last-child{font-size:11px;white-space:nowrap;color:var(--wh-muted);font-weight:600}
+.sf-import-section-toggle>span:last-child>span{padding-left:7px;font-size:16px;color:var(--wh-accent)}
+.sf-import-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px;padding:16px}
+.sf-import-field{display:flex;flex-direction:column;min-width:0;gap:7px}
+.sf-import-field-header{display:flex;gap:9px;justify-content:space-between;align-items:baseline;flex-wrap:wrap}
+.sf-import-field-header label{font-size:12px;font-weight:650;color:var(--wh-text)}
+.sf-import-matched{font-size:10px;color:var(--wh-green);font-weight:600}
+.sf-import-matched.conflict{color:#ba6125}
+.sf-import-field>select{display:block;box-sizing:border-box;width:100%;min-width:0;max-width:100%;height:44px;min-height:44px;padding:8px 28px 8px 10px;border:1px solid var(--wh-border);border-radius:9px;background:var(--wh-surface);color:var(--wh-text);font-size:13px;text-overflow:ellipsis}
+.sf-import-field>select[aria-invalid=true]{border-color:#d38839}
+.sf-import-field-foot{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;min-height:28px}
+.sf-import-field-foot small{font-size:10px;line-height:1.45;overflow-wrap:anywhere;min-width:0;color:var(--wh-muted)}
+.sf-import-field-foot button{display:inline;border:0;background:transparent;padding:0;min-height:25px;flex-shrink:0;color:var(--wh-accent);font-size:10px;font-weight:650;text-decoration:underline;text-underline-offset:2px}
+.sf-import-safe-note{margin:0!important;color:var(--wh-muted);font-size:11px!important;line-height:1.6}
+.sf-import-guided :is(button,select):focus-visible{outline:2px solid var(--wh-accent);outline-offset:2px}
+@media(max-width:700px){.sf-import-fields{grid-template-columns:minmax(0,1fr);padding:12px;gap:15px}.sf-import-section-toggle{padding:12px;align-items:flex-start}.sf-import-progress{padding:12px}.sf-import-progress button{width:100%}.sf-import-section-toggle>span:last-child{font-size:10px}}
