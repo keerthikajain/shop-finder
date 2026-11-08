@@ -45,6 +45,7 @@ SYNONYMS = {
     'बासमती':'basmati', 'चावल':'rice', 'chawal':'rice',
     'chaval':'rice', 'चावलें':'rice', 'राइस':'rice',
     'सोनामसूरी':'sona masoori', 'सोना मसूरी':'sona masoori',
+    'sona masuri':'sona masoori', 'sonamasuri':'sona masoori',
     'दाल':'dal', 'daal':'dal', 'अरहर':'toor', 'तूर':'toor',
     'moong':'moong', 'मूंग':'moong', 'उड़द':'urad', 'urad':'urad',
     'चना':'chana', 'राजमा':'rajma',
@@ -119,7 +120,7 @@ def normal_query(text):
     text = unicodedata.normalize('NFKC', str(text)).casefold().translate(str.maketrans('०१२३४५६७८९', '0123456789'))
     text = re.sub(r'[\u200b-\u200d\ufeff]', '', text)
     text = re.sub(r'\bt[- ]shirt\b', 'tshirt', text)
-    text = re.sub(r'[।?!,:;()\[\]{}]', ' ', text)
+    text = re.sub(r'[।?!,:;()\[\]{}]|(?<!\d)\.|\.(?!\d)', ' ', text)
     for pattern, replacement in _RULES:
         text = pattern.sub(lambda _m, value=replacement: value, text)
     return re.sub(r'\s+', ' ', text).strip()

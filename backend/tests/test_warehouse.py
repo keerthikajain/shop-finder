@@ -562,3 +562,14 @@ def test_unrecognised_translated_product_never_invents_location():
  for request in ['लेज़र प्रिंटर मशीन', 'mujhe unknown titanium device chahiye',
                  'ब्लैक जीन्स 55', 'चावल 50 किलो']:
   assert match(request,products,'all')==[]
+
+
+def test_grocery_spelling_variant_and_trailing_punctuation_preserve_safe_matching():
+ from app.warehouse_language import normal_query
+ item={'collection':'grocery','sku':'GRC-001','name':'Sona masoori rice 5 kg bag',
+       'category':'Rice','brand':'Test','aliases':[],'barcode':'','specs':{'size':'5 kg'},
+       'placements':[{'facility':'Warehouse','rack':'A','shelf':'02'}]}
+ assert [p['sku'] for p in match('Sona Masuri.',[item],'grocery')]==['GRC-001']
+ assert [p['sku'] for p in match('sona masoori.',[item],'grocery')]==['GRC-001']
+ assert match('Sona Masuri 10 kg',[item],'grocery')==[]
+ assert normal_query('1.5 L')=='1.5 l'
