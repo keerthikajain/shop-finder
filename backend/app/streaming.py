@@ -83,8 +83,16 @@ def provider_headers(language, style, enhanced, keywords):
     if auto and enhanced:
         headers['x-language-candidates'] = 'hi-IN,en-IN'
     if keywords:
-        # Header must be ASCII for WebSockets handshake.
-        headers['x-keywords'] = json.dumps(keywords, ensure_ascii=True)
+        # WebSocket handshake headers have tighter proxy limits than REST bodies.
+        # Keep the same verified names, but cap encoded keyword hints at ~3 KiB.
+        selected = []
+        for word in keywords:
+            trial = json.dumps([*selected, word], ensure_ascii=True)
+            if len(trial.encode('ascii')) > 3072:
+                break
+            selected.append(word)
+        if selected:
+            headers['x-keywords'] = json.dumps(selected, ensure_ascii=True)
     return headers
 
 
