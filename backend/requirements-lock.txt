@@ -1,6 +1,6 @@
 annotated-doc==0.0.5
 annotated-types==0.8.0
-anyio==4.15.1
+anyio==4.16.0
 certifi==2026.10.23
 click==8.5.0
 fastapi==0.162.0
@@ -12,13 +12,13 @@ iniconfig==2.3.1
 opentelemetry-api==1.45.1
 packaging==26.3
 pluggy==1.7.0
-pydantic==2.14.1
-pydantic_core==2.50.3
+pydantic==2.14.3
+pydantic_core==2.50.4
 Pygments==2.21.0
-pytest==9.1.1
+pytest==9.2.0
 RapidFuzz==3.14.6
-starlette==1.9.0
-typing-inspection==0.4.4
+starlette==1.10.0
+typing-inspection==0.4.5
 typing_extensions==4.16.0
 uvicorn==0.54.0
 websockets==15.0.1
