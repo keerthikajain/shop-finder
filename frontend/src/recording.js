@@ -29,9 +29,10 @@ export async function startRecording(onComplete,onError) {
  * authenticated same-origin Shop Finder proxy; no Gnani credentials reach JS.
  * Server VAD emits finished utterance segments, not word-by-word predictions.
  */
-export async function startLiveRecording({language='auto',style='transcribe',enhanced=true,collection='all',onSegment,onComplete,onError}) {
+export async function startLiveRecording({language='auto',style='transcribe',enhanced=true,collection='all',candidates=[],onSegment,onComplete,onError}) {
   if(!navigator.mediaDevices?.getUserMedia)throw Error('Microphone unavailable. Use HTTPS or localhost.');
   const params=new URLSearchParams({language,style,enhanced:String(enhanced),collection});
+  if(candidates.length)params.set('candidates',candidates.join(','));
   const url=(location.protocol==='https:'?'wss://':'ws://')+location.host+'/api/voice/live?'+params;
   let socket,stream,context,source,processor,timer,ended=false,stopping=false,opened=false;
   let accumulated='',samples=[],sum=0,count=0,phase=0;

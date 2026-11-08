@@ -69,7 +69,7 @@ class Query(Strict):
  brand:str=Field(default='',max_length=80)
  location:str=Field(default='',max_length=50)
  query:str=Field(min_length=1,max_length=600)
- language:Literal['en-IN','hi-IN','hi-en']='en-IN'
+ language:Literal['en-IN','hi-IN','bn-IN','mr-IN','gu-IN','pa-IN','kn-IN','te-IN','ta-IN','ml-IN','hi-en']='en-IN'
 class Choose(Strict):
  collection:str=Field(default='',max_length=40)
  line:int=Field(ge=0,le=9)

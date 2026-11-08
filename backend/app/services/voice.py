@@ -2,6 +2,20 @@ import os,io,wave,json
 import httpx
 from fastapi import HTTPException
 
+STT_LANGUAGES = ('en-IN','hi-IN','bn-IN','mr-IN','gu-IN','pa-IN','kn-IN','te-IN','ta-IN','ml-IN')
+
+def parse_language_candidates(value):
+    """An optional list of 2–4 likely languages; no list means full auto-detection."""
+    if value is None or value == '':
+        return ()
+    if not isinstance(value,str) or len(value)>80:
+        raise HTTPException(422,'Choose 2–4 expected languages.')
+    codes=tuple(p.strip() for p in value.split(','))
+    if not 2<=len(codes)<=4 or len(set(codes))!=len(codes) or any(p not in STT_LANGUAGES for p in codes):
+        raise HTTPException(422,'Choose 2–4 distinct supported languages.')
+    return codes
+
+
 def ready():return os.getenv('GNANI_ENABLED')=='true' and bool(os.getenv('GNANI_API_KEY'))
 
 def validate_wav(data):
@@ -29,10 +43,13 @@ def stt_model():
         raise HTTPException(503,'Unsupported Gnani STT model configuration.')
     return value
 
-def _stt_options(language,output_style='transcribe',enhanced=True,keywords=None):
-    if language not in ('en-IN','hi-IN','hi-en','auto'):
+def _stt_options(language,output_style='transcribe',enhanced=True,keywords=None,language_candidates=None):
+    if language not in (*STT_LANGUAGES,'hi-en','auto'):
         raise HTTPException(422,'Language not enabled.')
     model=stt_model()
+    candidates=parse_language_candidates(language_candidates)
+    if candidates and (language!='auto' or not enhanced or model!='prisma-v3.0'):
+        raise HTTPException(422,'Language hints require Prisma V3 auto-detection.')
     if output_style not in ('verbatim','transcribe','codemix','transliterate'):
         raise HTTPException(422,'Unsupported transcript style.')
     if model!='prisma-v3.0':
@@ -44,8 +61,9 @@ def _stt_options(language,output_style='transcribe',enhanced=True,keywords=None)
     data={'model':model,'language_code':'indic-auto' if auto else language,
           'format':output_style}
     if auto and enhanced:
-        # Supported SDK field for selecting 2–4 likely languages, not a restriction.
-        data['multi_lang_codes']='hi-IN,en-IN'
+        # Auto mode without hints can detect every supported language.
+        selected=candidates or (('hi-IN','en-IN') if language=='hi-en' else ())
+        if selected:data['multi_lang_codes']=','.join(selected)
     if keywords:
         selected=[]
         for word in keywords:
@@ -59,9 +77,9 @@ def _stt_options(language,output_style='transcribe',enhanced=True,keywords=None)
     data['topic']='Warehouse inventory item names, brands, sizes, quantities and shelf locations.'
     return data,model
 
-async def transcribe_details(data,language,*,output_style='transcribe',enhanced=True,keywords=None):
+async def transcribe_details(data,language,*,output_style='transcribe',enhanced=True,keywords=None,language_candidates=None):
     validate_wav(data)
-    form,model=_stt_options(language,output_style,enhanced,keywords)
+    form,model=_stt_options(language,output_style,enhanced,keywords,language_candidates)
     response=await call('/stt/v3',files={'audio_file':('query.wav',data,'audio/wav')},data=form)
     try:
         payload=response.json()
@@ -72,19 +90,23 @@ async def transcribe_details(data,language,*,output_style='transcribe',enhanced=
         if payload.get('truncated') is True:
             raise HTTPException(502,'Gnani returned a truncated transcript. Record a shorter request.')
         detected=payload.get('detected_language_code')
-        if detected not in ('en-IN','hi-IN'):detected=None
+        if detected not in STT_LANGUAGES:detected=None
         search_language=(detected or 'hi-en') if language=='auto' else language
         return {'transcript':transcript.strip(),'model':model,'detected_language_code':detected,
                 'search_language':search_language,'output_style':output_style}
     except (ValueError,TypeError,KeyError):
         raise HTTPException(502,'Invalid transcription response.')
 
-async def transcribe(data,language,*,output_style='transcribe',enhanced=True,keywords=None):
+async def transcribe(data,language,*,output_style='transcribe',enhanced=True,keywords=None,language_candidates=None):
     return (await transcribe_details(data,language,output_style=output_style,
-                                    enhanced=enhanced,keywords=keywords))['transcript']
+                                    enhanced=enhanced,keywords=keywords,
+                                    language_candidates=language_candidates))['transcript']
 
 async def speak(text,language='en-IN'):
     voices={'en-IN':'Kaveri','hi-IN':'Nalini','hi-en':'Poorvi'}
+    if language in STT_LANGUAGES and language not in voices:
+        # STT recognises ten languages; the warehouse currently speaks English/Hindi.
+        language='en-IN'
     if language not in voices:raise HTTPException(422,'Language not enabled.')
     r=await call('/api/v1/tts/inference',json={'text':text,'model':'timbre-v2.5','voice':voices[language],'language':language,'audio_config':{'encoding':'linear_pcm','container':'wav','sample_rate':48000,'num_channels':1,'sample_width':2}})
     if not r.content.startswith(b'RIFF'):raise HTTPException(502,'Invalid speech audio response.')

@@ -23,7 +23,7 @@ from .warehouse import rows as warehouse_rows
 MAX_SECONDS = 28
 MAX_BYTES = 16000 * 2 * MAX_SECONDS
 FRAME_BYTES = 1024
-ALLOWED_LANGUAGES = {'en-IN', 'hi-IN', 'hi-en', 'auto'}
+ALLOWED_LANGUAGES = {*voice.STT_LANGUAGES, 'hi-en', 'auto'}
 ALLOWED_STYLES = {'verbatim', 'transcribe', 'codemix', 'transliterate'}
 ALLOWED_COLLECTIONS = {'all', 'clothing', 'footwear', 'appliances', 'home', 'grocery'}
 
@@ -74,10 +74,13 @@ def context_keywords(path, collection):
     return words
 
 
-def provider_headers(language, style, enhanced, keywords):
+def provider_headers(language, style, enhanced, keywords, language_candidates=None):
     if voice.stt_model() != 'prisma-v3.0':
         raise ValueError('Live streaming requires Prisma V3.0.')
     auto = language in ('auto', 'hi-en')
+    candidates=voice.parse_language_candidates(language_candidates)
+    if candidates and (language!='auto' or not enhanced):
+        raise ValueError('Language hints require auto-detection.')
     headers = {
         'x-api-key-id': os.environ['GNANI_API_KEY'],
         'lang_code': 'indic-auto' if auto else language,
@@ -87,7 +90,8 @@ def provider_headers(language, style, enhanced, keywords):
         'x-api-request-id': secrets.token_hex(12),
     }
     if auto and enhanced:
-        headers['x-language-candidates'] = 'hi-IN,en-IN'
+        selected=candidates or (('hi-IN','en-IN') if language=='hi-en' else ())
+        if selected:headers['x-language-candidates']=','.join(selected)
     if keywords:
         # WebSocket handshake headers have tighter proxy limits than REST bodies.
         # Keep the same verified names, but cap encoded keyword hints at ~3 KiB.
@@ -116,7 +120,12 @@ def install_streaming(app, path):
         style = p.get('style', 'transcribe')
         collection = p.get('collection', 'all')
         enhanced = p.get('enhanced', 'true') == 'true'
-        if language not in ALLOWED_LANGUAGES or style not in ALLOWED_STYLES or collection not in ALLOWED_COLLECTIONS:
+        candidates=p.get('candidates', '')
+        try:voice.parse_language_candidates(candidates)
+        except HTTPException:
+            await ws.close(code=1008)
+            return
+        if (candidates and (language!='auto' or not enhanced)) or language not in ALLOWED_LANGUAGES or style not in ALLOWED_STYLES or collection not in ALLOWED_COLLECTIONS:
             await ws.close(code=1008)
             return
         await ws.accept()
@@ -142,7 +151,7 @@ def install_streaming(app, path):
                             if len(text) > 5000:
                                 continue
                             texts.append(text.strip())
-                            if event.get('detected_language_code') in ('hi-IN', 'en-IN'):
+                            if event.get('detected_language_code') in voice.STT_LANGUAGES:
                                 detected = event['detected_language_code']
                             await ws.send_json({'type': 'segment', 'text': text.strip(),
                                                 'detected_language_code': detected})
@@ -158,7 +167,7 @@ def install_streaming(app, path):
 
         try:
             from websockets.asyncio.client import connect as upstream_connect
-            headers = provider_headers(language, style, enhanced, context_keywords(path, collection))
+            headers = provider_headers(language, style, enhanced, context_keywords(path, collection), candidates)
             async with asyncio.timeout(MAX_SECONDS + 15):
                 async with upstream_connect(
                     'wss://api.vachana.ai/stt/v3/stream',
