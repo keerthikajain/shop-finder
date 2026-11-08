@@ -50,7 +50,7 @@ export const warehouseHindi={
 'Ask the owner to add or import products and recorded locations.':'मालिक से उत्पाद और उनकी दर्ज जगहें जोड़ने या आयात करने को कहें।',
 'Explore your catalogue':'अपनी उत्पाद सूची देखें',
 'Get your catalogue ready':'अपनी उत्पाद सूची तैयार करें',
-'Live speech segments':'बोलते समय वॉइस ट्रांसक्रिप्ट'
+'Live speech segments':'बोलते समय वॉइस ट्रांसक्रिप्ट',
 
 'WELCOME TO YOUR WORKSPACE':'आपके कार्यक्षेत्र में स्वागत है',
 'BUSINESS SETTINGS':'व्यवसाय की सेटिंग्स',
