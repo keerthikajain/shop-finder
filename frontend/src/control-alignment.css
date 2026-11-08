@@ -353,3 +353,22 @@
     padding-right: 25px !important;
   }
 }
+/* Optional Prisma V3 language hints; collapsed by default. */
+.sf-compact-app.sf-find-page .sf-voice-hints{
+  border:1px solid var(--wh-border);border-radius:10px;
+  padding:10px 12px;margin-top:12px;background:var(--wh-surface);
+}
+.sf-compact-app.sf-find-page .sf-voice-hints summary{
+  cursor:pointer;color:var(--wh-text);font-size:12px;font-weight:600;
+}
+.sf-compact-app.sf-find-page .sf-voice-hints p{font-size:11px;margin:8px 0;color:var(--wh-muted)}
+.sf-compact-app.sf-find-page .sf-voice-hint-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin:12px 0 4px;
+}
+.sf-compact-app.sf-find-page .sf-voice-hint-grid label{
+  display:flex;align-items:center;gap:9px;color:var(--wh-text);font-size:12px;min-width:0;
+}
+.sf-compact-app.sf-find-page .sf-voice-hint-grid input{
+  flex:0 0 16px;width:16px;min-width:16px;min-height:16px;height:16px;margin:0;accent-color:var(--wh-accent);
+}
+.sf-compact-app.sf-find-page .sf-voice-hints .sf-voice-hint-error{color:#a42c44;font-weight:600}

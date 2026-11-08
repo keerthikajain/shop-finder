@@ -245,3 +245,17 @@ test('report supports optional shelf voice transcription without changing record
   assert.match(source,/type="button" className=\{'wh-voice '/);
   assert.match(css,/\.sf-report-location-field > \.wh-voice\.icon-only/);
 });
+
+test('Prisma V3 offers ten selectable recognition languages and optional hints',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const recording=await readFile(new URL('../src/recording.js',import.meta.url),'utf8');
+ assert.match(src,/const VOICE_INPUT_LANGUAGES=\[/);
+ for(const code of ['en-IN','hi-IN','kn-IN','ta-IN','te-IN','ml-IN','mr-IN','bn-IN','gu-IN','pa-IN']){
+  assert.ok(src.includes("['"+code+"'"),code);
+ }
+ assert.match(src,/Auto-detect \(10 languages\)/);
+ assert.match(src,/candidates=\{language==='auto'\?hintLanguages:\[\]\}/);
+ assert.match(src,/candidates\.join\(','\)/);
+ assert.match(recording,/params\.set\('candidates',candidates\.join\(','\)\)/);
+ assert.match(src,/hintLanguages\.length>=4/);
+});

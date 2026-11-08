@@ -93,7 +93,7 @@ def test_streaming_header_options_and_invalid_frame(signed_in,monkeypatch):
         return Provider()
     monkeypatch.setattr(clientlib,'connect',fake_connect)
     with signed_in.websocket_connect(
-        '/api/voice/live?language=auto&style=transcribe&enhanced=true&collection=grocery',
+        '/api/voice/live?language=auto&style=transcribe&enhanced=true&collection=grocery&candidates=hi-IN,en-IN',
         headers={'origin':'http://testserver'}
     ) as ws:
         assert ws.receive_json()=={'type':'ready'}
@@ -144,3 +144,15 @@ def test_live_stream_segment_and_completion(signed_in,monkeypatch):
         assert done['search_language']=='hi-IN'
     assert len(connections[0].sent)>=33
     assert all(len(frame)==FRAME_BYTES for frame in connections[0].sent)
+
+def test_live_supported_languages_and_optional_hint_validation(monkeypatch):
+ monkeypatch.setenv('GNANI_STT_MODEL','prisma-v3.0')
+ monkeypatch.setenv('GNANI_API_KEY','test-not-a-secret')
+ for language in voice.STT_LANGUAGES:
+  headers=provider_headers(language,'transcribe',True,[])
+  assert headers['lang_code']==language
+ assert provider_headers('auto','transcribe',True,[])['lang_code']=='indic-auto'
+ assert 'x-language-candidates' not in provider_headers('auto','transcribe',True,[])
+ h=provider_headers('auto','transcribe',True,[],'ta-IN,kn-IN,en-IN')
+ assert h['x-language-candidates']=='ta-IN,kn-IN,en-IN'
+ with pytest.raises(ValueError):provider_headers('ta-IN','transcribe',True,[],'ta-IN,en-IN')

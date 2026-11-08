@@ -107,7 +107,7 @@ def test_prisma_v3_auto_detect_and_codestyle_contract(client,monkeypatch):
  form=calls[0]['data']
  assert form['model']=='prisma-v3.0'
  assert form['language_code']=='indic-auto'
- assert form['format']=='codemix' and form['multi_lang_codes']=='hi-IN,en-IN'
+ assert form['format']=='codemix' and 'multi_lang_codes' not in form
  assert 'topic' in form
 
 def test_prisma_v3_hints_are_bounded_and_styles_validated():
@@ -136,3 +136,32 @@ def test_v3_truncated_audio_is_rejected(monkeypatch):
  monkeypatch.setattr(voice,'call',fake)
  with pytest.raises(Exception) as e:asyncio.run(voice.transcribe(wav(),'hi-IN'))
  assert e.value.status_code==502
+
+@pytest.mark.parametrize('code',voice.STT_LANGUAGES)
+def test_prisma_v3_accepts_all_ten_spoken_input_languages(monkeypatch,code):
+ monkeypatch.setenv('GNANI_STT_MODEL','prisma-v3.0')
+ form,model=voice._stt_options(code)
+ assert model=='prisma-v3.0' and form['language_code']==code
+ assert 'multi_lang_codes' not in form
+
+def test_prisma_v3_optional_two_to_four_detection_hints_are_validated(monkeypatch):
+ monkeypatch.setenv('GNANI_STT_MODEL','prisma-v3.0')
+ form,_=voice._stt_options('auto',language_candidates='kn-IN,en-IN,hi-IN')
+ assert form['language_code']=='indic-auto'
+ assert form['multi_lang_codes']=='kn-IN,en-IN,hi-IN'
+ for value in ('hi-IN','xx-IN,en-IN','hi-IN,hi-IN','hi-IN,en-IN,kn-IN,ta-IN,mr-IN'):
+  with pytest.raises(Exception) as error:voice._stt_options('auto',language_candidates=value)
+  assert error.value.status_code==422
+ with pytest.raises(Exception) as error:voice._stt_options('kn-IN',language_candidates='kn-IN,en-IN')
+ assert error.value.status_code==422
+
+def test_auto_detection_keeps_kannada_code_and_warehouse_accepts_native_alias(client,monkeypatch):
+ async def fake(endpoint,**kwargs):
+  return httpx.Response(200,json={'success':True,'transcript':'ಮಿಕ್ಸರ್','model':'prisma-v3.0','detected_language_code':'kn-IN'})
+ monkeypatch.setattr(voice,'call',fake)
+ response=client.post('/api/voice/transcribe?language=auto&candidates=kn-IN,en-IN',headers=H,content=wav())
+ assert response.status_code==200,response.text
+ assert response.json()['detected_language_code']=='kn-IN'
+ assert response.json()['search_language']=='kn-IN'
+ assert client.post('/api/warehouse/search',json={'query':'nonexistent product','collection':'all','language':'kn-IN'},headers=H).status_code==200
+ assert client.post('/api/voice/transcribe?language=auto&candidates=kn-IN',headers=H,content=wav()).status_code==422

@@ -132,8 +132,9 @@ def install(app,path,SearchRequest,Constraints):
         return {'status':'resolved'}
 
     @app.post('/api/voice/transcribe',dependencies=[Depends(staff)])
-    async def transcribe(request:Request,language:str='en-IN',style:str='transcribe',enhanced:bool=True,collection:str='all'):
-        if language not in (*LANGUAGES,'auto'):raise HTTPException(422,'Language not enabled.')
+    async def transcribe(request:Request,language:str='en-IN',style:str='transcribe',enhanced:bool=True,collection:str='all',candidates:str=''):
+        if language not in (*voice.STT_LANGUAGES,'hi-en','auto'):raise HTTPException(422,'Language not enabled.')
+        voice.parse_language_candidates(candidates)
         if style not in ('verbatim','transcribe','codemix','transliterate'):
             raise HTTPException(422,'Transcript style not supported.')
         if collection not in ('all','clothing','footwear','appliances','home','grocery'):
@@ -157,7 +158,7 @@ def install(app,path,SearchRequest,Constraints):
                 if len(keywords)>=80:break
         started=time.perf_counter()
         result=await voice.transcribe_details(bytes(data),language,output_style=style,
-                                               enhanced=enhanced,keywords=keywords)
+                                               enhanced=enhanced,keywords=keywords,language_candidates=candidates)
         return {**result,'provider':'Gnani '+('Prisma V3.0' if result['model']=='prisma-v3.0' else 'Prisma V2.5'),
                 'language':language,'stt_ms':round((time.perf_counter()-started)*1000,2),
                 'experimental':language in ('hi-en','auto')}
