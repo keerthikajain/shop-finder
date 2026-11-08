@@ -43,6 +43,8 @@ RATE_RULES=(
  ('/api/reports',60),
 )
 def rate_bucket(route):
+ if route.endswith('/speak'):
+  return '/api/voice/speak',20
  for prefix,limit in RATE_RULES:
   if route.startswith(prefix):
    return prefix,limit
