@@ -1,0 +1,185 @@
+/* Final control alignment for the existing authenticated Shop Finder UI.
+   Keep this file after selected-design.css: no React logic or API changes. */
+
+/* Settings: language and appearance controls share one predictable footprint. */
+.sf-compact-app .sf-settings-page .sf-settings-preferences .sf-more-preference-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sf-compact-app .sf-settings-page .sf-settings-preferences .sf-more-preference-row > label,
+.sf-compact-app .sf-settings-page .sf-settings-preferences .sf-more-preference-row > span {
+  min-width: 0;
+}
+
+.sf-compact-app .sf-settings-page .sf-settings-preferences .sf-more-preference-row > select,
+.sf-compact-app .sf-settings-page .sf-settings-preferences .sf-more-preference-row > button {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 180px;
+  min-width: 0;
+  max-width: 100%;
+  height: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid var(--wh-border);
+  border-radius: 10px;
+  background: var(--wh-surface);
+  color: var(--wh-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sf-compact-app .sf-settings-page .sf-settings-preferences .sf-more-preference-row > button {
+  cursor: pointer;
+}
+
+.sf-compact-app .sf-settings-page .sf-settings-preferences .sf-more-preference-row > button:hover {
+  border-color: var(--wh-accent);
+  background: var(--wh-soft);
+}
+
+.sf-compact-app .sf-settings-page .sf-settings-preferences .sf-more-preference-row > button svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.sf-compact-app .sf-settings-page .sf-settings-preferences .sf-more-preference-row > :is(select, button):focus-visible {
+  outline: 2px solid var(--wh-accent);
+  outline-offset: 2px;
+}
+
+/* Find: keep voice-language choice compact; don't reserve a full button's width. */
+.sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice-lang {
+  box-sizing: border-box;
+  flex: 0 0 126px;
+  width: 126px;
+  min-width: 0;
+  max-width: 126px;
+  margin: 0;
+}
+
+.sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice-lang > select {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 25px 0 9px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid var(--wh-border) !important;
+  border-radius: 9px !important;
+  background: var(--wh-surface) !important;
+  color: var(--wh-text);
+  font-size: 12px !important;
+}
+
+/* Mobile: input + mic on row one; language + Find on row two.
+   Native select stays a usable touch target without spanning the page. */
+@media (max-width: 700px) {
+  .sf-compact-app.sf-find-page .wh-ask form {
+    display: grid;
+    grid-template-columns: minmax(0, 120px) minmax(0, 1fr) 50px;
+    gap: 9px;
+    align-items: stretch;
+    min-width: 0;
+  }
+
+  .sf-compact-app.sf-find-page .wh-ask #wh-query {
+    grid-column: 1 / 3;
+    grid-row: 1;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .sf-compact-app.sf-find-page .wh-composer-actions {
+    display: contents;
+  }
+
+  .sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice {
+    grid-column: 3;
+    grid-row: 1;
+    width: 50px;
+    min-width: 0;
+    height: 46px;
+    min-height: 46px !important;
+    margin: 0;
+  }
+
+  .sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice-lang {
+    display: block;
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: stretch;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    margin: 0;
+  }
+
+  .sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice-lang > select {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 46px;
+    min-height: 46px;
+  }
+
+  .sf-compact-app.sf-find-page .wh-composer-actions > .wh-search-submit {
+    grid-column: 2 / 4;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    height: 46px;
+    margin: 0;
+  }
+}
+
+/* Smaller screens: keep both Settings actions full width rather than wrapping
+   into mismatched button and dropdown sizes. */
+@media (max-width: 480px) {
+  .sf-compact-app .sf-settings-page .sf-settings-preferences .sf-more-preference-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 9px;
+  }
+
+  .sf-compact-app .sf-settings-page .sf-settings-preferences .sf-more-preference-row > select,
+  .sf-compact-app .sf-settings-page .sf-settings-preferences .sf-more-preference-row > button {
+    width: 100%;
+    max-width: 100%;
+    min-height: 46px;
+    height: 46px;
+  }
+}
+
+@media (max-width: 350px) {
+  .sf-compact-app.sf-find-page .wh-ask form {
+    grid-template-columns: minmax(0, 108px) minmax(0, 1fr) 46px;
+    column-gap: 7px;
+  }
+
+  .sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice {
+    width: 46px;
+  }
+
+  .sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice-lang > select {
+    padding-left: 7px;
+    padding-right: 20px;
+    font-size: 11px !important;
+  }
+}
