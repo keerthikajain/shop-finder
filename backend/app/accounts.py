@@ -191,7 +191,12 @@ def install_accounts(app,path,required=True):
   with connect(path) as c:
    c.execute('DELETE FROM login_attempts WHERE at<?',(now-900,))
    for bucket in buckets:
-    if c.execute('SELECT count(*) FROM login_attempts WHERE bucket=?',(bucket,)).fetchone()[0]>=10:raise HTTPException(429,'Too many attempts. Try again in 15 minutes.')
+    # A shared reverse-proxy IP can represent multiple real staff users.
+    # Keep the per-username limit strict without making ten mistakes
+    # against random accounts lock out an entire warehouse.
+    limit=10 if bucket.startswith('user:') else 100
+    if c.execute('SELECT count(*) FROM login_attempts WHERE bucket=?',(bucket,)).fetchone()[0]>=limit:
+     raise HTTPException(429,'Too many attempts. Try again in 15 minutes.')
    row=c.execute('SELECT * FROM accounts WHERE username=?',(name,)).fetchone()
   valid=check_password(body.password,row['password_hash'] if row else dummy)
   if not row or not row['active'] or not valid:
