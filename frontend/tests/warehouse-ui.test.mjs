@@ -183,12 +183,14 @@ test('item editor and spreadsheet importer expose the multilingual alias workflo
  assert.match(source,/separate with \|/);
 });
 
-test('Prisma V3 speech choices include server-controlled auto language and transcript styles',async()=>{
+test('Prisma V3 keeps automatic recognition settings behind a simple staff interface',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/value="auto">Auto-detect/);
- assert.match(src,/value="codemix"/);
- assert.match(src,/value="transliterate"/);
- assert.match(src,/sf-enhanced-detection/);
+ assert.match(src,/style="transcribe"/);
+ assert.match(src,/enhanced=\{prismaV3\}/);
+ assert.doesNotMatch(src,/t\('Transcript style'\)/);
+ assert.doesNotMatch(src,/t\('Gnani Prisma V3/);
+ assert.doesNotMatch(src,/transcriptStyle,TS/);
  assert.match(src,/URLSearchParams\(\{language,style,enhanced:String\(enhanced\),collection\}\)/);
  assert.match(src,/onText\(r\.transcript,r\.search_language,r\)/);
  assert.match(src,/language:language==='auto'\?\(detectedSearchLanguage\|\|'hi-en'\):language/);
