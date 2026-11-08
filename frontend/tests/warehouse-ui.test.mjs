@@ -160,7 +160,7 @@ test('production workspace chrome avoids status placeholders and broken account 
 test('empty fresh catalogue offers a real owner import route',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/!items\.length&&<div className="wh-panel">/);
- assert.match(src,/t\('Your catalogue starts here\.'\)/);
+ assert.match(src,/t\('Start building your catalogue\.'\)/);
  assert.match(src,/onClick=\{\(\)=>navigate\('import'\)\}/);
 });
 
