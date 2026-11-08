@@ -34,7 +34,7 @@ def register(c,code,username,**additional):
 
 def test_public_signup_requires_owner_enabled_code_and_approval(env):
     c,db=env
-    assert c.post('/api/auth/register',headers=HEAD,json={'code':'SF-INVALIDCODE','username':'a','password':PASSWORD,'display_name':'A'}).status_code==400
+    assert c.post('/api/auth/register',headers=HEAD,json={'code':'SF-'+('x'*32),'username':'a','password':PASSWORD,'display_name':'A'}).status_code==400
     assert login(c).status_code==200
     code=setup_code(c)
     settings=c.get('/api/registrations/workspace-code').json()
@@ -42,7 +42,7 @@ def test_public_signup_requires_owner_enabled_code_and_approval(env):
     with connect(db) as d:
         assert d.execute('SELECT code_digest FROM registration_workspace WHERE id=1').fetchone()[0]!=code
     c.post('/api/auth/logout',headers=HEAD)
-    wrong=register(c,'SF-WRONGCODE123','newhire')
+    wrong=register(c,'SF-'+('x'*32),'newhire')
     assert wrong.status_code==400
     p=register(c,code,'newhire')
     assert p.status_code==201,p.text
@@ -156,8 +156,8 @@ def test_staff_cannot_view_pending_or_rotate_code_and_registration_is_limited(en
     assert c.patch('/api/registrations/workspace-code',headers=HEAD,json={'enabled':True}).status_code==403
     c.post('/api/auth/logout',headers=HEAD)
     for i in range(20):
-        assert register(c,'SF-INVALIDCODE','spam'+str(i)).status_code==400
-    assert register(c,'SF-INVALIDCODE','spamoverflow').status_code==429
+        assert register(c,'SF-'+('x'*32),'spam'+str(i)).status_code==400
+    assert register(c,'SF-'+('x'*32),'spamoverflow').status_code==429
 
 def test_registration_config_is_private_and_request_origin_checked(env):
     c,db=env
