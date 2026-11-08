@@ -29,10 +29,10 @@ export function Login({ready,configured,language,L,error,busy,onSubmit}){
    </section>
    <section className="glass login-card">
     <span className="sf-login-kicker">{t('Welcome back')}</span>
-    <h1>{t('Sign in to Shopfinder')}</h1>
+    <h1>{t('Sign in to Shop Finder')}</h1>
     <p>{t('Use your team account to continue.')}</p>
     <label className="sf-login-language">{t('App language')}<select value={language} onChange={e=>L(e.target.value)}><option value="en">English</option><option value="hi">हिन्दी</option></select></label>
-    {!ready?<p role="status">{t('Loading…')}</p>:!configured?<p role="status">{t('Run scripts/start_local.py in the terminal to create the first owner account.')}</p>:<form onSubmit={onSubmit} aria-busy={busy}>
+    {!ready?<p role="status">{t('Loading…')}</p>:!configured?<p role="status">{t('This workspace is not set up yet. Ask the installer to create the first owner account.')}</p>:<form onSubmit={onSubmit} aria-busy={busy}>
      <label>{t('Username')}<input name="username" autoComplete="username" placeholder={t('Enter username')} required maxLength={80}/></label>
      <label htmlFor="login-password">{t('Password')}</label>
      <div className="sf-password-field"><input id="login-password" name="password" type={showPassword?'text':'password'} autoComplete="current-password" placeholder={t('Enter password')} required maxLength={128}/><button type="button" aria-controls="login-password" aria-label={t(showPassword?'Hide password':'Show password')} aria-pressed={showPassword} onClick={()=>setShowPassword(!showPassword)}>{t(showPassword?'Hide':'Show')}</button></div>

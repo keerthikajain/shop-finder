@@ -1,0 +1,83 @@
+/* Business settings: optional configuration belongs to the same card family as
+   product types and location labels. All rules are scoped to the setup form. */
+.sf-compact-app .sf-business .sf-advanced-settings{
+  box-sizing:border-box;
+  margin:20px 0 0;
+  padding:0;
+  overflow:hidden;
+  border:1px solid var(--wh-border);
+  border-radius:14px;
+  background:var(--wh-surface);
+  box-shadow:none;
+}
+.sf-compact-app .sf-business .sf-advanced-settings>summary{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+  padding:17px 19px;
+  cursor:pointer;
+  list-style:none;
+  color:var(--wh-text);
+  background:var(--wh-input);
+}
+.sf-compact-app .sf-business .sf-advanced-settings>summary::-webkit-details-marker{display:none}
+.sf-compact-app .sf-business .sf-advanced-settings>summary>span{display:grid;gap:4px;min-width:0}
+.sf-compact-app .sf-business .sf-advanced-settings>summary strong{
+  font-size:15px;
+  line-height:1.4;
+  font-weight:700;
+}
+.sf-compact-app .sf-business .sf-advanced-settings>summary small{
+  font-size:12px;
+  line-height:1.5;
+  font-weight:400;
+  color:var(--wh-muted);
+}
+.sf-compact-app .sf-business .sf-advanced-settings>summary svg{
+  flex:0 0 20px;
+  width:20px;
+  height:20px;
+  color:var(--wh-accent);
+  transition:transform .15s ease;
+}
+.sf-compact-app .sf-business .sf-advanced-settings[open]>summary svg{transform:rotate(90deg)}
+.sf-compact-app .sf-business .sf-advanced-settings>summary:hover{background:var(--wh-soft)}
+.sf-compact-app .sf-business .sf-advanced-settings>summary:focus-visible{
+  outline:2px solid var(--wh-accent);
+  outline-offset:-3px;
+}
+.sf-compact-app .sf-business .sf-advanced-body{
+  padding:16px 19px 20px;
+  border-top:1px solid var(--wh-border);
+}
+.sf-compact-app .sf-business .sf-advanced-body>p{
+  margin:0 0 14px;
+  font-size:12px;
+  line-height:1.6;
+  color:var(--wh-muted);
+}
+.sf-compact-app .sf-business .sf-advanced-body .wh-form-grid{
+  margin:0 0 16px;
+}
+.sf-compact-app .sf-business .sf-advanced-body .sf-permission{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin:14px 0 10px;
+  font-size:12px;
+  line-height:1.5;
+}
+.sf-compact-app .sf-business .sf-advanced-body .sf-permission input{
+  flex:0 0 auto;
+  margin-top:2px;
+}
+@media(max-width:650px){
+  .sf-compact-app .sf-business .sf-advanced-settings>summary{padding:14px}
+  .sf-compact-app .sf-business .sf-advanced-settings>summary strong{font-size:14px}
+  .sf-compact-app .sf-business .sf-advanced-body{padding:14px}
+  .sf-compact-app .sf-business .sf-advanced-body .wh-form-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media(prefers-reduced-motion:reduce){
+  .sf-compact-app .sf-business .sf-advanced-settings>summary svg{transition:none}
+}
