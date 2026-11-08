@@ -21,6 +21,9 @@ def initialize_accounts(path):
   c.execute('CREATE TABLE IF NOT EXISTS api_rate_limits(bucket TEXT NOT NULL,at REAL NOT NULL)')
   c.execute('CREATE INDEX IF NOT EXISTS api_rate_bucket_time ON api_rate_limits(bucket,at)')
   c.execute('CREATE INDEX IF NOT EXISTS login_attempt_bucket_time ON login_attempts(bucket,at)')
+  # Existing accounts remain approved; public registrations start pending.
+  from .registrations import migrate_registrations
+  migrate_registrations(c)
   c.execute("""CREATE TABLE IF NOT EXISTS staff_invitations(
      id TEXT PRIMARY KEY,code_digest TEXT UNIQUE NOT NULL,
      created_by TEXT NOT NULL REFERENCES accounts(id),
@@ -70,6 +73,7 @@ RATE_RULES=(
  ('/api/warehouse/settings',30),
  ('/api/auth/profile',30),
  ('/api/users',30),
+ ('/api/registrations/',30),
  ('/api/auth/password',20),
  ('/api/media',20),
  ('/api/warehouse/issues',60),
@@ -138,14 +142,18 @@ def origin_valid(request):
   except ValueError:return False
  if request.headers.get('sec-fetch-site','').lower()=='cross-site':return False
  return True
-def public(row):return {k:row[k] for k in ['id','username','role','language','tour_done','active','display_name','phone','staff_code']}
+def public(row):
+ result={k:row[k] for k in ['id','username','role','language','tour_done','active','display_name','phone','staff_code']}
+ result['role']='manager' if row['role']=='staff' and row['access_level']=='manager' else row['role']
+ result['approval_status']=row['approval_status']
+ return result
 
 class Login(BaseModel):
  model_config=ConfigDict(extra='forbid')
  username:str=Field(min_length=1,max_length=80,pattern=r'^[A-Za-z0-9_.-]+$')
  password:str=Field(min_length=1,max_length=128)
 class SignIn(Login):
- role:Literal['owner','staff']|None=None
+ role:Literal['owner','manager','staff']|None=None
 
 class NewAccount(Login):
  password:str=Field(min_length=12,max_length=128)
@@ -181,7 +189,7 @@ def install_accounts(app,path,required=True):
  def current(request):
   token=request.cookies.get(COOKIE,'')
   with connect(path) as c:
-   row=c.execute('SELECT a.* FROM accounts a JOIN account_sessions s ON a.id=s.user_id WHERE s.digest=? AND s.expires>? AND a.active=1',(digest(token),time.time())).fetchone()
+   row=c.execute('SELECT a.* FROM accounts a JOIN account_sessions s ON a.id=s.user_id WHERE s.digest=? AND s.expires>? AND a.active=1 AND a.approval_status='approved'',(digest(token),time.time())).fetchone()
   return public(row) if row else None
  @app.middleware('http')
  async def protect(request,call_next):
@@ -192,7 +200,7 @@ def install_accounts(app,path,required=True):
     if request.headers.get('X-Shop-Request')!='1' or not origin_valid(request):
      return apply_security_headers(JSONResponse({'detail':'Request origin or header not allowed.'},403),request)
    user=current(request);request.state.user=user
-   if request.url.path not in ('/api/health','/api/auth/login','/api/auth/status','/api/auth/join','/api/auth/logout'):
+   if request.url.path not in ('/api/health','/api/auth/login','/api/auth/status','/api/auth/join','/api/auth/register','/api/auth/logout'):
     if not user:
      return apply_security_headers(JSONResponse({'detail':'Please log in.'},401),request)
     route=request.url.path
@@ -230,9 +238,11 @@ def install_accounts(app,path,required=True):
      raise HTTPException(429,'Too many attempts. Try again in 15 minutes.')
    row=c.execute('SELECT * FROM accounts WHERE username=?',(name,)).fetchone()
   valid=check_password(body.password,row['password_hash'] if row else dummy)
-  if not row or not row['active'] or not valid or (body.role is not None and row['role']!=body.role):
+  if not row or not row['active'] or not valid or (body.role is not None and public(row)['role']!=body.role):
    with connect(path) as c:c.executemany('INSERT INTO login_attempts VALUES (?,?)',[(b,now) for b in buckets])
    raise HTTPException(401,'Incorrect username or password.')
+  if row['approval_status']!='approved':
+   raise HTTPException(403,'Account awaiting approval or unavailable. Contact your workspace administrator.')
   token=secrets.token_urlsafe(32)
   with connect(path) as c:
    c.execute('DELETE FROM account_sessions WHERE expires<? OR digest=?',(now,digest(request.cookies.get(COOKIE,''))))
@@ -305,6 +315,7 @@ def install_accounts(app,path,required=True):
    row=c.execute('SELECT * FROM accounts WHERE id=?',(uid,)).fetchone()
    if not row:raise HTTPException(404,'Unknown account.')
    if row['role']!='staff':raise HTTPException(403,'Only staff accounts can be managed here.')
+   if body.active and row['approval_status']!='approved':raise HTTPException(409,'Review the pending registration before enabling access.')
    if body.active is not None:c.execute('UPDATE accounts SET active=? WHERE id=?',(int(body.active),uid))
    if body.password:c.execute('UPDATE accounts SET password_hash=? WHERE id=?',(hash_password(body.password),uid))
    c.execute('DELETE FROM account_sessions WHERE user_id=?',(uid,))
@@ -348,3 +359,7 @@ def install_accounts(app,path,required=True):
   with connect(path) as c:
    records=c.execute('SELECT action,at,actor_id,subject_id FROM account_events ORDER BY id DESC LIMIT 100').fetchall()
   return [dict(x) for x in records]
+
+ # Registration review routes enforce owner/manager access individually.
+ from .registrations import install_registration_routes
+ install_registration_routes(app,path)
