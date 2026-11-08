@@ -137,7 +137,9 @@ def install_streaming(app, path):
                                             'message': 'Gnani streaming could not transcribe. Use recorded voice or text search.'})
                         closed = True
                         return
-            except (WebSocketDisconnect, RuntimeError, OSError, ValueError, json.JSONDecodeError):
+            except Exception:
+                # Provider disconnects, invalid event frames or browser closure
+                # must not surface credentials or crash the live session.
                 closed = True
 
         try:
