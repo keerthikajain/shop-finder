@@ -1,4 +1,5 @@
 import json
+import os
 import sqlite3
 from pathlib import Path
 from contextlib import contextmanager
@@ -23,8 +24,11 @@ def connect(path):
         conn.close()
 
 def initialize(path):
-    Path(path).parent.mkdir(parents=True, exist_ok=True)
-    with connect(path) as conn:
+    # On Unix, prevent other local system users from reading inventory or login data.
+    # Do not change the public access permissions of an unrelated parent folder.
+    db_path = Path(path)
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    with connect(db_path) as conn:
         conn.execute("""CREATE TABLE IF NOT EXISTS products (
             id TEXT PRIMARY KEY, category TEXT NOT NULL,
             synthetic INTEGER NOT NULL CHECK(synthetic IN (0,1)),
@@ -44,6 +48,8 @@ def initialize(path):
             staff_id TEXT NOT NULL, action TEXT NOT NULL, evidence_json TEXT NOT NULL,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         )""")
+    if os.name == 'posix':
+        os.chmod(db_path, 0o600)
 
 def seed(path, source=SEED):
     # Validate the complete input before touching SQLite; duplicate IDs are errors.
