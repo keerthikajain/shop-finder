@@ -41,7 +41,7 @@ def create_app(db_path=None, seed_demo=None, *, auth_required=True):
         if demo:
             seed(path)
         yield
-    app = FastAPI(title='Shop Finder — warehouse voice workspace', version='1.0.0', lifespan=lifespan,docs_url=None,redoc_url=None,openapi_url=None)
+    app = FastAPI(title='Shop Finder — warehouse voice workspace', version='1.0.0', lifespan=lifespan,docs_url=None,redoc_url=None,openapi_url=None,debug=False)
     install_accounts(app,path,auth_required)
     install_streaming(app,path)
     install_reports(app,path)
