@@ -38,6 +38,8 @@ RATE_RULES=(
  ('/api/warehouse/search',120),
  ('/api/search',120),
  ('/api/warehouse/imports',12),
+ ('/api/warehouse/stock/',120),
+ ('/api/auth/password',20),
  ('/api/media',20),
  ('/api/warehouse/issues',60),
  ('/api/reports',60),
@@ -68,6 +70,8 @@ SECURITY_HEADERS={
  'X-Content-Type-Options':'nosniff',
  'X-Frame-Options':'DENY',
  'Referrer-Policy':'same-origin',
+ 'Cross-Origin-Resource-Policy':'same-origin',
+ 'X-Permitted-Cross-Domain-Policies':'none',
  'Permissions-Policy':'camera=(self), microphone=(self), geolocation=()',
  'Content-Security-Policy':("default-src 'self'; base-uri 'none'; object-src 'none'; "
   "frame-ancestors 'none'; form-action 'self'; script-src 'self'; "
@@ -78,9 +82,21 @@ SECURITY_HEADERS={
 def apply_security_headers(response,request):
  for key,value in SECURITY_HEADERS.items():response.headers[key]=value
  if request.url.path.startswith('/api/'):response.headers['Cache-Control']='no-store'
- if request.url.scheme=='https':
+ if request.url.scheme=='https' or os.getenv('SHOP_FINDER_SECURE_COOKIE')=='true':
   response.headers['Strict-Transport-Security']='max-age=31536000'
  return response
+
+def body_within_limit(request):
+ value=request.headers.get('content-length')
+ if value is None:return True
+ try:
+  size=int(value)
+ except ValueError:return False
+ route=request.url.path
+ limit=(6_000_000 if route=='/api/voice/transcribe' else
+        4_000_000 if route=='/api/warehouse/imports' else
+        3_000_000 if route=='/api/media' else 1_000_000)
+ return 0<=size<=limit
 
 def origin_valid(request):
  origin=request.headers.get('origin')
@@ -134,6 +150,8 @@ def install_accounts(app,path,required=True):
  @app.middleware('http')
  async def protect(request,call_next):
   if required and request.url.path.startswith('/api/'):
+   if request.method not in ('GET','HEAD','OPTIONS') and not body_within_limit(request):
+    return apply_security_headers(JSONResponse({'detail':'Request body exceeds its limit or has an invalid size.'},413),request)
    if request.method not in ('GET','HEAD','OPTIONS'):
     if request.headers.get('X-Shop-Request')!='1' or not origin_valid(request):
      return apply_security_headers(JSONResponse({'detail':'Request origin or header not allowed.'},403),request)
