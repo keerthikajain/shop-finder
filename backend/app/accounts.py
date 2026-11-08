@@ -189,7 +189,7 @@ def install_accounts(app,path,required=True):
  def current(request):
   token=request.cookies.get(COOKIE,'')
   with connect(path) as c:
-   row=c.execute('SELECT a.* FROM accounts a JOIN account_sessions s ON a.id=s.user_id WHERE s.digest=? AND s.expires>? AND a.active=1 AND a.approval_status='approved'',(digest(token),time.time())).fetchone()
+   row=c.execute('SELECT a.* FROM accounts a JOIN account_sessions s ON a.id=s.user_id WHERE s.digest=? AND s.expires>? AND a.active=1 AND a.approval_status=?',(digest(token),time.time(),'approved')).fetchone()
   return public(row) if row else None
  @app.middleware('http')
  async def protect(request,call_next):
