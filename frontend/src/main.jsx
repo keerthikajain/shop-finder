@@ -4,6 +4,7 @@ import './style.css';
 import './theme.css';
 import WarehouseApp from './warehouse.jsx';
 import './selected-design.css';
+import './control-alignment.css';
 import {startRecording} from './recording.js';
 import {TestLog} from './test-log.jsx';
 import {getThemePreference, resolveTheme} from './theme.js';
