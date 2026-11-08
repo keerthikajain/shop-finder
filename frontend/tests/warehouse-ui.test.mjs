@@ -221,3 +221,27 @@ test('empty catalogue search clearly explains that import requires confirmation'
  assert.match(src,/Go to Import items/);
  assert.match(src,/task\.lines\.filter\(l=>!l\.selected&&!l\.candidates\.length\)\.length/);
 });
+
+test('worklist sort dropdown stays readable beside Read answer',async()=>{
+  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+  const css=await readFile(new URL('../src/control-alignment.css',import.meta.url),'utf8');
+  assert.match(source,/className="wh-toolbar sf-worklist-controls"/);
+  assert.match(source,/className="sf-worklist-order"/);
+  assert.match(css,/\.sf-worklist-controls > \.sf-worklist-order\s*\{/);
+  assert.match(css,/padding: 0 28px 0 12px !important/);
+  assert.match(css,/height: 42px !important/);
+  assert.match(css,/@media \(max-width: 480px\)/);
+});
+
+test('report supports optional shelf voice transcription without changing recorded location',async()=>{
+  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+  const css=await readFile(new URL('../src/control-alignment.css',import.meta.url),'utf8');
+  assert.match(source,/className="sf-report-location-field"/);
+  assert.match(source,/VoiceButton iconOnly small enabled=\{voice&&!busy\}/);
+  assert.match(source,/label="Dictate suggested shelf location"/);
+  assert.match(source,/S\(text.trim\(\).slice\(0,200\)\)/);
+  assert.match(source,/suggested_location:suggested/);
+  assert.match(source,/kind:location\?'wrong_location':'general'/);
+  assert.match(source,/type="button" className=\{'wh-voice '/);
+  assert.match(css,/\.sf-report-location-field > \.wh-voice\.icon-only/);
+});

@@ -229,3 +229,127 @@
     right: 10px;
   }
 }
+
+/* Worklist actions: the inherited 10px vertical select padding did not fit
+   the old 32px height, clipping “Request order” on desktop. */
+.sf-compact-app.sf-find-page .wh-results .wh-section-title .sf-worklist-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+.sf-compact-app.sf-find-page .wh-results .wh-section-title .sf-worklist-controls > .sf-worklist-order {
+  box-sizing: border-box;
+  flex: 0 0 158px;
+  width: 158px;
+  min-width: 0;
+  max-width: 100%;
+  height: 42px !important;
+  min-height: 42px !important;
+  margin: 0 !important;
+  padding: 0 28px 0 12px !important;
+  line-height: normal;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--wh-surface);
+  border: 1px solid var(--wh-border);
+  border-radius: 9px !important;
+  color: var(--wh-text);
+  white-space: nowrap;
+}
+.sf-compact-app.sf-find-page .wh-results .wh-section-title .sf-worklist-controls > button {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  gap: 7px;
+  min-height: 42px !important;
+  height: 42px;
+  margin: 0;
+  padding: 0 13px;
+  font-size: 12px;
+  line-height: 1.2;
+  border: 1px solid var(--wh-border);
+  border-radius: 9px !important;
+  white-space: nowrap;
+}
+/* The shelf suggestion is a typed draft; recording must not submit a report
+   or change a stored location without an owner's review. */
+.sf-report-flow .sf-report-location {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.sf-report-flow .sf-report-location-field {
+  position: relative;
+  min-width: 0;
+}
+.sf-report-flow .sf-report-location-field > input {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  margin: 0;
+  padding: 10px 57px 10px 13px;
+}
+.sf-report-flow .sf-report-location-field > .wh-voice.icon-only {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  border-radius: 8px;
+  background: var(--wh-soft) !important;
+  color: var(--wh-accent) !important;
+}
+.sf-report-flow .sf-report-location-field > .wh-voice.icon-only svg {
+  width: 19px;
+  height: 19px;
+}
+.sf-report-flow .sf-report-location-field > .wh-voice.icon-only.recording {
+  background: #fce6e9 !important;
+  color: #a52f4c !important;
+}
+@media (max-width: 900px) {
+  .sf-compact-app.sf-find-page .wh-results .wh-section-title {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .sf-compact-app.sf-find-page .wh-results .wh-section-title .sf-worklist-controls {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+@media (max-width: 480px) {
+  .sf-compact-app.sf-find-page .wh-results .wh-section-title .sf-worklist-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+  }
+  .sf-compact-app.sf-find-page .wh-results .wh-section-title .sf-worklist-controls > .sf-worklist-order,
+  .sf-compact-app.sf-find-page .wh-results .wh-section-title .sf-worklist-controls > button {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    flex: auto;
+    padding-left: 8px !important;
+    padding-right: 8px;
+  }
+  .sf-compact-app.sf-find-page .wh-results .wh-section-title .sf-worklist-controls > .sf-worklist-order {
+    padding-right: 25px !important;
+  }
+}
