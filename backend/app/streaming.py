@@ -13,9 +13,9 @@ from contextlib import suppress
 from urllib.parse import urlsplit
 
 import websockets
-from fastapi import WebSocket, WebSocketDisconnect, WebSocketException
+from fastapi import HTTPException, WebSocket, WebSocketDisconnect, WebSocketException
 
-from .accounts import COOKIE, digest
+from .accounts import COOKIE, digest, enforce_rate
 from .database import connect
 from .services import voice
 from .warehouse import rows as warehouse_rows
@@ -47,11 +47,17 @@ def authorize(ws: WebSocket, path) -> bool:
         return False
     with connect(path) as c:
         found = c.execute(
-            """SELECT 1 FROM accounts a JOIN account_sessions s ON a.id=s.user_id
+            """SELECT a.id FROM accounts a JOIN account_sessions s ON a.id=s.user_id
                WHERE s.digest=? AND s.expires>? AND a.active=1 LIMIT 1""",
             (digest(token), time.time()),
         ).fetchone()
-    return bool(found)
+    if not found:
+        return False
+    try:
+        enforce_rate(path, found['id'], '/api/voice/live')
+    except HTTPException:
+        return False
+    return True
 
 
 def context_keywords(path, collection):
