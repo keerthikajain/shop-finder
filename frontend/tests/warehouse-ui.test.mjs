@@ -212,3 +212,12 @@ test('Prisma V3 live voice is opt-in and retains recorded voice fallback',async(
  assert.doesNotMatch(recording,/GNANI_API_KEY/);
  assert.match(vite,/ws:true/);
 });
+
+
+test('empty catalogue search clearly explains that import requires confirmation',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/No catalogue items are saved yet/);
+ assert.match(src,/Preview changes, then Confirm import/);
+ assert.match(src,/Go to Import items/);
+ assert.match(src,/task\.lines\.filter\(l=>!l\.selected&&!l\.candidates\.length\)\.length/);
+});
