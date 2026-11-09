@@ -49,13 +49,13 @@ export default function WarehouseApp({user,preferences,logout}){
  function goBack(){navigate('more')}
  async function choose(line,p,l){await run(async()=>{const next=await api('/tasks/'+task.id+'/choose',{line,collection:p.collection,sku:p.sku,location:l.code});T(next);AL(line);if(auto&&voice&&taskVoice.current)await speak(next)})}
  async function scan(line,kind,value){await run(async()=>{const next=await api('/tasks/'+task.id+'/scan',{line,kind,value});T(next);if(kind==='manual')D(null);N(t(kind==='product'?'Item matched. Now scan the location.':'Location confirmed.'));await reload()})}
- async function playPickGuidance(command,source=task){
+ async function playPickGuidance(command,source=task,line=activeLine){
   if(!voice||!source)return;
   audio.current?.pause();SP(true);
   try{
    const response=await fetch('/api/warehouse/tasks/'+encodeURIComponent(source.id)+'/picking/guide-audio',{
     method:'POST',headers:{'X-Shop-Request':'1','Content-Type':'application/json'},
-    body:JSON.stringify({command,line:activeLine}),signal:AbortSignal.timeout(45000)
+    body:JSON.stringify({command,line}),signal:AbortSignal.timeout(45000)
    });
    if(!response.ok){const err=await response.json();throw Error(err.detail||'Spoken guidance unavailable.')}
    const blob=await response.blob();
@@ -79,7 +79,7 @@ export default function WarehouseApp({user,preferences,logout}){
     D({type:'report',item:selected.selected,location:selected.location,index:answer.line});
    }
    if(answer.action==='stop'){VGP(true);audio.current?.pause();SP(false);return}
-   if(answer.action!=='unknown'&&voice){VGP(false);await playPickGuidance(answer.action,source)}
+   if(answer.action!=='unknown'&&voice){VGP(false);await playPickGuidance(answer.action,source,answer.line??activeLine)}
   })
  }
  async function pickAction(kind){if(!task)return;await run(async()=>{const next=await api('/tasks/'+task.id+'/picking/'+kind,{});T(next);G('location');if(kind==='start'){AL(Math.max(0,next.lines.findIndex(l=>!l.complete)));VGP(false);VGC('');VGT('');N(t('Picking started. Check each item at its recorded shelf.'))}else{VGP(true);VGT('');N(t('Picking completed. No stock quantities were changed.'))}R(await request('/warehouse/tasks'))})}
