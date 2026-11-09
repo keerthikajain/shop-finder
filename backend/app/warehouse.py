@@ -75,6 +75,12 @@ class Query(Strict):
  location:str=Field(default='',max_length=50)
  query:str=Field(min_length=1,max_length=600)
  language:Literal['en-IN','hi-IN','bn-IN','mr-IN','gu-IN','pa-IN','kn-IN','te-IN','ta-IN','ml-IN','hi-en']='en-IN'
+class ImportTranslationReview(Strict):
+ translations_reviewed:bool=False
+
+class ImportTranslationRequest(Strict):
+ source_language:Literal['en-IN','hi-IN','te-IN','kn-IN']='en-IN'
+
 class TranslationRequest(Strict):
  name:str=Field(min_length=2,max_length=120)
  source_language:Literal['en-IN','hi-IN','te-IN','kn-IN']='en-IN'
@@ -685,12 +691,40 @@ def install_warehouse(app,path):
   with connect(path) as c:
    raw=get_pending(c,token,'sheet',u);preview=import_preview(c,raw,body.mapping);new=pending(c,'import',u,preview)
   return {**preview,'token':new}
+ @app.post('/api/warehouse/imports/{token}/suggest-translations')
+ async def suggest_import_translations(token:str,body:ImportTranslationRequest,request:Request):
+  u=identity(request,True)
+  with connect(path) as c:
+   preview=get_pending(c,token,'import',u)
+  if preview['errors']:raise HTTPException(422,'Fix the spreadsheet errors before requesting translations.')
+  start=preview.get('translation_cursor',0)
+  finish=min(start+10,len(preview['changes']))
+  suggested=0
+  # Network calls only happen after an explicit owner click. The preview is
+  # staged and never changes saved products until separately confirmed.
+  for ch in preview['changes'][start:finish]:
+   if ch['action']=='unchanged':continue
+   old=ch['item'].get('translations',{})
+   if len(old)==5:continue
+   suggestions=await warehouse_translation.suggest(ch['item']['name'],body.source_language)
+   updated={**old,**{k:v for k,v in suggestions.items() if k not in old}}
+   ch['item']['translations']=updated
+   Item(**ch['item'])
+   suggested+=1
+  preview['translation_cursor']=finish
+  preview['translation_suggestions_count']=preview.get('translation_suggestions_count',0)+suggested
+  preview['translation_review_required']=bool(preview['translation_suggestions_count'])
+  with connect(path) as c:
+   new=pending(c,'import',u,preview)
+  return {**preview,'token':new,'translations_done':finish==len(preview['changes'])}
+
  @app.post('/api/warehouse/imports/{token}/confirm')
- def confirm_import(token:str,request:Request):
+ def confirm_import(token:str,body:ImportTranslationReview,request:Request):
   u=identity(request,True)
   with connect(path) as c:
    c.execute('BEGIN IMMEDIATE');p=get_pending(c,token,'import',u)
    if p['errors']:raise HTTPException(422,'Fix every import error before applying.')
+   if p.get('translation_review_required') and not body.translations_reviewed:raise HTTPException(422,'Review and approve generated product translations before importing.')
    for ch in p['changes']:
     r=c.execute('SELECT revision FROM wh_items WHERE collection=? AND sku=?',(ch['item']['collection'],ch['item']['sku'])).fetchone()
     if (r[0] if r else 0)!=ch['revision']:raise HTTPException(409,'Catalogue changed since preview. Upload and review again; nothing was applied.')

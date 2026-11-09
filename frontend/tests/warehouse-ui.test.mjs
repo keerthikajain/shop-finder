@@ -468,3 +468,13 @@ test('owner reviews optional translation suggestions and cannot auto-save them',
  assert.match(server,/async def suggest_product_translation/);
  assert.match(server,/identity\(request,True\)/);
 });
+
+test('bulk import translations require deliberate review before save',async()=>{
+ const ui=await readFile(new URL('../src/warehouse-manage.jsx',import.meta.url),'utf8');
+ const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
+ assert.match(ui,/Suggest next 10 translated product names/);
+ assert.match(ui,/preview.translation_review_required&&!translationsReviewed/);
+ assert.match(ui,/translations_reviewed:translationsReviewed/);
+ assert.match(server,/def suggest_import_translations/);
+ assert.match(server,/Review and approve generated product translations before importing/);
+});

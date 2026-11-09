@@ -1166,3 +1166,28 @@ def test_translation_provider_key_required_for_owner_suggestions(setup,monkeypat
  monkeypatch.delenv('SARVAM_API_KEY',raising=False)
  response=post(c,'/translations/suggest',{'name':'Steel washer','source_language':'en-IN'})
  assert response.status_code==503
+
+def test_import_translation_suggestions_require_explicit_review(setup,monkeypatch):
+ from app import warehouse_translation
+ import csv,io
+ c,_=setup
+ async def fake_suggest(name,source_language):
+  assert source_language=='en-IN'
+  return {'en':name,'hi':'स्टील वॉशर','hi_latn':'steel washer','te':'స్టీల్ వాషర్','kn':'ಸ್ಟೀಲ್ ವಾಷರ್'}
+ monkeypatch.setattr(warehouse_translation,'suggest',fake_suggest)
+ rows=[['sku','name','category','rack'],['APP-NEW-990','Steel washer','Hardware','Z']]
+ out=io.StringIO();csv.writer(out).writerows(rows)
+ uploaded=c.post('/api/warehouse/imports?collection=appliances&filename=names.csv',headers=H,content=out.getvalue().encode())
+ assert uploaded.status_code==200
+ preview=post(c,'/imports/'+uploaded.json()['token']+'/preview',{'mapping':{k:k for k in rows[0]}})
+ assert preview.status_code==200
+ generated=post(c,'/imports/'+preview.json()['token']+'/suggest-translations',{'source_language':'en-IN'})
+ assert generated.status_code==200,generated.text
+ assert generated.json()['translation_review_required'] is True
+ assert generated.json()['changes'][0]['item']['translations']['kn']=='ಸ್ಟೀಲ್ ವಾಷರ್'
+ assert post(c,'/imports/'+generated.json()['token']+'/confirm',{}).status_code==422
+ assert not any(p['sku']=='APP-NEW-990' for p in items(c,'appliances'))
+ approved=post(c,'/imports/'+generated.json()['token']+'/confirm',{'translations_reviewed':True})
+ assert approved.status_code==200,approved.text
+ saved=next(p for p in items(c,'appliances') if p['sku']=='APP-NEW-990')
+ assert saved['translations']['te']=='స్టీల్ వాషర్'
