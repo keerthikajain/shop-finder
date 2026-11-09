@@ -49,6 +49,18 @@ def test_separate_judge_workspaces_use_real_owner_permissions_and_catalogues(mon
   assert second.get(photo_url).status_code==404
   assert first.get('/api/users').status_code==200
   assert second.get('/api/users').status_code==200
+  invitation=first.post('/api/users/invitations',headers=H)
+  assert invitation.status_code==200,invitation.text
+  with TestClient(app) as staff_browser:
+   enrolled=staff_browser.post('/api/auth/join',headers=H,json={'code':invitation.json()['code'],
+      'username':'worker_review_1','password':'strong-review-worker-abc','language':'en'})
+   assert enrolled.status_code==201,enrolled.text
+   signed_staff=staff_browser.post('/api/auth/login',headers=H,json={'username':'worker_review_1',
+      'password':'strong-review-worker-abc'})
+   assert signed_staff.status_code==200,signed_staff.text
+   assert signed_staff.json()['role']=='staff'
+   assert staff_browser.get('/api/warehouse/items?collection=all').status_code==200
+   assert staff_browser.get('/api/users').status_code==403
   assert first.get('/api/auth/status').json()['user']['username']=='judge_one'
   assert second.get('/api/auth/status').json()['user']['username']=='judge_two'
   assert second.post('/api/auth/logout',headers=H).status_code==200
