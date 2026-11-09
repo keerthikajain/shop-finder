@@ -75,6 +75,10 @@ class Query(Strict):
  location:str=Field(default='',max_length=50)
  query:str=Field(min_length=1,max_length=600)
  language:Literal['en-IN','hi-IN','bn-IN','mr-IN','gu-IN','pa-IN','kn-IN','te-IN','ta-IN','ml-IN','hi-en']='en-IN'
+class TranslationRequest(Strict):
+ name:str=Field(min_length=2,max_length=120)
+ source_language:Literal['en-IN','hi-IN','te-IN','kn-IN']='en-IN'
+
 class Choose(Strict):
  collection:str=Field(default='',max_length=40)
  line:int=Field(ge=0,le=9)
@@ -176,6 +180,7 @@ def get_pending(c,token,kind,user):
 # Normalize transcripts and saved aliases with the same bounded Hindi/Hinglish vocabulary.
 # Unknown modifiers still abstain; do not infer SKUs or locations.
 from .warehouse_language import normal_query,tokens
+from . import warehouse_translation
 
 def split_request(query,items,collection):
  # Split only when the catalogue supports a unique complete segmentation.
@@ -433,6 +438,12 @@ def install_warehouse(app,path):
    settings=get_settings(c)
    packs=[{**p,'count':c.execute('SELECT count(*) FROM wh_items WHERE collection=?',(p['id'],)).fetchone()[0]} for p in COLLECTIONS]
   return {'collections':packs,'location_fields':LOCATION_FIELDS,'field_labels':FIELD_LABELS,'voice':voice.ready(),'stt_model':voice.stt_model(),'settings':settings}
+ @app.post('/api/warehouse/translations/suggest')
+ async def suggest_product_translation(body:TranslationRequest,request:Request):
+  identity(request,True)
+  return {'suggestions':await warehouse_translation.suggest(body.name,body.source_language),
+          'requires_review':True,'provider':'Sarvam Mayura'}
+
  @app.get('/api/warehouse/items')
  def items(request:Request,collection:str='all'):
   identity(request)

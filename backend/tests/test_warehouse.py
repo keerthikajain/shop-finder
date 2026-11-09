@@ -1160,3 +1160,9 @@ def test_import_explicit_language_names_and_export_roundtrip(setup):
  exported=c.get('/api/warehouse/export?collection=appliances').content
  headers,rows=parse_sheet(exported,'saved.csv')
  assert next(row for row in rows if row['sku']=='APP-NEW-991')['name_kn']=='ಪೈಪ್ ಕ್ಲಾಂಪ್'
+
+def test_translation_provider_key_required_for_owner_suggestions(setup,monkeypatch):
+ c,_=setup
+ monkeypatch.delenv('SARVAM_API_KEY',raising=False)
+ response=post(c,'/translations/suggest',{'name':'Steel washer','source_language':'en-IN'})
+ assert response.status_code==503

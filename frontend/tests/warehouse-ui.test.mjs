@@ -458,3 +458,13 @@ test('imported items support separately reviewed names in five languages',async(
  assert.match(editor,/Product names in other languages/);
  assert.match(editor,/not automatic translations/);
 });
+
+test('owner reviews optional translation suggestions and cannot auto-save them',async()=>{
+ const ui=await readFile(new URL('../src/warehouse-manage.jsx',import.meta.url),'utf8');
+ const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
+ assert.match(ui,/Suggest translations/);
+ assert.match(ui,/translations\/suggest/);
+ assert.match(ui,/Check the names, brands and specifications before saving/);
+ assert.match(server,/async def suggest_product_translation/);
+ assert.match(server,/identity\(request,True\)/);
+});
