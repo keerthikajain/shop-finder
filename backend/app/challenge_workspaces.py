@@ -100,6 +100,7 @@ def _create(base,username,password,language,ip,quick=False):
   initialize_warehouse(db,True)
   seed(db)
   uid=add_account(db,username,password,role='owner',language=language)
+  with sqlite3.connect(db) as c:c.execute('UPDATE accounts SET is_challenge=1 WHERE id=?',(uid,))
   token=secrets.token_urlsafe(32)
   with sqlite3.connect(db) as c:
    c.execute('INSERT INTO account_sessions VALUES (?,?,?)',(digest(token),uid,now+TTL))

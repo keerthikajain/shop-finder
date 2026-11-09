@@ -17,6 +17,7 @@ def initialize_accounts(path):
   for name in ('display_name','phone','staff_code'):
    if name not in columns:c.execute(f"ALTER TABLE accounts ADD COLUMN {name} TEXT NOT NULL DEFAULT ''")
   if 'is_demo' not in columns:c.execute("ALTER TABLE accounts ADD COLUMN is_demo INTEGER NOT NULL DEFAULT 0")
+   if 'is_challenge' not in columns:c.execute("ALTER TABLE accounts ADD COLUMN is_challenge INTEGER NOT NULL DEFAULT 0")
   c.execute('CREATE TABLE IF NOT EXISTS demo_feedback(id INTEGER PRIMARY KEY AUTOINCREMENT,visitor TEXT NOT NULL,comment TEXT NOT NULL,created_at REAL NOT NULL)')
   c.execute('CREATE TABLE IF NOT EXISTS account_sessions(digest TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES accounts(id),expires REAL NOT NULL)')
   c.execute('CREATE TABLE IF NOT EXISTS login_attempts(bucket TEXT NOT NULL,at REAL NOT NULL)')
@@ -150,6 +151,7 @@ def public(row):
  result['role']='manager' if row['role']=='staff' and row['access_level']=='manager' else row['role']
  result['approval_status']=row['approval_status']
  result['is_demo']=bool(row['is_demo'])
+ result['is_challenge']=bool(row['is_challenge'])
  return result
 
 class Login(BaseModel):
