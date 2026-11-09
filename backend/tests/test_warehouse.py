@@ -612,3 +612,30 @@ def test_complex_native_script_tokens_preserve_combining_marks():
  assert 'அரிசி' in tokens('அரிசி')
  assert 'അരി' in tokens('അരി')
  assert 'ਬਿਆਨ' in tokens('ਬਿਆਨ')
+
+@pytest.mark.parametrize('language,label',[
+ ('kn-IN','ರ್ಯಾಕ್'),('ta-IN','ரேக்'),('te-IN','ర్యాక్'),
+ ('ml-IN','റാക്ക്'),('bn-IN','র্যাক'),('mr-IN','रॅक'),
+ ('gu-IN','રેક'),('pa-IN','ਰੈਕ')
+])
+def test_localized_display_text_is_separate_from_spoken_audio(language,label):
+ from app.warehouse import display_task,speak_task
+ product={'brand':'Test','name':'Rice','sku':'GRC-001','collection':'grocery'}
+ location={'facility':'Main Warehouse','rack':'A01','shelf':'02','bin':'03'}
+ task={'language':language,'lines':[{'query':'rice','candidates':[product],'selected':product,'location':location}]}
+ displayed=display_task(task)
+ spoken=speak_task(task)
+ assert label+' A01' in displayed
+ assert 'GRC-001' in displayed and 'Main Warehouse' in displayed
+ assert label not in spoken
+ assert 'rack A01' in spoken
+
+@pytest.mark.parametrize('language',[
+ 'bn-IN','mr-IN','gu-IN','pa-IN','kn-IN','te-IN','ta-IN','ml-IN'
+])
+def test_localized_unknown_result_does_not_invent_a_location(language):
+ from app.warehouse import display_task
+ task={'language':language,'lines':[{'query':'not recorded','candidates':[],'selected':None,'location':None}]}
+ text=display_task(task)
+ assert 'not recorded' in text
+ assert 'A01' not in text

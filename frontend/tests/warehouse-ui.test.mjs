@@ -318,3 +318,11 @@ test('high-use owner approval and filter UI text passes through translation func
    assert.ok(warehouse.includes("t('"+key+"')"),key);
  }
 });
+
+test('warehouse uses translated display text without changing the spoken audio path',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/task\.display_text\|\|task\.spoken_text/);
+ const backendText=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
+ assert.match(backendText,/def display_task\(task\)/);
+ assert.match(backendText,/t\['display_text'\]=display_task\(t\)/);
+});
