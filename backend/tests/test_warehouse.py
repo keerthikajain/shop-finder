@@ -1219,3 +1219,14 @@ def test_reject_hidden_wrong_script_marks_in_translated_product():
  with pytest.raises(ValueError,match='wrong regional script'):
   Item(sku='APP-MIXED',collection='appliances',name='Steel clamp',category='Hardware',
        translations={'te':label},placements=[{'rack':'A'}])
+
+def test_spoken_and_display_answers_use_saved_language_product_names():
+ from app.warehouse import speak_task,display_task
+ p={'sku':'APP-NEW-991','name':'Steel washer','brand':'Workshop','synthetic':False,
+    'translations':{'hi':'स्टील वॉशर','hi_latn':'steel washer','te':'స్టీల్ వాషర్','kn':'ಸ್ಟೀಲ್ ವಾಷರ್'}}
+ place={'facility':'Warehouse','rack':'Z','shelf':'5','bin':'07'}
+ for lang,expected in [('en-IN','Steel washer'),('hi-IN','स्टील वॉशर'),
+                       ('hi-en','steel washer'),('te-IN','స్టీల్ వాషర్'),('kn-IN','ಸ್ಟೀಲ್ ವಾಷರ್')]:
+  task={'language':lang,'lines':[{'selected':p,'location':place,'candidates':[p],'query':p['name']}]}
+  assert expected in speak_task(task)
+  assert expected in display_task(task)

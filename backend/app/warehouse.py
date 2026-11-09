@@ -257,6 +257,10 @@ def match(query,items,collection):
   if leftovers and not exact_saved_name:continue
   found.append(p)
  return found
+def localized_product_name(product,language):
+ language_key={'en-IN':'en','hi-IN':'hi','hi-en':'hi_latn','te-IN':'te','kn-IN':'kn'}.get(language)
+ return product.get('translations',{}).get(language_key) or product['name']
+
 def speak_task(task):
  hi=task['language'] in ('hi-IN','hi-en');parts=[]
  for line in task['lines']:
@@ -265,7 +269,7 @@ def speak_task(task):
    l=line['location'];labels={'facility':'facility','floor':'floor','zone':'section','aisle':'aisle','rack':'rack','shelf':'shelf','bin':'bin'}
    if hi:labels.update(facility='गोदाम',floor='मंज़िल',zone='भाग',aisle='गलियारा',rack='रैक',shelf='शेल्फ',bin='बिन')
    place=', '.join(f"{labels[k]} {l[k]}" for k in LOCATION_FIELDS if l.get(k) and not (p.get('synthetic') and k=='facility' and l[k]=='Demo Hub'))
-   parts.append(f"{p.get('brand','')} {p['name']}, {p['sku']}. {'Example shelf, ' if p.get('synthetic') else ''}{place}.".strip())
+   parts.append(f"{p.get('brand','')} {localized_product_name(p,task['language'])}, {p['sku']}. {'Example shelf, ' if p.get('synthetic') else ''}{place}.".strip())
   elif line['candidates']:parts.append((f"{line['query']}: कृपया सही आकार या प्रकार चुनें।" if hi else f"{line['query']}: choose the size or variant before going to a location."))
   else:parts.append((f"{line['query']}: सूची में नहीं मिला।" if hi else f"{line['query']}: we couldn't find this exact item. Try another name or browse your saved items."))
  return ' '.join(parts)[:2400]
@@ -294,7 +298,7 @@ def display_task(task):
    loc=line['location']
    # Values are taken only from the verified selected catalogue record.
    where=', '.join(f"{labels[k]} {loc[k]}" for k in LOCATION_FIELDS if loc.get(k) and not (product.get('synthetic') and k=='facility' and loc[k]=='Demo Hub'))
-   parts.append(f"{product.get('brand','')} {product['name']}, {product['sku']}. {'Example shelf. ' if product.get('synthetic') else ''}{where}.")
+   parts.append(f"{product.get('brand','')} {localized_product_name(product,lang)}, {product['sku']}. {'Example shelf. ' if product.get('synthetic') else ''}{where}.")
   elif line['candidates']:
    parts.append(f"{line['query']}: {choose}")
   else:
