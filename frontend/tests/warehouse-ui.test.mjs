@@ -344,3 +344,19 @@ test('guided picking has explicit start, resume, verified progress, next stop an
  assert.match(css,/\.sf-guided-picking\{/);
  assert.match(css,/@media\(max-width:700px\)/);
 });
+
+test('owner-only activity tab exposes unmatched-search review without modifying staff reports',async()=>{
+ const manage=await readFile(new URL('../src/warehouse-manage.jsx',import.meta.url),'utf8');
+ const panel=await readFile(new URL('../src/failed-search-panel.jsx',import.meta.url),'utf8');
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(manage,/import FailedSearchPanel from '.\/failed-search-panel.jsx'/);
+ assert.match(manage,/owner&&<button aria-pressed=\{tab==='unknowns'\}/);
+ assert.match(manage,/tab==='unknowns'&&owner\?<FailedSearchPanel/);
+ assert.match(panel,/\/warehouse\/failed-searches\?/);
+ assert.match(panel,/I verified that this phrase refers to the exact selected product and variant/);
+ assert.match(panel,/action==='alias'&&!!verified\[entry.id\]/);
+ assert.match(panel,/Add verified alias/);
+ assert.match(panel,/Dismiss with note/);
+ assert.match(css,/\.sf-search-intelligence\{/);
+ assert.match(css,/\.sf-unknown-confirm input\{/);
+});
