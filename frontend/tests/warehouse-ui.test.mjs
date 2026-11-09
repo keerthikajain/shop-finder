@@ -344,3 +344,20 @@ test('guided picking has explicit start, resume, verified progress, next stop an
  assert.match(css,/\.sf-guided-picking\{/);
  assert.match(css,/@media\(max-width:700px\)/);
 });
+
+test('voice-guided picking uses real Prisma transcript and Timbre audio with safe action handoff',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/async function voicePickCommand\(transcript/);
+ assert.match(src,/async function playPickGuidance\(command/);
+ assert.match(src,/\/picking\/command/);
+ assert.match(src,/\/picking\/guide-audio/);
+ assert.match(src,/onText=\{transcript=>voicePickCommand\(transcript\)\}/);
+ assert.match(src,/answer\.action==='verify'&&answer\.line!=null/);
+ assert.match(src,/D\(\{type:'scan',index:answer\.line\}\)/);
+ assert.match(src,/answer\.action==='report'&&answer\.line!=null/);
+ assert.match(src,/D\(\{type:'report',item:selected\.selected,location:selected\.location,index:answer\.line\}\)/);
+ assert.match(src,/answer\.action==='stop'/);
+ assert.doesNotMatch(src,/voicePickCommand\([^]*?kind:'manual',value:'confirmed'/);
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(css,/\.sf-voice-guide\{/);
+});

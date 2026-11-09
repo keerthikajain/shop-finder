@@ -2176,3 +2176,13 @@ body,.wh-app{
 .sf-guided-picking~.wh-work-grid #sf-shelf-guide{scroll-margin-top:72px}
 .wh-task[id^=sf-picking-line-]{scroll-margin-top:84px}
 @media(max-width:700px){.sf-guided-picking{padding:13px;margin-bottom:12px}.sf-picking-head h3{font-size:17px}.sf-picking-actions,.sf-picking-actions>div{width:100%}.sf-picking-actions button{flex:1 1 145px}.sf-picking-actions>span{flex-basis:100%}}
+
+/* Voice-led picking guidance uses the same card/touch patterns as the worklist. */
+.sf-voice-guide{display:grid;gap:11px;padding:13px;border:1px solid var(--wh-border);border-radius:12px;background:var(--wh-soft);min-width:0}
+.sf-voice-guide-heading{display:grid;gap:4px}
+.sf-voice-guide-heading strong{font-size:15px;color:var(--wh-text)}
+.sf-voice-guide-heading small,.sf-guide-transcript{font-size:12px;color:var(--wh-muted);line-height:1.5;overflow-wrap:anywhere}
+.sf-voice-guide-actions,.sf-voice-guide-choices{display:flex;flex-wrap:wrap;gap:8px}
+.sf-voice-guide-actions button,.sf-voice-guide-choices button{min-height:44px;box-sizing:border-box;border-radius:9px;padding:9px 12px}
+.sf-guide-reply{margin:0;border-radius:9px;padding:11px;background:var(--wh-surface);color:var(--wh-text);line-height:1.5;font-size:13px}
+@media(max-width:700px){.sf-voice-guide{padding:11px}.sf-voice-guide-actions button{flex:1 1 140px}.sf-voice-guide-choices button{flex:1 1 115px}}

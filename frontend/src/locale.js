@@ -363,3 +363,14 @@ Object.assign(hindi,{
  'Picking completed. No stock quantities were changed.':'सामान चुनना पूरा हुआ। स्टॉक की मात्रा नहीं बदली।',
  'Picking session restored.':'सामान चुनने की प्रक्रिया फिर खोली गई।'
 });
+
+Object.assign(hindi,{
+ 'Voice-guided picking':'आवाज़ से सामान चुनने का मार्गदर्शन',
+ 'Speak a short command, or use the buttons below. No item is confirmed by speech alone.':'छोटा निर्देश बोलें या नीचे बटन दबाएँ। केवल बोलने से सामान की पुष्टि नहीं होती।',
+ 'Speak picking command':'सामान चुनने का निर्देश बोलें',
+ 'Read guidance':'निर्देश सुनें','Resume voice commands':'आवाज़ के निर्देश फिर शुरू करें',
+ 'Repeat location':'जगह दोहराओ','Found it':'मिल गया','Wrong location':'गलत जगह','Stop guidance':'मार्गदर्शन रोकें',
+ 'Spoken picking commands currently support English, Hindi and Hinglish. Scan and manual controls work in other languages.':'सामान चुनने के आवाज़ निर्देश अभी अंग्रेज़ी, हिंदी और हिंग्लिश में हैं। अन्य भाषाओं में स्कैन और मैन्युअल जाँच उपलब्ध हैं।',
+ 'Recognized command':'पहचाना गया निर्देश',
+ 'Tap Read guidance to allow audio playback.':'आवाज़ सुनने के लिए निर्देश सुनें दबाएँ।'
+});
