@@ -178,7 +178,8 @@ test('Grocery Warehouse appears in the business setup and has its own imagery',a
 
 test('item editor and spreadsheet importer expose the multilingual alias workflow',async()=>{
  const source=await readFile(new URL('../src/warehouse-manage.jsx',import.meta.url),'utf8');
- assert.match(source,/Other names in any supported language/);
+ assert.match(source,/Other nicknames/);
+ assert.match(source,/Product names in other languages/);
  assert.match(source,/Add the names workers actually say/);
  assert.match(source,/aliases:aliases\.split\(','\)/);
  assert.match(source,/separate with \|/);
