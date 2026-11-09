@@ -737,3 +737,83 @@ def test_guided_picking_uses_private_sessions_and_staff_can_pick(setup):
  assert post(c,'/tasks/'+staff_task['id']+'/picking/finish').status_code==200
  login(c,'owner')
  assert c.get('/api/warehouse/tasks/'+staff_task['id']).status_code==404
+
+@pytest.mark.parametrize('spoken,expected',[
+ ('next item','next'),('Next one','next'),('अगला सामान','next'),
+ ('repeat location','repeat'),('जगह दोहराओ','repeat'),
+ ('found it','verify'),('मिल गया','verify'),
+ ('wrong shelf','report'),('गलत जगह','report'),
+ ('stop','stop'),('रुको','stop'),('help','help'),
+ ('not found','unknown'),('found it then next','unknown'),('finish picking','unknown'),
+ ('confirmed','unknown'),('delete all products','unknown')
+])
+def test_pick_voice_command_grammar_is_strict(spoken,expected):
+ from app.warehouse_voice_guide import intent
+ assert intent(spoken)==expected
+
+def test_voice_pick_guidance_no_state_mutation_and_explicit_verification(setup,monkeypatch):
+ c,_=setup
+ t=search(c,'CLO-001 and CLO-004')
+ url='/tasks/'+t['id']+'/picking/command'
+ assert post(c,url,{'transcript':'next item','line':0}).status_code==409
+ assert post(c,'/tasks/'+t['id']+'/picking/start').status_code==200
+ before=c.get('/api/warehouse/tasks/'+t['id']).json()
+ r=post(c,url,{'transcript':'next item','line':0})
+ assert r.status_code==200,r.text
+ result=r.json()
+ assert result['action']=='next' and result['line'] in (0,1)
+ assert t['lines'][result['line']]['selected']['sku'] in result['text']
+ assert 'rack' in result['text'].lower() or 'shelf' in result['text'].lower()
+ for command,action in [('found it','verify'),('wrong location','report'),('repeat location','repeat'),
+                        ('stop','stop'),('delete item','unknown')]:
+  out=post(c,url,{'transcript':command,'line':result['line']})
+  assert out.status_code==200,out.text
+  assert out.json()['action']==action
+ assert c.get('/api/warehouse/tasks/'+t['id']).json()==before
+ assert c.get('/api/warehouse/issues').json()==[]
+ assert post(c,'/tasks/'+t['id']+'/picking/finish').status_code==409
+ # A speech assertion can open the verification UI but never completes the pick.
+ assert not any(x['complete'] for x in before['lines'])
+
+def test_voice_pick_guide_synthesizes_authenticated_text_only(setup,monkeypatch):
+ c,_=setup
+ t=search(c,'CLO-001')
+ assert post(c,'/tasks/'+t['id']+'/picking/start').status_code==200
+ spoken=[]
+ async def fake_speak(text,language):
+  spoken.append((text,language))
+  return b'RIFF'+b'0'*20
+ monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
+ r=post(c,'/tasks/'+t['id']+'/picking/guide-audio',{'command':'repeat','line':0})
+ assert r.status_code==200,r.text
+ assert r.headers['content-type'].startswith('audio/wav')
+ assert spoken and spoken[0][1]=='en-IN' and 'CLO-001' in spoken[0][0]
+ assert r.headers['cache-control']=='no-store'
+ assert c.get('/api/warehouse/tasks/'+t['id']).json()['lines'][0]['complete'] is False
+
+def test_voice_pick_command_is_user_private_and_regional_unsupported(setup):
+ c,_=setup
+ t=search(c,'CLO-001')
+ assert post(c,'/tasks/'+t['id']+'/picking/start').status_code==200
+ login(c,'staff')
+ assert post(c,'/tasks/'+t['id']+'/picking/command',{'transcript':'next item'}).status_code==404
+ assert post(c,'/tasks/'+t['id']+'/picking/guide-audio',{'command':'next'}).status_code==404
+ login(c)
+ regional=post(c,'/search',{'collection':'clothing','query':'CLO-001','language':'kn-IN'}).json()
+ assert post(c,'/tasks/'+regional['id']+'/picking/start').status_code==200
+ assert post(c,'/tasks/'+regional['id']+'/picking/command',{'transcript':'next item'}).status_code==422
+ assert post(c,'/tasks/'+regional['id']+'/picking/guide-audio',{'command':'next'}).status_code==422
+
+def test_voice_pick_commands_preserve_hindi_shelf_and_existing_revision_guard(setup):
+ c,_=setup
+ t=post(c,'/search',{'collection':'clothing','query':'CLO-001','language':'hi-IN'}).json()
+ assert post(c,'/tasks/'+t['id']+'/picking/start').status_code==200
+ result=post(c,'/tasks/'+t['id']+'/picking/command',{'transcript':'जगह दोहराओ','line':0})
+ assert result.status_code==200
+ assert result.json()['action']=='repeat'
+ assert 'रैक' in result.json()['text']
+ assert 'CLO-001' in result.json()['text']
+ product=t['lines'][0]['selected']
+ product['name']='Changed product'
+ assert save(c,product,product['revision']).status_code==200
+ assert post(c,'/tasks/'+t['id']+'/picking/command',{'transcript':'next item'}).status_code==409
