@@ -114,7 +114,7 @@ export function Login({ready,configured,language,L,error,busy,notice='',demoEnab
     </div>}
     {error&&<p className="error sf-auth-message" role="alert">{t(error)}</p>}
     {notice&&<p className="sf-auth-success sf-auth-message" role="status">{t(notice)}</p>}
-    {ready&&configured&&!signupEnabled&&<p className="quiet sf-auth-footer">{joining?t('Already have an account?'):t('New to the team?')} <button type="button" className="sf-auth-text-link" onClick={()=>navigate(joining?'login':'join')}>{t(joining?'Sign in':'Join workspace')}</button></p>}
+    {ready&&configured&&<p className="quiet sf-auth-footer">{joining?t('Already have an account?'):t('New to the team?')} <button type="button" className="sf-auth-text-link" onClick={()=>navigate(joining?'login':'join')}>{t(joining?'Sign in':'Join workspace')}</button></p>}
    </section>
   </div>
  </main>;
