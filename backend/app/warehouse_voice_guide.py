@@ -5,6 +5,7 @@ REQUEST. Commands NEVER mark items picked, change stock or file reports.
 """
 import re
 from fastapi import HTTPException
+from .warehouse_voice_languages import REGIONAL, regional_messages
 
 # Short, explicit commands avoid substring accidents ("not found" != "found").
 COMMANDS = {
@@ -23,7 +24,7 @@ COMMANDS = {
  'help': ('help','commands','voice commands','what can i say','madad','मदद','क्या बोलूं','कमांड बताओ')
 }
 
-def intent(transcript):
+def intent(transcript,language='en-IN'):
  value=re.sub(r'[.,!?।॥]+',' ',str(transcript).casefold())
  value=' '.join(value.split())
  # Allow harmless courtesy words around a SHORT command, never free-form actions.
@@ -31,6 +32,8 @@ def intent(transcript):
   if value.startswith(prefix): value=value[len(prefix):]
  for suffix in (' please',' जी',' करो'):
   if value.endswith(suffix): value=value[:-len(suffix)]
+ if language in REGIONAL:
+  return next((kind for kind,phrases in REGIONAL[language]['commands'].items() if value in phrases),'unknown')
  return next((kind for kind,phrases in COMMANDS.items() if value in phrases),'unknown')
 
 def pending_line(task):
@@ -49,9 +52,12 @@ def guide(task,action,requested_line,check_line):
   raise HTTPException(409,'Start picking before using voice guidance.')
  if action not in (*COMMANDS,'unknown'):
   raise HTTPException(422,'Unsupported voice command.')
+ language=task.get('language','en-IN')
+ regional=language in REGIONAL
+ hi=language in ('hi-IN','hi-en')
+ messages, labels=regional_messages(language) if regional else ({}, {})
  if action in ('help','unknown','stop'):
-  hi=task.get('language') in ('hi-IN','hi-en')
-  messages={
+  legacy={
    'help':('Say next item, repeat location, found it, wrong location, or stop.',
            'कहें अगला सामान, जगह दोहराओ, मिल गया, गलत जगह, या रुको।'),
    'unknown':('Command not recognized. Say next item, repeat location, found it, or wrong location.',
@@ -59,24 +65,26 @@ def guide(task,action,requested_line,check_line):
    'stop':('Voice guidance paused. Picking progress is saved. Resume when ready.',
            'आवाज़ के निर्देश रुके हैं। सामान चुनने की प्रगति सेव है। तैयार होने पर फिर शुरू करें।')
   }
-  return {'action':action,'line':None,'text':messages[action][1 if hi else 0],
-          'language':task['language']}
+  return {'action':action,'line':None,
+          'text':messages[action] if regional else legacy[action][1 if hi else 0],
+          'language':language}
  index=pending_line(task)
  if index is None:
   return {'action':'done','line':None,
-          'text':'सभी सामान जाँचे गए हैं। अब फिनिश पिकिंग दबाएँ।' if task['language'] in ('hi-IN','hi-en') else 'All items verified. Select Finish picking.',
-          'language':task['language']}
- # Even if a worker says "next", an unverified item remains pending.
- # Repeat/verify/report can refer to the selected outstanding line only.
+          'text':messages['done'] if regional else ('सभी सामान जाँचे गए हैं। अब फिनिश पिकिंग दबाएँ।' if hi else 'All items verified. Select Finish picking.'),
+          'language':language}
  if action in ('repeat','verify','report') and 0<=requested_line<len(task['lines']) and not task['lines'][requested_line].get('complete'):
   index=requested_line
  line=task['lines'][index]
- check_line(index)   # recheck product revision and actual saved location
+ check_line(index)   # recheck product revision and recorded location
  product=line['selected'];location=line['location']
- hi=task.get('language') in ('hi-IN','hi-en')
- place=', '.join(f"{dict(rack='रैक',shelf='शेल्फ',bin='बिन',aisle='गलियारा',zone='भाग',facility='गोदाम',floor='मंज़िल').get(k,k) if hi else k} {location[k]}" for k in ('facility','floor','zone','aisle','rack','shelf','bin') if location.get(k))
+ label_hi={'rack':'रैक','shelf':'शेल्फ','bin':'बिन','aisle':'गलियारा','zone':'भाग','facility':'गोदाम','floor':'मंज़िल'}
+ label_keys=('facility','floor','zone','aisle','rack','shelf','bin')
+ place=', '.join(f"{labels.get(k,k) if regional else (label_hi.get(k,k) if hi else k)} {location[k]}" for k in label_keys if location.get(k))
  name=f"{product['name']}, {product['sku']}"
- if action in ('next','repeat'):
+ if regional:
+  text=messages['next' if action=='next' else action].format(name=name,place=place)
+ elif action in ('next','repeat'):
   text=(f"अगला सामान {name}। {place}। सामान और शेल्फ की पुष्टि करें।" if hi else
         f"Next item: {name}. {place}. Verify the item and shelf.")
  elif action=='verify':
@@ -85,4 +93,4 @@ def guide(task,action,requested_line,check_line):
  else:
   text=('गलत जगह की रिपोर्ट भरें। मालिक जाँच करेगा। रिकॉर्ड अपने आप नहीं बदलेगा।' if hi else
         'Please submit the wrong-location report for owner review. The saved shelf will not change automatically.')
- return {'action':action,'line':index,'text':text,'language':task['language']}
+ return {'action':action,'line':index,'text':text,'language':language}

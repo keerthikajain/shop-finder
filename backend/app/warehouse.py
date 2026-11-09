@@ -11,6 +11,7 @@ from pydantic import BaseModel,Field,ConfigDict,field_validator,model_validator
 from .database import connect
 from .services import voice
 from . import warehouse_voice_guide as voice_guide
+from .warehouse_voice_languages import SUPPORTED_PICKING_LANGUAGES
 from .warehouse_catalogue import COLLECTIONS,COLLECTION_MAP,LOCATION_FIELDS,FIELD_LABELS,demo_items
 
 def now():return datetime.now(timezone.utc).isoformat()
@@ -473,18 +474,18 @@ def install_warehouse(app,path):
   u=identity(request)
   with connect(path) as c:
    task=task_get(c,tid,u)
-   if task['language'] not in ('en-IN','hi-IN','hi-en'):
-    raise HTTPException(422,'Voice picking commands currently support English, Hindi and Hinglish. Use the on-screen controls for other languages.')
+   if task['language'] not in SUPPORTED_PICKING_LANGUAGES:
+    raise HTTPException(422,'Unsupported language for voice picking commands.')
    picking_check(c,task)
-   return voice_guide.guide(task,voice_guide.intent(body.transcript),body.line,
+   return voice_guide.guide(task,voice_guide.intent(body.transcript,task['language']),body.line,
                             lambda index:current_line(c,task,index))
  @app.post('/api/warehouse/tasks/{tid}/picking/guide-audio')
  async def picking_guide_audio(tid:str,body:PickGuideAudio,request:Request):
   u=identity(request)
   with connect(path) as c:
    task=task_get(c,tid,u)
-   if task['language'] not in ('en-IN','hi-IN','hi-en'):
-    raise HTTPException(422,'Voice picking guidance currently supports English, Hindi and Hinglish.')
+   if task['language'] not in SUPPORTED_PICKING_LANGUAGES:
+    raise HTTPException(422,'Unsupported language for voice guidance.')
    picking_check(c,task)
    guidance=voice_guide.guide(task,body.command,body.line,
                               lambda index:current_line(c,task,index))
