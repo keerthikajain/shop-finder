@@ -1111,3 +1111,13 @@ def test_native_blue_jeans_does_not_match_black_sample(setup,language,query):
  result=post(c,'/search',{'collection':'clothing','query':query,'language':language})
  assert result.status_code==200,result.text
  assert result.json()['lines'][0]['candidates']==[]
+
+def test_telugu_salt_normalization_does_not_invent_missing_shelf(setup):
+ from app.warehouse_language import tokens
+ assert tokens('ఉప్పు ఎక్కడ ఉంది?')=={'salt'}
+ c,_=setup
+ result=post(c,'/search',{'collection':'all','query':'ఉప్పు ఎక్కడ ఉంది?','language':'te-IN'})
+ assert result.status_code==200,result.text
+ # The catalogue determines availability; no guessed product or location.
+ if not result.json()['lines'][0]['candidates']:
+  assert result.json()['lines'][0]['selected'] is None
