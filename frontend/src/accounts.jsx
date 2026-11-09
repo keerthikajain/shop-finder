@@ -11,14 +11,50 @@ export function AccountGate({children}){
  useEffect(()=>{const clear=()=>setUser(null);window.addEventListener('session-expired',clear);request('/auth/status').then(r=>{setUser(r.user);C(r.configured);if(r.user)L(r.user.language)}).catch(e=>E(e.message)).finally(()=>setReady(true));return()=>window.removeEventListener('session-expired',clear)},[]);
  async function preferences(patch){const next=await request('/auth/preferences',{method:'PUT',body:JSON.stringify({language:user.language,tour_done:!!user.tour_done,...patch})});setUser(next);L(next.language)}
  async function logout(){await request('/auth/logout',{method:'POST'});setUser(null)}
- return <Locale.Provider value={user?.language||language}>{user?children({user,preferences,logout}):<Login {...{ready,configured,language,L,error,busy,notice}} onRegister={async ({code,username,password,display_name})=>{B(true);E('');N('');try{await request('/auth/register',{method:'POST',body:JSON.stringify({code,username,password,display_name,language})});N('Registration requested. An owner or manager must approve your account before you can sign in.')}catch(err){E(err.message);throw err}finally{B(false)}}} onJoin={async ({code,username,password})=>{B(true);E('');N('');try{await request('/auth/join',{method:'POST',body:JSON.stringify({code,username,password,language})});N('Staff account created. Sign in with your new credentials.')}catch(err){E(err.message);throw err}finally{B(false)}}} onSubmit={async e=>{e.preventDefault();const data=new FormData(e.currentTarget);B(true);E('');N('');try{const next=await request('/auth/login',{method:'POST',body:JSON.stringify({username:data.get('username'),password:data.get('password'),role:data.get('role')||undefined})});setUser(next);L(next.language)}catch(err){E(err.message)}finally{B(false)}}}/>}</Locale.Provider>;
+ return <Locale.Provider value={user?.language||language}>{user?children({user,preferences,logout}):<Login {...{ready,configured,language,L,error,busy,notice}} onRegister={async ({code,username,password,display_name})=>{B(true);E('');N('');try{await request('/auth/register',{method:'POST',body:JSON.stringify({code,username,password,display_name,language})});N('Registration requested. An owner or manager must approve your account before you can sign in.')}catch(err){E(err.message);throw err}finally{B(false)}}} onJoin={async ({code,username,password})=>{B(true);E('');N('');try{await request('/auth/join',{method:'POST',body:JSON.stringify({code,username,password,language})});N('Staff account created. Sign in with your new credentials.')}catch(err){E(err.message);throw err}finally{B(false)}}} onClearFeedback={()=>{E('');N('')}} onSubmit={async e=>{e.preventDefault();const data=new FormData(e.currentTarget);B(true);E('');N('');try{const next=await request('/auth/login',{method:'POST',body:JSON.stringify({username:data.get('username'),password:data.get('password')})});setUser(next);L(next.language)}catch(err){E(err.message)}finally{B(false)}}}/>}</Locale.Provider>;
 }
-export function Login({ready,configured,language,L,error,busy,notice='',onSubmit,onJoin,onRegister}){
+export function Login({ready,configured,language,L,error,busy,notice='',onSubmit,onJoin,onRegister,onClearFeedback}){
  const t=useT();
- const [showPassword,setShowPassword]=useState(false),[mode,M]=useState('login'),[role,R]=useState('staff');
- const [joinError,JE]=useState('');
- // Keep sign-in neutral and consistent; theme preference applies inside the signed-in workspace.
- useEffect(()=>{document.documentElement.dataset.theme='light'},[]);
+ const [screen,setScreen]=useState('login');
+ const [joinMethod,setJoinMethod]=useState(null);
+ const [showPassword,setShowPassword]=useState(false);
+ const joining=screen==='join';
+
+ function navigate(next,{clearFeedback=true}={}){
+  setScreen(next);
+  setJoinMethod(null);
+  setShowPassword(false);
+  if(clearFeedback)onClearFeedback?.();
+ }
+ function chooseMethod(method){
+  setJoinMethod(method);
+  setShowPassword(false);
+  onClearFeedback?.();
+ }
+ async function submitJoin(event){
+  event.preventDefault();
+  const form=event.currentTarget;
+  const data=new FormData(form);
+  const handler=joinMethod==='workspace'?onRegister:onJoin;
+  if(!handler)return;
+  try{
+   if(joinMethod==='workspace'){
+    await handler({code:data.get('code'),username:data.get('username'),display_name:data.get('display_name'),password:data.get('password')});
+   }else{
+    await handler({code:data.get('code'),username:data.get('username'),password:data.get('password')});
+   }
+   form.reset();
+   navigate('login',{clearFeedback:false});
+  }catch{
+   // The account gate displays the server-provided, safely escaped error.
+  }
+ }
+
+ const heading=joining?t('Join your workspace'):t('Sign in to Shop Finder');
+ const intro=joining?t('Choose how you would like to join your team.'):t('Use your team account to continue.');
+ const codeLabel=joinMethod==='workspace'?t('Workspace code'):t('Staff invitation code');
+ const joinWithWorkspace=joinMethod==='workspace';
+
  return <main className="login-shell">
   <header className="sf-login-header">
    <div className="wh-brand"><Mark/><span>shopfinder</span></div>
@@ -28,31 +64,58 @@ export function Login({ready,configured,language,L,error,busy,notice='',onSubmit
     <img src="/art/workspace-login.webp" width="1254" height="1254" alt=""/>
     <div><h2>{t('Your workspace, within reach.')}</h2><p>{t('Find items. Know their place.')}</p></div>
    </section>
-   <section className="glass login-card">
-    <span className="sf-login-kicker">{t('Welcome back')}</span>
-    <h1>{t('Sign in to Shop Finder')}</h1>
-    <p>{t('Use your team account to continue.')}</p>
+   <section className="glass login-card" aria-label={heading}>
+    <span className="sf-login-kicker">{t(joining?'New to Shop Finder?':'Welcome back')}</span>
+    <h1>{heading}</h1>
+    <p className="sf-auth-intro">{intro}</p>
     <label className="sf-login-language">{t('App language')}<select value={language} onChange={e=>L(e.target.value)}><option value="en">English</option><option value="hi">हिन्दी</option></select></label>
-    {ready&&configured&&<div className="sf-auth-modes" role="group" aria-label="Account access"><button type="button" aria-pressed={mode==='login'} onClick={()=>{M('login');JE('')}}>Sign in</button><button type="button" aria-pressed={mode==='join'} onClick={()=>{M('join');JE('')}}>One-time invite</button><button type="button" aria-pressed={mode==='register'} onClick={()=>{M('register');JE('')}}>Request access</button></div>}
-    {!ready?<p role="status">{t('Loading…')}</p>:!configured?<p role="status">{t('This workspace is not set up yet. Ask the installer to create the first owner account.')}</p>:mode==='register'?<form className="sf-staff-join-form" aria-busy={busy} onSubmit={e=>{e.preventDefault();if(!onRegister)return;const form=e.currentTarget;const d=new FormData(form);Promise.resolve(onRegister({code:d.get('code'),username:d.get('username'),display_name:d.get('display_name'),password:d.get('password')})).then(()=>{form.reset();M('login')}).catch(()=>{})}}><p className="sf-auth-helper">Know your workplace registration code? Request Staff access here. An owner or manager must approve you before login.</p><label>Workspace code<input name="code" autoComplete="off" required minLength={27} maxLength={100} pattern="SF-[A-Za-z0-9_-]{24,80}"/></label><label>Full name<input name="display_name" autoComplete="name" required maxLength={80}/></label><label>Username<input name="username" autoComplete="username" required maxLength={80} pattern="[A-Za-z0-9_.-]+"/></label><label>Password (12+ characters)<input name="password" type="password" autoComplete="new-password" minLength={12} maxLength={128} required/></label><button className="primary full-width sf-signin" disabled={busy||!onRegister}>Request staff access<Glyph name="arrow"/></button></form>:mode==='join'?
-    <form className="sf-staff-join-form" onSubmit={e=>{e.preventDefault();if(!onJoin)return;const form=e.currentTarget,data=new FormData(form);Promise.resolve(onJoin({code:data.get('code'),username:data.get('username'),password:data.get('password')})).then(()=>{form.reset();M('login')}).catch(()=>{})}} aria-busy={busy}>
-     <p className="sf-auth-helper">Enter your one-time invitation from the owner. Your account will have Staff permissions only.</p>
-     <label>Staff invitation code<input name="code" autoComplete="off" required minLength={24} maxLength={100} pattern="[A-Za-z0-9_-]+" /></label>
-     <label>{t('Username')}<input name="username" autoComplete="username" required maxLength={80} pattern="[A-Za-z0-9_.-]+" /></label>
-     <label>Choose a password (12+ characters)<input name="password" type="password" autoComplete="new-password" required minLength={12} maxLength={128}/></label>
-     <button className="primary full-width sf-signin" disabled={busy||!onJoin}>Create staff account<Glyph name="arrow"/></button>
-     {joinError&&<p role="alert">{joinError}</p>}
-    </form>:
-    <form onSubmit={onSubmit} aria-busy={busy}>
-     <fieldset className="sf-auth-role"><legend>Sign in as</legend><label><input type="radio" name="role" value="owner" checked={role==='owner'} onChange={()=>R('owner')}/> Owner</label><label><input type="radio" name="role" value="staff" checked={role==='staff'} onChange={()=>R('staff')}/> Staff</label><label><input type="radio" name="role" value="manager" checked={role==='manager'} onChange={()=>R('manager')}/> Manager</label></fieldset>
-     <label>{t('Username')}<input name="username" autoComplete="username" placeholder={t('Enter username')} required maxLength={80}/></label>
-     <label htmlFor="login-password">{t('Password')}</label>
-     <div className="sf-password-field"><input id="login-password" name="password" type={showPassword?'text':'password'} autoComplete="current-password" placeholder={t('Enter password')} required maxLength={128}/><button type="button" aria-controls="login-password" aria-label={t(showPassword?'Hide password':'Show password')} aria-pressed={showPassword} onClick={()=>setShowPassword(!showPassword)}>{t(showPassword?'Hide':'Show')}</button></div>
+    {ready&&configured&&<div className="sf-auth-modes" role="group" aria-label={t('Account access')}>
+     <button type="button" aria-pressed={!joining} onClick={()=>navigate('login')}>{t('Sign in')}</button>
+     <button type="button" aria-pressed={joining} onClick={()=>navigate('join')}>{t('Join workspace')}</button>
+    </div>}
+    {!ready?<p role="status">{t('Loading…')}</p>:!configured?<p role="status">{t('This workspace is not set up yet. Ask the installer to create the first owner account.')}</p>:!joining?
+    <form className="sf-auth-fields" onSubmit={onSubmit} aria-busy={busy}>
+     <label htmlFor="sf-signin-username">{t('Username')}<input id="sf-signin-username" name="username" autoComplete="username" placeholder={t('Enter username')} required maxLength={80}/></label>
+     <div className="sf-auth-password">
+      <label htmlFor="login-password">{t('Password')}</label>
+      <div className="sf-password-field"><input id="login-password" name="password" type={showPassword?'text':'password'} autoComplete="current-password" placeholder={t('Enter password')} required maxLength={128}/>
+       <button type="button" aria-controls="login-password" aria-label={t(showPassword?'Hide password':'Show password')} aria-pressed={showPassword} onClick={()=>setShowPassword(v=>!v)}>{t(showPassword?'Hide':'Show')}</button>
+      </div>
+     </div>
      <button className="primary full-width sf-signin" disabled={busy}>{t(busy?'Working…':'Sign in')}<Glyph name="arrow"/></button>
-    </form>}
-    {error&&<p className="error" role="alert">{t(error)}</p>}
-    {notice&&<p className="sf-auth-success" role="status">{t(notice)}</p>}
-    <p className="quiet">{t('Need access? Ask your workspace owner.')}</p>
+     <p className="sf-auth-support">{t('Your role and permissions are identified automatically after sign-in.')}</p>
+    </form>:!joinMethod?
+    <div className="sf-join-choices" role="group" aria-label={t('Choose how to join')}>
+     <button type="button" className="sf-join-option" onClick={()=>chooseMethod('workspace')}>
+      <span className="sf-join-option-copy"><strong>{t('I have a workspace code')}</strong><small>{t('Request staff access. An owner or manager will review your request.')}</small></span>
+      <Glyph name="arrow"/>
+     </button>
+     <button type="button" className="sf-join-option" onClick={()=>chooseMethod('invite')}>
+      <span className="sf-join-option-copy"><strong>{t('I have a one-time invitation')}</strong><small>{t('Create a staff account using an invitation from your owner.')}</small></span>
+      <Glyph name="arrow"/>
+     </button>
+     <p className="sf-auth-support">{t('Ask your workplace owner or manager how to join.')}</p>
+    </div>:
+    <div className="sf-join-form-wrap">
+     <button className="sf-auth-back" type="button" onClick={()=>chooseMethod(null)}>{'← '}{t('Choose another method')}</button>
+     <h2 className="sf-join-form-title">{t(joinWithWorkspace?'Request staff access':'Accept your invitation')}</h2>
+     <p className="sf-auth-helper">{t(joinWithWorkspace?'Use the workplace code shared by your team. Your account will remain pending until approved.':'Use the private one-time code from your owner. The code expires after 24 hours.')}</p>
+     <form className="sf-auth-fields sf-staff-join-form" onSubmit={submitJoin} aria-busy={busy}>
+      <label htmlFor="sf-join-code">{codeLabel}<input id="sf-join-code" name="code" autoComplete="off" required minLength={joinWithWorkspace?27:24} maxLength={100} pattern={joinWithWorkspace?'SF-[A-Za-z0-9_-]{24,80}':'[A-Za-z0-9_-]+'} placeholder={t('Enter your code')}/></label>
+      {joinWithWorkspace&&<label htmlFor="sf-join-name">{t('Full name')}<input id="sf-join-name" name="display_name" autoComplete="name" required maxLength={80} placeholder={t('Your name')}/></label>}
+      <label htmlFor="sf-join-username">{t('Username')}<input id="sf-join-username" name="username" autoComplete="username" required maxLength={80} pattern="[A-Za-z0-9_.-]+" placeholder={t('Choose a username')}/></label>
+      <div className="sf-auth-password">
+       <label htmlFor="sf-join-password">{t('Password (12+ characters)')}</label>
+       <div className="sf-password-field"><input id="sf-join-password" name="password" type={showPassword?'text':'password'} autoComplete="new-password" required minLength={12} maxLength={128} placeholder={t('Create a password')}/>
+        <button type="button" aria-controls="sf-join-password" aria-label={t(showPassword?'Hide password':'Show password')} aria-pressed={showPassword} onClick={()=>setShowPassword(v=>!v)}>{t(showPassword?'Hide':'Show')}</button>
+       </div>
+      </div>
+      <button className="primary full-width sf-signin" disabled={busy||!(joinWithWorkspace?onRegister:onJoin)}>{t(busy?'Working…':joinWithWorkspace?'Request approval':'Create staff account')}<Glyph name="arrow"/></button>
+     </form>
+    </div>}
+    {error&&<p className="error sf-auth-message" role="alert">{t(error)}</p>}
+    {notice&&<p className="sf-auth-success sf-auth-message" role="status">{t(notice)}</p>}
+    {ready&&configured&&<p className="quiet sf-auth-footer">{joining?t('Already have an account?'):t('New to the team?')} <button type="button" className="sf-auth-text-link" onClick={()=>navigate(joining?'login':'join')}>{t(joining?'Sign in':'Join workspace')}</button></p>}
    </section>
   </div>
  </main>;
