@@ -245,10 +245,10 @@ def speak_task(task):
   if p:
    l=line['location'];labels={'facility':'facility','floor':'floor','zone':'section','aisle':'aisle','rack':'rack','shelf':'shelf','bin':'bin'}
    if hi:labels.update(facility='गोदाम',floor='मंज़िल',zone='भाग',aisle='गलियारा',rack='रैक',shelf='शेल्फ',bin='बिन')
-   place=', '.join(f"{labels[k]} {l[k]}" for k in LOCATION_FIELDS if l.get(k))
-   parts.append(f"{p.get('brand','')} {p['name']}, {p['sku']}. {COLLECTION_MAP[p['collection']]['name']}. {place}.".strip())
+   place=', '.join(f"{labels[k]} {l[k]}" for k in LOCATION_FIELDS if l.get(k) and not (p.get('synthetic') and k=='facility' and l[k]=='Demo Hub'))
+   parts.append(f"{p.get('brand','')} {p['name']}, {p['sku']}. {'Example shelf, ' if p.get('synthetic') else ''}{place}.".strip())
   elif line['candidates']:parts.append((f"{line['query']}: कृपया सही आकार या प्रकार चुनें।" if hi else f"{line['query']}: choose the size or variant before going to a location."))
-  else:parts.append((f"{line['query']}: सूची में नहीं मिला।" if hi else f"{line['query']}: no matching catalogue record."))
+  else:parts.append((f"{line['query']}: सूची में नहीं मिला।" if hi else f"{line['query']}: we couldn't find this exact item. Try another name or browse your saved items."))
  return ' '.join(parts)[:2400]
 # Display-only translations for spoken-result captions. Product names, SKUs,
 # brands and stored location values are never translated or inferred.
@@ -274,8 +274,8 @@ def display_task(task):
   if product:
    loc=line['location']
    # Values are taken only from the verified selected catalogue record.
-   where=', '.join(f"{labels[k]} {loc[k]}" for k in LOCATION_FIELDS if loc.get(k))
-   parts.append(f"{product.get('brand','')} {product['name']}, {product['sku']}. {where}.")
+   where=', '.join(f"{labels[k]} {loc[k]}" for k in LOCATION_FIELDS if loc.get(k) and not (product.get('synthetic') and k=='facility' and loc[k]=='Demo Hub'))
+   parts.append(f"{product.get('brand','')} {product['name']}, {product['sku']}. {'Example shelf. ' if product.get('synthetic') else ''}{where}.")
   elif line['candidates']:
    parts.append(f"{line['query']}: {choose}")
   else:
@@ -526,6 +526,19 @@ def install_warehouse(app,path):
    picking_check(c,task)
    state.update(status='completed',completed_at=now())
    return task_put(c,task)
+ @app.delete('/api/warehouse/tasks/{tid}/lines/{index}')
+ def remove_unresolved_line(tid:str,index:int,request:Request):
+  """Remove an unresolved request from a ready task, never from inventory."""
+  u=identity(request)
+  with connect(path) as c:
+   c.execute('BEGIN IMMEDIATE')
+   t=task_get(c,tid,u)
+   picking_mutable(t)
+   if index<0 or index>=len(t['lines']):raise HTTPException(422,'Invalid task line.')
+   if len(t['lines'])<=1:raise HTTPException(409,'Keep one item. Edit and search again to replace it.')
+   if t['lines'][index].get('selected'):raise HTTPException(409,'Only unresolved requests can be removed.')
+   t['lines'].pop(index)
+   return task_put(c,t)
  @app.post('/api/warehouse/tasks/{tid}/choose')
  def choose(tid:str,body:Choose,request:Request):
   u=identity(request)

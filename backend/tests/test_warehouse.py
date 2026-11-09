@@ -975,3 +975,139 @@ def test_failed_search_validation_and_match_ambiguity_not_autolinked(setup):
  assert result.status_code==409
  assert row['status']=='open'
  assert 'glimmer gizmo' not in next(x for x in items(c) if x['sku']=='CLO-001')['aliases']
+
+def test_remove_unresolved_worklist_line_preserves_other_lines(setup):
+ c,_=setup
+ task=search(c,'Blue T-shirt and black jeans, 37')
+ assert len(task['lines'])==3
+ assert task['lines'][2]['selected'] is None
+ before=items(c)
+ deleted=c.delete('/api/warehouse/tasks/'+task['id']+'/lines/2',headers=H)
+ assert deleted.status_code==200,deleted.text
+ assert len(deleted.json()['lines'])==2
+ assert [line['query'] for line in deleted.json()['lines']]==[line['query'] for line in task['lines'][:2]]
+ assert items(c)==before
+ assert c.delete('/api/warehouse/tasks/'+task['id']+'/lines/99',headers=H).status_code==422
+ # Choose a variant explicitly; the app never chooses one from an ambiguous name.
+ unresolved=deleted.json()['lines'][0]
+ choice=unresolved['candidates'][0]
+ selected=post(c,'/tasks/'+task['id']+'/choose',{
+  'line':0,'collection':choice['collection'],'sku':choice['sku'],
+  'location':choice['placements'][0]['code']})
+ assert selected.status_code==200,selected.text
+ assert c.delete('/api/warehouse/tasks/'+task['id']+'/lines/0',headers=H).status_code==409
+
+def test_unresolved_line_removal_is_blocked_after_pick_starts(setup):
+ c,_=setup
+ task=search(c,'CLO-001 and CLO-004, 37')
+ assert len(task['lines'])==3
+ assert c.delete('/api/warehouse/tasks/'+task['id']+'/lines/2',headers=H).status_code==200
+ ready=c.get('/api/warehouse/tasks/'+task['id']).json()
+ assert all(line.get('selected') and line.get('location') for line in ready['lines'])
+ assert post(c,'/tasks/'+task['id']+'/picking/start').status_code==200
+ assert c.delete('/api/warehouse/tasks/'+task['id']+'/lines/0',headers=H).status_code==409
+
+def test_unresolved_last_request_requires_a_new_search(setup):
+ c,_=setup
+ task=search(c,'glimmer gizmo')
+ assert task['lines'][0]['selected'] is None
+ assert c.delete('/api/warehouse/tasks/'+task['id']+'/lines/0',headers=H).status_code==409
+
+def test_telugu_mixed_search_question_normalized_without_guessing_item(setup):
+ from app.warehouse_language import tokens
+ assert tokens('blue jeans? ఎక్కడుంది?')=={'blue','jeans'}
+ c,_=setup
+ missing=post(c,'/search',{'collection':'clothing','query':'blue jeans? ఎక్కడుంది?','language':'te-IN'})
+ assert missing.status_code==200
+ assert missing.json()['lines'][0]['selected'] is None
+ found=post(c,'/search',{'collection':'clothing','query':'black jeans ఎక్కడుంది','language':'te-IN'})
+ assert found.status_code==200
+ assert found.json()['lines'][0]['candidates']
+
+@pytest.mark.parametrize('language,phrase',[
+ ('en-IN','blue jeans where is it'),
+ ('hi-IN','blue jeans कहाँ है'),
+ ('kn-IN','blue jeans ಎಲ್ಲಿದೆ'),
+ ('ta-IN','blue jeans எங்கிருக்கிறது'),
+ ('te-IN','blue jeans ఎక్కడుంది'),
+ ('ml-IN','blue jeans എവിടെയാണ്'),
+ ('mr-IN','blue jeans कुठे आहे'),
+ ('bn-IN','blue jeans কোথায় আছে'),
+ ('gu-IN','blue jeans ક્યાં છે'),
+ ('pa-IN','blue jeans ਕਿੱਥੇ ਹੈ'),
+ ('hi-en','blue jeans kaha hai'),
+])
+def test_all_search_languages_location_request_keeps_product_constraints(setup,language,phrase):
+ from app.warehouse_language import tokens
+ # A location question is not itself a product attribute.
+ assert tokens(phrase)=={'blue','jeans'},(language,phrase,tokens(phrase))
+ c,_=setup
+ result=post(c,'/search',{'collection':'clothing','query':phrase,'language':language})
+ assert result.status_code==200,result.text
+ assert len(result.json()['lines'])==1
+ assert result.json()['lines'][0]['selected'] is None
+ assert result.json()['lines'][0]['candidates']==[]
+
+@pytest.mark.parametrize('language,phrase',[
+ ('en-IN','black jeans where is it'),
+ ('hi-IN','black jeans कहाँ है'),
+ ('kn-IN','black jeans ಎಲ್ಲಿದೆ'),
+ ('ta-IN','black jeans எங்கிருக்கிறது'),
+ ('te-IN','black jeans ఎక్కడుంది'),
+ ('ml-IN','black jeans എവിടെയാണ്'),
+ ('mr-IN','black jeans कुठे आहे'),
+ ('bn-IN','black jeans কোথায় আছে'),
+ ('gu-IN','black jeans ક્યાં છે'),
+ ('pa-IN','black jeans ਕਿੱਥੇ ਹੈ'),
+ ('hi-en','black jeans kaha hai'),
+])
+def test_all_search_languages_find_real_items_without_guessing_size(setup,language,phrase):
+ from app.warehouse_language import tokens
+ assert tokens(phrase)=={'black','jeans'},(language,phrase,tokens(phrase))
+ c,_=setup
+ response=post(c,'/search',{'collection':'clothing','query':phrase,'language':language})
+ assert response.status_code==200,response.text
+ lines=response.json()['lines']
+ assert len(lines)==1
+ assert len(lines[0]['candidates'])==2
+ assert lines[0]['selected'] is None # user must choose the size
+
+
+@pytest.mark.parametrize('language,query,colour',[
+ ('kn-IN','ಕಪ್ಪು ಜೀನ್ಸ್ ಎಲ್ಲಿದೆ','black'),
+ ('ta-IN','கருப்பு ஜீன்ஸ் எங்கே','black'),
+ ('te-IN','నల్ల జీన్స్ ఎక్కడుంది','black'),
+ ('ml-IN','കറുപ്പ് ജീൻസ് എവിടെയാണ്','black'),
+ ('mr-IN','काळी जीन्स कुठे आहे','black'),
+ ('bn-IN','কালো জিন্স কোথায় আছে','black'),
+ ('gu-IN','કાળા જીન્સ ક્યાં છે','black'),
+ ('pa-IN','ਕਾਲੀ ਜੀਨਸ ਕਿੱਥੇ ਹੈ','black'),
+ ('hi-IN','काली jeans kaha hai','black'),
+ ('en-IN','black jeans where is it','black'),
+])
+def test_native_regional_jeans_words_keep_colour_and_require_size(setup,language,query,colour):
+ from app.warehouse_language import tokens
+ words=tokens(query)
+ assert colour in words and 'jeans' in words,(language,words)
+ c,_=setup
+ found=post(c,'/search',{'collection':'clothing','query':query,'language':language})
+ assert found.status_code==200,found.text
+ assert len(found.json()['lines'])==1
+ assert len(found.json()['lines'][0]['candidates'])==2
+ assert found.json()['lines'][0]['selected'] is None
+
+@pytest.mark.parametrize('language,query',[
+ ('kn-IN','ನೀಲಿ ಜೀನ್ಸ್ ಎಲ್ಲಿದೆ'),
+ ('ta-IN','நீலம் ஜீன்ஸ் எங்கே'),
+ ('te-IN','నీలం జీన్స్ ఎక్కడుంది'),
+ ('ml-IN','നീല ജീൻസ് എവിടെയാണ്'),
+ ('mr-IN','निळी जीन्स कुठे आहे'),
+ ('bn-IN','নীল জিন্স কোথায় আছে'),
+ ('gu-IN','વાદળી જીન્સ ક્યાં છે'),
+ ('pa-IN','ਨੀਲੀ ਜੀਨਸ ਕਿੱਥੇ ਹੈ'),
+])
+def test_native_blue_jeans_does_not_match_black_sample(setup,language,query):
+ c,_=setup
+ result=post(c,'/search',{'collection':'clothing','query':query,'language':language})
+ assert result.status_code==200,result.text
+ assert result.json()['lines'][0]['candidates']==[]

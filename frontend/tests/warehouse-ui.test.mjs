@@ -131,14 +131,11 @@ test('secondary Back is available only in phone layout while desktop uses the si
  assert.match(css,/@media \(min-width:701px\)\{\s*\.sf-compact-app \.sf-page-back\{display:none!important\}/);
  assert.match(css,/@media \(max-width:700px\)/);
 });
-test('authenticated header exposes working light and dark theme toggle on desktop and mobile',async()=>{
+test('appearance is controlled only from Settings, on both desktop and mobile',async()=>{
  const jsx=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
- assert.match(jsx,/className="wh-icon-button sf-header-theme"/);
- assert.match(jsx,/aria-pressed=\{theme==='dark'\}/);
+ assert.doesNotMatch(jsx,/className="wh-icon-button sf-header-theme"/);
+ assert.match(jsx,/<span>\{t\('Appearance'\)\}<\/span>/);
  assert.match(jsx,/onClick=\{\(\)=>TH\(theme==='dark'\?'light':'dark'\)\}/);
- assert.match(css,/\.sf-compact-app \.wh-top-actions \.sf-header-theme\{/);
- assert.match(css,/display:inline-flex!important/);
 });
 
 test('account actions are grouped and logout is separate from staff creation',async()=>{
@@ -267,7 +264,7 @@ test('Prisma V3 offers ten selectable recognition languages and optional hints',
 test('setup guidance is limited to Find when workspace setup is unfinished',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/!meta\.settings\.configured&&page==='find'/);
- assert.match(src,/owner&&<button onClick=\{\(\)=>navigate\('business'\)\}>Set up workspace/);
+ assert.match(src,/owner&&<button onClick=\{\(\)=>navigate\('business'\)\}>Set up my store/);
  assert.doesNotMatch(src,/!meta\.settings\.configured&&!\['business','more','settings'\]\.includes\(page\)/);
 });
 test('catalogue label is not repeated as inert decoration on workspace pages',async()=>{
@@ -392,4 +389,45 @@ test('owner-only activity tab exposes unmatched-search review without modifying 
  assert.match(panel,/Dismiss with note/);
  assert.match(css,/\.sf-search-intelligence\{/);
  assert.match(css,/\.sf-unknown-confirm input\{/);
+});
+
+test('voice picking is discoverable before starting and unmatched requests can be removed',async()=>{
+ const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
+ assert.match(ui,/picking.status!=='completed'&&<div className="sf-voice-guide"/);
+ assert.match(ui,/Choose your items, then tap Start picking to use voice commands/);
+ assert.match(ui,/enabled={picking.status==='active'&&voice&&!busy&&!voiceGuidePaused}/);
+ assert.match(ui,/async function removeUnresolvedLine\(index\)/);
+ assert.match(ui,/Remove from worklist/);
+ assert.match(server,/def remove_unresolved_line\(tid:str,index:int,request:Request\)/);
+});
+
+test('example locations and voice controls use readable labels',async()=>{
+ const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const parts=await readFile(new URL('../src/warehouse-ui.jsx',import.meta.url),'utf8');
+ assert.match(ui,/Example products and shelves/);
+ assert.match(ui,/Browse saved items/);
+ assert.match(ui,/friendlyPath\(l,!!p.synthetic\)/);
+ assert.match(parts,/example=false/);
+ assert.match(parts,/Example shelf/);
+});
+
+test('synthetic catalogue locations are explicitly examples in spoken and visual responses',async()=>{
+ const backend=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
+ const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(backend,/Example shelf/);
+ assert.match(ui,/These are example items and locations/);
+ assert.match(ui,/friendlyPath\(ls\[0\]\.location,!!ls\[0\]\.selected\?\.synthetic\)/);
+});
+
+
+test('only settings page exposes appearance control and manager empty state is actionable',async()=>{
+ const warehouse=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const accounts=await readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
+ assert.doesNotMatch(warehouse,/className="wh-icon-button sf-header-theme"/);
+ assert.match(warehouse,/sf-settings-preferences/);
+ assert.match(accounts,/managersEligible\.length===0/);
+ assert.match(accounts,/No staff members are ready to become managers yet/);
+ assert.match(accounts,/sf-staff-create/);
+ assert.match(accounts,/owner_password:d\.get\('password'\)/);
 });

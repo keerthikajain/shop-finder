@@ -29,7 +29,7 @@ test('staff facing copy does not expose release operations or debug instructions
  const account=await read('accounts.jsx');
  assert.doesNotMatch(workspace,/Gnani configured\. Verify microphone and speech playback before release\./);
  assert.doesNotMatch(workspace,/Training catalogue — synthetic records/);
- assert.match(workspace,/Sample catalogue — fictional records/);
+ assert.match(workspace,/Example products and shelves — replace them with your own items before use/);
  assert.match(account,/This workspace is not set up yet\./);
  assert.doesNotMatch(account,/Run scripts\/start_local\.py in the terminal to create the first owner account/);
 });

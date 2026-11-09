@@ -91,25 +91,44 @@ SYNONYMS = {
     'towels':'towel', 'boxes':'box',
 }
 
+# Verified basic product words in the native scripts. These are lexical
+# equivalents, not similarity guesses; explicit colours remain mandatory.
+REGIONAL_PRODUCT_SYNONYMS = {
+ 'ಜೀನ್ಸ್':'jeans', 'ಕಪ್ಪು':'black', 'ಕಪ್ಪುಬಣ್ಣದ':'black', 'ನೀಲಿ':'blue',
+ 'ஜீன்ஸ்':'jeans', 'கருப்பு':'black', 'நீல':'blue', 'நீலம்':'blue',
+ 'జీన్స్':'jeans', 'నల్ల':'black', 'నీలం':'blue', 'నీలి':'blue',
+ 'ജീൻസ്':'jeans', 'കറുപ്പ്':'black', 'നീല':'blue',
+ 'जीन्स':'jeans', 'काळी':'black', 'काळा':'black', 'निळी':'blue', 'निळा':'blue',
+ 'জিন্স':'jeans', 'কালো':'black', 'নীল':'blue',
+ 'જીન્સ':'jeans', 'કાળા':'black', 'કાળી':'black', 'વાદળી':'blue',
+ 'ਜੀਨਸ':'jeans', 'ਜੀਨਜ਼':'jeans', 'ਕਾਲੀ':'black', 'ਕਾਲਾ':'black', 'ਨੀਲੀ':'blue',
+}
+SYNONYMS.update(REGIONAL_PRODUCT_SYNONYMS)
+
 # Only generic request words are removed. Do NOT remove units, ratings,
 # sizes, package counts, brands, locations or product descriptors.
 
 # Only grammatical request words. Never drop product descriptors, size,
 # quantity, pack, brand, colour or electrical rating words.
-INDIC_REQUEST_FILLERS = set("""
-ಎಲ್ಲಿ ಎಲ್ಲಿದೆ ಇದೆ ನನಗೆ ಬೇಕು ದಯವಿಟ್ಟು ತೋರಿಸಿ ಕೊಡಿ ಹುಡುಕಿ
-எங்கே உள்ளது இருக்கிறது எனக்கு வேண்டும் தயவுசெய்து காட்டுங்கள்
-ఎక్కడ ఉంది నాకు కావాలి దయచేసి చూపించు చూపించండి
-എവിടെ ഉണ്ട് എനിക്ക് വേണം ദയവായി കാണിക്കൂ
-कुठे आहे मला पाहिजे कृपया दाखवा
-কোথায় আছে আমাকে চাই দয়া করে দেখান
-ક્યાં છે મને જોઈએ કૃપા કરીને બતાવો
-ਕਿੱਥੇ ਹੈ ਮੈਨੂੰ ਚਾਹੀਦਾ ਕਿਰਪਾ ਕਰਕੇ ਦਿਖਾਓ
-""".split())
+# Explicit location/request grammar for all eight regional languages.
+# Product words, colours, sizes, brands and specifications MUST stay in tokens.
+# Extend this only with phrases verified as grammatical requests, never by
+# stripping arbitrary native-script text.
+REGIONAL_REQUEST_WORDS = {
+ 'kn-IN': 'ಎಲ್ಲಿ ಎಲ್ಲಿದೆ ಎಲ್ಲಿದೆಯೆ ಎಲ್ಲಿವೆ ಎಲ್ಲಿದ್ದಾರೆ ಇದೆ ಇವೆ ನನಗೆ ಬೇಕು ದಯವಿಟ್ಟು ತೋರಿಸಿ ಕೊಡಿ ಹುಡುಕಿ ಸಿಗುತ್ತದೆ ಸಿಗುತ್ತವೆ',
+ 'ta-IN': 'எங்கே எங்குள்ளது எங்கிருக்கிறது உள்ளது இருக்கிறது இருக்கின்றன எனக்கு வேண்டும் தயவுசெய்து காட்டுங்கள் காட்டு சொல்லுங்கள் கிடைக்கும்',
+ 'te-IN': 'ఎక్కడ ఎక్కడుంది ఎక్కడుందో ఎక్కడున్నాయి ఎక్కడున్నది ఉంది ఉన్నాయి నాకు కావాలి దయచేసి చూపించు చూపించండి చెప్పండి దొరుకుతుంది',
+ 'ml-IN': 'എവിടെ എവിടെയാണ് എവിടെയുണ്ട് എവിടെയാണുള്ളത് ഉണ്ട് ഉണ്ടോ എനിക്ക് വേണം ദയവായി കാണിക്കൂ കാണിക്കുക പറയൂ കിട്ടും',
+ 'mr-IN': 'कुठे कुठे आहे कुठे मिळेल आहे आहेत मला पाहिजे कृपया दाखवा सांगा मिळेल',
+ 'bn-IN': 'কোথায় কোথায় কোথায় আছে আছে আছে কি আমাকে চাই দয়া করে দেখান বলুন পাওয়া যাবে',
+ 'gu-IN': 'ક્યાં ક્યાં છે ક્યાં મળશે છે મને જોઈએ કૃપા કરીને બતાવો કહો મળશે',
+ 'pa-IN': 'ਕਿੱਥੇ ਕਿੱਥੇ ਹੈ ਕਿਥੇ ਹੈ ਹੈ ਮੈਨੂੰ ਚਾਹੀਦਾ ਕਿਰਪਾ ਕਰਕੇ ਦਿਖਾਓ ਦੱਸੋ ਮਿਲੇਗਾ',
+}
+INDIC_REQUEST_FILLERS = set(' '.join(REGIONAL_REQUEST_WORDS.values()).split())
 
 STOP = set("""
 find where is are the a an i can do you have me please show need want
-get locate in stock of for at my this that which
+get locate in stock of for at my this that which it them there
 mujhe muje chahiye chahie chahiyeh kahan kahaan kaha kidhar
 hai hain he h kya batao btao dikhao dhundo dhoondo milega milegi milenge
 rakha rakhi rakhe rakhega rakhiye ka ki ke ko par se mujko zara
@@ -123,7 +142,7 @@ size uk colour color power capacity brand w l
 
 _DEVANAGARI = '\u0900-\u097f'
 # Match a whole Devanagari/Latin phrase, never part of another word.
-_BOUNDARY = r'[\w' + _DEVANAGARI + r']'
+_BOUNDARY = r'[\w\u0900-\u0d7f]'
 _RULES = [
     (re.compile(r'(?<!' + _BOUNDARY + r')' + re.escape(src) +
                 r'(?!' + _BOUNDARY + r')', re.IGNORECASE), dst)
