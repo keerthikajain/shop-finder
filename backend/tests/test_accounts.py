@@ -174,3 +174,16 @@ def test_logout_remains_idempotent_and_invalidates_all_sessions(setup):
  assert c.post('/api/auth/logout',headers=H).status_code==200
  assert c.post('/api/auth/logout',headers=H).status_code==200
  assert c.get('/api/users').status_code==401
+
+@pytest.mark.parametrize('language', ['en','hi','bn','mr','gu','pa','kn','te','ta','ml'])
+def test_staff_account_can_store_all_supported_interface_languages(tmp_path,language):
+ from app.accounts import add_account
+ from app.database import connect
+ db=tmp_path/'languages.sqlite3'
+ with TestClient(create_app(db,seed_demo=False)) as client:
+  uid=add_account(db,'worker','staff-password-1234',language=language)
+  with connect(db) as conn:
+   assert conn.execute('SELECT language FROM accounts WHERE id=?',(uid,)).fetchone()['language']==language
+  resp=client.post('/api/auth/login',headers=H,json={'username':'worker','password':'staff-password-1234'})
+  assert resp.status_code==200,resp.text
+  assert resp.json()['language']==language

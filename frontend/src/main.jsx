@@ -11,7 +11,7 @@ import {TestLog} from './test-log.jsx';
 import {getThemePreference, resolveTheme} from './theme.js';
 import {AccountGate,AccountSettings,request} from './accounts.jsx';
 import {Tour} from './tour.jsx';
-import {useT} from './locale.js';
+import {useT,APP_LANGUAGES} from './locale.js';
 import {EvidenceEditor} from './evidence-editor.jsx';
 import {categories, Icon, Results, fieldLabel} from './components.jsx';
 function App({user,preferences,logout}){
@@ -61,7 +61,7 @@ function App({user,preferences,logout}){
     <div className="sidebar-bottom">{products.some(p=>p.is_synthetic)&&<span className="demo-tag"><span/>{t("Synthetic demo")}</span>}<p>{t("Built for the parts desk.")}<br/>{t("Made to keep things clear.")}</p></div>
    </aside>
    <main id="main-content" tabIndex={-1}>
-    <div className="topline"><span>{t("YOUR PARTS DESK")}<span className="breadcrumb">/ {t(page)}</span></span><label>{t('App language')}<select value={user.language} disabled={busy||recording} onChange={e=>task(()=>preferences({language:e.target.value}))}><option value="en">English</option><option value="hi">हिन्दी</option></select></label><button className="text-button" onClick={()=>{changePage('Ask');TOUR(true)}}>{t('Restart tour')}</button><button className="text-button" onClick={()=>task(logout)}>{t('Log out')}</button><div className="theme-control"><label htmlFor="theme-select">{t("Appearance")}</label><select id="theme-select" value={theme} onChange={e=>setTheme(e.target.value)}><option value="light">{t("Light")}</option><option value="dark">{t("Dark")}</option><option value="system">{t("System")}</option></select></div></div>
+    <div className="topline"><span>{t("YOUR PARTS DESK")}<span className="breadcrumb">/ {t(page)}</span></span><label>{t('App language')}<select value={user.language} disabled={busy||recording} onChange={e=>task(()=>preferences({language:e.target.value}))}>{APP_LANGUAGES.map(([code,name])=><option key={code} value={code}>{name}</option>)}</select></label><button className="text-button" onClick={()=>{changePage('Ask');TOUR(true)}}>{t('Restart tour')}</button><button className="text-button" onClick={()=>task(logout)}>{t('Log out')}</button><div className="theme-control"><label htmlFor="theme-select">{t("Appearance")}</label><select id="theme-select" value={theme} onChange={e=>setTheme(e.target.value)}><option value="light">{t("Light")}</option><option value="dark">{t("Dark")}</option><option value="system">{t("System")}</option></select></div></div>
     <header className="page-heading"><div><h1>{t(headings[page][0])}</h1><p>{t(headings[page][1])}</p></div><span className="page-icon"><Icon name={pages.find(([n])=>n===page)[1]}/></span></header>
     {products.some(p=>p.is_synthetic)&&<div className="demo-notice"><Icon name="info"/><p><b>{t("Synthetic demo catalogue.")}</b> {t('Invented details and locations are not for selecting or installing real parts.')}</p></div>}
     {error&&<div className="error" role="alert"><Icon name="info"/><span>{t(error)}</span>{!products.length&&<button disabled={busy} onClick={()=>task(async()=>{await load();setLoading(false)})}>{t("Retry connection")}</button>}</div>}

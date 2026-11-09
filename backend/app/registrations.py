@@ -28,7 +28,7 @@ class RegisterRequest(BaseModel):
     username:str=Field(min_length=1,max_length=80,pattern=r'^[A-Za-z0-9_.-]+$')
     password:str=Field(min_length=12,max_length=128)
     display_name:str=Field(min_length=1,max_length=80)
-    language:Literal['en','hi']='en'
+    language:Literal['en','hi','bn','mr','gu','pa','kn','te','ta','ml']='en'
 
 class WorkspaceSetting(BaseModel):
     model_config=ConfigDict(extra='forbid')

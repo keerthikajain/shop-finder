@@ -114,7 +114,9 @@ test('Finder appears in the browser title and installed app name',async()=>{
 
 test('desktop login is constrained to a centered shadow card and leaves phone styling alone',async()=>{
  const styles=await (await import('node:fs/promises')).readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
- const desktop=styles.slice(styles.indexOf('/* Desktop Finder sign-in: a compact login card'));
+ const start=styles.indexOf('/* Desktop Finder sign-in: a compact login card');
+ const end=styles.indexOf('/* 10-language selector:',start);
+ const desktop=styles.slice(start,end);
  assert.match(desktop,/@media \(min-width:761px\)/);
  assert.match(desktop,/\.login-shell \.sf-login-layout\{[\s\S]*?max-width:940px/);
  assert.match(desktop,/grid-template-columns:minmax\(0,1fr\) minmax\(0,420px\)/);
@@ -123,4 +125,16 @@ test('desktop login is constrained to a centered shadow card and leaves phone st
  assert.match(desktop,/background:#fff/);
  assert.match(desktop,/min-height:0/);
  assert.doesNotMatch(desktop,/@media\s*\(max-width:/);
+});
+
+test('login and registration expose all ten persistent interface languages',async()=>{
+ const html=render();
+ const expected=['en','hi','bn','mr','gu','pa','kn','te','ta','ml'];
+ for(const code of expected)assert.match(html,new RegExp('value="'+code+'"'));
+ assert.match(render({},'kn'),/ಮತ್ತೆ ಸ್ವಾಗತ/);
+ assert.match(render({},'ta'),/மீண்டும் வரவேற்கிறோம்/);
+ assert.match(render({},'bn'),/আবার স্বাগতম/);
+ const file=await (await import('node:fs/promises')).readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
+ assert.match(file,/finder-app-language/);
+ assert.match(file,/document\.documentElement\.lang/);
 });
