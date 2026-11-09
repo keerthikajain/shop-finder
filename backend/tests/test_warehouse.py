@@ -1121,3 +1121,50 @@ def test_telugu_salt_normalization_does_not_invent_missing_shelf(setup):
  # The catalogue determines availability; no guessed product or location.
  if not result.json()['lines'][0]['candidates']:
   assert result.json()['lines'][0]['selected'] is None
+
+def test_query_time_translation_finds_newly_imported_product_without_translated_catalogue(setup,monkeypatch):
+ from app import warehouse_query_translation
+ c,_=setup
+ base=items(c,'appliances')[0]
+ product={k:v for k,v in base.items() if k not in ('revision','updated_at','updated_by')}
+ product.update(sku='APP-TRANS-991',name='Stainless steel hose clamp',category='Hardware',
+                aliases=[],brand='',specs={'size':'16 mm'},synthetic=False)
+ assert save(c,product,0).status_code==200
+ assert not next(p for p in items(c,'appliances') if p['sku']=='APP-TRANS-991').get('translations')
+ async def translate(query,language,products):
+  assert query=='स्टेनलेस स्टील होज़ क्लैंप कहाँ है?'
+  assert language=='hi-IN'
+  return ['Stainless steel hose clamp'],'attempted'
+ monkeypatch.setattr(warehouse_query_translation,'translate_to_catalogue',translate)
+ result=post(c,'/search',{'collection':'appliances','query':'स्टेनलेस स्टील होज़ क्लैंप कहाँ है?','language':'hi-IN'})
+ assert result.status_code==200,result.text
+ matching=result.json()['lines'][0]
+ assert matching['match_method']=='query_translation'
+ assert matching['selected']['sku']=='APP-TRANS-991'
+ assert matching['location'] is not None
+ assert not next(p for p in items(c,'appliances') if p['sku']=='APP-TRANS-991').get('translations')
+
+def test_query_translation_cannot_force_nonexistent_item_or_wrong_spec(setup,monkeypatch):
+ from app import warehouse_query_translation
+ c,_=setup
+ async def translate(query,language,products):
+  return ['Blue T-shirt size M'],'attempted'
+ monkeypatch.setattr(warehouse_query_translation,'translate_to_catalogue',translate)
+ result=post(c,'/search',{'collection':'clothing','query':'काली जींस कहाँ है?','language':'hi-IN'})
+ assert result.status_code==200
+ assert not result.json()['lines'][0]['selected']
+ assert result.json()['lines'][0]['match_method']=='catalogue'
+ result=post(c,'/search',{'collection':'clothing','query':'Blue T-shirt size 44','language':'hi-IN'})
+ assert result.status_code==200
+ assert not result.json()['lines'][0]['selected']
+
+def test_query_time_translation_unavailable_is_nonblocking(setup,monkeypatch):
+ from app import warehouse_query_translation
+ c,_=setup
+ monkeypatch.delenv('SARVAM_API_KEY',raising=False)
+ query='అభ్యర్థించిన తెలియని వస్తువు ఎక్కడ ఉంది?'
+ result=post(c,'/search',{'collection':'all','query':query,'language':'te-IN'})
+ assert result.status_code==200,result.text
+ line=result.json()['lines'][0]
+ assert not line['selected']
+ assert line['translation_status'] in ('not_configured','not_applicable')

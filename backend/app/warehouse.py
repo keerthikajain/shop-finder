@@ -174,6 +174,7 @@ def get_pending(c,token,kind,user):
 # Normalize transcripts and saved aliases with the same bounded Hindi/Hinglish vocabulary.
 # Unknown modifiers still abstain; do not infer SKUs or locations.
 from .warehouse_language import normal_query,tokens
+from . import warehouse_query_translation as query_translate
 
 def split_request(query,items,collection):
  # Split only when the catalogue supports a unique complete segmentation.
@@ -455,7 +456,7 @@ def install_warehouse(app,path):
                            lambda db,coll,sku:public(item_row(db,coll,sku)),
                            lambda db:rows(db,'all'),match,write,Item)
  @app.post('/api/warehouse/search')
- def search(body:Query,request:Request):
+ async def search(body:Query,request:Request):
   u=identity(request);queries=[q.strip(' .?!') for q in re.split(r'\s+(?:and|aur|और)\s+|[,;\n]',body.query,flags=re.I) if q.strip(' .?!')]
   if not 1<=len(queries)<=10:raise HTTPException(422,'Ask for 1–10 items at a time.')
   with connect(path) as c:
@@ -463,10 +464,25 @@ def install_warehouse(app,path):
    queries=split_request(body.query,all_items,body.collection)
    if not 1<=len(queries)<=10:raise HTTPException(422,'Ask for 1–10 items at a time.')
    for q in queries:
-    candidates=match(q,all_items,body.collection);p=candidates[0] if len(candidates)==1 else None
+    candidates=match(q,all_items,body.collection)
+    matching_method='catalogue'
+    translation_status='not_needed'
+    if not candidates and body.language in ('en-IN','hi-IN','hi-en','te-IN','kn-IN'):
+     # This is a request-time fallback, not bulk translation of saved products.
+     # A provider returns text only: matching still uses actual catalogue rows.
+     alternatives,translation_status=await query_translate.translate_to_catalogue(q,body.language,all_items)
+     translated_candidates={}
+     for alternative in alternatives:
+      for item in match(alternative,all_items,body.collection):
+       if query_translate.preserves_explicit_details(q,alternative,item):
+        translated_candidates[(item['collection'],item['sku'])]=item
+     if translated_candidates:
+      candidates=list(translated_candidates.values())
+      matching_method='query_translation'
+    p=candidates[0] if len(candidates)==1 else None
     available=[l for l in p['placements'] if not body.location or l['code']==body.location] if p else []
     l=available[0] if len(available)==1 else None
-    lines.append({'query':q,'candidates':candidates,'selected':p if l else None,'location':l,'product_scanned':False,'complete':False,'confirmation':None,'location_feedback':None,**location_status(c,p,l)})
+    lines.append({'query':q,'match_method':matching_method,'translation_status':translation_status,'candidates':candidates,'selected':p if l else None,'location':l,'product_scanned':False,'complete':False,'confirmation':None,'location_feedback':None,**location_status(c,p,l)})
     # A search result, including no match, never creates a report by itself.
    if not u.get('is_demo'):unknowns.capture(c,(line['query'] for line in lines if not line['candidates']),body.collection,rows(c,'all'),match)
    tid=secrets.token_urlsafe(24);t={'id':tid,'collection':body.collection,'language':body.language,'query':body.query,'lines':lines,'picking':{'status':'ready','started_at':None,'completed_at':None}};t['spoken_text']=speak_task(t);t['display_text']=display_task(t)
