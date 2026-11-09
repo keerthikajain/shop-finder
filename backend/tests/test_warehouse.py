@@ -1128,7 +1128,7 @@ def test_query_time_translation_finds_newly_imported_product_without_translated_
  base=items(c,'appliances')[0]
  product={k:v for k,v in base.items() if k not in ('revision','updated_at','updated_by')}
  product.update(sku='APP-TRANS-991',name='Stainless steel hose clamp',category='Hardware',
-                aliases=[],brand='',specs={'size':'16 mm'},synthetic=False)
+                aliases=[],brand='',barcode='',specs={'size':'16 mm'},synthetic=False)
  assert save(c,product,0).status_code==200
  assert not next(p for p in items(c,'appliances') if p['sku']=='APP-TRANS-991').get('translations')
  async def translate(query,language,products):
