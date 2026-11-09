@@ -1,6 +1,6 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {AccountSettings,request} from './accounts.jsx';
-import {useT} from './locale.js';
+import {useT,APP_LANGUAGES} from './locale.js';
 import {startRecording,startLiveRecording} from './recording.js';
 import {getThemePreference,resolveTheme} from './theme.js';
 import {Mark,Glyph,Modal,Place,Specs,ItemArt,ScanBox,Label,Feedback} from './warehouse-ui.jsx';
@@ -15,6 +15,7 @@ const VOICE_INPUT_LANGUAGES=[
  ['mr-IN','मराठी / Marathi'],['bn-IN','বাংলা / Bengali'],
  ['gu-IN','ગુજરાતી / Gujarati'],['pa-IN','ਪੰਜਾਬੀ / Punjabi'],
 ];
+const VOICE_LANGUAGE_DEFAULT={en:'en-IN',hi:'hi-IN',bn:'bn-IN',mr:'mr-IN',gu:'gu-IN',pa:'pa-IN',kn:'kn-IN',te:'te-IN',ta:'ta-IN',ml:'ml-IN'};
 export const locationFields=['facility','floor','zone','aisle','rack','shelf','bin'];
 export const pathText=l=>locationFields.map(k=>l?.[k]).filter(Boolean).join(' / ');
 export const cleanItem=p=>({sku:p.sku,collection:p.collection,name:p.name,category:p.category,brand:p.brand||'',aliases:p.aliases,barcode:p.barcode,photo_url:p.photo_url||'',specs:p.specs,synthetic:p.synthetic,placements:p.placements.map(l=>({...Object.fromEntries(locationFields.map(k=>[k,l[k]||''])),quantity:l.quantity??null}))});
@@ -30,7 +31,7 @@ export function VoiceButton({language,enabled,onText,onError,onPartial,live=fals
 }
 export default function WarehouseApp({user,preferences,logout}){
  const t=useT(),owner=user.role==='owner';
- const [meta,M]=useState(null),[items,I]=useState([]),[collection,C]=useState('all'),[page,P]=useState('find'),[brand,BR]=useState(''),[locationFilter,LF]=useState(''),[query,Q]=useState(''),[task,T]=useState(null),[recent,R]=useState([]),[busy,B]=useState(false),[error,E]=useState(''),[notice,N]=useState(''),[modal,D]=useState(null),[group,G]=useState('request'),[filter,F]=useState(''),[category,CAT]=useState(''),[language,L]=useState(()=>localStorage.getItem('sf-voice-'+user.id)||'en-IN'),[liveMode,LM]=useState(false),[detectedSearchLanguage,DSL]=useState(null),[hintLanguages,HL]=useState([]),[auto,AUTO]=useState(true),[voiceQuery,VQ]=useState(false),[tour,TOUR]=useState(user.tour_done?null:0),[theme,TH]=useState(()=>getThemePreference(localStorage)),[speaking,SP]=useState(false),[filtersOpen,FO]=useState(false),[sizeFilter,SZ]=useState(''),[activeLine,AL]=useState(0),[reviewNonce,RV]=useState(0);
+ const [meta,M]=useState(null),[items,I]=useState([]),[collection,C]=useState('all'),[page,P]=useState('find'),[brand,BR]=useState(''),[locationFilter,LF]=useState(''),[query,Q]=useState(''),[task,T]=useState(null),[recent,R]=useState([]),[busy,B]=useState(false),[error,E]=useState(''),[notice,N]=useState(''),[modal,D]=useState(null),[group,G]=useState('request'),[filter,F]=useState(''),[category,CAT]=useState(''),[language,L]=useState(()=>localStorage.getItem('sf-voice-'+user.id)||(VOICE_LANGUAGE_DEFAULT[user.language]||'en-IN')),[liveMode,LM]=useState(false),[detectedSearchLanguage,DSL]=useState(null),[hintLanguages,HL]=useState([]),[auto,AUTO]=useState(true),[voiceQuery,VQ]=useState(false),[tour,TOUR]=useState(user.tour_done?null:0),[theme,TH]=useState(()=>getThemePreference(localStorage)),[speaking,SP]=useState(false),[filtersOpen,FO]=useState(false),[sizeFilter,SZ]=useState(''),[activeLine,AL]=useState(0),[reviewNonce,RV]=useState(0);
  const audio=useRef(),audioURL=useRef(),generation=useRef(0),main=useRef(),taskVoice=useRef(false);
  const pack=collection==='all'?{id:'all',name:'Whole store',fields:[...new Set(meta?.collections.flatMap(c=>[...c.fields,...(meta.settings.custom_fields[c.id]||[])])||[])]}:meta?.collections.find(c=>c.id===collection),labels=meta?.field_labels||{},voice=!!meta?.voice,prismaV3=meta?.stt_model!=='prisma-v2.5';
  const invalidHints=language==='auto'&&hintLanguages.length===1;
@@ -92,7 +93,7 @@ export default function WarehouseApp({user,preferences,logout}){
   </div>
   <button type="button" className="sf-more-logout" disabled={busy} onClick={()=>run(logout)}><Glyph name="logout"/>{t('Log out')}</button>
 </section>}
- {page==='settings'&&<section className="sf-settings-page"><div className="sf-more-group sf-settings-preferences"><h2>{t('App preferences')}</h2><p className="sf-voice-setting-status">{voice?t('Voice search is enabled. Check your microphone from Find items before using it.'):t('Voice search is unavailable. You can still find items by typing.')}</p><div className="sf-more-preference-row"><label htmlFor="sf-settings-language">{t('App language')}</label><select id="sf-settings-language" aria-label={t('App language')} disabled={busy} value={user.language} onChange={e=>run(()=>preferences({language:e.target.value}))}><option value="en">English</option><option value="hi">हिन्दी</option></select></div><div className="sf-more-preference-row"><span>{t('Appearance')}</span><button type="button" onClick={()=>TH(theme==='dark'?'light':'dark')}><Glyph name={theme==='dark'?'sun':'moon'}/>{t(theme==='dark'?'Light mode':'Dark mode')}</button></div></div><AccountSettings {...{user,preferences,logout}} showLanguage={false}/></section>}
+ {page==='settings'&&<section className="sf-settings-page"><div className="sf-more-group sf-settings-preferences"><h2>{t('App preferences')}</h2><p className="sf-voice-setting-status">{voice?t('Voice search is enabled. Check your microphone from Find items before using it.'):t('Voice search is unavailable. You can still find items by typing.')}</p><div className="sf-more-preference-row"><label htmlFor="sf-settings-language">{t('App language')}</label><select id="sf-settings-language" aria-label={t('App language')} disabled={busy} value={user.language} onChange={e=>run(()=>preferences({language:e.target.value}))}>{APP_LANGUAGES.map(([code,name])=><option key={code} value={code}>{name}</option>)}</select></div><div className="sf-more-preference-row"><span>{t('Appearance')}</span><button type="button" onClick={()=>TH(theme==='dark'?'light':'dark')}><Glyph name={theme==='dark'?'sun':'moon'}/>{t(theme==='dark'?'Light mode':'Dark mode')}</button></div></div><AccountSettings {...{user,preferences,logout}} showLanguage={false}/></section>}
  </>}
  <footer className="wh-footer"><span><Mark/>finder</span>{items.some(i=>i.synthetic)&&<small>{t('Sample catalogue — fictional records')}</small>}</footer>
  </main></div>

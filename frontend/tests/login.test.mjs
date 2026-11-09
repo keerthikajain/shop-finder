@@ -124,3 +124,15 @@ test('desktop login is constrained to a centered shadow card and leaves phone st
  assert.match(desktop,/min-height:0/);
  assert.doesNotMatch(desktop,/@media\s*\(max-width:/);
 });
+
+test('login and registration expose all ten persistent interface languages',async()=>{
+ const html=render();
+ const expected=['en','hi','bn','mr','gu','pa','kn','te','ta','ml'];
+ for(const code of expected)assert.match(html,new RegExp('value="'+code+'"'));
+ assert.match(render({},'kn'),/ಮತ್ತೆ ಸ್ವಾಗತ/);
+ assert.match(render({},'ta'),/மீண்டும் வரவேற்கிறோம்/);
+ assert.match(render({},'bn'),/আবার স্বাগতম/);
+ const file=await (await import('node:fs/promises')).readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
+ assert.match(file,/finder-app-language/);
+ assert.match(file,/document\.documentElement\.lang/);
+});

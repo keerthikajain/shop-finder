@@ -1,4 +1,6 @@
 import {createContext,useContext} from 'react';
+import {additionalLocales,APP_LANGUAGES,SUPPORTED_APP_CODES} from './locale-multilingual.js';
+export {APP_LANGUAGES,SUPPORTED_APP_CODES};
 export const Locale=createContext('en');
 export const hindi={
   "Find your next item.": "अपना अगला सामान खोजें।",
@@ -321,7 +323,14 @@ export const hindi={
   "Loading catalogue…": "सूची लोड हो रही है…",
   "No records here. Choose another appliance.": "यहाँ कोई रिकॉर्ड नहीं। दूसरा उपकरण चुनें।"
 };
-export function translate(language,text){if(language!=='hi'||typeof text!=='string')return text;if(hindi[text])return hindi[text];const unit=text.match(/^(.+?)( \(.+\))$/);return unit&&hindi[unit[1]]?hindi[unit[1]]+unit[2]:text}
+export function translate(language,text){
+ if(typeof text!=='string')return text;
+ const words=language==='hi'?hindi:additionalLocales[language];
+ if(!words)return text;
+ if(Object.prototype.hasOwnProperty.call(words,text))return words[text];
+ const unit=text.match(/^(.+?)( \(.+\))$/);
+ return unit&&Object.prototype.hasOwnProperty.call(words,unit[1])?words[unit[1]]+unit[2]:text;
+}
 export function useT(){const language=useContext(Locale);return text=>translate(language,text)}
 
 Object.assign(hindi,{

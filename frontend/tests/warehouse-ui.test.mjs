@@ -181,7 +181,7 @@ test('Grocery Warehouse appears in the business setup and has its own imagery',a
 
 test('item editor and spreadsheet importer expose the multilingual alias workflow',async()=>{
  const source=await readFile(new URL('../src/warehouse-manage.jsx',import.meta.url),'utf8');
- assert.match(source,/Other names in English, Hindi and Hinglish/);
+ assert.match(source,/Other names in any supported language/);
  assert.match(source,/Add the names workers actually say/);
  assert.match(source,/aliases:aliases\.split\(','\)/);
  assert.match(source,/separate with \|/);
@@ -297,4 +297,13 @@ test('mobile header names the active section and shows a single Find navigation 
  assert.doesNotMatch(src,/className="sf-mobile-speak"[^>]*onClick=\{\(\)=>\{navigate\('find'\)/);
  assert.match(css,/\.sf-compact-app \.sf-compact-page-title\{display:none\}/);
  assert.match(css,/\.sf-compact-app\.sf-voice-unavailable \.wh-top-actions \.sf-header-scan\{display:none\}/);
+});
+
+test('Finder settings expose ten interface languages with stored preferences',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/APP_LANGUAGES\.map\(\(\[code,name\]\)/);
+ assert.match(src,/VOICE_LANGUAGE_DEFAULT\[user\.language\]/);
+ assert.match(src,/id="sf-settings-language"/);
+ const locale=await readFile(new URL('../src/locale-multilingual.js',import.meta.url),'utf8');
+ for(const code of ['bn','mr','gu','pa','kn','te','ta','ml'])assert.match(locale,new RegExp('"'+code+'":'));
 });
