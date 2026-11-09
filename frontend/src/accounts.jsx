@@ -11,7 +11,9 @@ export function AccountGate({children}){
  useEffect(()=>{const clear=()=>setUser(null);window.addEventListener('session-expired',clear);request('/auth/status').then(r=>{setUser(r.user);C(r.configured);if(r.user)L(r.user.language)}).catch(e=>E(e.message)).finally(()=>setReady(true));return()=>window.removeEventListener('session-expired',clear)},[]);
  async function preferences(patch){const next=await request('/auth/preferences',{method:'PUT',body:JSON.stringify({language:user.language,tour_done:!!user.tour_done,...patch})});setUser(next);L(next.language)}
  async function logout(){await request('/auth/logout',{method:'POST'});setUser(null)}
- return <Locale.Provider value={user?.language||language}>{user?children({user,preferences,logout}):<Login {...{ready,configured,language,L,error,busy,notice}} onRegister={async ({code,username,password,display_name})=>{B(true);E('');N('');try{await request('/auth/register',{method:'POST',body:JSON.stringify({code,username,password,display_name,language})});N('Registration requested. An owner or manager must approve your account before you can sign in.')}catch(err){E(err.message);throw err}finally{B(false)}}} onJoin={async ({code,username,password})=>{B(true);E('');N('');try{await request('/auth/join',{method:'POST',body:JSON.stringify({code,username,password,language})});N('Staff account created. Sign in with your new credentials.')}catch(err){E(err.message);throw err}finally{B(false)}}} onClearFeedback={()=>{E('');N('')}} onSubmit={async e=>{e.preventDefault();const data=new FormData(e.currentTarget);B(true);E('');N('');try{const next=await request('/auth/login',{method:'POST',body:JSON.stringify({username:data.get('username'),password:data.get('password')})});setUser(next);L(next.language)}catch(err){E(err.message)}finally{B(false)}}}/>}</Locale.Provider>;export function Login({ready,configured,language,L,error,busy,notice='',onSubmit,onJoin,onRegister,onClearFeedback}){
+ return <Locale.Provider value={user?.language||language}>{user?children({user,preferences,logout}):<Login {...{ready,configured,language,L,error,busy,notice}} onRegister={async ({code,username,password,display_name})=>{B(true);E('');N('');try{await request('/auth/register',{method:'POST',body:JSON.stringify({code,username,password,display_name,language})});N('Registration requested. An owner or manager must approve your account before you can sign in.')}catch(err){E(err.message);throw err}finally{B(false)}}} onJoin={async ({code,username,password})=>{B(true);E('');N('');try{await request('/auth/join',{method:'POST',body:JSON.stringify({code,username,password,language})});N('Staff account created. Sign in with your new credentials.')}catch(err){E(err.message);throw err}finally{B(false)}}} onClearFeedback={()=>{E('');N('')}} onSubmit={async e=>{e.preventDefault();const data=new FormData(e.currentTarget);B(true);E('');N('');try{const next=await request('/auth/login',{method:'POST',body:JSON.stringify({username:data.get('username'),password:data.get('password')})});setUser(next);L(next.language)}catch(err){E(err.message)}finally{B(false)}}}/>}</Locale.Provider>;
+}
+export function Login({ready,configured,language,L,error,busy,notice='',onSubmit,onJoin,onRegister,onClearFeedback}){
  const t=useT();
  const [screen,setScreen]=useState('login');
  const [joinMethod,setJoinMethod]=useState(null);
@@ -117,8 +119,6 @@ export function AccountGate({children}){
    </section>
   </div>
  </main>;
-}
-
 }
 
 export function AccountSettings({user,preferences,logout,showLanguage=true}){
