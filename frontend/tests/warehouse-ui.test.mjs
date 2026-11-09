@@ -307,3 +307,14 @@ test('Finder settings expose ten interface languages with stored preferences',as
  const locale=await readFile(new URL('../src/locale-multilingual.js',import.meta.url),'utf8');
  for(const code of ['bn','mr','gu','pa','kn','te','ta','ml'])assert.match(locale,new RegExp('"'+code+'":'));
 });
+
+test('high-use owner approval and filter UI text passes through translation functions',async()=>{
+ const account=await readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
+ const warehouse=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ for(const key of ['Staff registration requests','Approve','Reject','Refresh requests','Generate staff invitation','Self-registration']){
+   assert.ok(account.includes("t('"+key+"')"),key);
+ }
+ for(const key of ['All types','All brands','All sizes','Every location']){
+   assert.ok(warehouse.includes("t('"+key+"')"),key);
+ }
+});
