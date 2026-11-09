@@ -52,7 +52,13 @@ SYNONYMS = {
     'गेहूँ':'wheat', 'गेहूं':'wheat', 'आटा':'atta',
     'मैदा':'maida', 'सूजी':'rava', 'रवा':'rava', 'पोहा':'poha',
     'चीनी':'sugar', 'cheeni':'sugar', 'शक्कर':'sugar',
-    'नमक':'salt', 'namak':'salt', 'ఉప్పు':'salt', 'uppu':'salt', 'हल्दी':'turmeric',
+    'नमक':'salt', 'namak':'salt',
+    # Canonical meanings across all supported regional scripts. Do not
+    # normalize away qualifiers such as iodised, size or brand.
+    'ಉಪ್ಪು':'salt', 'உப்பு':'salt', 'ఉప్పు':'salt', 'ഉപ്പ്':'salt',
+    'मीठ':'salt', 'লবণ':'salt', 'নুন':'salt', 'મીઠું':'salt',
+    'લૂણ':'salt', 'ਲੂਣ':'salt', 'ਨਮਕ':'salt',
+    'uppu':'salt', 'haldi':'turmeric', 'हल्दी':'turmeric',
     'haldi':'turmeric', 'मिर्च':'chilli', 'mirchi':'chilli',
     'धनिया':'coriander', 'dhania':'coriander',
     'जीरा':'cumin', 'jeera':'cumin',
