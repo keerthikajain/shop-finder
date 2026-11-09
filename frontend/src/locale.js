@@ -363,3 +363,16 @@ Object.assign(hindi,{
  'Picking completed. No stock quantities were changed.':'सामान चुनना पूरा हुआ। स्टॉक की मात्रा नहीं बदली।',
  'Picking session restored.':'सामान चुनने की प्रक्रिया फिर खोली गई।'
 });
+
+Object.assign(hindi,{
+ 'Unmatched searches':'बिना मेल वाली खोजें',
+ 'Repeated unknown product names help improve your catalogue. No changes are made until you verify an exact product.':'बार-बार खोजे गए अज्ञात नाम सूची को बेहतर बनाते हैं। सही उत्पाद की पुष्टि के बिना कोई बदलाव नहीं होता।',
+ 'Search patterns are grouped without staff names or audio recordings. Retained for up to 90 days.':'कर्मचारी नाम या ऑडियो के बिना खोजें गिनी जाती हैं। अधिकतम 90 दिनों तक रखी जाती हैं।',
+ 'Unmatched search status':'बिना मेल की खोज की स्थिति','Dismissed':'खारिज','All statuses':'सभी स्थितियाँ','search patterns':'खोज पैटर्न',
+ 'Last searched':'पिछली खोज','searches':'खोजें','Scope':'दायरा','Status':'स्थिति',
+ 'Link to a verified catalogue item':'पुष्टि किए गए उत्पाद से जोड़ें','Choose a product — no automatic match':'उत्पाद चुनें — स्वतः मिलान नहीं',
+ 'Current aliases':'मौजूदा अन्य नाम','I verified that this phrase refers to the exact selected product and variant.':'मैंने पुष्टि की है कि यह नाम चुने गए सही उत्पाद और प्रकार का है।',
+ 'Review note':'समीक्षा टिप्पणी','Reason for approving or dismissing':'मंज़ूरी या खारिज करने का कारण',
+ 'Add verified alias':'पुष्टि किया गया नाम जोड़ें','Dismiss with note':'टिप्पणी के साथ खारिज करें','Reviewed by':'समीक्षक',
+ 'No unmatched search patterns for this filter.':'इस फ़िल्टर में बिना मेल की खोजें नहीं हैं।'
+});

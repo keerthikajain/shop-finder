@@ -2176,3 +2176,29 @@ body,.wh-app{
 .sf-guided-picking~.wh-work-grid #sf-shelf-guide{scroll-margin-top:72px}
 .wh-task[id^=sf-picking-line-]{scroll-margin-top:84px}
 @media(max-width:700px){.sf-guided-picking{padding:13px;margin-bottom:12px}.sf-picking-head h3{font-size:17px}.sf-picking-actions,.sf-picking-actions>div{width:100%}.sf-picking-actions button{flex:1 1 145px}.sf-picking-actions>span{flex-basis:100%}}
+
+/* Owner-only failed search insights, integrated into existing Activity tabs. */
+.sf-search-intelligence{display:grid;gap:14px;margin:12px 0;min-width:0}
+.sf-search-intelligence-intro{display:grid;gap:5px}
+.sf-search-intelligence-intro h3{margin:0;font-size:19px;color:var(--wh-text)}
+.sf-search-intelligence-intro p{margin:0;font-size:13px;color:var(--wh-muted);line-height:1.55}
+.sf-search-intelligence-intro small{font-size:11px;color:var(--wh-muted)}
+.sf-search-intelligence-toolbar{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.sf-search-intelligence-toolbar label,.sf-unknown-review label:not(.sf-unknown-confirm){display:grid;gap:6px;min-width:0;flex:1 1 190px;font-size:12px;font-weight:650}
+.sf-search-intelligence-toolbar select,.sf-unknown-review select,.sf-unknown-review input[type=text]{box-sizing:border-box;max-width:100%;min-width:0;min-height:43px;border:1px solid var(--wh-border);background:var(--wh-input);color:var(--wh-text);padding:9px;border-radius:9px;font-size:13px}
+.sf-search-intelligence-toolbar span{font-size:12px;color:var(--wh-muted);padding-bottom:10px}
+.sf-unknown-row{display:grid;gap:12px;min-width:0;padding:17px;border-radius:13px;border:1px solid var(--wh-border);background:var(--wh-surface);overflow-wrap:anywhere}
+.sf-unknown-row>small{font-size:11px;color:var(--wh-muted)}
+.sf-unknown-heading{display:flex;align-items:start;justify-content:space-between;gap:12px}
+.sf-unknown-heading>div{display:grid;gap:5px;min-width:0}
+.sf-unknown-heading strong{font-size:16px;color:var(--wh-text);overflow-wrap:anywhere}
+.sf-unknown-heading small{font-size:11px;color:var(--wh-muted)}
+.sf-unknown-count{flex:0 0 auto;background:var(--wh-soft);color:var(--wh-accent);padding:7px 10px;border-radius:9px;font-size:12px;font-weight:700}
+.sf-unknown-review{display:grid;gap:13px}
+.sf-unknown-selection{padding:11px;margin:0;background:var(--wh-soft);color:var(--wh-text);border-radius:9px;line-height:1.5;font-size:12px;overflow-wrap:anywhere}
+.sf-unknown-confirm{display:flex;align-items:start;gap:10px;font-size:12px;line-height:1.5;cursor:pointer;color:var(--wh-text)}
+.sf-unknown-confirm input{width:18px;height:18px;flex:0 0 18px;accent-color:var(--wh-accent)}
+.sf-unknown-actions{display:flex;flex-wrap:wrap;gap:10px}
+.sf-unknown-actions button{min-height:44px;padding:9px 15px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.sf-unknown-done{border-top:1px solid var(--wh-border);padding-top:9px}
+@media(max-width:700px){.sf-unknown-row{padding:12px}.sf-unknown-heading strong{font-size:14px}.sf-unknown-actions button{flex:1 1 150px}.sf-unknown-count{font-size:11px}}
