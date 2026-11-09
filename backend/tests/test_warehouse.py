@@ -573,3 +573,42 @@ def test_grocery_spelling_variant_and_trailing_punctuation_preserve_safe_matchin
  assert [p['sku'] for p in match('sona masoori.',[item],'grocery')]==['GRC-001']
  assert match('Sona Masuri 10 kg',[item],'grocery')==[]
  assert normal_query('1.5 L')=='1.5 l'
+
+@pytest.mark.parametrize('query,alias,language',[
+ ('ಅಕ್ಕಿ ಎಲ್ಲಿ ಇದೆ','ಅಕ್ಕಿ','kn-IN'),
+ ('அரிசி எங்கே உள்ளது','அரிசி','ta-IN'),
+ ('బియ్యం ఎక్కడ ఉంది','బియ్యం','te-IN'),
+ ('അരി എവിടെ ഉണ്ട്','അരി','ml-IN'),
+ ('तांदूळ कुठे आहे','तांदूळ','mr-IN'),
+ ('চাল কোথায় আছে','চাল','bn-IN'),
+ ('ચોખા ક્યાં છે','ચોખા','gu-IN'),
+ ('ਚਾਵਲ ਕਿੱਥੇ ਹੈ','ਚਾਵਲ','pa-IN'),
+])
+def test_native_script_alias_matches_only_verified_catalogue_language(setup,query,alias,language):
+ c,_=setup
+ item=next(p for p in items(c,'grocery') if p['sku']=='GRC-001') if items(c,'grocery') else None
+ # Insert a synthetic catalogue record with its native-language alias. No
+ # automatic product translation or SKU substitution is permitted.
+ from app.warehouse import match
+ record={'sku':'SAFE-001','collection':'grocery','name':'Rice','brand':'Test',
+         'barcode':'SAFE-001','category':'Rice','aliases':[alias],
+         'specs':{'size':'5 kg'}}
+ found=match(query,[record],'grocery')
+ assert [x['sku'] for x in found]==['SAFE-001']
+ assert match('unknown '+query,[record],'grocery')==[]
+ assert match(query,[{**record,'aliases':[]}],'grocery')==[]
+
+@pytest.mark.parametrize('number,expected',[
+ ('೧೨','12'),('१२','12'),('১২','12'),('૧૨','12'),
+ ('੧੨','12'),('௧௨','12'),('౧౨','12'),('൧൨','12')
+])
+def test_indic_decimal_digits_normalized_without_losing_sku_info(number,expected):
+ from app.warehouse_language import normal_query
+ assert normal_query('pack '+number)== 'pack '+expected
+
+def test_complex_native_script_tokens_preserve_combining_marks():
+ from app.warehouse_language import tokens
+ assert 'ಅಕ್ಕಿ' in tokens('ಅಕ್ಕಿ')
+ assert 'அரிசி' in tokens('அரிசி')
+ assert 'അരി' in tokens('അരി')
+ assert 'ਬਿਆਨ' in tokens('ਬਿਆਨ')

@@ -93,6 +93,20 @@ SYNONYMS = {
 
 # Only generic request words are removed. Do NOT remove units, ratings,
 # sizes, package counts, brands, locations or product descriptors.
+
+# Only grammatical request words. Never drop product descriptors, size,
+# quantity, pack, brand, colour or electrical rating words.
+INDIC_REQUEST_FILLERS = set("""
+ಎಲ್ಲಿ ಎಲ್ಲಿದೆ ಇದೆ ನನಗೆ ಬೇಕು ದಯವಿಟ್ಟು ತೋರಿಸಿ ಕೊಡಿ ಹುಡುಕಿ
+எங்கே உள்ளது இருக்கிறது எனக்கு வேண்டும் தயவுசெய்து காட்டுங்கள்
+ఎక్కడ ఉంది నాకు కావాలి దయచేసి చూపించు చూపించండి
+എവിടെ ഉണ്ട് എനിക്ക് വേണം ദയവായി കാണിക്കൂ
+कुठे आहे मला पाहिजे कृपया दाखवा
+কোথায় আছে আমাকে চাই দয়া করে দেখান
+ક્યાં છે મને જોઈએ કૃપા કરીને બતાવો
+ਕਿੱਥੇ ਹੈ ਮੈਨੂੰ ਚਾਹੀਦਾ ਕਿਰਪਾ ਕਰਕੇ ਦਿਖਾਓ
+""".split())
+
 STOP = set("""
 find where is are the a an i can do you have me please show need want
 get locate in stock of for at my this that which
@@ -105,7 +119,7 @@ aur and
 का की के को से पर में यह ये वह वो मुझे इसका इस की कहाँ रखा हुआ हैं
 और सामान उत्पाद प्रोडक्ट चीज चीज़ कितने किसमें
 size uk colour color power capacity brand w l
-""".split()) | FILLERS
+""".split()) | FILLERS | INDIC_REQUEST_FILLERS
 
 _DEVANAGARI = '\u0900-\u097f'
 # Match a whole Devanagari/Latin phrase, never part of another word.
@@ -117,14 +131,19 @@ _RULES = [
 ]
 
 def normal_query(text):
-    text = unicodedata.normalize('NFKC', str(text)).casefold().translate(str.maketrans('०१२३४५६७८९', '0123456789'))
+    text = unicodedata.normalize('NFKC', str(text)).casefold()
+    # Unicode decimal digits include digits in all supported Indic scripts.
+    text = ''.join(str(unicodedata.decimal(c)) if c.isdecimal() else c for c in text)
     text = re.sub(r'[\u200b-\u200d\ufeff]', '', text)
     text = re.sub(r'\bt[- ]shirt\b', 'tshirt', text)
-    text = re.sub(r'[।?!,:;()\[\]{}]|(?<!\d)\.|\.(?!\d)', ' ', text)
+    text = re.sub(r'[।॥?!,:;()\[\]{}]|(?<!\d)\.|\.(?!\d)', ' ', text)
     for pattern, replacement in _RULES:
         text = pattern.sub(lambda _m, value=replacement: value, text)
     return re.sub(r'\s+', ' ', text).strip()
 
 def tokens(text):
-    return {token for token in re.findall(r'[\w.\u0900-\u097f]+', normal_query(text))
+    # Regex \\w drops combining vowel signs in Kannada, Tamil, Telugu,
+    # Malayalam, Bengali, Punjabi and Gujarati. Split on whitespace after
+    # punctuation normalization to preserve complete native-script words.
+    return {token for token in normal_query(text).split()
             if token not in STOP}
