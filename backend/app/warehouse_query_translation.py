@@ -30,7 +30,7 @@ def target_languages(items,original_language):
             present.append(language)
     # Names written in Latin script usually map to English; no translation
     # is needed if the original request is English or already matches.
-    return [lang for lang in _TARGETS if lang in present][:3]
+    return [lang for lang in _TARGETS if lang in present]
 
 async def translate_to_catalogue(query,language,items):
     """Return limited alternative phrases, not matches, with a transparent status."""
