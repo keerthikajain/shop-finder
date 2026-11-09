@@ -114,7 +114,9 @@ test('Finder appears in the browser title and installed app name',async()=>{
 
 test('desktop login is constrained to a centered shadow card and leaves phone styling alone',async()=>{
  const styles=await (await import('node:fs/promises')).readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
- const desktop=styles.slice(styles.indexOf('/* Desktop Finder sign-in: a compact login card'));
+ const start=styles.indexOf('/* Desktop Finder sign-in: a compact login card');
+ const end=styles.indexOf('/* 10-language selector:',start);
+ const desktop=styles.slice(start,end);
  assert.match(desktop,/@media \(min-width:761px\)/);
  assert.match(desktop,/\.login-shell \.sf-login-layout\{[\s\S]*?max-width:940px/);
  assert.match(desktop,/grid-template-columns:minmax\(0,1fr\) minmax\(0,420px\)/);
