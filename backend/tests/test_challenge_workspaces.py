@@ -2,7 +2,7 @@
 import os
 from fastapi.testclient import TestClient
 from app.main import create_app
-from app.challenge_workspaces import ChallengeDispatcher,install_challenge_routes
+from app.challenge_workspaces import ChallengeDispatcher
 from app.accounts import COOKIE
 
 H={'X-Shop-Request':'1'}
@@ -11,8 +11,7 @@ def test_separate_judge_workspaces_use_real_owner_permissions_and_catalogues(mon
  monkeypatch.setenv('SHOP_FINDER_CHALLENGE_SIGNUP','true')
  monkeypatch.setenv('SHOP_FINDER_CHALLENGE_DATA_DIR',str(tmp_path/'reviewers'))
  base=tmp_path/'root.sqlite3'
- root=create_app(base,seed_demo=False)
- install_challenge_routes(root,base)
+ root=create_app(base,seed_demo=False,challenge_root=True)
  app=ChallengeDispatcher(root,base)
  with TestClient(app) as first,TestClient(app) as second:
   start=first.get('/api/auth/status')
@@ -53,8 +52,7 @@ def test_separate_judge_workspaces_use_real_owner_permissions_and_catalogues(mon
 
 def test_instant_try_is_private_owner_and_disabled_outside_challenge(monkeypatch,tmp_path):
  base=tmp_path/'root.sqlite3'
- root=create_app(base,seed_demo=False)
- install_challenge_routes(root,base)
+ root=create_app(base,seed_demo=False,challenge_root=True)
  app=ChallengeDispatcher(root,base)
  monkeypatch.delenv('SHOP_FINDER_CHALLENGE_SIGNUP',raising=False)
  with TestClient(app) as client:
