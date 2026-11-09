@@ -30,6 +30,7 @@ def test_separate_judge_workspaces_use_real_owner_permissions_and_catalogues(mon
   original=one.json()[0]
   record={key:value for key,value in original.items() if key not in ('revision','updated_at','updated_by')}
   record.update({'sku':'REVIEW-OWN-991','name':'Reviewer exclusive sample part','barcode':'','synthetic':True})
+  record['placements']=[{k:v for k,v in place.items() if k!='code'} for place in record['placements']]
   added=first.put('/api/warehouse/items',headers=H,json={'item':record,'revision':0,'reason':'test'})
   assert added.status_code==200,added.text
   assert any(x['sku']=='REVIEW-OWN-991' for x in first.get('/api/warehouse/items?collection=all').json())
