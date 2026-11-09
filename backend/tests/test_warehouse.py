@@ -1121,3 +1121,42 @@ def test_telugu_salt_normalization_does_not_invent_missing_shelf(setup):
  # The catalogue determines availability; no guessed product or location.
  if not result.json()['lines'][0]['candidates']:
   assert result.json()['lines'][0]['selected'] is None
+
+@pytest.mark.parametrize('lang,phrase',[
+ ('en-IN','Stainless steel hose clamp'),
+ ('hi-IN','स्टेनलेस स्टील होज़ क्लैंप'),
+ ('hi-en','steel pipe clamp'),
+ ('te-IN','స్టెయిన్లెస్ స్టీల్ పైపు క్లాంప్'),
+ ('kn-IN','ಸ್ಟೇನ್ಲೆಸ್ ಸ್ಟೀಲ್ ಪೈಪ್ ಕ್ಲಾಂಪ್'),
+])
+def test_new_product_translated_names_are_searchable(lang,phrase):
+ from app.warehouse import Item,match
+ item=Item(sku='APP-NEW-991',collection='appliances',name='Stainless steel hose clamp',
+  category='Hardware',brand='Workshop',aliases=['pipe clamp'],
+  translations={'en':'Stainless steel hose clamp','hi':'स्टेनलेस स्टील होज़ क्लैंप',
+   'hi_latn':'steel pipe clamp','te':'స్టెయిన్లెస్ స్టీల్ పైపు క్లాంప್',
+   'kn':'ಸ್ಟೇನ್ಲೆಸ್ ಸ್ಟೀಲ್ ಪೈಪ್ ಕ್ಲಾಂಪ್'},
+  specs={'size':'16 mm'},placements=[{'facility':'Warehouse','rack':'Z','shelf':'5','bin':'07'}],
+  synthetic=False).model_dump()
+ assert [p['sku'] for p in match(phrase,[item],'all')]==['APP-NEW-991']
+
+def test_import_explicit_language_names_and_export_roundtrip(setup):
+ c,_=setup
+ from app.warehouse import parse_sheet
+ import csv,io
+ grid=[['sku','name','category','rack','name_en','name_hi','name_hi_latn','name_te','name_kn'],
+       ['APP-NEW-991','Steel hose clamp','Hardware','Z','hose clamp','होज़ क्लैंप','pipe clamp','పైపు క్లాంప్','ಪೈಪ್ ಕ್ಲಾಂಪ್']]
+ out=io.StringIO();csv.writer(out).writerows(grid)
+ upload=c.post('/api/warehouse/imports?collection=appliances&filename=names.csv',headers=H,content=out.getvalue().encode())
+ assert upload.status_code==200,upload.text
+ preview=post(c,'/imports/'+upload.json()['token']+'/preview',{'mapping':{k:k for k in grid[0]}})
+ assert preview.status_code==200,preview.text
+ assert preview.json()['errors']==[]
+ assert post(c,'/imports/'+preview.json()['token']+'/confirm').status_code==200
+ saved=next(p for p in items(c,'appliances') if p['sku']=='APP-NEW-991')
+ assert saved['translations']['kn']=='ಪೈಪ್ ಕ್ಲಾಂಪ್'
+ for query in ('होज़ क्लैंप','పైపు క్లాంప్','ಪೈಪ್ ಕ್ಲಾಂಪ್','pipe clamp'):
+  assert search(c,query,'appliances')['lines'][0]['candidates']
+ exported=c.get('/api/warehouse/export?collection=appliances').content
+ headers,rows=parse_sheet(exported,'saved.csv')
+ assert next(row for row in rows if row['sku']=='APP-NEW-991')['name_kn']=='ಪೈಪ್ ಕ್ಲಾಂಪ್'

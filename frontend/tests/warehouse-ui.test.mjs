@@ -451,3 +451,10 @@ test('a fully unmatched request does not show unusable picking commands and sear
  assert.match(css,/\.sf-find-page \.wh-work-grid\{grid-template-columns:minmax\(0,1fr\) minmax\(0,280px\)\}/);
  assert.match(css,/@media\(max-width:900px\)/);
 });
+
+test('imported items support separately reviewed names in five languages',async()=>{
+ const editor=await readFile(new URL('../src/warehouse-manage.jsx',import.meta.url),'utf8');
+ for(const field of ['name_en','name_hi','name_hi_latn','name_te','name_kn'])assert.match(editor,new RegExp(field));
+ assert.match(editor,/Product names in other languages/);
+ assert.match(editor,/not automatic translations/);
+});

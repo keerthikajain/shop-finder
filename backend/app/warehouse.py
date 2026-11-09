@@ -50,6 +50,7 @@ class Item(Strict):
  category:str=Field(min_length=1,max_length=60)
  brand:str=Field(default='',max_length=80)
  aliases:list[str]=Field(default_factory=list,max_length=20)
+ translations:dict[str,str]=Field(default_factory=dict,max_length=5)
  barcode:str=Field(default='',max_length=100)
  photo_url:str=Field(default='',pattern=r'^(?:/api/media/[a-f0-9]{64}\.(?:png|jpg))?$')
  specs:dict[str,str]=Field(default_factory=dict,max_length=12)
@@ -61,6 +62,7 @@ class Item(Strict):
   if any(not re.fullmatch(r'[a-z][a-z0-9_]{0,39}',k) for k in self.specs):raise ValueError('Specification keys must use lowercase letters, numbers and underscores.')
   if any(not v.strip() or len(v)>80 for v in self.specs.values()):raise ValueError('Specification values must be 1–80 characters.')
   if any(not a.strip() or len(a)>100 for a in self.aliases):raise ValueError('Aliases must be 1–100 characters.')
+  if any(k not in ('en','hi','hi_latn','te','kn') or not v.strip() or len(v)>120 for k,v in self.translations.items()):raise ValueError('Product language names must use English, Hindi, Hinglish, Telugu or Kannada and be 1–120 characters.')
   if len({loc_code(p.model_dump()) for p in self.placements})!=len(self.placements):raise ValueError('Duplicate location.')
   self.sku=self.sku.upper();return self
 class SaveItem(Strict):
@@ -224,7 +226,7 @@ def match(query,items,collection):
  if size:constraints['size_uk' if collection=='footwear' else 'size']=size[1]
  colours={'blue','white','black','red','green','grey','brown','pink','beige','silver','clear'}&qt
  for p in items:
-  names=tokens(' '.join([p['name'],p['category'],p.get('brand',''),*p['aliases']]))
+  names=tokens(' '.join([p['name'],p['category'],p.get('brand',''),*p['aliases'],*p.get('translations',{}).values()]))
   spec_tokens=tokens(' '.join(p['specs'].values()))
   if not codes and not (qt&names):continue
   if numeric and not numeric<=set(re.findall(r'\d+(?:\.\d+)?',' '.join(p['specs'].values()))):continue
@@ -353,14 +355,15 @@ def import_fields(c,collection):
  specs=list(dict.fromkeys(k for g in groups for k in [*COLLECTION_MAP[g]['fields'],*settings['custom_fields'].get(g,[])]))
  # Include fields already stored so an export/import cannot silently drop custom specifications.
  specs=list(dict.fromkeys([*specs,*(k for p in rows(c,collection) for k in p['specs'])]))
- return ['sku','collection','name','brand','category','barcode','aliases','synthetic','revision',*LOCATION_FIELDS,'quantity',*specs]
+ return ['sku','collection','name','brand','category','barcode','aliases','name_en','name_hi','name_hi_latn','name_te','name_kn','synthetic','revision',*LOCATION_FIELDS,'quantity',*specs]
 
 def suggest_mapping(columns,fields):
  aliases={'sku':['itemcode','productcode','itemid'],'name':['productname','itemname','product'], 'brand':['brandname','manufacturer'], 'collection':['catalogue','catalog','producttype'], 'zone':['section','area'], 'facility':['warehouse','store','site'], 'aisle':['row'], 'bin':['box','bincode'], 'quantity':['qty','stock','onhand'], 'colour':['color']}
  key=lambda x:re.sub(r'[^a-z0-9]','',x.lower())
  result={}
  for field in fields:
-  choices=[col for col in columns if key(col) in [key(field),*aliases.get(field,[])]]
+  name_columns={'name_en':['englishname','productenglish'],'name_hi':['hindiname','producthindi'],'name_hi_latn':['hinglishname','romanizedhindi'],'name_te':['teluguname','producttelugu'],'name_kn':['kannadaname','productkannada']}
+  choices=[col for col in columns if key(col) in [key(field),*aliases.get(field,[]),*name_columns.get(field,[])]]
   if len(choices)==1:result[field]=choices[0]
  return result
 
@@ -381,8 +384,10 @@ def import_preview(c,raw,mapping):
    if v['synthetic'].lower() not in ('','true','false','yes','no','1','0'):raise ValueError('Sample status must be true or false.')
    quantity=int(v['quantity']) if v['quantity'] else None
    location={k:v[k] for k in LOCATION_FIELDS};location['quantity']=quantity
-   spec_keys=[k for k in fields if k not in ['sku','collection','name','brand','category','barcode','aliases','synthetic','revision',*LOCATION_FIELDS,'quantity']]
-   p=Item(sku=v['sku'],collection=collection,name=v['name'],brand=v['brand'],category=v['category'],barcode=v['barcode'],aliases=[a.strip() for a in v['aliases'].split('|') if a.strip()],specs={k:v[k] for k in spec_keys if v[k]},placements=[location],synthetic=v['synthetic'].lower() in ('true','yes','1')).model_dump()
+   translation_fields={'name_en':'en','name_hi':'hi','name_hi_latn':'hi_latn','name_te':'te','name_kn':'kn'}
+   translations={lang:v[column] for column,lang in translation_fields.items() if v[column]}
+   spec_keys=[k for k in fields if k not in ['sku','collection','name','brand','category','barcode','aliases',*translation_fields,'synthetic','revision',*LOCATION_FIELDS,'quantity']]
+   p=Item(sku=v['sku'],collection=collection,name=v['name'],brand=v['brand'],category=v['category'],barcode=v['barcode'],aliases=[a.strip() for a in v['aliases'].split('|') if a.strip()],translations=translations,specs={k:v[k] for k in spec_keys if v[k]},placements=[location],synthetic=v['synthetic'].lower() in ('true','yes','1')).model_dump()
    key=(collection,p['sku']);revision=int(v['revision']) if v['revision'] else None
    if revision is not None and revision<0:raise ValueError('Revision cannot be negative.')
    if key in expected and expected[key]!=revision:raise ValueError('Rows for one SKU have different revisions.')
@@ -407,6 +412,8 @@ def import_preview(c,raw,mapping):
    if 'synthetic' not in mapping:p['synthetic']=before['synthetic']
    if before['synthetic']!=p['synthetic']:errors.append({'row':0,'message':f"{p['sku']}: sample status cannot be changed by reimport."})
    if 'brand' not in mapping:p['brand']=before['brand']
+   if 'aliases' not in mapping:p['aliases']=before['aliases']
+   p['translations']={**{k:v for k,v in before.get('translations',{}).items() if 'name_'+k not in mapping},**p['translations']}
    if 'quantity' not in mapping:
     quantities={loc_code(l):l['quantity'] for l in before['placements']}
     for l in p['placements']:l['quantity']=quantities.get(loc_code(l))
@@ -688,7 +695,7 @@ def install_warehouse(app,path):
   data=[]
   for p in products:
    for l in p['placements']:
-    row={**p,**l,**p['specs'],'aliases':'|'.join(p['aliases']),'synthetic':str(p['synthetic']).lower()}
+    row={**p,**l,**p['specs'],**{'name_'+k:v for k,v in p.get('translations',{}).items()},'aliases':'|'.join(p['aliases']),'synthetic':str(p['synthetic']).lower()}
     data.append([str(row.get(k,'')) if row.get(k) is not None else '' for k in fields])
   if format=='xlsx':
    from openpyxl import Workbook
