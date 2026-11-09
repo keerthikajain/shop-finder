@@ -47,18 +47,35 @@ test('sign-in keeps language and accessible password visibility controls',()=>{
  assert.match(html,/aria-pressed="false"/);
 });
 
-test('login has server-verified owner/staff role choices and staff join mode',()=>{
+test('sign in offers only account credentials, with role determined by the backend',()=>{
  const html=render();
- assert.match(html,/name="role" value="owner"/);
- assert.match(html,/name="role"[^>]*value="staff"/);
+ assert.match(html,/name="username"/);
+ assert.match(html,/name="password"/);
+ assert.doesNotMatch(html,/name="role"|Sign in as|type="radio"/);
+ assert.match(html,/Your role and permissions are identified automatically/);
  assert.match(html,/aria-label="Account access"/);
- assert.match(html,/One-time invite/);
+ assert.match(html,/Join workspace/);
 });
 
-test('staff self-registration and manager role are available without changing default login',()=>{
+test('guided join screen keeps both registration paths without exposing them on sign-in',async()=>{
  const html=render();
- assert.match(html,/Request access/);
- assert.match(html,/One-time invite/);
- assert.match(html,/name="role"[^>]*value="manager"/);
- assert.match(html,/Sign in to Shop Finder/);
+ assert.doesNotMatch(html,/Staff invitation code|Request approval|Workspace code/);
+ const source=await (await import('node:fs/promises')).readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
+ assert.match(source,/I have a workspace code/);
+ assert.match(source,/I have a one-time invitation/);
+ assert.match(source,/onRegister\(\{code/);
+ assert.match(source,/await handler\(\{code/);
+ assert.match(source,/navigate\('login',\{clearFeedback:false\}\)/);
+ assert.match(source,/setJoinMethod\(null\)/);
+ assert.match(source,/autoComplete="new-password"/);
+ assert.match(source,/aria-controls="sf-join-password"/);
+ assert.match(source,/Your account will remain pending until approved/);
+});
+
+test('auth layout has responsive two-tab controls and no forced tall registration gaps',async()=>{
+ const styles=await (await import('node:fs/promises')).readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(styles,/Auth redesign: two entry paths/);
+ assert.match(styles,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+ assert.match(styles,/\.sf-auth-fields\{display:grid;gap:14px/);
+ assert.match(styles,/@media\(max-width:480px\)/);
 });
