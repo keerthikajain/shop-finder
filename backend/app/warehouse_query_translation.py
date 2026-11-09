@@ -62,13 +62,13 @@ async def translate_to_catalogue(query,language,items):
 
 def preserves_explicit_details(original,translated,product):
     """Never erase written digits, Latin model codes or obvious colour constraints."""
-    original_numbers=set(re.findall(r'(?<![\\w.])\\d+(?:\\.\\d+)?(?![\\w.])',original))
-    candidate_numbers=set(re.findall(r'\\d+(?:\\.\\d+)?',' '.join(str(v) for v in product.get('specs',{}).values())))
+    original_numbers=set(re.findall(r'(?<![\w.])\d+(?:\.\d+)?(?![\w.])',original))
+    candidate_numbers=set(re.findall(r'\d+(?:\.\d+)?',' '.join(str(v) for v in product.get('specs',{}).values())))
     if original_numbers and not original_numbers<=candidate_numbers:
         return False
     # Translation is fallible: an explicitly written original SKU or barcode
     # must always be matched as-is and cannot be generalized.
-    for token in re.findall(r'(?<!\\w)[A-Za-z]+[-_][A-Za-z0-9_-]+(?!\\w)',original):
+    for token in re.findall(r'(?<!\w)[A-Za-z]+[-_][A-Za-z0-9_-]+(?!\w)',original):
         if token.casefold() not in {str(product.get('sku','')).casefold(),
                                      str(product.get('barcode','')).casefold()}:
             return False
