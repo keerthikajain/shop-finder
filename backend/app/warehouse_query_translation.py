@@ -73,6 +73,9 @@ def preserves_explicit_details(original,translated,product):
     # Translation is fallible: an explicitly written original SKU or barcode
     # must always be matched as-is and cannot be generalized.
     for token in re.findall(r'(?<!\w)[A-Za-z]+[-_][A-Za-z0-9_-]+(?!\w)',original):
+        # T-shirt is a product word, whereas APP-991 is a model-like code.
+        if not any(ch.isdigit() for ch in token):
+            continue
         if token.casefold() not in {str(product.get('sku','')).casefold(),
                                      str(product.get('barcode','')).casefold()}:
             return False
