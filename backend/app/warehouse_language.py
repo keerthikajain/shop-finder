@@ -145,5 +145,6 @@ def tokens(text):
     # Regex \\w drops combining vowel signs in Kannada, Tamil, Telugu,
     # Malayalam, Bengali, Punjabi and Gujarati. Split on whitespace after
     # punctuation normalization to preserve complete native-script words.
-    return {token for token in normal_query(text).split()
+    # Hyphens still separate English pack expressions like 30-count.
+    return {token for token in normal_query(text).replace('-', ' ').split()
             if token not in STOP}
