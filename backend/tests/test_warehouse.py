@@ -988,9 +988,14 @@ def test_remove_unresolved_worklist_line_preserves_other_lines(setup):
  assert [line['query'] for line in deleted.json()['lines']]==[line['query'] for line in task['lines'][:2]]
  assert items(c)==before
  assert c.delete('/api/warehouse/tasks/'+task['id']+'/lines/99',headers=H).status_code==422
- # A resolved product cannot be removed from the picker this way.
- resolved_index=next(i for i,line in enumerate(deleted.json()['lines']) if line['selected'])
- assert c.delete('/api/warehouse/tasks/'+task['id']+'/lines/'+str(resolved_index),headers=H).status_code==409
+ # Choose a variant explicitly; the app never chooses one from an ambiguous name.
+ unresolved=deleted.json()['lines'][0]
+ choice=unresolved['candidates'][0]
+ selected=post(c,'/tasks/'+task['id']+'/choose',{
+  'line':0,'collection':choice['collection'],'sku':choice['sku'],
+  'location':choice['placements'][0]['code']})
+ assert selected.status_code==200,selected.text
+ assert c.delete('/api/warehouse/tasks/'+task['id']+'/lines/0',headers=H).status_code==409
 
 def test_unresolved_line_removal_is_blocked_after_pick_starts(setup):
  c,_=setup

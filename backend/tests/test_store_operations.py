@@ -40,7 +40,7 @@ def test_global_query_brand_and_three_product_types(setup):
     c, _ = setup
     task = post(c, '/search', {'query': 'Everyday red dress kahaan hai and Northline white trainers size 7 and mixer 750 W'}).json()
     assert [l['selected']['collection'] for l in task['lines']] == ['clothing', 'footwear', 'appliances']
-    assert 'Clothing outlet' in task['spoken_text'] and 'rack D' in task['spoken_text']
+    assert 'Example shelf' in task['spoken_text'] and 'rack D' in task['spoken_text']
     assert not post(c, '/search', {'query': 'red dress', 'brand': 'Northline'}).json()['lines'][0]['candidates']
     for query in ['Northline red dress', 'white trainers size 99', 'Hearth mixer 500 W waterproof']:
         assert not post(c, '/search', {'query': query}).json()['lines'][0]['candidates']
