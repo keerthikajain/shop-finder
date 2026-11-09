@@ -11,6 +11,7 @@ from .reports import install_reports
 from .warehouse import initialize_warehouse, install_warehouse
 from .accounts import initialize_accounts, install_accounts
 from .streaming import install_streaming
+from .public_preview import install_public_preview
 
 class Constraints(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -43,6 +44,7 @@ def create_app(db_path=None, seed_demo=None, *, auth_required=True):
         yield
     app = FastAPI(title='Shop Finder — warehouse voice workspace', version='1.0.0', lifespan=lifespan,docs_url=None,redoc_url=None,openapi_url=None,debug=False)
     install_accounts(app,path,auth_required)
+    install_public_preview(app,path)
     install_streaming(app,path)
     install_reports(app,path)
     install_warehouse(app,path)

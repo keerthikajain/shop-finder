@@ -200,7 +200,7 @@ def install_accounts(app,path,required=True):
     if request.headers.get('X-Shop-Request')!='1' or not origin_valid(request):
      return apply_security_headers(JSONResponse({'detail':'Request origin or header not allowed.'},403),request)
    user=current(request);request.state.user=user
-   if request.url.path not in ('/api/health','/api/auth/login','/api/auth/status','/api/auth/join','/api/auth/register','/api/auth/logout'):
+   if request.url.path not in ('/api/health','/api/auth/login','/api/auth/status','/api/auth/join','/api/auth/register','/api/auth/logout','/api/public-preview/feedback'):
     if not user:
      return apply_security_headers(JSONResponse({'detail':'Please log in.'},401),request)
     route=request.url.path

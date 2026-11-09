@@ -187,3 +187,28 @@ def test_staff_account_can_store_all_supported_interface_languages(tmp_path,lang
   resp=client.post('/api/auth/login',headers=H,json={'username':'worker','password':'staff-password-1234'})
   assert resp.status_code==200,resp.text
   assert resp.json()['language']==language
+
+def test_public_preview_feedback_allows_submission_but_never_gives_access(setup):
+ c,_=setup
+ assert c.get('/api/warehouse/items').status_code==401
+ assert c.get('/api/users').status_code==401
+ assert c.get('/api/public-preview/feedback').status_code==401
+ assert c.post('/api/public-preview/feedback',json={'category':'idea','message':'Please add larger shelf text'}).status_code==403
+ r=c.post('/api/public-preview/feedback',headers=H,json={'category':'idea','message':'Please add larger shelf text'})
+ assert r.status_code==201,r.text
+ assert 'peer_bucket' not in str(r.json())
+ login(c)
+ notes=c.get('/api/public-preview/feedback')
+ assert notes.status_code==200
+ assert notes.json()[0]['message']=='Please add larger shelf text'
+ assert 'peer_bucket' not in str(notes.json())
+
+def test_public_preview_feedback_rejects_abuse_and_staff_read_access(setup):
+ c,_=setup
+ for i in range(10):
+  result=c.post('/api/public-preview/feedback',headers=H,json={'category':'issue','message':f'Please improve the shelf guide for mobile {i}'})
+  assert result.status_code==201,result.text
+ assert c.post('/api/public-preview/feedback',headers=H,json={'category':'idea','message':'Please add a new filter'}).status_code==429
+ assert c.post('/api/public-preview/feedback',headers=H,json={'category':'idea','message':'short'}).status_code==422
+ login(c,'worker')
+ assert c.get('/api/public-preview/feedback').status_code==403
