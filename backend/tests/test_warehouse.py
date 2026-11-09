@@ -1150,7 +1150,7 @@ def test_query_translation_cannot_force_nonexistent_item_or_wrong_spec(setup,mon
  async def translate(query,language,products):
   return ['Blue T-shirt size M'],'attempted'
  monkeypatch.setattr(warehouse_query_translation,'translate_to_catalogue',translate)
- result=post(c,'/search',{'collection':'clothing','query':'काली जींस कहाँ है?','language':'hi-IN'})
+ result=post(c,'/search',{'collection':'clothing','query':'काला अनजान कवर कहाँ है?','language':'hi-IN'})
  assert result.status_code==200
  assert not result.json()['lines'][0]['selected']
  assert result.json()['lines'][0]['match_method']=='catalogue'
