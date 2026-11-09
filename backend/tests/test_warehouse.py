@@ -1212,3 +1212,10 @@ def test_novel_imported_product_location_questions_in_five_languages(language,ph
   synthetic=False).model_dump()
  assert [p['sku'] for p in match(phrase,[product],'all')]==['APP-NEW-991'],(language,phrase)
  assert match('steel pipe clamp size 20 mm',[product],'all')==[]
+
+def test_reject_hidden_wrong_script_marks_in_translated_product():
+ from app.warehouse import Item
+ label='స్టీల్ క్లాంప'+chr(0x0ccd) # Kannada virama inside Telugu string
+ with pytest.raises(ValueError,match='wrong regional script'):
+  Item(sku='APP-MIXED',collection='appliances',name='Steel clamp',category='Hardware',
+       translations={'te':label},placements=[{'rack':'A'}])

@@ -3,7 +3,7 @@
 No generated inventory answers: matching uses stored names, aliases and specs.
 Mutations use owner permissions, revision checks and a transactional audit trail.
 """
-import csv,io,json,re,secrets,time,hashlib,zipfile
+import csv,io,json,re,secrets,time,hashlib,zipfile,unicodedata
 from datetime import datetime,timezone
 from typing import Literal
 from fastapi import HTTPException,Request,Response
@@ -63,6 +63,11 @@ class Item(Strict):
   if any(not v.strip() or len(v)>80 for v in self.specs.values()):raise ValueError('Specification values must be 1–80 characters.')
   if any(not a.strip() or len(a)>100 for a in self.aliases):raise ValueError('Aliases must be 1–100 characters.')
   if any(k not in ('en','hi','hi_latn','te','kn') or not v.strip() or len(v)>120 for k,v in self.translations.items()):raise ValueError('Product language names must use English, Hindi, Hinglish, Telugu or Kannada and be 1–120 characters.')
+  # Reject visually deceptive combining marks from the other regional script.
+  # English brand/model names within a translated label are still allowed.
+  for language,foreign_low,foreign_high in [('te',0x0c80,0x0cff),('kn',0x0c00,0x0c7f)]:
+   if any(foreign_low<=ord(ch)<=foreign_high and unicodedata.category(ch) in ('Mn','Mc') for ch in self.translations.get(language,'')):
+    raise ValueError(language+' product name contains characters from the wrong regional script. Check its spelling.')
   if len({loc_code(p.model_dump()) for p in self.placements})!=len(self.placements):raise ValueError('Duplicate location.')
   self.sku=self.sku.upper();return self
 class SaveItem(Strict):
