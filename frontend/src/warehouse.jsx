@@ -1,6 +1,7 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {AccountSettings,request} from './accounts.jsx';
 import {useT,APP_LANGUAGES} from './locale.js';
+import {PICKING_VOICE_LANGUAGES,pickVoicePhrase} from './picking-voice-phrases.js';
 import {startRecording,startLiveRecording} from './recording.js';
 import {getThemePreference,resolveTheme} from './theme.js';
 import {Mark,Glyph,Modal,Place,Specs,ItemArt,ScanBox,Label,Feedback} from './warehouse-ui.jsx';
@@ -82,7 +83,7 @@ export default function WarehouseApp({user,preferences,logout}){
    if(answer.action!=='unknown'&&voice){VGP(false);await playPickGuidance(answer.action,source,answer.line??activeLine)}
   })
  }
- async function pickAction(kind){if(!task)return;await run(async()=>{const next=await api('/tasks/'+task.id+'/picking/'+kind,{});T(next);G('location');if(kind==='start'){AL(Math.max(0,next.lines.findIndex(l=>!l.complete)));VGP(false);VGC('');VGT('');N(t('Picking started. Check each item at its recorded shelf.'));if(voice&&['en-IN','hi-IN','hi-en'].includes(next.language))await playPickGuidance('next',next,Math.max(0,next.lines.findIndex(l=>!l.complete)))}else{VGP(true);VGT('');N(t('Picking completed. No stock quantities were changed.'))}R(await request('/warehouse/tasks'))})}
+ async function pickAction(kind){if(!task)return;await run(async()=>{const next=await api('/tasks/'+task.id+'/picking/'+kind,{});T(next);G('location');if(kind==='start'){AL(Math.max(0,next.lines.findIndex(l=>!l.complete)));VGP(false);VGC('');VGT('');N(t('Picking started. Check each item at its recorded shelf.'));if(voice&&PICKING_VOICE_LANGUAGES.includes(next.language))await playPickGuidance('next',next,Math.max(0,next.lines.findIndex(l=>!l.complete)))}else{VGP(true);VGT('');N(t('Picking completed. No stock quantities were changed.'))}R(await request('/warehouse/tasks'))})}
  async function resumePick(id){await run(async()=>{const restored=await request('/warehouse/tasks/'+encodeURIComponent(id));if(restored.collection!==collection){pendingResume.current=restored;C(restored.collection)}else{T(restored);Q(restored.query);G('location');AL(Math.max(0,restored.lines.findIndex(l=>!l.complete)))}P('find');N(t('Picking session restored.'))})}
  const picking=task?.picking||{status:'ready'},verifiedCount=task?.lines.filter(l=>l.complete).length||0,canStartPick=!!task?.lines.length&&task.lines.every(l=>l.selected&&l.location&&!l.location_report_open),nextPickIndex=task?.lines.findIndex(l=>!l.complete)??-1;
  const selected=task?.lines.filter(l=>l.selected)||[],locations=[...new Map(items.flatMap(p=>p.placements.map(l=>[l.code,l]))).values()],filtered=items.filter(p=>(!category||p.category===category)&&(!filter||[p.sku,p.name,p.brand,p.category,p.barcode,...p.aliases,...Object.values(p.specs),...p.placements.map(pathText)].join(' ').toLowerCase().includes(filter.toLowerCase())));
@@ -111,14 +112,14 @@ export default function WarehouseApp({user,preferences,logout}){
   <progress aria-label={t('Picking progress')} max={task.lines.length} value={verifiedCount}/>
   {picking.status==='active'&&<div className="sf-voice-guide">
    <div className="sf-voice-guide-heading"><strong>{t('Voice-guided picking')}</strong><small>{t('Speak a short command, or use the buttons below. No item is confirmed by speech alone.')}</small></div>
-   {['en-IN','hi-IN','hi-en'].includes(task.language)?<>
+   {PICKING_VOICE_LANGUAGES.includes(task.language)?<>
     <div className="sf-voice-guide-actions">
      <VoiceButton small enabled={voice&&!busy&&!voiceGuidePaused} language={task.language} onError={E} onText={transcript=>voicePickCommand(transcript)} label={t('Speak picking command')}/>
      <button type="button" disabled={busy||!voice} onClick={()=>playPickGuidance('repeat')}>{t('Read guidance')}</button>
      {voiceGuidePaused&&<button type="button" onClick={()=>VGP(false)}>{t('Resume voice commands')}</button>}
     </div>
-    <div className="sf-voice-guide-choices"><button type="button" disabled={busy} onClick={()=>voicePickCommand('next item')}>{t('Next item')}</button><button type="button" disabled={busy} onClick={()=>voicePickCommand('repeat location')}>{t('Repeat location')}</button><button type="button" disabled={busy} onClick={()=>voicePickCommand('found it')}>{t('Found it')}</button><button type="button" disabled={busy} onClick={()=>voicePickCommand('wrong location')}>{t('Wrong location')}</button><button type="button" disabled={busy} onClick={()=>voicePickCommand('stop')}>{t('Stop guidance')}</button></div>
-   </>:<small>{t('Spoken picking commands currently support English, Hindi and Hinglish. Scan and manual controls work in other languages.')}</small>}
+    <div className="sf-voice-guide-choices"><button type="button" disabled={busy} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'next'))}>{pickVoicePhrase(task.language,'next')}</button><button type="button" disabled={busy} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'repeat'))}>{pickVoicePhrase(task.language,'repeat')}</button><button type="button" disabled={busy} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'verify'))}>{pickVoicePhrase(task.language,'verify')}</button><button type="button" disabled={busy} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'report'))}>{pickVoicePhrase(task.language,'report')}</button><button type="button" disabled={busy} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'stop'))}>{pickVoicePhrase(task.language,'stop')}</button></div>
+   </>:<small>{t('This language is not supported for spoken picking commands. Use scanning or manual verification.')}</small>}
    {voiceGuideCommand&&<small className="sf-guide-transcript">{t('Recognized command')}: {voiceGuideCommand}</small>}
    {voiceGuideText&&<p className="sf-guide-reply" role="status">{voiceGuideText}</p>}
   </div>}
