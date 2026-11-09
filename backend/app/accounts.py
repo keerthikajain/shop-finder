@@ -65,6 +65,7 @@ def enforce_join_rate(path,request):
 # application supports. Login failure throttling remains separate below.
 RATE_RULES=(
  ('/api/voice/',20),
+ ('/api/demo/feedback',3),
  ('/api/warehouse/tasks/',120),
  ('/api/warehouse/search',120),
  ('/api/search',120),

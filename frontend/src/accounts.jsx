@@ -7,14 +7,14 @@ export async function request(path,options={}){
  const data=await r.json();if(!r.ok)throw Error(typeof data.detail==='string'?data.detail:'Check the fields and try again.');return data;
 }
 export function AccountGate({children}){
- const [user,setUser]=useState(null),[ready,setReady]=useState(false),[configured,C]=useState(true),[language,L]=useState(()=>{const selected=localStorage.getItem('finder-app-language');return APP_LANGUAGES.some(([code])=>code===selected)?selected:'en'}),[error,E]=useState(''),[busy,B]=useState(false),[notice,N]=useState('');
+ const [user,setUser]=useState(null),[ready,setReady]=useState(false),[configured,C]=useState(true),[language,L]=useState(()=>{const selected=localStorage.getItem('finder-app-language');return APP_LANGUAGES.some(([code])=>code===selected)?selected:'en'}),[error,E]=useState(''),[busy,B]=useState(false),[notice,N]=useState(''),[demoEnabled,DE]=useState(false);
  useEffect(()=>{document.documentElement.lang=user?.language||language;localStorage.setItem('finder-app-language',user?.language||language)},[language,user?.language]);
- useEffect(()=>{const clear=()=>setUser(null);window.addEventListener('session-expired',clear);request('/auth/status').then(r=>{setUser(r.user);C(r.configured);if(r.user)L(r.user.language)}).catch(e=>E(e.message)).finally(()=>setReady(true));return()=>window.removeEventListener('session-expired',clear)},[]);
+ useEffect(()=>{const clear=()=>setUser(null);window.addEventListener('session-expired',clear);request('/auth/status').then(r=>{setUser(r.user);C(r.configured);DE(!!r.demo_enabled);if(r.user)L(r.user.language)}).catch(e=>E(e.message)).finally(()=>setReady(true));return()=>window.removeEventListener('session-expired',clear)},[]);
  async function preferences(patch){const next=await request('/auth/preferences',{method:'PUT',body:JSON.stringify({language:user.language,tour_done:!!user.tour_done,...patch})});setUser(next);L(next.language)}
  async function logout(){await request('/auth/logout',{method:'POST'});setUser(null)}
- return <Locale.Provider value={user?.language||language}>{user?children({user,preferences,logout}):<Login {...{ready,configured,language,L,error,busy,notice}} onRegister={async ({code,username,password,display_name})=>{B(true);E('');N('');try{await request('/auth/register',{method:'POST',body:JSON.stringify({code,username,password,display_name,language})});N('Registration requested. An owner or manager must approve your account before you can sign in.')}catch(err){E(err.message);throw err}finally{B(false)}}} onJoin={async ({code,username,password})=>{B(true);E('');N('');try{await request('/auth/join',{method:'POST',body:JSON.stringify({code,username,password,language})});N('Staff account created. Sign in with your new credentials.')}catch(err){E(err.message);throw err}finally{B(false)}}} onClearFeedback={()=>{E('');N('')}} onSubmit={async e=>{e.preventDefault();const data=new FormData(e.currentTarget);B(true);E('');N('');try{const next=await request('/auth/login',{method:'POST',body:JSON.stringify({username:data.get('username'),password:data.get('password')})});setUser(next);L(next.language)}catch(err){E(err.message)}finally{B(false)}}}/>}</Locale.Provider>;
+ return <Locale.Provider value={user?.language||language}>{user?children({user,preferences,logout}):<Login {...{ready,configured,language,L,error,busy,notice,demoEnabled}} onDemo={async()=>{B(true);E('');try{const visitor=await request('/demo/enter',{method:'POST'});setUser(visitor);L(visitor.language)}catch(err){E(err.message)}finally{B(false)}}} onRegister={async ({code,username,password,display_name})=>{B(true);E('');N('');try{await request('/auth/register',{method:'POST',body:JSON.stringify({code,username,password,display_name,language})});N('Registration requested. An owner or manager must approve your account before you can sign in.')}catch(err){E(err.message);throw err}finally{B(false)}}} onJoin={async ({code,username,password})=>{B(true);E('');N('');try{await request('/auth/join',{method:'POST',body:JSON.stringify({code,username,password,language})});N('Staff account created. Sign in with your new credentials.')}catch(err){E(err.message);throw err}finally{B(false)}}} onClearFeedback={()=>{E('');N('')}} onSubmit={async e=>{e.preventDefault();const data=new FormData(e.currentTarget);B(true);E('');N('');try{const next=await request('/auth/login',{method:'POST',body:JSON.stringify({username:data.get('username'),password:data.get('password')})});setUser(next);L(next.language)}catch(err){E(err.message)}finally{B(false)}}}/>}</Locale.Provider>;
 }
-export function Login({ready,configured,language,L,error,busy,notice='',onSubmit,onJoin,onRegister,onClearFeedback}){
+export function Login({ready,configured,language,L,error,busy,notice='',demoEnabled=false,onDemo,onSubmit,onJoin,onRegister,onClearFeedback}){
  const t=useT();
  const [screen,setScreen]=useState('login');
  const [joinMethod,setJoinMethod]=useState(null);
@@ -73,7 +73,7 @@ export function Login({ready,configured,language,L,error,busy,notice='',onSubmit
     </label>
     {intro&&<p className="sf-auth-intro">{intro}</p>}
     {!ready?<p role="status">{t('Loading…')}</p>:!configured?<p role="status">{t('This workspace is not set up yet. Ask the installer to create the first owner account.')}</p>:!joining?
-    <form className="sf-auth-fields" onSubmit={onSubmit} aria-busy={busy}>
+    <><form className="sf-auth-fields" onSubmit={onSubmit} aria-busy={busy}>
      <label htmlFor="sf-signin-username">{t('Username')}<input id="sf-signin-username" name="username" autoComplete="username" placeholder={t('Enter username')} required maxLength={80}/></label>
      <div className="sf-auth-password">
       <label htmlFor="login-password">{t('Password')}</label>
@@ -82,7 +82,7 @@ export function Login({ready,configured,language,L,error,busy,notice='',onSubmit
       </div>
      </div>
      <button className="primary full-width sf-signin" disabled={busy}>{t(busy?'Working…':'Sign in')}<Glyph name="arrow"/></button>
-    </form>:!joinMethod?
+    </form>{demoEnabled&&<section className="sf-public-invite" aria-label="Public challenge preview"><p><strong>Explore Shop Finder without an account.</strong></p><p>Try multilingual search, example shelves and guided voice picking. This temporary challenge preview uses fictional products and cannot change business records.</p><button type="button" disabled={busy} onClick={onDemo} className="sf-demo-enter">{busy?'Opening preview…':'Try Shop Finder'} <Glyph name="arrow"/></button><small>Feedback is welcome. Voice features need microphone permission and may be limited.</small></section>}</>:!joinMethod?
     <div className="sf-join-choices" role="group" aria-label={t('Choose how to join')}>
      <button type="button" className="sf-join-option" onClick={()=>chooseMethod('workspace')}>
       <span className="sf-join-option-copy"><strong>{t('I have a workspace code')}</strong><small>{t('Request staff access. An owner or manager will review your request.')}</small></span>
