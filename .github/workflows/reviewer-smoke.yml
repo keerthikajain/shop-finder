@@ -1,0 +1,32 @@
+name: Reviewer workspace smoke
+on:
+  push:
+    paths:
+      - 'backend/app/challenge_workspaces.py'
+      - 'backend/app/accounts.py'
+      - 'backend/app/main.py'
+      - 'backend/app/reports.py'
+      - 'backend/tests/test_challenge_workspaces.py'
+      - '.github/workflows/reviewer-smoke.yml'
+  pull_request:
+    paths:
+      - 'backend/app/challenge_workspaces.py'
+      - 'backend/app/accounts.py'
+      - 'backend/app/main.py'
+      - 'backend/app/reports.py'
+      - 'backend/tests/test_challenge_workspaces.py'
+      - '.github/workflows/reviewer-smoke.yml'
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: backend/requirements-lock.txt
+      - run: python -m pip install -r backend/requirements-lock.txt
+      - run: python -m pytest backend/tests/test_challenge_workspaces.py -q
