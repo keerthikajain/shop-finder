@@ -264,7 +264,7 @@ test('Prisma V3 offers ten selectable recognition languages and optional hints',
 test('setup guidance is limited to Find when workspace setup is unfinished',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/!meta\.settings\.configured&&page==='find'/);
- assert.match(src,/owner&&<button onClick=\{\(\)=>navigate\('business'\)\}>Set up workspace/);
+ assert.match(src,/owner&&<button onClick=\{\(\)=>navigate\('business'\)\}>Set up my store/);
  assert.doesNotMatch(src,/!meta\.settings\.configured&&!\['business','more','settings'\]\.includes\(page\)/);
 });
 test('catalogue label is not repeated as inert decoration on workspace pages',async()=>{
@@ -395,7 +395,7 @@ test('voice picking is discoverable before starting and unmatched requests can b
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
  assert.match(ui,/picking.status!=='completed'&&<div className="sf-voice-guide"/);
- assert.match(ui,/Start picking to enable voice commands/);
+ assert.match(ui,/Choose your items, then tap Start picking to use voice commands/);
  assert.match(ui,/enabled={picking.status==='active'&&voice&&!busy&&!voiceGuidePaused}/);
  assert.match(ui,/async function removeUnresolvedLine\(index\)/);
  assert.match(ui,/Remove from worklist/);
