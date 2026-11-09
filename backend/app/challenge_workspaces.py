@@ -43,6 +43,7 @@ def ensure_registry(base):
   c.execute('CREATE TABLE IF NOT EXISTS challenge_workspaces(id TEXT PRIMARY KEY,username TEXT UNIQUE NOT NULL,created REAL NOT NULL,db_name TEXT UNIQUE NOT NULL)')
   c.execute('CREATE TABLE IF NOT EXISTS challenge_sessions(digest TEXT PRIMARY KEY,workspace_id TEXT NOT NULL,expires REAL NOT NULL)')
   c.execute('CREATE TABLE IF NOT EXISTS challenge_users(username TEXT PRIMARY KEY,workspace_id TEXT NOT NULL)')
+  c.execute('CREATE TABLE IF NOT EXISTS challenge_codes(digest TEXT PRIMARY KEY,workspace_id TEXT NOT NULL)')
   c.execute('CREATE TABLE IF NOT EXISTS challenge_attempts(ip TEXT NOT NULL,at REAL NOT NULL)')
   c.execute('CREATE INDEX IF NOT EXISTS challenge_session_expiry ON challenge_sessions(expires)')
 
@@ -183,7 +184,7 @@ class ChallengeDispatcher:
    wid=row['workspace_id'] if row else None
   cached_body=None
   # A returning judge can sign in on a new browser without an existing cookie.
-  if route=='/api/auth/login' and scope.get('method')=='POST' and not wid:
+  if route in ('/api/auth/login','/api/auth/join','/api/auth/register') and scope.get('method')=='POST' and not wid:
    messages=[]
    while True:
     item=await receive()
@@ -191,8 +192,16 @@ class ChallengeDispatcher:
     if not item.get('more_body',False):break
    cached_body=b''.join(m.get('body',b'') for m in messages)
    try:
-    username=json.loads(cached_body).get('username','')
-    if isinstance(username,str):wid=username_workspace(self.base,username)
+    data=json.loads(cached_body)
+    if route=='/api/auth/login':
+     username=data.get('username','')
+     if isinstance(username,str):wid=username_workspace(self.base,username)
+    else:
+     code=data.get('code','')
+     if isinstance(code,str):
+      with registry(self.base) as c:
+       found=c.execute('SELECT workspace_id FROM challenge_codes WHERE digest=?',(digest(code),)).fetchone()
+      wid=found['workspace_id'] if found else None
    except (ValueError,TypeError,AttributeError):pass
   if not wid or not workspace_for_cookie(self.base,wid):
    if cached_body is not None:
@@ -234,15 +243,20 @@ class ChallengeDispatcher:
       if os.getenv('SHOP_FINDER_SECURE_COOKIE')=='true':extra[WORKSPACE_COOKIE]['secure']=True
       headers.append((b'set-cookie',extra.output(header='').strip().encode('latin1')))
       message={**message,'headers':headers}
-   if message['type']=='http.response.body' and route in ('/api/users','/api/auth/join') and scope.get('method')=='POST' and response_status in (200,201):
-    response_body.append(message.get('body',b''))
-    if not message.get('more_body',False):
-     try:
-      user=json.loads(b''.join(response_body))
-      name=user.get('username','')
-      if isinstance(name,str) and name:
-       with registry(self.base) as c:
-        c.execute('INSERT OR IGNORE INTO challenge_users VALUES (?,?)',(name.lower(),wid))
-     except (ValueError,TypeError,sqlite3.Error):pass
+   if message['type']=='http.response.body' and scope.get('method')=='POST' and response_status in (200,201):
+    if route in ('/api/users','/api/auth/join','/api/auth/register','/api/users/invitations','/api/registrations/workspace-code'):
+     response_body.append(message.get('body',b''))
+     if not message.get('more_body',False):
+      try:
+       payload=json.loads(b''.join(response_body))
+       if route in ('/api/users','/api/auth/join','/api/auth/register'):
+        name=payload.get('username','')
+        if isinstance(name,str) and name:
+         with registry(self.base) as c:c.execute('INSERT OR IGNORE INTO challenge_users VALUES (?,?)',(name.lower(),wid))
+       else:
+        code=payload.get('code','')
+        if isinstance(code,str) and code:
+         with registry(self.base) as c:c.execute('INSERT OR REPLACE INTO challenge_codes VALUES (?,?)',(digest(code),wid))
+      except (ValueError,TypeError,AttributeError,sqlite3.Error):pass
    await send(message)
   return await tenant(scope,receive,capture)
