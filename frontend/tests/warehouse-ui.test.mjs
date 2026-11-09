@@ -375,5 +375,5 @@ test('native voice picking commands are wired for every supported input language
  assert.match(src,/pickVoicePhrase\(task\.language,'stop'\)/);
  for(const code of ['kn-IN','ta-IN','te-IN','ml-IN','mr-IN','bn-IN','gu-IN','pa-IN'])assert.ok(terms.includes('"'+code+'"'),code);
  assert.match(server,/voice_guide\.intent\(body\.transcript,task\['language'\]\)/);
- assert.doesNotMatch(src,/PICKING_VOICE_LANGUAGES\.includes\(task\.language\)\?[^]*?kind:'manual',value:'confirmed'/);
+ assert.match(src,/if\(answer\.action==='verify'&&answer\.line!=null\)D\(\{type:'scan',index:answer\.line\}\)/);
 });
