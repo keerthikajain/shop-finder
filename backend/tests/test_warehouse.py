@@ -1249,3 +1249,13 @@ def test_bulk_translations_update_existing_unchanged_catalogue_rows(setup,monkey
  assert post(c,'/imports/'+staged.json()['token']+'/confirm',{}).status_code==422
  assert post(c,'/imports/'+staged.json()['token']+'/confirm',{'translations_reviewed':True}).status_code==200
  assert all(p['translations'].get('te') for p in items(c))
+
+def test_voice_guidance_uses_translated_recorded_product_name():
+ from app.warehouse_voice_guide import guide
+ product={'name':'Steel washer','sku':'APP-991',
+          'translations':{'te':'స్టీల్ వాషర్','kn':'ಸ್ಟೀಲ್ ವಾಷರ್','hi':'स्टील वॉशर'}}
+ for lang,label in [('te-IN','స్టీల్ వాషర్'),('kn-IN','ಸ್ಟೀಲ್ ವಾಷರ್'),('hi-IN','स्टील वॉशर')]:
+  task={'language':lang,'picking':{'status':'active'},
+        'lines':[{'selected':product,'location':{'rack':'Z','shelf':'5','bin':'07'},'complete':False}]}
+  response=guide(task,'next',0,lambda index:None)
+  assert label in response['text'],(lang,response)
