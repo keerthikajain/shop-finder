@@ -270,12 +270,30 @@ def location_status(c,p,l):
  match=c.execute('SELECT at FROM wh_location_checks WHERE collection=? AND sku=? AND location_code=? AND revision=? ORDER BY id DESC LIMIT 1',(p['collection'],p['sku'],l['code'],p['revision'])).fetchone()
  open_report=c.execute("SELECT 1 FROM wh_issues WHERE collection=? AND sku=? AND kind='wrong_location' AND location_code=? AND status='open' LIMIT 1",(p['collection'],p['sku'],l['code'])).fetchone()
  return {'last_confirmed_at':match['at'] if match else None,'location_report_open':bool(open_report)}
+def picking_state(task):
+ # Older persisted searches were created before guided picking existed.
+ return task.setdefault('picking',{'status':'ready','started_at':None,'completed_at':None})
+def picking_mutable(task):
+ if picking_state(task)['status']!='ready':
+  raise HTTPException(409,'This picking session has started. Search again to change selected products.')
+def picking_check(c,task):
+ if not task['lines'] or any(not line.get('selected') or not line.get('location') for line in task['lines']):
+  raise HTTPException(409,'Resolve every requested item and location before starting or finishing the pick.')
+ for i,line in enumerate(task['lines']):
+  _,item=current_line(c,task,i)
+  location=line['location']
+  if not any(p['code']==location['code'] for p in item['placements']):
+   raise HTTPException(409,'Recorded location changed. Search again.')
+  if location_status(c,item,location)['location_report_open']:
+   raise HTTPException(409,'This shelf has an unresolved location report. Ask the owner to verify it before picking.')
 def task_get(c,tid,u):
  r=c.execute('SELECT * FROM wh_tasks WHERE id=? AND owner=?',(tid,u['id'])).fetchone()
  if not r or time.time()-r['created']>86400:raise HTTPException(404,'Search session expired. Search again.')
- return json.loads(r['payload'])
+ task=json.loads(r['payload']);picking_state(task);return task
 def task_put(c,t):
- t['spoken_text']=speak_task(t);t['display_text']=display_task(t);c.execute('UPDATE wh_tasks SET payload=? WHERE id=?',(encode(t),t['id']));return t
+ picking_state(t)
+ t['spoken_text']=speak_task(t);t['display_text']=display_task(t)
+ c.execute('UPDATE wh_tasks SET payload=? WHERE id=?',(encode(t),t['id']));return t
 def current_line(c,t,index):
  if index>=len(t['lines']):raise HTTPException(422,'Invalid task line.')
  line=t['lines'][index];selected=line.get('selected')
@@ -421,18 +439,47 @@ def install_warehouse(app,path):
     l=available[0] if len(available)==1 else None
     lines.append({'query':q,'candidates':candidates,'selected':p if l else None,'location':l,'product_scanned':False,'complete':False,'confirmation':None,'location_feedback':None,**location_status(c,p,l)})
     # A search result, including no match, never creates a report by itself.
-   tid=secrets.token_urlsafe(24);t={'id':tid,'collection':body.collection,'language':body.language,'query':body.query,'lines':lines};t['spoken_text']=speak_task(t);t['display_text']=display_task(t)
+   tid=secrets.token_urlsafe(24);t={'id':tid,'collection':body.collection,'language':body.language,'query':body.query,'lines':lines,'picking':{'status':'ready','started_at':None,'completed_at':None}};t['spoken_text']=speak_task(t);t['display_text']=display_task(t)
    c.execute('DELETE FROM wh_tasks WHERE created<?',(time.time()-86400,));c.execute('INSERT INTO wh_tasks VALUES(?,?,?,?)',(tid,u['id'],time.time(),encode(t)))
    return t
  @app.get('/api/warehouse/tasks')
  def recent(request:Request):
   u=identity(request)
   with connect(path) as c:return [json.loads(r[0]) for r in c.execute('SELECT payload FROM wh_tasks WHERE owner=? AND created>? ORDER BY created DESC LIMIT 6',(u['id'],time.time()-86400))]
+ @app.get('/api/warehouse/tasks/{tid}')
+ def get_task(tid:str,request:Request):
+  u=identity(request)
+  with connect(path) as c:return task_get(c,tid,u)
+ @app.post('/api/warehouse/tasks/{tid}/picking/start')
+ def start_picking(tid:str,request:Request):
+  u=identity(request)
+  with connect(path) as c:
+   c.execute('BEGIN IMMEDIATE');task=task_get(c,tid,u)
+   state=picking_state(task)
+   if state['status']=='completed':raise HTTPException(409,'Completed picks cannot be started again. Create a new search.')
+   if state['status']=='active':return task
+   picking_check(c,task)
+   state.update(status='active',started_at=now(),completed_at=None)
+   return task_put(c,task)
+ @app.post('/api/warehouse/tasks/{tid}/picking/finish')
+ def finish_picking(tid:str,request:Request):
+  u=identity(request)
+  with connect(path) as c:
+   c.execute('BEGIN IMMEDIATE');task=task_get(c,tid,u)
+   state=picking_state(task)
+   if state['status']=='completed':return task
+   if state['status']!='active':raise HTTPException(409,'Start the picking session before completing it.')
+   if not all(line.get('complete') for line in task['lines']):
+    raise HTTPException(409,'Verify every item and recorded shelf before completing this picking session.')
+   picking_check(c,task)
+   state.update(status='completed',completed_at=now())
+   return task_put(c,task)
  @app.post('/api/warehouse/tasks/{tid}/choose')
  def choose(tid:str,body:Choose,request:Request):
   u=identity(request)
   with connect(path) as c:
    c.execute('BEGIN IMMEDIATE');t=task_get(c,tid,u)
+   picking_mutable(t)
    if body.line>=len(t['lines']):raise HTTPException(422,'Invalid task line.')
    line=t['lines'][body.line]
    choices=[p for p in line['candidates'] if p['sku']==body.sku and (not body.collection or p['collection']==body.collection)]
@@ -445,6 +492,7 @@ def install_warehouse(app,path):
   u=identity(request)
   with connect(path) as c:
    c.execute('BEGIN IMMEDIATE');t=task_get(c,tid,u)
+   picking_mutable(t)
    if body.line>=len(t['lines']):raise HTTPException(422,'Invalid task line.')
    line=t['lines'][body.line];ids={(p['collection'],p['sku']) for p in line['candidates']}
    current=[p for p in rows(c,t['collection']) if (p['collection'],p['sku']) in ids]
@@ -460,7 +508,9 @@ def install_warehouse(app,path):
   u=identity(request)
   with connect(path) as c:
    c.execute('BEGIN IMMEDIATE')
-   t=task_get(c,tid,u);line,p=current_line(c,t,body.line)
+   t=task_get(c,tid,u)
+   if picking_state(t)['status']=='completed':raise HTTPException(409,'This picking session is already completed.')
+   line,p=current_line(c,t,body.line)
    location=line['location']
    if not any(l['code']==location['code'] for l in p['placements']):raise HTTPException(409,'Location changed. Search again.')
    existing=c.execute('SELECT at,actor FROM wh_location_checks WHERE task_id=? AND line_index=?',(tid,body.line)).fetchone()
@@ -475,7 +525,10 @@ def install_warehouse(app,path):
  def scan(tid:str,body:Scan,request:Request):
   u=identity(request)
   with connect(path) as c:
-   c.execute('BEGIN IMMEDIATE');t=task_get(c,tid,u);line,p=current_line(c,t,body.line)
+   c.execute('BEGIN IMMEDIATE');t=task_get(c,tid,u)
+   if picking_state(t)['status']=='completed':raise HTTPException(409,'This picking session is already completed.')
+   line,p=current_line(c,t,body.line)
+   if line.get('complete'):raise HTTPException(409,'This item is already verified.')
    if body.kind=='product':
     if body.value not in [p['sku'],p['barcode'],f"ITEM:{p['collection']}:{p['sku']}"]:raise HTTPException(409,'Different item scanned. Check the SKU and variant.')
     line['product_scanned']=True
@@ -483,7 +536,9 @@ def install_warehouse(app,path):
     if not line['product_scanned']:raise HTTPException(409,'Scan the item first.')
     if body.value!=line['location']['code']:raise HTTPException(409,'Different location scanned. Check the shelf label.')
     line.update(complete=True,confirmation='barcode')
-   else:line.update(complete=True,confirmation='manual')
+   else:
+    if body.value not in ('confirmed','yes'):raise HTTPException(422,'Manual verification requires explicit confirmation.')
+    line.update(complete=True,confirmation='manual')
    return task_put(c,t)
  @app.post('/api/warehouse/tasks/{tid}/speak')
  async def speech(tid:str,request:Request):

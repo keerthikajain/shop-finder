@@ -663,3 +663,77 @@ def test_warehouse_speech_reads_localized_response_without_inventing_location(se
  assert text==result['display_text']
  assert word in text
  assert 'CLO-001' in text
+
+
+def test_guided_picking_requires_resolved_items_and_locations(setup):
+ c,_=setup
+ t=search(c,'blue T-shirt and black jeans size 32')
+ url='/tasks/'+t['id']+'/picking/start'
+ assert post(c,url).status_code==409
+ assert post(c,'/tasks/'+t['id']+'/picking/finish').status_code==409
+ assert t['lines'][0]['selected'] is None
+ resolved=post(c,'/tasks/'+t['id']+'/clarify',{'line':0,'reply':'size M'})
+ assert resolved.status_code==200,resolved.text
+ started=post(c,url)
+ assert started.status_code==200,started.text
+ assert started.json()['picking']['status']=='active'
+ assert started.json()['picking']['started_at']
+ assert post(c,url).json()['picking']['started_at']==started.json()['picking']['started_at']
+ assert post(c,'/tasks/'+t['id']+'/choose',{'line':0,'sku':'CLO-001','collection':'clothing','location':resolved.json()['lines'][0]['location']['code']}).status_code==409
+ assert post(c,'/tasks/'+t['id']+'/clarify',{'line':0,'reply':'size L'}).status_code==409
+
+def test_guided_picking_requires_verified_items_and_keeps_stock_unchanged(setup):
+ c,path=setup
+ original=items(c)
+ t=search(c,'CLO-001 and CLO-004')
+ assert len(t['lines'])==2 and all(line['selected'] for line in t['lines'])
+ assert post(c,'/tasks/'+t['id']+'/picking/start').status_code==200
+ assert post(c,'/tasks/'+t['id']+'/picking/finish').status_code==409
+ checked=post(c,'/tasks/'+t['id']+'/location-check',{'line':0})
+ assert checked.status_code==200
+ assert post(c,'/tasks/'+t['id']+'/picking/finish').status_code==409
+ first=post(c,'/tasks/'+t['id']+'/scan',{'line':0,'kind':'manual','value':'confirmed'})
+ assert first.status_code==200,first.text
+ assert first.json()['lines'][0]['confirmation']=='manual'
+ assert post(c,'/tasks/'+t['id']+'/picking/finish').status_code==409
+ second=t['lines'][1]
+ assert post(c,'/tasks/'+t['id']+'/scan',{'line':1,'kind':'location','value':second['location']['code']}).status_code==409
+ assert post(c,'/tasks/'+t['id']+'/scan',{'line':1,'kind':'product','value':second['selected']['sku']}).status_code==200
+ assert post(c,'/tasks/'+t['id']+'/scan',{'line':1,'kind':'location','value':second['location']['code']}).status_code==200
+ finished=post(c,'/tasks/'+t['id']+'/picking/finish')
+ assert finished.status_code==200,finished.text
+ assert finished.json()['picking']['status']=='completed'
+ assert finished.json()['picking']['completed_at']
+ assert post(c,'/tasks/'+t['id']+'/picking/finish').json()['picking']==finished.json()['picking']
+ assert post(c,'/tasks/'+t['id']+'/scan',{'line':0,'kind':'manual','value':'confirmed'}).status_code==409
+ assert items(c)==original
+ with TestClient(create_app(path,seed_demo=True)) as restarted:
+  login(restarted)
+  restored=restarted.get('/api/warehouse/tasks/'+t['id'])
+  assert restored.status_code==200 and restored.json()['picking']==finished.json()['picking']
+
+def test_guided_picking_stale_catalogue_and_wrong_scan_cannot_finish(setup):
+ c,_=setup
+ t=search(c,'CLO-001')
+ assert post(c,'/tasks/'+t['id']+'/picking/start').status_code==200
+ assert post(c,'/tasks/'+t['id']+'/scan',{'line':0,'kind':'manual','value':'maybe'}).status_code==422
+ assert post(c,'/tasks/'+t['id']+'/scan',{'line':0,'kind':'product','value':'WRONG-SKU'}).status_code==409
+ assert post(c,'/tasks/'+t['id']+'/picking/finish').status_code==409
+ product=t['lines'][0]['selected'];product['name']='Updated product'
+ assert save(c,product,product['revision']).status_code==200
+ assert post(c,'/tasks/'+t['id']+'/scan',{'line':0,'kind':'manual','value':'confirmed'}).status_code==409
+ assert post(c,'/tasks/'+t['id']+'/picking/finish').status_code==409
+
+def test_guided_picking_uses_private_sessions_and_staff_can_pick(setup):
+ c,_=setup
+ owner_task=search(c,'CLO-001')
+ login(c,'staff')
+ assert c.get('/api/warehouse/tasks/'+owner_task['id']).status_code==404
+ assert post(c,'/tasks/'+owner_task['id']+'/picking/start').status_code==404
+ staff_task=search(c,'CLO-004')
+ assert post(c,'/tasks/'+staff_task['id']+'/picking/start').status_code==200
+ assert c.get('/api/warehouse/tasks/'+staff_task['id']).json()['picking']['status']=='active'
+ assert post(c,'/tasks/'+staff_task['id']+'/scan',{'line':0,'kind':'manual','value':'confirmed'}).status_code==200
+ assert post(c,'/tasks/'+staff_task['id']+'/picking/finish').status_code==200
+ login(c,'owner')
+ assert c.get('/api/warehouse/tasks/'+staff_task['id']).status_code==404
