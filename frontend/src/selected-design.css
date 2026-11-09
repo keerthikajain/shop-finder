@@ -1849,3 +1849,70 @@ body,.wh-app{
     max-width:100%;
   }
 }
+/* Mobile auth and navigation polish: keep a single visible sign-in heading,
+   offer language selection beside the logo, and reuse desktop art softly. */
+.login-shell .sf-login-header .sf-login-language{
+ display:flex;align-items:center;justify-content:flex-end;
+ margin:0;flex:0 0 auto;min-width:0;
+}
+.login-shell .sf-login-header .sf-login-language select{
+ box-sizing:border-box;width:114px;max-width:114px;height:42px;min-height:42px;
+ margin:0;padding:0 28px 0 12px;border-radius:11px;
+ font-size:13px;font-weight:650;line-height:1.2;
+ background:var(--wh-input);color:var(--wh-text);border:1px solid var(--wh-border);
+}
+.login-shell .login-card h1{margin:0 0 17px}
+.login-shell .login-card .sf-auth-footer{margin-top:16px}
+@media(max-width:700px){
+ .login-shell{padding:16px 14px 28px}
+ .login-shell .sf-login-header{display:flex;gap:12px;align-items:center;padding:0 0 14px}
+ .login-shell .sf-login-header .wh-brand{min-width:0;gap:7px}
+ .login-shell .sf-login-header .wh-brand>span{font-size:clamp(19px,5.4vw,25px)}
+ .login-shell .sf-login-header .sf-login-language select{width:109px;max-width:109px;font-size:13px}
+ .login-shell .sf-login-layout{
+   position:relative;isolation:isolate;display:block;
+   width:100%;max-width:510px;min-height:0;padding:38px 0 16px;margin:0 auto
+ }
+ .login-shell .sf-login-art{
+   display:block;position:absolute;inset:0;z-index:0;width:100%;height:100%;
+   opacity:1;pointer-events:none;overflow:hidden;
+ }
+ .login-shell .sf-login-art img{
+   display:block;width:100%;max-width:none;height:330px;max-height:330px;
+   object-fit:contain;object-position:center top;opacity:.25;
+ }
+ .login-shell .sf-login-art>div{display:none}
+ .login-shell .login-card{
+   position:relative;z-index:1;width:100%;max-width:100%;
+   margin:0;padding:22px 18px 19px;
+   border:1px solid #e1dbe9;border-radius:17px;
+   background:rgba(255,255,255,.91);
+   box-shadow:0 14px 38px rgba(48,31,69,.10);
+   backdrop-filter:blur(6px);
+ }
+ .login-shell .login-card h1{font-size:clamp(26px,7vw,32px);line-height:1.17;margin:0 0 18px}
+ .login-shell .login-card .sf-auth-intro{margin:0 0 16px}
+ .login-shell .login-card .sf-auth-fields{gap:13px}
+ .login-shell .login-card .sf-auth-fields .sf-signin{margin-top:5px}
+ .sf-compact-app .wh-mobile-brand{display:flex;gap:9px;align-items:center;min-width:0;flex:1 1 auto}
+ .sf-compact-app .wh-mobile-brand .sf-mobile-header-copy{display:grid;gap:2px;min-width:0}
+ .sf-compact-app .wh-mobile-brand .sf-mobile-header-copy small{
+   color:#bcb2ce;font-size:9px;letter-spacing:1px;
+   text-transform:uppercase;font-weight:650;line-height:1.15
+ }
+ .sf-compact-app .wh-mobile-brand .sf-mobile-header-copy strong{
+   display:block;min-width:0;max-width:100%;font-size:15px;
+   line-height:1.2;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+ }
+ .sf-compact-app .sf-compact-page-title{display:none}
+ .sf-compact-app.sf-voice-unavailable .wh-top-actions .sf-header-scan{display:none}
+}
+@media(max-width:370px){
+ .login-shell{padding-inline:10px}
+ .login-shell .login-card{padding:19px 13px 17px}
+ .login-shell .sf-login-header .sf-login-language select{width:98px;max-width:98px;padding-left:9px;font-size:12px}
+ .sf-compact-app .wh-mobile-brand .sf-mobile-header-copy strong{font-size:13px}
+}
+@media(prefers-reduced-transparency:reduce){
+ .login-shell .login-card{backdrop-filter:none;background:#fff}
+}

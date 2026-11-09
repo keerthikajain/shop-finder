@@ -282,3 +282,15 @@ test('secondary page controls use consistent 44px touch targets without touching
  assert.match(css,/\.sf-compact-app:not\(\.sf-find-page\) \.wh-toolbar > :is\(select,button,\.wh-button\)/);
  assert.match(css,/height:44px/);
 });
+
+test('mobile header names the active section and shows a single Find navigation action',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(src,/className="sf-mobile-header-copy"/);
+ assert.match(src,/role="heading" aria-level="1"/);
+ assert.match(src,/sf-voice-unavailable/);
+ assert.match(src,/className="sf-mobile-speak" type="button" aria-label=\{t\('Scan a label'\)\}/);
+ assert.doesNotMatch(src,/className="sf-mobile-speak"[^>]*onClick=\{\(\)=>\{navigate\('find'\)/);
+ assert.match(css,/\.sf-compact-app \.sf-compact-page-title\{display:none\}/);
+ assert.match(css,/\.sf-compact-app\.sf-voice-unavailable \.wh-top-actions \.sf-header-scan\{display:none\}/);
+});
