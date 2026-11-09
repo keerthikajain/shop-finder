@@ -1121,3 +1121,32 @@ def test_telugu_salt_normalization_does_not_invent_missing_shelf(setup):
  # The catalogue determines availability; no guessed product or location.
  if not result.json()['lines'][0]['candidates']:
   assert result.json()['lines'][0]['selected'] is None
+
+@pytest.mark.parametrize('language,query',[
+ ('en-IN','Where is the salt?'),
+ ('hi-IN','नमक कहाँ है?'),
+ ('kn-IN','ಉಪ್ಪು ಎಲ್ಲಿದೆ?'),
+ ('ta-IN','உப்பு எங்கே?'),
+ ('te-IN','ఉప్పు ఎక్కడ ఉంది?'),
+ ('ml-IN','ഉപ്പ് എവിടെയാണ്?'),
+ ('mr-IN','मीठ कुठे आहे?'),
+ ('bn-IN','লবণ কোথায় আছে?'),
+ ('gu-IN','મીઠું ક્યાં છે?'),
+ ('pa-IN','ਲੂਣ ਕਿੱਥੇ ਹੈ?'),
+ ('hi-en','uppu where is it'),
+])
+def test_salt_product_across_supported_languages_requires_real_catalogue_record(language,query):
+ from app.warehouse_language import tokens
+ from app.warehouse import match
+ from app.warehouse_catalogue import demo_items
+ assert tokens(query)=={'salt'},(language,query,tokens(query))
+ catalogue=list(demo_items())
+ assert match(query,catalogue,'all')==[],(language,'Unexpected salt match in demo catalogue')
+ # Once a verified product is explicitly saved, every spelling resolves to
+ # that same product without guessing a location or substituting another item.
+ salt={**catalogue[0],'collection':'grocery','sku':'GRO-SALT-001',
+       'name':'Salt','aliases':['table salt'],'category':'Staples',
+       'specs':{'size':'1 kg'},'placements':[
+          {'facility':'Test Store','zone':'Grocery','aisle':'1','rack':'A','shelf':'1','bin':'01'}
+       ]}
+ assert [p['sku'] for p in match(query,[*catalogue,salt],'all')]==['GRO-SALT-001']

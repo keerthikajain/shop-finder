@@ -94,6 +94,11 @@ SYNONYMS = {
 # Verified basic product words in the native scripts. These are lexical
 # equivalents, not similarity guesses; explicit colours remain mandatory.
 REGIONAL_PRODUCT_SYNONYMS = {
+ # Basic product name aliases across supported scripts. Keep these distinct
+ # from question fillers, so a missing item never becomes a guessed shelf.
+ 'ಉಪ್ಪು':'salt', 'உப்பு':'salt', 'ఉప్పు':'salt', 'ഉപ്പ്':'salt',
+ 'मीठ':'salt', 'लवण':'salt', 'লবণ':'salt', 'নুন':'salt',
+ 'મીઠું':'salt', 'નમક':'salt', 'ਲੂਣ':'salt', 'ਨਮਕ':'salt',
  'ಜೀನ್ಸ್':'jeans', 'ಕಪ್ಪು':'black', 'ಕಪ್ಪುಬಣ್ಣದ':'black', 'ನೀಲಿ':'blue',
  'ஜீன்ஸ்':'jeans', 'கருப்பு':'black', 'நீல':'blue', 'நீலம்':'blue',
  'జీన్స్':'jeans', 'నల్ల':'black', 'నీలం':'blue', 'నీలి':'blue',
