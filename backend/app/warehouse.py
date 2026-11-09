@@ -10,6 +10,7 @@ from fastapi import HTTPException,Request,Response
 from pydantic import BaseModel,Field,ConfigDict,field_validator,model_validator
 from .database import connect
 from .services import voice
+from . import warehouse_failed_searches as unknowns
 from .warehouse_catalogue import COLLECTIONS,COLLECTION_MAP,LOCATION_FIELDS,FIELD_LABELS,demo_items
 
 def now():return datetime.now(timezone.utc).isoformat()
@@ -102,6 +103,13 @@ class Issue(Strict):
  kind:Literal['general','wrong_location']='general'
  location_code:str=Field(default='',max_length=50)
  suggested_location:str=Field(default='',max_length=200)
+class FailedSearchReview(Strict):
+ action:Literal['alias','dismiss']
+ collection:str=Field(default='',max_length=40)
+ sku:str=Field(default='',max_length=40)
+ revision:int|None=Field(default=None,ge=1)
+ verified:bool=False
+ note:str=Field(default='',max_length=250)
 class LocationCheck(Strict):
  line:int=Field(ge=0,le=9)
 class Resolve(Strict):note:str=Field(min_length=3,max_length=300)
@@ -121,6 +129,7 @@ def initialize_warehouse(path,demo=True):
     c.execute(f"ALTER TABLE wh_issues ADD COLUMN {name} TEXT NOT NULL DEFAULT '{default}'")
   from .store_operations import initialize_store
   initialize_store(c)
+  unknowns.initialize(c)
   if demo:
    for p in demo_items():
     p=Item(**p).model_dump();c.execute('INSERT OR IGNORE INTO wh_items VALUES(?,?,?,?,1,?,?)',(p['collection'],p['sku'],p['barcode'],encode(p),now(),'Demo seed'))
@@ -425,6 +434,18 @@ def install_warehouse(app,path):
     if any(l.get('quantity') not in (None,0) and code not in new_places for code,l in old_places.items()):raise HTTPException(422,'Move or count stock to zero before removing a stocked location.')
     if any(l.quantity!=old_places.get(code,{}).get('quantity') for code,l in new_places.items()):raise HTTPException(422,'Use a confirmed stock operation to change quantities.')
    return write(c,body.item.model_dump(),body.revision,u['username'],body.reason)
+ @app.get('/api/warehouse/failed-searches')
+ def failed_searches(request:Request,collection:str='all',status:str='open'):
+  identity(request,True)
+  with connect(path) as c:return unknowns.list_for_owner(c,collection,status)
+ @app.post('/api/warehouse/failed-searches/{fid}/review')
+ def review_failed_search(fid:int,body:FailedSearchReview,request:Request):
+  owner=identity(request,True)
+  with connect(path) as c:
+   c.execute('BEGIN IMMEDIATE')
+   return unknowns.resolve(c,fid,body.action,owner,body.note,body.collection,body.sku,body.revision,body.verified,
+                           lambda db,coll,sku:public(item_row(db,coll,sku)),
+                           lambda db:rows(db,'all'),match,write,Item)
  @app.post('/api/warehouse/search')
  def search(body:Query,request:Request):
   u=identity(request);queries=[q.strip(' .?!') for q in re.split(r'\s+(?:and|aur|और)\s+|[,;\n]',body.query,flags=re.I) if q.strip(' .?!')]
@@ -439,6 +460,7 @@ def install_warehouse(app,path):
     l=available[0] if len(available)==1 else None
     lines.append({'query':q,'candidates':candidates,'selected':p if l else None,'location':l,'product_scanned':False,'complete':False,'confirmation':None,'location_feedback':None,**location_status(c,p,l)})
     # A search result, including no match, never creates a report by itself.
+   unknowns.capture(c,(line['query'] for line in lines if not line['candidates']),body.collection,rows(c,'all'),match)
    tid=secrets.token_urlsafe(24);t={'id':tid,'collection':body.collection,'language':body.language,'query':body.query,'lines':lines,'picking':{'status':'ready','started_at':None,'completed_at':None}};t['spoken_text']=speak_task(t);t['display_text']=display_task(t)
    c.execute('DELETE FROM wh_tasks WHERE created<?',(time.time()-86400,));c.execute('INSERT INTO wh_tasks VALUES(?,?,?,?)',(tid,u['id'],time.time(),encode(t)))
    return t

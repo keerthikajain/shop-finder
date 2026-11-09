@@ -208,6 +208,7 @@ def install_accounts(app,path,required=True):
      (route in ('/api/warehouse/settings','/api/warehouse/items') and request.method in ('PUT','PATCH','DELETE'))
      or route.startswith('/api/warehouse/imports')
      or route.startswith('/api/warehouse/moves/')
+     or route.startswith('/api/warehouse/failed-searches')
      or route=='/api/warehouse/history'
      or (route.startswith('/api/warehouse/issues/') and route.endswith('/resolve'))
     )
