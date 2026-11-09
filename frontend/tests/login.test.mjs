@@ -87,7 +87,9 @@ test('login header has one compact accessible language selector and no repeated 
  assert.match(html,/aria-label="App language"/);
  assert.match(html,/class="sf-login-language"/);
  assert.match(html,/<h1>Welcome back<\/h1>/);
- assert.equal((html.match(/>Sign in<\/button>/g)||[]).length,1);
+ // The primary button contains a decorative SVG icon after its text.
+ assert.match(html,/<button[^>]*class="primary full-width sf-signin"[^>]*>Sign in/);
+ assert.equal((html.match(/class="primary full-width sf-signin"/g)||[]).length,1);
  assert.doesNotMatch(html,/sf-login-kicker|sf-auth-modes/);
 });
 test('mobile login preserves the workspace illustration behind a readable form',async()=>{

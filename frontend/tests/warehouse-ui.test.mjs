@@ -116,7 +116,11 @@ test('one-tap mobile Speak starts a Gnani recording from any section',async()=>{
  assert.match(src,/id==='locations'&&\(voice\?<VoiceButton nav enabled=\{!busy\}/);
  assert.match(src,/if\(page!=='find'\)navigate\('find'\)/);
  assert.match(src,/Q\(text\);DSL\(detected\);VQ\(true\);taskVoice.current=true/);
- assert.match(src,/Voice unavailable\. Open text search/);
+ // When voice is unavailable, the center shortcut becomes Scan (not a second Find).
+ assert.match(src,/id==='locations'&&\(voice\?<VoiceButton nav enabled=\{!busy\}/);
+ assert.match(src,/className="sf-mobile-speak" type="button" aria-label=\{t\('Scan a label'\)\}/);
+ assert.match(src,/onClick=\{\(\)=>D\(\{type:'lookup'\}\)\}/);
+ assert.doesNotMatch(src,/Voice unavailable\. Open text search/);
  assert.doesNotMatch(src,/if\(page!=='find'\)\{navigate\('find'\);return\}/);
 });
 
