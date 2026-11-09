@@ -2160,3 +2160,19 @@ body,.wh-app{
    flex-basis:145px;width:145px;min-width:0;max-width:145px;font-size:13px;
  }
 }
+
+/* Guided picking uses existing worklist and scan components; no new navigation. */
+.sf-guided-picking{display:grid;gap:11px;margin:0 0 14px;padding:16px 18px;border:1px solid var(--wh-border);border-radius:14px;background:var(--wh-surface)}
+.sf-picking-head{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.sf-picking-head h3{font-size:19px;margin:3px 0 4px;color:var(--wh-text)}
+.sf-picking-head small{display:block;font-size:12px;line-height:1.5;color:var(--wh-muted)}
+.sf-picking-head>b{white-space:nowrap;color:var(--wh-accent);font-size:21px}
+.sf-guided-picking>progress{display:block;width:100%;height:8px;accent-color:var(--wh-accent)}
+.sf-picking-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.sf-picking-actions>span,.sf-picking-actions>small{font-size:12px;line-height:1.5;color:var(--wh-muted);overflow-wrap:anywhere;flex:1 1 210px}
+.sf-picking-actions>div{display:flex;flex-wrap:wrap;gap:8px}
+.sf-picking-actions button{min-height:44px;padding:9px 15px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.sf-picking-done{margin:0;color:var(--wh-green);font-size:13px;font-weight:650}
+.sf-guided-picking~.wh-work-grid #sf-shelf-guide{scroll-margin-top:72px}
+.wh-task[id^=sf-picking-line-]{scroll-margin-top:84px}
+@media(max-width:700px){.sf-guided-picking{padding:13px;margin-bottom:12px}.sf-picking-head h3{font-size:17px}.sf-picking-actions,.sf-picking-actions>div{width:100%}.sf-picking-actions button{flex:1 1 145px}.sf-picking-actions>span{flex-basis:100%}}
