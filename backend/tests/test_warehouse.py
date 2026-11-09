@@ -1230,3 +1230,22 @@ def test_spoken_and_display_answers_use_saved_language_product_names():
   task={'language':lang,'lines':[{'selected':p,'location':place,'candidates':[p],'query':p['name']}]}
   assert expected in speak_task(task)
   assert expected in display_task(task)
+
+def test_bulk_translations_update_existing_unchanged_catalogue_rows(setup,monkeypatch):
+ from app import warehouse_translation
+ c,_=setup
+ async def fake_suggest(name,source_language):
+  return {'en':name,'hi':'परीक्षित '+name,'hi_latn':'tested '+name,
+          'te':'పరీక్ష '+name,'kn':'ಪರೀಕ್ಷೆ '+name}
+ monkeypatch.setattr(warehouse_translation,'suggest',fake_suggest)
+ data=c.get('/api/warehouse/export?collection=clothing').content
+ preview=sheet(c,data)
+ assert preview['counts']['unchanged']==8
+ staged=post(c,'/imports/'+preview['token']+'/suggest-translations',{'source_language':'en-IN'})
+ assert staged.status_code==200,staged.text
+ assert staged.json()['counts']['update']==8
+ assert staged.json()['counts']['unchanged']==0
+ assert staged.json()['translation_review_required']
+ assert post(c,'/imports/'+staged.json()['token']+'/confirm',{}).status_code==422
+ assert post(c,'/imports/'+staged.json()['token']+'/confirm',{'translations_reviewed':True}).status_code==200
+ assert all(p['translations'].get('te') for p in items(c))
