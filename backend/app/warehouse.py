@@ -713,13 +713,16 @@ def install_warehouse(app,path):
   # Network calls only happen after an explicit owner click. The preview is
   # staged and never changes saved products until separately confirmed.
   for ch in preview['changes'][start:finish]:
-   if ch['action']=='unchanged':continue
    old=ch['item'].get('translations',{})
    if len(old)==5:continue
    suggestions=await warehouse_translation.suggest(ch['item']['name'],body.source_language)
    updated={**old,**{k:v for k,v in suggestions.items() if k not in old}}
    ch['item']['translations']=updated
    Item(**ch['item'])
+   if ch['action']=='unchanged':
+    ch['action']='update'
+    preview['counts']['unchanged']-=1
+    preview['counts']['update']+=1
    suggested+=1
   preview['translation_cursor']=finish
   preview['translation_suggestions_count']=preview.get('translation_suggestions_count',0)+suggested
