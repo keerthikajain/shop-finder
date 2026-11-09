@@ -431,3 +431,16 @@ test('only settings page exposes appearance control and manager empty state is a
  assert.match(accounts,/sf-staff-create/);
  assert.match(accounts,/owner_password:d\.get\('password'\)/);
 });
+
+test('public preview is available before sign-in and isolates sample data',async()=>{
+ const accounts=await readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
+ const preview=await readFile(new URL('../src/public-preview.jsx',import.meta.url),'utf8');
+ const backend=await readFile(new URL('../../backend/app/public_preview.py',import.meta.url),'utf8');
+ assert.match(accounts,/Explore the public preview/);
+ assert.match(accounts,/screen==='preview'/);
+ assert.match(preview,/fictional/);
+ assert.match(preview,/no real|No inventory/i);
+ assert.doesNotMatch(preview,/\/warehouse\/items/);
+ assert.match(preview,/Send feedback/);
+ assert.match(backend,/Owner access required/);
+});
