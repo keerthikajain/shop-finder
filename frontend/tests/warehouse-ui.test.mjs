@@ -39,7 +39,7 @@ test('More offers scan as a task without unrelated filters or setup banners',asy
  assert.ok(src.includes("['find','catalogue','locations'].includes(page)&&<button type=\"button\" className=\"sf-header-scan\""));
  assert.ok(src.includes("onClick={()=>D({type:'lookup'})}><span className=\"sf-more-icon\"><Glyph name=\"scan\"/>"));
  assert.ok(src.includes("meta&&!['find','account','business','more','settings'].includes(page)"));
- assert.ok(src.includes("!meta.settings.configured&&!['business','more','settings'].includes(page)"));
+ assert.ok(src.includes("!meta.settings.configured&&page==='find'"));
 });
 
 test('mobile Find navigation keeps a compact label while desktop keeps the full label',async()=>{
@@ -258,4 +258,27 @@ test('Prisma V3 offers ten selectable recognition languages and optional hints',
  assert.match(src,/candidates\.join\(','\)/);
  assert.match(recording,/params\.set\('candidates',candidates\.join\(','\)\)/);
  assert.match(src,/hintLanguages\.length>=4/);
+});
+
+test('setup guidance is limited to Find when workspace setup is unfinished',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/!meta\.settings\.configured&&page==='find'/);
+ assert.match(src,/owner&&<button onClick=\{\(\)=>navigate\('business'\)\}>Set up workspace/);
+ assert.doesNotMatch(src,/!meta\.settings\.configured&&!\['business','more','settings'\]\.includes\(page\)/);
+});
+test('catalogue label is not repeated as inert decoration on workspace pages',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/meta&&!\['find','account','business','more','settings'\]\.includes\(page\)/);
+ assert.match(src,/aria-label="Product type"/);
+ assert.doesNotMatch(src,/className="sf-scope-note"/);
+ assert.doesNotMatch(src,/t\('Your catalogue'\)/);
+ assert.match(src,/\['catalogue','grid','Catalogue'\]/);
+});
+test('secondary page controls use consistent 44px touch targets without touching Find voice layout',async()=>{
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(css,/Secondary workspace controls share one comfortable touch size/);
+ assert.match(css,/\.sf-compact-app:not\(\.sf-find-page\) > \.wh-main-wrap #wh-packs\.sf-search-filters > label > select/);
+ assert.match(css,/\.sf-compact-app:not\(\.sf-find-page\) \.wh-toolbar > \.wh-filter > input/);
+ assert.match(css,/\.sf-compact-app:not\(\.sf-find-page\) \.wh-toolbar > :is\(select,button,\.wh-button\)/);
+ assert.match(css,/height:44px/);
 });

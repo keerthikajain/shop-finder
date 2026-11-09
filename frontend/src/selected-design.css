@@ -1782,3 +1782,70 @@ body,.wh-app{
  .login-shell .login-card .sf-auth-modes{margin:0 0 17px}
  .login-shell .login-card .sf-join-option{min-height:80px;padding:13px 12px}
 }
+/* Secondary workspace controls share one comfortable touch size.
+   Keep Find's voice composer, print labels, import mapping and card actions intact. */
+.sf-compact-app:not(.sf-find-page) > .wh-main-wrap #wh-packs.sf-search-filters{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:flex-end;
+  gap:12px;
+  margin:0 0 16px;
+}
+.sf-compact-app:not(.sf-find-page) > .wh-main-wrap #wh-packs.sf-search-filters > label{
+  display:grid;
+  gap:6px;
+  flex:0 1 240px;
+  min-width:0;
+  font-size:12px;
+  line-height:1.4;
+}
+.sf-compact-app:not(.sf-find-page) > .wh-main-wrap #wh-packs.sf-search-filters > label > select{
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  height:44px;
+  min-height:44px;
+  padding:0 34px 0 12px;
+  margin:0;
+  font-size:13px;
+  border-radius:9px;
+}
+.sf-compact-app:not(.sf-find-page) .wh-toolbar > .wh-filter{
+  box-sizing:border-box;
+  height:44px;
+  min-height:44px;
+  min-width:0;
+  border-radius:9px;
+}
+.sf-compact-app:not(.sf-find-page) .wh-toolbar > .wh-filter > input{
+  box-sizing:border-box;
+  height:42px;
+  min-height:42px;
+  width:100%;
+  min-width:0;
+  margin:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  font-size:13px;
+}
+.sf-compact-app:not(.sf-find-page) .wh-toolbar > :is(select,button,.wh-button){
+  box-sizing:border-box;
+  min-height:44px;
+  height:auto;
+  border-radius:9px;
+  font-size:12px;
+  line-height:1.4;
+}
+.sf-compact-app:not(.sf-find-page) .wh-toolbar > select{
+  height:44px;
+  padding:0 32px 0 12px;
+  margin:0;
+}
+@media(max-width:700px){
+  .sf-compact-app:not(.sf-find-page) > .wh-main-wrap #wh-packs.sf-search-filters > label{
+    flex:1 1 180px;
+    max-width:100%;
+  }
+}
