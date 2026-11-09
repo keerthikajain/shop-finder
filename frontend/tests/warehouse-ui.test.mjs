@@ -442,3 +442,12 @@ test('public challenge preview has an explicit guest entry and feedback screen',
  assert.match(workspace,/request\('\/demo\/feedback'/);
  assert.match(workspace,/ownerFeedback\.map/);
 });
+
+test('a fully unmatched request does not show unusable picking commands and search stays responsive',async()=>{
+ const jsx=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(jsx,/hasSearchCandidates\?<section className="wh-panel sf-guided-picking"/);
+ assert.match(jsx,/No items ready to pick/);
+ assert.match(css,/\.sf-find-page \.wh-work-grid\{grid-template-columns:minmax\(0,1fr\) minmax\(0,280px\)\}/);
+ assert.match(css,/@media\(max-width:900px\)/);
+});

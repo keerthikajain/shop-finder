@@ -52,7 +52,7 @@ SYNONYMS = {
     'गेहूँ':'wheat', 'गेहूं':'wheat', 'आटा':'atta',
     'मैदा':'maida', 'सूजी':'rava', 'रवा':'rava', 'पोहा':'poha',
     'चीनी':'sugar', 'cheeni':'sugar', 'शक्कर':'sugar',
-    'नमक':'salt', 'namak':'salt', 'हल्दी':'turmeric',
+    'नमक':'salt', 'namak':'salt', 'ఉప్పు':'salt', 'uppu':'salt', 'हल्दी':'turmeric',
     'haldi':'turmeric', 'मिर्च':'chilli', 'mirchi':'chilli',
     'धनिया':'coriander', 'dhania':'coriander',
     'जीरा':'cumin', 'jeera':'cumin',
