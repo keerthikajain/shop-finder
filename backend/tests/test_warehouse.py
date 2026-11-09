@@ -1007,3 +1007,14 @@ def test_unresolved_last_request_requires_a_new_search(setup):
  task=search(c,'glimmer gizmo')
  assert task['lines'][0]['selected'] is None
  assert c.delete('/api/warehouse/tasks/'+task['id']+'/lines/0',headers=H).status_code==409
+
+def test_telugu_mixed_search_question_normalized_without_guessing_item(setup):
+ from app.warehouse_language import tokens
+ assert tokens('blue jeans? ఎక్కడుంది?')=={'blue','jeans'}
+ c,_=setup
+ missing=post(c,'/search',{'collection':'clothing','query':'blue jeans? ఎక్కడుంది?','language':'te-IN'})
+ assert missing.status_code==200
+ assert missing.json()['lines'][0]['selected'] is None
+ found=post(c,'/search',{'collection':'clothing','query':'black jeans ఎక్కడుంది','language':'te-IN'})
+ assert found.status_code==200
+ assert found.json()['lines'][0]['candidates']

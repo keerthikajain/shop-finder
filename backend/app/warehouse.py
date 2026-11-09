@@ -248,7 +248,7 @@ def speak_task(task):
    place=', '.join(f"{labels[k]} {l[k]}" for k in LOCATION_FIELDS if l.get(k))
    parts.append(f"{p.get('brand','')} {p['name']}, {p['sku']}. {COLLECTION_MAP[p['collection']]['name']}. {place}.".strip())
   elif line['candidates']:parts.append((f"{line['query']}: कृपया सही आकार या प्रकार चुनें।" if hi else f"{line['query']}: choose the size or variant before going to a location."))
-  else:parts.append((f"{line['query']}: सूची में नहीं मिला।" if hi else f"{line['query']}: no matching catalogue record."))
+  else:parts.append((f"{line['query']}: सूची में नहीं मिला।" if hi else f"{line['query']}: we couldn't find this exact item. Try another name or browse your saved items."))
  return ' '.join(parts)[:2400]
 # Display-only translations for spoken-result captions. Product names, SKUs,
 # brands and stored location values are never translated or inferred.

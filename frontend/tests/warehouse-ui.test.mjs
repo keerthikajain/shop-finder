@@ -404,3 +404,13 @@ test('voice picking is discoverable before starting and unmatched requests can b
  assert.match(ui,/Remove from worklist/);
  assert.match(server,/def remove_unresolved_line\(tid:str,index:int,request:Request\)/);
 });
+
+test('example locations and voice controls use readable labels',async()=>{
+ const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const parts=await readFile(new URL('../src/warehouse-ui.jsx',import.meta.url),'utf8');
+ assert.match(ui,/Example products and shelves/);
+ assert.match(ui,/Browse saved items/);
+ assert.match(ui,/friendlyPath\(l,!!p.synthetic\)/);
+ assert.match(parts,/example=false/);
+ assert.match(parts,/Example shelf/);
+});
