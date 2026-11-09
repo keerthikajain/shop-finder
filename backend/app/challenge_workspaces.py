@@ -181,6 +181,15 @@ class ChallengeDispatcher:
   return self._apps[wid]
 
  async def __call__(self,scope,receive,send):
+  if scope['type']=='websocket':
+   # Gnani live speech streams must authenticate against this judge's own DB.
+   cookies=parse_cookies(scope)
+   wid=cookies.get(WORKSPACE_COOKIE)
+   tenant=self.tenant(wid) if workspace_for_cookie(self.base,wid or '') else None
+   if tenant is None:
+    await send({'type':'websocket.close','code':1008,'reason':'Sign in to your workspace first.'})
+    return
+   return await tenant(scope,receive,send)
   if scope['type']!='http':
    return await self.root_app(scope,receive,send)
   route=scope.get('path','')
