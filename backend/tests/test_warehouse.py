@@ -1018,3 +1018,51 @@ def test_telugu_mixed_search_question_normalized_without_guessing_item(setup):
  found=post(c,'/search',{'collection':'clothing','query':'black jeans ఎక్కడుంది','language':'te-IN'})
  assert found.status_code==200
  assert found.json()['lines'][0]['candidates']
+
+@pytest.mark.parametrize('language,phrase',[
+ ('en-IN','blue jeans where is it'),
+ ('hi-IN','blue jeans कहाँ है'),
+ ('kn-IN','blue jeans ಎಲ್ಲಿದೆ'),
+ ('ta-IN','blue jeans எங்கிருக்கிறது'),
+ ('te-IN','blue jeans ఎక్కడుంది'),
+ ('ml-IN','blue jeans എവിടെയാണ്'),
+ ('mr-IN','blue jeans कुठे आहे'),
+ ('bn-IN','blue jeans কোথায় আছে'),
+ ('gu-IN','blue jeans ક્યાં છે'),
+ ('pa-IN','blue jeans ਕਿੱਥੇ ਹੈ'),
+ ('hi-en','blue jeans kaha hai'),
+])
+def test_all_search_languages_location_request_keeps_product_constraints(setup,language,phrase):
+ from app.warehouse_language import tokens
+ # A location question is not itself a product attribute.
+ assert tokens(phrase)=={'blue','jeans'},(language,phrase,tokens(phrase))
+ c,_=setup
+ result=post(c,'/search',{'collection':'clothing','query':phrase,'language':language})
+ assert result.status_code==200,result.text
+ assert len(result.json()['lines'])==1
+ assert result.json()['lines'][0]['selected'] is None
+ assert result.json()['lines'][0]['candidates']==[]
+
+@pytest.mark.parametrize('language,phrase',[
+ ('en-IN','black jeans where is it'),
+ ('hi-IN','black jeans कहाँ है'),
+ ('kn-IN','black jeans ಎಲ್ಲಿದೆ'),
+ ('ta-IN','black jeans எங்கிருக்கிறது'),
+ ('te-IN','black jeans ఎక్కడుంది'),
+ ('ml-IN','black jeans എവിടെയാണ്'),
+ ('mr-IN','black jeans कुठे आहे'),
+ ('bn-IN','black jeans কোথায় আছে'),
+ ('gu-IN','black jeans ક્યાં છે'),
+ ('pa-IN','black jeans ਕਿੱਥੇ ਹੈ'),
+ ('hi-en','black jeans kaha hai'),
+])
+def test_all_search_languages_find_real_items_without_guessing_size(setup,language,phrase):
+ from app.warehouse_language import tokens
+ assert tokens(phrase)=={'black','jeans'},(language,phrase,tokens(phrase))
+ c,_=setup
+ response=post(c,'/search',{'collection':'clothing','query':phrase,'language':language})
+ assert response.status_code==200,response.text
+ lines=response.json()['lines']
+ assert len(lines)==1
+ assert len(lines[0]['candidates'])==2
+ assert lines[0]['selected'] is None # user must choose the size

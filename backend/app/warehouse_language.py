@@ -96,16 +96,21 @@ SYNONYMS = {
 
 # Only grammatical request words. Never drop product descriptors, size,
 # quantity, pack, brand, colour or electrical rating words.
-INDIC_REQUEST_FILLERS = set("""
-ಎಲ್ಲಿ ಎಲ್ಲಿದೆ ಇದೆ ನನಗೆ ಬೇಕು ದಯವಿಟ್ಟು ತೋರಿಸಿ ಕೊಡಿ ಹುಡುಕಿ
-எங்கே உள்ளது இருக்கிறது எனக்கு வேண்டும் தயவுசெய்து காட்டுங்கள்
-ఎక్కడ ఉంది ఎక్కడుంది ఎక్కడుందో ఎక్కడున్నాయి ఎక్కడున్నది నాకు కావాలి దయచేసి చూపించు చూపించండి
-എവിടെ ഉണ്ട് എനിക്ക് വേണം ദയവായി കാണിക്കൂ
-कुठे आहे मला पाहिजे कृपया दाखवा
-কোথায় আছে আমাকে চাই দয়া করে দেখান
-ક્યાં છે મને જોઈએ કૃપા કરીને બતાવો
-ਕਿੱਥੇ ਹੈ ਮੈਨੂੰ ਚਾਹੀਦਾ ਕਿਰਪਾ ਕਰਕੇ ਦਿਖਾਓ
-""".split())
+# Explicit location/request grammar for all eight regional languages.
+# Product words, colours, sizes, brands and specifications MUST stay in tokens.
+# Extend this only with phrases verified as grammatical requests, never by
+# stripping arbitrary native-script text.
+REGIONAL_REQUEST_WORDS = {
+ 'kn-IN': 'ಎಲ್ಲಿ ಎಲ್ಲಿದೆ ಎಲ್ಲಿದೆಯೆ ಎಲ್ಲಿವೆ ಎಲ್ಲಿದ್ದಾರೆ ಇದೆ ಇವೆ ನನಗೆ ಬೇಕು ದಯವಿಟ್ಟು ತೋರಿಸಿ ಕೊಡಿ ಹುಡುಕಿ ಸಿಗುತ್ತದೆ ಸಿಗುತ್ತವೆ',
+ 'ta-IN': 'எங்கே எங்குள்ளது எங்கிருக்கிறது உள்ளது இருக்கிறது இருக்கின்றன எனக்கு வேண்டும் தயவுசெய்து காட்டுங்கள் காட்டு சொல்லுங்கள் கிடைக்கும்',
+ 'te-IN': 'ఎక్కడ ఎక్కడుంది ఎక్కడుందో ఎక్కడున్నాయి ఎక్కడున్నది ఉంది ఉన్నాయి నాకు కావాలి దయచేసి చూపించు చూపించండి చెప్పండి దొరుకుతుంది',
+ 'ml-IN': 'എവിടെ എവിടെയാണ് എവിടെയുണ്ട് എവിടെയാണുള്ളത് ഉണ്ട് ഉണ്ടോ എനിക്ക് വേണം ദയവായി കാണിക്കൂ കാണിക്കുക പറയൂ കിട്ടും',
+ 'mr-IN': 'कुठे कुठे आहे कुठे मिळेल आहे आहेत मला पाहिजे कृपया दाखवा सांगा मिळेल',
+ 'bn-IN': 'কোথায় কোথায় কোথায় আছে আছে আছে কি আমাকে চাই দয়া করে দেখান বলুন পাওয়া যাবে',
+ 'gu-IN': 'ક્યાં ક્યાં છે ક્યાં મળશે છે મને જોઈએ કૃપા કરીને બતાવો કહો મળશે',
+ 'pa-IN': 'ਕਿੱਥੇ ਕਿੱਥੇ ਹੈ ਕਿਥੇ ਹੈ ਹੈ ਮੈਨੂੰ ਚਾਹੀਦਾ ਕਿਰਪਾ ਕਰਕੇ ਦਿਖਾਓ ਦੱਸੋ ਮਿਲੇਗਾ',
+}
+INDIC_REQUEST_FILLERS = set(' '.join(REGIONAL_REQUEST_WORDS.values()).split())
 
 STOP = set("""
 find where is are the a an i can do you have me please show need want
