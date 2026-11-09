@@ -10,6 +10,7 @@ from fastapi import HTTPException,Request,Response
 from pydantic import BaseModel,Field,ConfigDict,field_validator,model_validator
 from .database import connect
 from .services import voice
+from . import warehouse_voice_guide as voice_guide
 from .warehouse_catalogue import COLLECTIONS,COLLECTION_MAP,LOCATION_FIELDS,FIELD_LABELS,demo_items
 
 def now():return datetime.now(timezone.utc).isoformat()
@@ -82,6 +83,12 @@ class Scan(Strict):
  line:int=Field(ge=0,le=9)
  value:str=Field(min_length=1,max_length=150)
  kind:Literal['product','location','manual']
+class PickCommand(Strict):
+ transcript:str=Field(min_length=1,max_length=120)
+ line:int=Field(default=0,ge=0,le=9)
+class PickGuideAudio(Strict):
+ command:Literal['next','repeat','verify','report','stop','help','unknown']
+ line:int=Field(default=0,ge=0,le=9)
 class Move(Strict):
  collection:str=Field(max_length=40)
  sku:str=Field(max_length=40)
@@ -461,6 +468,28 @@ def install_warehouse(app,path):
    picking_check(c,task)
    state.update(status='active',started_at=now(),completed_at=None)
    return task_put(c,task)
+ @app.post('/api/warehouse/tasks/{tid}/picking/command')
+ def picking_voice_command(tid:str,body:PickCommand,request:Request):
+  u=identity(request)
+  with connect(path) as c:
+   task=task_get(c,tid,u)
+   if task['language'] not in ('en-IN','hi-IN','hi-en'):
+    raise HTTPException(422,'Voice picking commands currently support English, Hindi and Hinglish. Use the on-screen controls for other languages.')
+   picking_check(c,task)
+   return voice_guide.guide(task,voice_guide.intent(body.transcript),body.line,
+                            lambda index:current_line(c,task,index))
+ @app.post('/api/warehouse/tasks/{tid}/picking/guide-audio')
+ async def picking_guide_audio(tid:str,body:PickGuideAudio,request:Request):
+  u=identity(request)
+  with connect(path) as c:
+   task=task_get(c,tid,u)
+   if task['language'] not in ('en-IN','hi-IN','hi-en'):
+    raise HTTPException(422,'Voice picking guidance currently supports English, Hindi and Hinglish.')
+   picking_check(c,task)
+   guidance=voice_guide.guide(task,body.command,body.line,
+                              lambda index:current_line(c,task,index))
+  audio=await voice.speak(guidance['text'],task['language'])
+  return Response(audio,media_type='audio/wav',headers={'Cache-Control':'no-store'})
  @app.post('/api/warehouse/tasks/{tid}/picking/finish')
  def finish_picking(tid:str,request:Request):
   u=identity(request)
