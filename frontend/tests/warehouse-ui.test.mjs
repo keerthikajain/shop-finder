@@ -431,3 +431,14 @@ test('only settings page exposes appearance control and manager empty state is a
  assert.match(accounts,/sf-staff-create/);
  assert.match(accounts,/owner_password:d\.get\('password'\)/);
 });
+
+test('public challenge preview has an explicit guest entry and feedback screen',async()=>{
+ const accounts=await readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
+ const workspace=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(accounts,/Try Shop Finder/);
+ assert.match(accounts,/demoEnabled&&<section/);
+ assert.match(accounts,/request\('\/demo\/enter'/);
+ assert.match(workspace,/user\.is_demo&&<section className="sf-preview-banner"/);
+ assert.match(workspace,/request\('\/demo\/feedback'/);
+ assert.match(workspace,/ownerFeedback\.map/);
+});

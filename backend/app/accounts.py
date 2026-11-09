@@ -16,6 +16,8 @@ def initialize_accounts(path):
   columns={row['name'] for row in c.execute('PRAGMA table_info(accounts)')}
   for name in ('display_name','phone','staff_code'):
    if name not in columns:c.execute(f"ALTER TABLE accounts ADD COLUMN {name} TEXT NOT NULL DEFAULT ''")
+  if 'is_demo' not in columns:c.execute("ALTER TABLE accounts ADD COLUMN is_demo INTEGER NOT NULL DEFAULT 0")
+  c.execute('CREATE TABLE IF NOT EXISTS demo_feedback(id INTEGER PRIMARY KEY AUTOINCREMENT,visitor TEXT NOT NULL,comment TEXT NOT NULL,created_at REAL NOT NULL)')
   c.execute('CREATE TABLE IF NOT EXISTS account_sessions(digest TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES accounts(id),expires REAL NOT NULL)')
   c.execute('CREATE TABLE IF NOT EXISTS login_attempts(bucket TEXT NOT NULL,at REAL NOT NULL)')
   c.execute('CREATE TABLE IF NOT EXISTS api_rate_limits(bucket TEXT NOT NULL,at REAL NOT NULL)')
@@ -63,6 +65,7 @@ def enforce_join_rate(path,request):
 # application supports. Login failure throttling remains separate below.
 RATE_RULES=(
  ('/api/voice/',20),
+ ('/api/demo/feedback',3),
  ('/api/warehouse/tasks/',120),
  ('/api/warehouse/search',120),
  ('/api/search',120),
@@ -146,6 +149,7 @@ def public(row):
  result={k:row[k] for k in ['id','username','role','language','tour_done','active','display_name','phone','staff_code']}
  result['role']='manager' if row['role']=='staff' and row['access_level']=='manager' else row['role']
  result['approval_status']=row['approval_status']
+ result['is_demo']=bool(row['is_demo'])
  return result
 
 class Login(BaseModel):
@@ -183,6 +187,28 @@ def add_account(path,username,password,role='staff',language='en'):
  with connect(path) as c:c.execute('INSERT INTO accounts(id,username,password_hash,role,language) VALUES (?,?,?,?,?)',(uid,account.username.lower(),hash_password(password),role,language))
  return uid
 
+def demo_enabled(path):
+ if os.getenv('SHOP_FINDER_PUBLIC_DEMO')!='true' or os.getenv('SHOP_FINDER_SEED_DEMO')!='true':return False
+ with connect(path) as c:
+  if not c.execute("SELECT 1 FROM accounts WHERE role='owner' LIMIT 1").fetchone():return False
+  # Never expose non-synthetic inventory through a public preview.
+  return not bool(c.execute("SELECT 1 FROM wh_items WHERE coalesce(json_extract(payload,'$.synthetic'),0)!=1 LIMIT 1").fetchone())
+
+def demo_allowed(route,method):
+ if route in ('/api/auth/status','/api/auth/logout','/api/auth/preferences'):return True
+ if route=='/api/demo/feedback' and method=='POST':return True
+ if route in ('/api/warehouse/meta','/api/warehouse/items') and method=='GET':return True
+ if route=='/api/warehouse/search' and method=='POST':return True
+ if route=='/api/warehouse/tasks' and method=='GET':return True
+ if route=='/api/voice/transcribe' and method=='POST':return True
+ if route.startswith('/api/warehouse/tasks/'):
+  parts=route.split('/')
+  if len(parts)==5:return method=='GET'
+  if len(parts)==6 and parts[-1] in ('choose','clarify','scan','speak'):return method=='POST'
+  if len(parts)==7 and parts[-2]=='lines':return method=='DELETE'
+  if len(parts)==7 and parts[-2]=='picking' and parts[-1] in ('start','command','guide-audio','finish'):return method=='POST'
+ return False
+
 def install_accounts(app,path,required=True):
  app.state.accounts_required=required
  dummy=hash_password(secrets.token_urlsafe(24))
@@ -200,10 +226,12 @@ def install_accounts(app,path,required=True):
     if request.headers.get('X-Shop-Request')!='1' or not origin_valid(request):
      return apply_security_headers(JSONResponse({'detail':'Request origin or header not allowed.'},403),request)
    user=current(request);request.state.user=user
-   if request.url.path not in ('/api/health','/api/auth/login','/api/auth/status','/api/auth/join','/api/auth/register','/api/auth/logout'):
+   if request.url.path not in ('/api/health','/api/auth/login','/api/auth/status','/api/auth/join','/api/auth/register','/api/auth/logout','/api/demo/enter'):
     if not user:
      return apply_security_headers(JSONResponse({'detail':'Please log in.'},401),request)
     route=request.url.path
+    if user['is_demo'] and (not demo_enabled(path) or not demo_allowed(route,request.method)):
+     return apply_security_headers(JSONResponse({'detail':'This action is unavailable in the public preview.'},403),request)
     warehouse_owner=(
      (route in ('/api/warehouse/settings','/api/warehouse/items') and request.method in ('PUT','PATCH','DELETE'))
      or route.startswith('/api/warehouse/imports')
@@ -224,7 +252,45 @@ def install_accounts(app,path,required=True):
  @app.get('/api/auth/status')
  def status(request:Request):
   with connect(path) as c:configured=bool(c.execute('SELECT 1 FROM accounts WHERE role=\'owner\'').fetchone())
-  return {'configured':configured,'user':current(request)}
+  return {'configured':configured,'demo_enabled':demo_enabled(path),'user':current(request)}
+ @app.post('/api/demo/enter')
+ def enter_public_preview(request:Request,response:Response):
+  if not demo_enabled(path):raise HTTPException(404,'The public preview is not available.')
+  now=time.time();peer=digest(request.client.host if request.client else 'local')
+  with connect(path) as c:
+   c.execute('BEGIN IMMEDIATE')
+   c.execute('DELETE FROM login_attempts WHERE at<?',(now-3600,))
+   bucket='demo-enter:'+peer
+   if c.execute('SELECT count(*) FROM login_attempts WHERE bucket=?',(bucket,)).fetchone()[0]>=12:
+    raise HTTPException(429,'Public preview limit reached. Try later.')
+   c.execute('INSERT INTO login_attempts(bucket,at) VALUES (?,?)',(bucket,now))
+   # Expired preview sessions and their private worklists are not permanent accounts.
+   expired=[row[0] for row in c.execute("SELECT a.id FROM accounts a WHERE a.is_demo=1 AND NOT EXISTS (SELECT 1 FROM account_sessions s WHERE s.user_id=a.id AND s.expires>?)",(now,))]
+   for old_uid in expired:
+    c.execute('DELETE FROM wh_tasks WHERE owner=?',(old_uid,))
+    c.execute('DELETE FROM account_sessions WHERE user_id=?',(old_uid,))
+    c.execute('DELETE FROM accounts WHERE id=?',(old_uid,))
+   uid=secrets.token_hex(16);name='visitor_'+secrets.token_hex(8)
+   c.execute("INSERT INTO accounts(id,username,password_hash,role,language,tour_done,active,is_demo) VALUES (?,?,?,?,?,?,?,1)",(uid,name,hash_password(secrets.token_urlsafe(32)),'staff','en',0,1))
+   token=secrets.token_urlsafe(32)
+   c.execute('INSERT INTO account_sessions VALUES (?,?,?)',(digest(token),uid,now+TTL))
+   row=c.execute('SELECT * FROM accounts WHERE id=?',(uid,)).fetchone()
+  response.set_cookie(COOKIE,token,httponly=True,samesite='strict',secure=os.getenv('SHOP_FINDER_SECURE_COOKIE')=='true' or request.url.scheme=='https',max_age=TTL,path='/')
+  return public(row)
+ @app.post('/api/demo/feedback')
+ def public_feedback(body:dict,request:Request):
+  user=getattr(request.state,'user',None)
+  if not user or not user['is_demo']:raise HTTPException(403,'Visitor preview only.')
+  if set(body)!={'comment'} or not isinstance(body['comment'],str) or not 10<=len(body['comment'].strip())<=800:
+   raise HTTPException(422,'Write feedback between 10 and 800 characters.')
+  with connect(path) as c:
+   c.execute('INSERT INTO demo_feedback(visitor,comment,created_at) VALUES (?,?,?)',(user['id'],body['comment'].strip(),time.time()))
+  return {'ok':True}
+ @app.get('/api/demo/feedback')
+ def review_demo_feedback(request:Request):
+  user=getattr(request.state,'user',None)
+  if not user or user['role']!='owner':raise HTTPException(403,'Owner access required.')
+  with connect(path) as c:return [dict(row) for row in c.execute('SELECT id,comment,created_at FROM demo_feedback ORDER BY id DESC LIMIT 100')]
  @app.post('/api/auth/login')
  def login(body:SignIn,request:Request,response:Response):
   name=body.username.lower();now=time.time();buckets=['user:'+name,'ip:'+(request.client.host if request.client else 'local')]
