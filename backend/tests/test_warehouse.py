@@ -878,3 +878,100 @@ def test_regional_voice_guidance_and_timbre_language_never_mutate_picks(setup,mo
  assert spoken[0][1]==language
  assert 'CLO-001' in spoken[0][0]
  assert REGIONAL[language]['labels'][4] in spoken[0][0]
+
+def test_failed_search_intelligence_aggregates_only_genuine_unknowns(setup):
+ c,_=setup
+ assert c.get('/api/warehouse/failed-searches').json()==[]
+ unknown='glimmer gizmo'
+ assert search(c,unknown)['lines'][0]['candidates']==[]
+ assert search(c,unknown.upper())['lines'][0]['candidates']==[]
+ results=c.get('/api/warehouse/failed-searches').json()
+ assert len(results)==1
+ assert results[0]['hits']==2
+ assert results[0]['example']==unknown
+ assert results[0]['scope']=='clothing'
+ assert 'actor' not in results[0] and 'user_id' not in results[0] and 'audio' not in results[0]
+ assert c.get('/api/warehouse/issues').json()==[]
+ # A restricted collection or brand search should not be reported if the real
+ # catalogue already contains the requested SKU.
+ search(c,'CLO-001',collection='home')
+ assert len(c.get('/api/warehouse/failed-searches').json())==1
+ # An ambiguous variant remains a clarification request, not an unknown name.
+ search(c,'blue T-shirt')
+ assert len(c.get('/api/warehouse/failed-searches').json())==1
+ # Sensitive or overly long dictation is never saved to insight history.
+ for phrase in ('name@example.com','http://example.com/part','9876543210','x'*120):
+  search(c,phrase)
+ assert len(c.get('/api/warehouse/failed-searches').json())==1
+
+
+def test_failed_search_owner_only_and_verified_alias_improves_search(setup):
+ c,path=setup
+ search(c,'glimmer gizmo')
+ hit=c.get('/api/warehouse/failed-searches').json()[0]
+ p=next(p for p in items(c) if p['sku']=='CLO-001')
+ endpoint=f"/failed-searches/{hit['id']}/review"
+ payload={'action':'alias','collection':p['collection'],'sku':p['sku'],'revision':p['revision'],
+          'verified':True,'note':'Physically checked labelled SKU CLO-001'}
+ login(c,'staff')
+ assert c.get('/api/warehouse/failed-searches').status_code==403
+ assert post(c,endpoint,payload).status_code==403
+ login(c)
+ assert post(c,endpoint,{**payload,'verified':False}).status_code==422
+ assert post(c,endpoint,{**payload,'revision':p['revision']+1}).status_code==409
+ out=post(c,endpoint,payload)
+ assert out.status_code==200,out.text
+ assert out.json()['status']=='resolved'
+ assert c.get('/api/warehouse/failed-searches').json()==[]
+ assert c.get('/api/warehouse/failed-searches?status=resolved').json()[0]['linked_sku']=='CLO-001'
+ matched=search(c,'glimmer gizmo')['lines'][0]
+ assert matched['selected']['sku']=='CLO-001'
+ updated=next(p for p in items(c) if p['sku']=='CLO-001')
+ assert 'glimmer gizmo' in updated['aliases']
+ assert updated['revision']==p['revision']+1
+ assert post(c,endpoint,payload).status_code==409
+ assert c.get('/api/warehouse/issues').json()==[]
+ history=c.get('/api/warehouse/history?collection=clothing').json()
+ assert history[0]['action']=='alias'
+ with TestClient(create_app(path,seed_demo=True)) as restarted:
+  login(restarted)
+  assert 'glimmer gizmo' in next(i for i in items(restarted) if i['sku']=='CLO-001')['aliases']
+
+
+def test_failed_search_dismissal_excludes_it_from_open_review(setup):
+ c,_=setup
+ search(c,'unknown plastic widget')
+ row=c.get('/api/warehouse/failed-searches').json()[0]
+ endpoint='/failed-searches/'+str(row['id'])+'/review'
+ assert post(c,endpoint,{'action':'dismiss','note':'No'}).status_code==422
+ resp=post(c,endpoint,{'action':'dismiss','note':'Not a stocked product'})
+ assert resp.status_code==200,resp.text
+ assert c.get('/api/warehouse/failed-searches').json()==[]
+ dismissed=c.get('/api/warehouse/failed-searches?status=dismissed').json()[0]
+ assert dismissed['status']=='dismissed'
+ assert dismissed['review_note']=='Not a stocked product'
+ assert post(c,endpoint,{'action':'dismiss','note':'Already done'}).status_code==409
+ # Repeated requests are counted but a deliberately dismissed phrase stays dismissed.
+ search(c,'unknown plastic widget')
+ assert c.get('/api/warehouse/failed-searches').json()==[]
+ assert c.get('/api/warehouse/failed-searches?status=dismissed').json()[0]['hits']==2
+
+
+def test_failed_search_validation_and_match_ambiguity_not_autolinked(setup):
+ c,_=setup
+ search(c,'glimmer gizmo')
+ row=c.get('/api/warehouse/failed-searches').json()[0]
+ p=next(p for p in items(c) if p['sku']=='CLO-001')
+ url=f"/failed-searches/{row['id']}/review"
+ assert c.get('/api/warehouse/failed-searches?status=invalid').status_code==422
+ assert c.get('/api/warehouse/failed-searches?collection=invalid').status_code==422
+ # Force a second catalogue item to already recognize the same alias by
+ # manipulating the verified catalogue through its normal owner endpoint.
+ another=next(p for p in items(c) if p['sku']=='CLO-004')
+ another['aliases']=[*another['aliases'],'glimmer gizmo']
+ assert save(c,another,another['revision']).status_code==200
+ result=post(c,url,{'action':'alias','collection':p['collection'],'sku':p['sku'],
+                    'revision':p['revision'],'verified':True,'note':'Checked product'})
+ assert result.status_code==409
+ assert row['status']=='open'
+ assert 'glimmer gizmo' not in next(x for x in items(c) if x['sku']=='CLO-001')['aliases']
