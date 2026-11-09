@@ -20,7 +20,7 @@ const VOICE_LANGUAGE_DEFAULT={en:'en-IN',hi:'hi-IN',bn:'bn-IN',mr:'mr-IN',gu:'gu
 export const locationFields=['facility','floor','zone','aisle','rack','shelf','bin'];
 export const pathText=l=>locationFields.map(k=>l?.[k]).filter(Boolean).join(' / ');
 const friendlyPath=(l,example=false)=>locationFields.filter(k=>l?.[k]&&!(example&&k==='facility'&&l[k]==='Demo Hub')).map(k=>l[k]).join(' / ');
-export const cleanItem=p=>({sku:p.sku,collection:p.collection,name:p.name,category:p.category,brand:p.brand||'',aliases:p.aliases,barcode:p.barcode,photo_url:p.photo_url||'',specs:p.specs,synthetic:p.synthetic,placements:p.placements.map(l=>({...Object.fromEntries(locationFields.map(k=>[k,l[k]||''])),quantity:l.quantity??null}))});
+export const cleanItem=p=>({sku:p.sku,collection:p.collection,name:p.name,category:p.category,brand:p.brand||'',aliases:p.aliases,translations:p.translations||{},barcode:p.barcode,photo_url:p.photo_url||'',specs:p.specs,synthetic:p.synthetic,placements:p.placements.map(l=>({...Object.fromEntries(locationFields.map(k=>[k,l[k]||''])),quantity:l.quantity??null}))});
 export function VoiceButton({language,enabled,onText,onError,onPartial,live=false,small=false,nav=false,iconOnly=false,label='',style='transcribe',enhanced=true,collection='all',candidates=[]}){
  const t=useT(),ref=useRef(),[state,S]=useState('idle');
  useEffect(()=>()=>ref.current?.stop(true),[]);
