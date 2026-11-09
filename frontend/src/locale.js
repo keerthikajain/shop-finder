@@ -365,6 +365,17 @@ Object.assign(hindi,{
 });
 
 Object.assign(hindi,{
+ 'Voice-guided picking':'आवाज़ से सामान चुनने का मार्गदर्शन',
+ 'Speak a short command, or use the buttons below. No item is confirmed by speech alone.':'छोटा निर्देश बोलें या नीचे बटन दबाएँ। केवल बोलने से सामान की पुष्टि नहीं होती।',
+ 'Speak picking command':'सामान चुनने का निर्देश बोलें',
+ 'Read guidance':'निर्देश सुनें','Resume voice commands':'आवाज़ के निर्देश फिर शुरू करें',
+ 'Repeat location':'जगह दोहराओ','Found it':'मिल गया','Wrong location':'गलत जगह','Stop guidance':'मार्गदर्शन रोकें',
+ 'Spoken picking commands currently support English, Hindi and Hinglish. Scan and manual controls work in other languages.':'सामान चुनने के आवाज़ निर्देश अभी अंग्रेज़ी, हिंदी और हिंग्लिश में हैं। अन्य भाषाओं में स्कैन और मैन्युअल जाँच उपलब्ध हैं।',
+ 'Recognized command':'पहचाना गया निर्देश',
+ 'Tap Read guidance to allow audio playback.':'आवाज़ सुनने के लिए निर्देश सुनें दबाएँ।'
+});
+
+Object.assign(hindi,{
  'Unmatched searches':'बिना मेल वाली खोजें',
  'Repeated unknown product names help improve your catalogue. No changes are made until you verify an exact product.':'बार-बार खोजे गए अज्ञात नाम सूची को बेहतर बनाते हैं। सही उत्पाद की पुष्टि के बिना कोई बदलाव नहीं होता।',
  'Search patterns are grouped without staff names or audio recordings. Retained for up to 90 days.':'कर्मचारी नाम या ऑडियो के बिना खोजें गिनी जाती हैं। अधिकतम 90 दिनों तक रखी जाती हैं।',

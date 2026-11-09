@@ -345,6 +345,39 @@ test('guided picking has explicit start, resume, verified progress, next stop an
  assert.match(css,/@media\(max-width:700px\)/);
 });
 
+test('voice-guided picking uses real Prisma transcript and Timbre audio with safe action handoff',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/async function voicePickCommand\(transcript/);
+ assert.match(src,/async function playPickGuidance\(command/);
+ assert.match(src,/\/picking\/command/);
+ assert.match(src,/\/picking\/guide-audio/);
+ assert.match(src,/onText=\{transcript=>voicePickCommand\(transcript\)\}/);
+ assert.match(src,/answer\.action==='verify'&&answer\.line!=null/);
+ assert.match(src,/D\(\{type:'scan',index:answer\.line\}\)/);
+ assert.match(src,/answer\.action==='report'&&answer\.line!=null/);
+ assert.match(src,/D\(\{type:'report',item:selected\.selected,location:selected\.location,index:answer\.line\}\)/);
+ assert.match(src,/answer\.action==='stop'/);
+ assert.doesNotMatch(src,/voicePickCommand\([^]*?kind:'manual',value:'confirmed'/);
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(css,/\.sf-voice-guide\{/);
+});
+
+test('native voice picking commands are wired for every supported input language',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const terms=await readFile(new URL('../src/picking-voice-phrases.js',import.meta.url),'utf8');
+ const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
+ assert.match(src,/PICKING_VOICE_LANGUAGES\.includes\(task\.language\)/);
+ assert.match(src,/PICKING_VOICE_LANGUAGES\.includes\(next\.language\)/);
+ assert.match(src,/pickVoicePhrase\(task\.language,'next'\)/);
+ assert.match(src,/pickVoicePhrase\(task\.language,'repeat'\)/);
+ assert.match(src,/pickVoicePhrase\(task\.language,'verify'\)/);
+ assert.match(src,/pickVoicePhrase\(task\.language,'report'\)/);
+ assert.match(src,/pickVoicePhrase\(task\.language,'stop'\)/);
+ for(const code of ['kn-IN','ta-IN','te-IN','ml-IN','mr-IN','bn-IN','gu-IN','pa-IN'])assert.ok(terms.includes('"'+code+'"'),code);
+ assert.match(server,/voice_guide\.intent\(body\.transcript,task\['language'\]\)/);
+ assert.match(src,/if\(answer\.action==='verify'&&answer\.line!=null\)D\(\{type:'scan',index:answer\.line\}\)/);
+});
+
 test('owner-only activity tab exposes unmatched-search review without modifying staff reports',async()=>{
  const manage=await readFile(new URL('../src/warehouse-manage.jsx',import.meta.url),'utf8');
  const panel=await readFile(new URL('../src/failed-search-panel.jsx',import.meta.url),'utf8');
