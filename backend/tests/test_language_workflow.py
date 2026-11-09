@@ -168,3 +168,31 @@ def test_auto_detection_keeps_kannada_code_and_warehouse_accepts_native_alias(cl
  # Unauthenticated warehouse search requests still must be denied.
  assert client.post('/api/warehouse/search',json={'query':'nonexistent product','collection':'all','language':'kn-IN'},headers=H).status_code==401
  assert client.post('/api/voice/transcribe?language=auto&candidates=kn-IN',headers=H,content=wav()).status_code==422
+
+@pytest.mark.parametrize('language,preferred',[
+ ('en-IN','Kaveri'),('hi-IN','Nalini'),('hi-en','Poorvi'),
+ ('bn-IN','Kirra'),('mr-IN','Ishaan'),('gu-IN','Falak'),
+ ('pa-IN','Zayan'),('kn-IN','Kavin'),('te-IN','Varuni'),
+ ('ta-IN','Trisha'),('ml-IN','Reshma')
+])
+def test_timbre_25_uses_official_voice_for_each_language(monkeypatch,language,preferred):
+ calls=[]
+ async def fake(endpoint,**kwargs):
+  calls.append((endpoint,kwargs))
+  return httpx.Response(200,content=wav())
+ monkeypatch.setattr(voice,'call',fake)
+ result=asyncio.run(voice.speak('Test message',language))
+ assert result.startswith(b'RIFF')
+ assert calls[0][0]=='/api/v1/tts/inference'
+ body=calls[0][1]['json']
+ assert body['voice']==preferred
+ assert body['language']==language
+ assert body['model']=='timbre-v2.5'
+ assert body['text']=='Test message'
+
+def test_timbre_rejects_unsupported_language_without_silent_english_fallback(monkeypatch):
+ async def no_call(*args,**kwargs):
+  raise AssertionError('Unsupported language reached Gnani provider')
+ monkeypatch.setattr(voice,'call',no_call)
+ with pytest.raises(Exception) as error:asyncio.run(voice.speak('hello','xx-IN'))
+ assert error.value.status_code==422

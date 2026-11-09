@@ -233,6 +233,38 @@ def speak_task(task):
   elif line['candidates']:parts.append((f"{line['query']}: कृपया सही आकार या प्रकार चुनें।" if hi else f"{line['query']}: choose the size or variant before going to a location."))
   else:parts.append((f"{line['query']}: सूची में नहीं मिला।" if hi else f"{line['query']}: no matching catalogue record."))
  return ' '.join(parts)[:2400]
+# Display-only translations for spoken-result captions. Product names, SKUs,
+# brands and stored location values are never translated or inferred.
+# Speech audio remains English/Hindi until verified per-language TTS voices are configured.
+DISPLAY_RESULT_LANGUAGES={
+ 'bn-IN':(('গুদাম','তলা','বিভাগ','আইল','র্যাক','তাক','বিন'),'সঠিক মাপ বা ধরন বেছে নিন।','তালিকায় মিল পাওয়া যায়নি।'),
+ 'mr-IN':(('गोदाम','मजला','विभाग','मार्गिका','रॅक','शेल्फ','बिन'),'योग्य आकार किंवा प्रकार निवडा.','यादीत जुळणारी वस्तू नाही.'),
+ 'gu-IN':(('ગોદામ','માળ','વિભાગ','પાંખ','રેક','શેલ્ફ','બિન'),'યોગ્ય સાઇઝ અથવા પ્રકાર પસંદ કરો.','યાદીમાં મેળ ખાતી વસ્તુ નથી.'),
+ 'pa-IN':(('ਗੋਦਾਮ','ਮੰਜ਼ਿਲ','ਭਾਗ','ਗਲੀ','ਰੈਕ','ਸ਼ੈਲਫ','ਬਿਨ'),'ਸਹੀ ਆਕਾਰ ਜਾਂ ਕਿਸਮ ਚੁਣੋ।','ਸੂਚੀ ਵਿੱਚ ਮੇਲ ਨਹੀਂ ਮਿਲਿਆ।'),
+ 'kn-IN':(('ಗೋದಾಮು','ಮಹಡಿ','ವಿಭಾಗ','ಸಾಲು','ರ್ಯಾಕ್','ಶೆಲ್ಫ್','ಬಿನ್'),'ಸರಿಯಾದ ಗಾತ್ರ ಅಥವಾ ರೂಪವನ್ನು ಆರಿಸಿ.','ಪಟ್ಟಿಯಲ್ಲಿ ಹೊಂದಾಣಿಕೆ ಇಲ್ಲ.'),
+ 'te-IN':(('గిడ్డంగి','అంతస్తు','విభాగం','నడవ','ర్యాక్','షెల్ఫ్','బిన్'),'సరైన సైజు లేదా రకాన్ని ఎంచుకోండి.','జాబితాలో సరిపోలిక లేదు.'),
+ 'ta-IN':(('கிடங்கு','தளம்','பகுதி','நடைபாதை','ரேக்','அலமாரி','பெட்டி'),'சரியான அளவு அல்லது வகையைத் தேர்ந்தெடு.','பட்டியலில் பொருத்தம் இல்லை.'),
+ 'ml-IN':(('ഗോഡൗൺ','നില','വിഭാഗം','ഇടനാഴി','റാക്ക്','ഷെൽഫ്','ബിൻ'),'ശരിയായ വലുപ്പമോ തരമോ തിരഞ്ഞെടുക്കുക.','പട്ടികയിൽ പൊരുത്തമില്ല.'),
+}
+def display_task(task):
+ lang=task['language']
+ if lang not in DISPLAY_RESULT_LANGUAGES:return speak_task(task)
+ location_labels,choose,missing=DISPLAY_RESULT_LANGUAGES[lang]
+ labels=dict(zip(LOCATION_FIELDS,location_labels))
+ parts=[]
+ for line in task['lines']:
+  product=line.get('selected')
+  if product:
+   loc=line['location']
+   # Values are taken only from the verified selected catalogue record.
+   where=', '.join(f"{labels[k]} {loc[k]}" for k in LOCATION_FIELDS if loc.get(k))
+   parts.append(f"{product.get('brand','')} {product['name']}, {product['sku']}. {where}.")
+  elif line['candidates']:
+   parts.append(f"{line['query']}: {choose}")
+  else:
+   parts.append(f"{line['query']}: {missing}")
+ return ' '.join(parts)[:2400]
+
 def location_status(c,p,l):
  if not p or not l:return {'last_confirmed_at':None,'location_report_open':False}
  match=c.execute('SELECT at FROM wh_location_checks WHERE collection=? AND sku=? AND location_code=? AND revision=? ORDER BY id DESC LIMIT 1',(p['collection'],p['sku'],l['code'],p['revision'])).fetchone()
@@ -243,7 +275,7 @@ def task_get(c,tid,u):
  if not r or time.time()-r['created']>86400:raise HTTPException(404,'Search session expired. Search again.')
  return json.loads(r['payload'])
 def task_put(c,t):
- t['spoken_text']=speak_task(t);c.execute('UPDATE wh_tasks SET payload=? WHERE id=?',(encode(t),t['id']));return t
+ t['spoken_text']=speak_task(t);t['display_text']=display_task(t);c.execute('UPDATE wh_tasks SET payload=? WHERE id=?',(encode(t),t['id']));return t
 def current_line(c,t,index):
  if index>=len(t['lines']):raise HTTPException(422,'Invalid task line.')
  line=t['lines'][index];selected=line.get('selected')
@@ -389,7 +421,7 @@ def install_warehouse(app,path):
     l=available[0] if len(available)==1 else None
     lines.append({'query':q,'candidates':candidates,'selected':p if l else None,'location':l,'product_scanned':False,'complete':False,'confirmation':None,'location_feedback':None,**location_status(c,p,l)})
     # A search result, including no match, never creates a report by itself.
-   tid=secrets.token_urlsafe(24);t={'id':tid,'collection':body.collection,'language':body.language,'query':body.query,'lines':lines};t['spoken_text']=speak_task(t)
+   tid=secrets.token_urlsafe(24);t={'id':tid,'collection':body.collection,'language':body.language,'query':body.query,'lines':lines};t['spoken_text']=speak_task(t);t['display_text']=display_task(t)
    c.execute('DELETE FROM wh_tasks WHERE created<?',(time.time()-86400,));c.execute('INSERT INTO wh_tasks VALUES(?,?,?,?)',(tid,u['id'],time.time(),encode(t)))
    return t
  @app.get('/api/warehouse/tasks')
@@ -460,7 +492,7 @@ def install_warehouse(app,path):
    t=task_get(c,tid,u)
    for i,l in enumerate(t['lines']):
     if l.get('selected'):current_line(c,t,i)
-  audio=await voice.speak(t['spoken_text'],t['language']);return Response(audio,media_type='audio/wav')
+  audio=await voice.speak(t.get('display_text',t['spoken_text']),t['language']);return Response(audio,media_type='audio/wav')
  @app.post('/api/warehouse/moves/parse')
  def parse_move(body:MoveSpeech,request:Request):
   identity(request,True)

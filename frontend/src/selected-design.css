@@ -2138,3 +2138,25 @@ body,.wh-app{
 @media (prefers-reduced-transparency:reduce){
   .login-shell .login-card{background:#fff;backdrop-filter:none}
 }
+
+/* 10-language selector: prevent native-script names from being clipped on phones. */
+.login-shell .login-card .sf-login-language select{
+  flex:0 0 min(158px,48%);
+  width:min(158px,48%);
+  min-width:130px;
+  max-width:158px;
+  padding-inline:10px 28px;
+  font-family:inherit;
+  font-size:14px;
+}
+.sf-compact-app .sf-settings-preferences #sf-settings-language{
+  box-sizing:border-box;
+  width:min(100%,210px);
+  min-width:0;
+  font-family:inherit;
+}
+@media(max-width:370px){
+ .login-shell .login-card .sf-login-language select{
+   flex-basis:145px;width:145px;min-width:0;max-width:145px;font-size:13px;
+ }
+}
