@@ -11,7 +11,7 @@ from .reports import install_reports
 from .warehouse import initialize_warehouse, install_warehouse
 from .accounts import initialize_accounts, install_accounts
 from .streaming import install_streaming
-from .public_preview import install_public_preview
+from .public_preview import install_public_preview,initialize_public_preview
 
 class Constraints(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -38,6 +38,7 @@ def create_app(db_path=None, seed_demo=None, *, auth_required=True):
     async def lifespan(app):
         initialize(path)
         initialize_accounts(path)
+        initialize_public_preview(path)
         initialize_warehouse(path,demo)
         if demo:
             seed(path)

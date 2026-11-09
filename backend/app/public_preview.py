@@ -10,13 +10,14 @@ class PreviewFeedback(BaseModel):
  category:Literal['idea','issue','other']='idea'
  message:str=Field(min_length=15,max_length=800)
 
-def install_public_preview(app,path):
+def initialize_public_preview(path):
  with connect(path) as c:
   c.execute("""CREATE TABLE IF NOT EXISTS public_preview_feedback(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     category TEXT NOT NULL,message TEXT NOT NULL,
     created_at REAL NOT NULL,peer_bucket TEXT NOT NULL)""")
   c.execute('CREATE INDEX IF NOT EXISTS public_feedback_peer_time ON public_preview_feedback(peer_bucket,created_at)')
+def install_public_preview(app,path):
  @app.post('/api/public-preview/feedback',status_code=201)
  def send(body:PreviewFeedback,request:Request):
   message=body.message.strip()
