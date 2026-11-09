@@ -28,7 +28,7 @@ test('busy and failed sign-in states remain accessible and error content is esca
  assert.match(html,/role="alert"/);assert.match(html,/&lt;script&gt;/);
 });
 test('Hindi login translates new labels while retaining credential field names',()=>{
- const html=render({},'hi');assert.match(html,/शॉप फाइंडर में साइन इन करें/);
+ const html=render({},'hi');assert.match(html,/आपका स्वागत है/);
  assert.match(html,/name="username"/);assert.match(html,/पासवर्ड दिखाएँ/);
  assert.doesNotMatch(html,/Use your team account/);
 });
@@ -52,8 +52,9 @@ test('sign in offers only account credentials, with role determined by the backe
  assert.match(html,/name="username"/);
  assert.match(html,/name="password"/);
  assert.doesNotMatch(html,/name="role"|Sign in as|type="radio"/);
- assert.match(html,/Your role and permissions are identified automatically/);
- assert.match(html,/aria-label="Account access"/);
+ assert.match(html,/<h1>Welcome back<\/h1>/);
+ assert.doesNotMatch(html,/Your role and permissions are identified automatically/);
+ assert.doesNotMatch(html,/sf-auth-modes|aria-label="Account access"/);
  assert.match(html,/Join workspace/);
 });
 
@@ -72,10 +73,29 @@ test('guided join screen keeps both registration paths without exposing them on 
  assert.match(source,/Your account will remain pending until approved/);
 });
 
-test('auth layout has responsive two-tab controls and no forced tall registration gaps',async()=>{
+test('auth layout retains compact spacing and a soft illustrated mobile backdrop',async()=>{
  const styles=await (await import('node:fs/promises')).readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
  assert.match(styles,/Auth redesign: two entry paths/);
  assert.match(styles,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(styles,/\.sf-auth-fields\{display:grid;gap:14px/);
  assert.match(styles,/@media\(max-width:480px\)/);
+});
+
+test('login header has one compact accessible language selector and no repeated sign-in tab',()=>{
+ const html=render();
+ assert.match(html,/<header class="sf-login-header">/);
+ assert.match(html,/aria-label="App language"/);
+ assert.match(html,/class="sf-login-language"/);
+ assert.match(html,/<h1>Welcome back<\/h1>/);
+ // The primary button contains a decorative SVG icon after its text.
+ assert.match(html,/<button[^>]*class="primary full-width sf-signin"[^>]*>Sign in/);
+ assert.equal((html.match(/class="primary full-width sf-signin"/g)||[]).length,1);
+ assert.doesNotMatch(html,/sf-login-kicker|sf-auth-modes/);
+});
+test('mobile login preserves the workspace illustration behind a readable form',async()=>{
+ const css=await (await import('node:fs/promises')).readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(css,/Mobile auth and navigation polish/);
+ assert.match(css,/\.login-shell \.sf-login-art\{[\s\S]*?position:absolute/);
+ assert.match(css,/\.login-shell \.login-card\{[\s\S]*?background:rgba\(255,255,255,\.91\)/);
+ assert.match(css,/\.sf-login-header \.sf-login-language select/);
 });

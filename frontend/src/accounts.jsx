@@ -50,14 +50,18 @@ export function Login({ready,configured,language,L,error,busy,notice='',onSubmit
   }
  }
 
- const heading=joining?t('Join your workspace'):t('Sign in to Shop Finder');
- const intro=joining?t('Choose how you would like to join your team.'):t('Use your team account to continue.');
+ const heading=joining?t('Join workspace'):t('Welcome back');
+ const intro=joining&&!joinMethod?t('Choose how you would like to join your team.'):'';
  const codeLabel=joinMethod==='workspace'?t('Workspace code'):t('Staff invitation code');
  const joinWithWorkspace=joinMethod==='workspace';
 
  return <main className="login-shell">
   <header className="sf-login-header">
    <div className="wh-brand"><Mark/><span>shopfinder</span></div>
+   <label className="sf-login-language">
+    <span className="sr-only">{t('App language')}</span>
+    <select aria-label={t('App language')} value={language} onChange={e=>L(e.target.value)}><option value="en">English</option><option value="hi">हिन्दी</option></select>
+   </label>
   </header>
   <div className="sf-login-layout">
    <section className="sf-login-art" aria-label={t('Your workspace, within reach.')}>
@@ -65,14 +69,8 @@ export function Login({ready,configured,language,L,error,busy,notice='',onSubmit
     <div><h2>{t('Your workspace, within reach.')}</h2><p>{t('Find items. Know their place.')}</p></div>
    </section>
    <section className="glass login-card" aria-label={heading}>
-    <span className="sf-login-kicker">{t(joining?'New to Shop Finder?':'Welcome back')}</span>
     <h1>{heading}</h1>
-    <p className="sf-auth-intro">{intro}</p>
-    <label className="sf-login-language">{t('App language')}<select value={language} onChange={e=>L(e.target.value)}><option value="en">English</option><option value="hi">हिन्दी</option></select></label>
-    {ready&&configured&&<div className="sf-auth-modes" role="group" aria-label={t('Account access')}>
-     <button type="button" aria-pressed={!joining} onClick={()=>navigate('login')}>{t('Sign in')}</button>
-     <button type="button" aria-pressed={joining} onClick={()=>navigate('join')}>{t('Join workspace')}</button>
-    </div>}
+    {intro&&<p className="sf-auth-intro">{intro}</p>}
     {!ready?<p role="status">{t('Loading…')}</p>:!configured?<p role="status">{t('This workspace is not set up yet. Ask the installer to create the first owner account.')}</p>:!joining?
     <form className="sf-auth-fields" onSubmit={onSubmit} aria-busy={busy}>
      <label htmlFor="sf-signin-username">{t('Username')}<input id="sf-signin-username" name="username" autoComplete="username" placeholder={t('Enter username')} required maxLength={80}/></label>
@@ -83,7 +81,6 @@ export function Login({ready,configured,language,L,error,busy,notice='',onSubmit
       </div>
      </div>
      <button className="primary full-width sf-signin" disabled={busy}>{t(busy?'Working…':'Sign in')}<Glyph name="arrow"/></button>
-     <p className="sf-auth-support">{t('Your role and permissions are identified automatically after sign-in.')}</p>
     </form>:!joinMethod?
     <div className="sf-join-choices" role="group" aria-label={t('Choose how to join')}>
      <button type="button" className="sf-join-option" onClick={()=>chooseMethod('workspace')}>

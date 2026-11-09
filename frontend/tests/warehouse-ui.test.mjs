@@ -116,7 +116,11 @@ test('one-tap mobile Speak starts a Gnani recording from any section',async()=>{
  assert.match(src,/id==='locations'&&\(voice\?<VoiceButton nav enabled=\{!busy\}/);
  assert.match(src,/if\(page!=='find'\)navigate\('find'\)/);
  assert.match(src,/Q\(text\);DSL\(detected\);VQ\(true\);taskVoice.current=true/);
- assert.match(src,/Voice unavailable\. Open text search/);
+ // When voice is unavailable, the center shortcut becomes Scan (not a second Find).
+ assert.match(src,/id==='locations'&&\(voice\?<VoiceButton nav enabled=\{!busy\}/);
+ assert.match(src,/className="sf-mobile-speak" type="button" aria-label=\{t\('Scan a label'\)\}/);
+ assert.match(src,/onClick=\{\(\)=>D\(\{type:'lookup'\}\)\}/);
+ assert.doesNotMatch(src,/Voice unavailable\. Open text search/);
  assert.doesNotMatch(src,/if\(page!=='find'\)\{navigate\('find'\);return\}/);
 });
 
@@ -281,4 +285,16 @@ test('secondary page controls use consistent 44px touch targets without touching
  assert.match(css,/\.sf-compact-app:not\(\.sf-find-page\) \.wh-toolbar > \.wh-filter > input/);
  assert.match(css,/\.sf-compact-app:not\(\.sf-find-page\) \.wh-toolbar > :is\(select,button,\.wh-button\)/);
  assert.match(css,/height:44px/);
+});
+
+test('mobile header names the active section and shows a single Find navigation action',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(src,/className="sf-mobile-header-copy"/);
+ assert.match(src,/role="heading" aria-level="1"/);
+ assert.match(src,/sf-voice-unavailable/);
+ assert.match(src,/className="sf-mobile-speak" type="button" aria-label=\{t\('Scan a label'\)\}/);
+ assert.doesNotMatch(src,/className="sf-mobile-speak"[^>]*onClick=\{\(\)=>\{navigate\('find'\)/);
+ assert.match(css,/\.sf-compact-app \.sf-compact-page-title\{display:none\}/);
+ assert.match(css,/\.sf-compact-app\.sf-voice-unavailable \.wh-top-actions \.sf-header-scan\{display:none\}/);
 });
