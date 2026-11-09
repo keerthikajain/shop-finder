@@ -639,3 +639,27 @@ def test_localized_unknown_result_does_not_invent_a_location(language):
  text=display_task(task)
  assert 'not recorded' in text
  assert 'A01' not in text
+
+@pytest.mark.parametrize('language,word',[
+ ('kn-IN','ರ್ಯಾಕ್'),('ta-IN','ரேக்'),('te-IN','ర్యాక్'),
+ ('ml-IN','റാക്ക്'),('bn-IN','র্যাক'),('mr-IN','रॅक'),
+ ('gu-IN','રેક'),('pa-IN','ਰੈਕ')
+])
+def test_warehouse_speech_reads_localized_response_without_inventing_location(setup,monkeypatch,language,word):
+ c,path=setup
+ captured=[]
+ async def fake_speak(text,lang):
+  captured.append((text,lang))
+  return b'RIFF'+b'0'*10
+ monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
+ result=post(c,'/search',{'query':'CLO-001','collection':'clothing','language':language}).json()
+ assert result['display_text']!=result['spoken_text']
+ assert result['lines'][0]['selected']['sku']=='CLO-001'
+ r=c.post('/api/warehouse/tasks/'+result['id']+'/speak',headers=H)
+ assert r.status_code==200
+ assert captured
+ text,lang=captured[0]
+ assert lang==language
+ assert text==result['display_text']
+ assert word in text
+ assert 'CLO-001' in text

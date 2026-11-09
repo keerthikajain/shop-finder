@@ -103,10 +103,13 @@ async def transcribe(data,language,*,output_style='transcribe',enhanced=True,key
                                     language_candidates=language_candidates))['transcript']
 
 async def speak(text,language='en-IN'):
-    voices={'en-IN':'Kaveri','hi-IN':'Nalini','hi-en':'Poorvi'}
-    if language in STT_LANGUAGES and language not in voices:
-        # STT recognises ten languages; the warehouse currently speaks English/Hindi.
-        language='en-IN'
+    # Gnani Timbre v2.5 official Preferred Voices by Language catalog.
+    # These voices must be live-tested with the deployed API key before release.
+    voices={
+      'en-IN':'Kaveri','hi-IN':'Nalini','hi-en':'Poorvi',
+      'bn-IN':'Kirra','mr-IN':'Ishaan','gu-IN':'Falak','pa-IN':'Zayan',
+      'kn-IN':'Kavin','te-IN':'Varuni','ta-IN':'Trisha','ml-IN':'Reshma'
+    }
     if language not in voices:raise HTTPException(422,'Language not enabled.')
     r=await call('/api/v1/tts/inference',json={'text':text,'model':'timbre-v2.5','voice':voices[language],'language':language,'audio_config':{'encoding':'linear_pcm','container':'wav','sample_rate':48000,'num_channels':1,'sample_width':2}})
     if not r.content.startswith(b'RIFF'):raise HTTPException(502,'Invalid speech audio response.')

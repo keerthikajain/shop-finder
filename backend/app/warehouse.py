@@ -492,7 +492,7 @@ def install_warehouse(app,path):
    t=task_get(c,tid,u)
    for i,l in enumerate(t['lines']):
     if l.get('selected'):current_line(c,t,i)
-  audio=await voice.speak(t['spoken_text'],t['language']);return Response(audio,media_type='audio/wav')
+  audio=await voice.speak(t.get('display_text',t['spoken_text']),t['language']);return Response(audio,media_type='audio/wav')
  @app.post('/api/warehouse/moves/parse')
  def parse_move(body:MoveSpeech,request:Request):
   identity(request,True)
