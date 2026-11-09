@@ -478,3 +478,8 @@ test('bulk import translations require deliberate review before save',async()=>{
  assert.match(server,/def suggest_import_translations/);
  assert.match(server,/Review and approve generated product translations before importing/);
 });
+
+test('product edits retain translated names rather than silently dropping them',async()=>{
+ const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(ui,/translations:p.translations\|\|\{\}/);
+});
