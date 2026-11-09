@@ -537,7 +537,7 @@ def install_warehouse(app,path):
     if body.value!=line['location']['code']:raise HTTPException(409,'Different location scanned. Check the shelf label.')
     line.update(complete=True,confirmation='barcode')
    else:
-    if body.value not in ('confirmed','yes'):raise HTTPException(422,'Manual verification requires explicit confirmation.')
+    if body.value not in ('confirmed','yes','checked'):raise HTTPException(422,'Manual verification requires explicit confirmation.')
     line.update(complete=True,confirmation='manual')
    return task_put(c,t)
  @app.post('/api/warehouse/tasks/{tid}/speak')
