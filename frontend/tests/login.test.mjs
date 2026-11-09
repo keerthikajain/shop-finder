@@ -94,14 +94,16 @@ test('login has Finder branding and a readable language control inside the form 
  assert.equal((html.match(/class="primary full-width sf-signin"/g)||[]).length,1);
  assert.doesNotMatch(html,/sf-login-kicker|sf-auth-modes/);
 });
-test('mobile artwork stays fully visible above the card and language fits in the form',async()=>{
- const css=await (await import('node:fs/promises')).readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
- const latest=css.slice(css.indexOf('/* Finder branding and visible mobile artwork'));
- assert.match(latest,/@media\(max-width:700px\)/);
- assert.match(latest,/\.login-shell \.sf-login-art\{[\s\S]*?position:relative/);
- assert.match(latest,/\.login-shell \.sf-login-art img\{[\s\S]*?opacity:1/);
- assert.match(latest,/\.login-shell \.login-card\{[\s\S]*?background:#fff/);
- assert.match(latest,/\.login-shell \.login-card \.sf-login-language select\{[\s\S]*?width:132px/);
+test('mobile art is faint, larger than the form and placed BEHIND its controls',async()=>{
+ const styles=await (await import('node:fs/promises')).readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ const mobile=styles.slice(styles.indexOf('@media (max-width:760px){',styles.indexOf('/* Finder authentication: one shared desktop card')));
+ assert.match(mobile,/\.login-shell \.sf-login-layout\{[\s\S]*?position:relative/);
+ assert.match(mobile,/\.login-shell \.sf-login-art\{[\s\S]*?position:absolute/);
+ assert.match(mobile,/\.login-shell \.sf-login-art\{[\s\S]*?opacity:\.30/);
+ assert.match(mobile,/\.login-shell \.sf-login-art img\{[\s\S]*?width:112%/);
+ assert.match(mobile,/\.login-shell \.login-card\{[\s\S]*?z-index:1/);
+ assert.match(mobile,/\.login-shell \.login-card\{[\s\S]*?background:rgba\(255,255,255,\.92\)/);
+ assert.match(mobile,/pointer-events:none/);
 });
 
 test('Finder appears in the browser title and installed app name',async()=>{
@@ -112,15 +114,19 @@ test('Finder appears in the browser title and installed app name',async()=>{
  assert.equal(manifest.short_name,'Finder');
 });
 
-test('desktop login is constrained to a centered shadow card and leaves phone styling alone',async()=>{
+test('desktop login puts illustration AND form inside one shared shadow card',async()=>{
  const styles=await (await import('node:fs/promises')).readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
- const desktop=styles.slice(styles.indexOf('/* Desktop Finder sign-in: a compact login card'));
+ const latest=styles.slice(styles.indexOf('/* Finder authentication: one shared desktop card'));
+ const desktop=latest.slice(0,latest.indexOf('@media (max-width:760px)'));
  assert.match(desktop,/@media \(min-width:761px\)/);
  assert.match(desktop,/\.login-shell \.sf-login-layout\{[\s\S]*?max-width:940px/);
- assert.match(desktop,/grid-template-columns:minmax\(0,1fr\) minmax\(0,420px\)/);
- assert.match(desktop,/\.login-shell \.login-card\{[\s\S]*?max-width:420px/);
- assert.match(desktop,/box-shadow:0 16px 45px/);
- assert.match(desktop,/background:#fff/);
- assert.match(desktop,/min-height:0/);
- assert.doesNotMatch(desktop,/@media\s*\(max-width:/);
+ assert.match(desktop,/grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\)/);
+ assert.match(desktop,/box-shadow:0 22px 54px/);
+ assert.match(desktop,/overflow:hidden/);
+ assert.match(desktop,/\.login-shell \.sf-login-art\{[\s\S]*?border-right:1px solid/);
+ assert.match(desktop,/\.login-shell \.login-card\{[\s\S]*?border:0/);
+ assert.match(desktop,/\.login-shell \.login-card\{[\s\S]*?box-shadow:none/);
+ const html=render();
+ assert.match(html,/class="sf-login-layout"><section class="sf-login-art"/);
+ assert.match(html,/class="glass login-card"/);
 });

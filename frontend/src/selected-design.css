@@ -1917,37 +1917,35 @@ body,.wh-app{
  .login-shell .login-card{backdrop-filter:none;background:#fff}
 }
 
-/* Finder branding and visible mobile artwork (login + join screens).
-   Language belongs to the form card, not the global header. */
-.login-shell .sf-login-header{
-  justify-content:flex-start;
-}
+/* Finder authentication: one shared desktop card and soft illustrated mobile backdrop.
+   Existing Login component markup already groups both panels in .sf-login-layout.
+   All selectors here are scoped to the unauthenticated login/join experience. */
 .login-shell .login-card .sf-login-language{
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:12px;
-  margin:0 0 20px;
   min-width:0;
+  margin:0 0 20px;
   color:#534c5b;
   font-size:12px;
   font-weight:650;
 }
 .login-shell .login-card .sf-login-language span{
   flex:1 1 auto;
-  white-space:nowrap;
+  min-width:0;
 }
 .login-shell .login-card .sf-login-language select{
   box-sizing:border-box;
   display:block;
   flex:0 0 132px;
   width:132px;
-  max-width:132px;
   min-width:118px;
+  max-width:160px;
   height:42px;
   min-height:42px;
   margin:0;
-  padding:0 32px 0 12px;
+  padding:0 30px 0 12px;
   border:1px solid #d8d6dc;
   border-radius:11px;
   background:#fff;
@@ -1955,49 +1953,145 @@ body,.wh-app{
   font-size:14px;
   line-height:1.2;
   font-weight:600;
-  text-overflow:clip;
 }
-@media(max-width:700px){
+@media (min-width:761px){
   .login-shell .sf-login-header{
+    width:min(100%,940px);
+    max-width:940px;
     justify-content:flex-start;
-    padding:0 0 13px;
+    padding:4px 0 18px;
   }
+  /* Single shared outer shadow around BOTH illustration and form. */
   .login-shell .sf-login-layout{
-    position:relative;
-    isolation:auto;
-    display:flex;
-    flex-direction:column;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
     align-items:stretch;
     gap:0;
-    width:100%;
-    max-width:510px;
+    width:min(100%,940px);
+    max-width:940px;
+    min-width:0;
     min-height:0;
+    margin:clamp(26px,5vh,64px) auto 48px;
     padding:0;
-    margin:0 auto;
+    overflow:hidden;
+    background:#fff;
+    border:1px solid #e5dfea;
+    border-radius:24px;
+    box-shadow:0 22px 54px rgba(43,29,68,.11);
   }
   .login-shell .sf-login-art{
-    position:relative;
-    inset:auto;
-    z-index:auto;
     display:flex;
+    flex-direction:column;
     justify-content:center;
     align-items:center;
-    height:clamp(170px,48vw,210px);
+    align-self:stretch;
+    gap:12px;
     width:100%;
     min-width:0;
+    max-width:none;
     margin:0;
-    opacity:1;
-    overflow:visible;
-    pointer-events:none;
+    padding:28px clamp(20px,3vw,38px) 30px;
+    background:linear-gradient(145deg,#faf7ff 0%,#f5f2fc 100%);
+    border-right:1px solid #eee8f5;
+    text-align:left;
   }
   .login-shell .sf-login-art img{
     display:block;
     width:100%;
-    max-width:100%;
-    height:100%;
-    max-height:none;
+    max-width:380px;
+    height:auto;
+    max-height:350px;
     object-fit:contain;
-    object-position:center;
+  }
+  .login-shell .sf-login-art>div{
+    display:block;
+    width:100%;
+    max-width:380px;
+  }
+  .login-shell .sf-login-art h2{
+    font-size:clamp(19px,2vw,23px);
+    line-height:1.25;
+    margin:8px 0 5px;
+  }
+  .login-shell .sf-login-art p{margin:0}
+  /* The right-hand section is NOT a separate card. */
+  .login-shell .login-card{
+    box-sizing:border-box;
+    align-self:center;
+    width:100%;
+    max-width:none;
+    min-width:0;
+    margin:0;
+    padding:clamp(24px,3vw,36px);
+    border:0;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+    backdrop-filter:none;
+  }
+  .login-shell .login-card h1{
+    font-size:clamp(26px,2.5vw,32px);
+    line-height:1.2;
+    margin:0 0 20px;
+  }
+  .login-shell .login-card .sf-auth-fields{gap:15px}
+  .login-shell .login-card .sf-auth-footer{margin:16px 0 0}
+}
+@media (max-width:760px){
+  .login-shell{padding:16px 14px 28px}
+  .login-shell .sf-login-header{
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    gap:12px;
+    padding:0 0 12px;
+  }
+  .login-shell .sf-login-header .wh-brand{min-width:0;gap:7px}
+  .login-shell .sf-login-header .wh-brand>span{font-size:clamp(19px,5.4vw,25px)}
+  /* The illustration is larger than the form and extends beyond its edges.
+     It stays behind the actual interactive card, never in front of inputs. */
+  .login-shell .sf-login-layout{
+    position:relative;
+    isolation:isolate;
+    display:block;
+    width:100%;
+    max-width:510px;
+    min-width:0;
+    min-height:0;
+    margin:4px auto 22px;
+    padding:42px 6px 38px;
+    overflow:visible;
+    border:0;
+    background:transparent;
+    border-radius:0;
+    box-shadow:none;
+  }
+  .login-shell .sf-login-art{
+    display:block;
+    position:absolute;
+    z-index:0;
+    inset:-24px -10px -28px;
+    width:auto;
+    max-width:none;
+    min-width:0;
+    height:auto;
+    margin:0;
+    padding:0;
+    opacity:.30;
+    overflow:visible;
+    pointer-events:none;
+    background:transparent;
+    border:0;
+  }
+  .login-shell .sf-login-art img{
+    display:block;
+    width:112%;
+    max-width:none;
+    height:auto;
+    max-height:none;
+    margin:0 0 0 -6%;
+    object-fit:contain;
+    object-position:top center;
     opacity:1;
     border-radius:0;
   }
@@ -2005,103 +2099,42 @@ body,.wh-app{
   .login-shell .login-card{
     position:relative;
     z-index:1;
+    box-sizing:border-box;
     width:100%;
-    max-width:100%;
-    margin:-13px 0 0;
-    padding:21px 18px 19px;
-    background:#fff;
+    max-width:none;
+    min-width:0;
+    margin:0;
+    padding:22px 19px 21px;
     border:1px solid #e1dbe9;
-    border-radius:17px;
-    box-shadow:0 12px 32px rgba(48,31,69,.09);
-    backdrop-filter:none;
+    border-radius:19px;
+    background:rgba(255,255,255,.92);
+    box-shadow:0 15px 34px rgba(48,31,69,.11);
+    backdrop-filter:blur(1px);
   }
-  .login-shell .login-card .sf-login-language{
+  .login-shell .login-card h1{
+    font-size:clamp(25px,7vw,32px);
+    line-height:1.2;
     margin:0 0 18px;
   }
-  .login-shell .login-card .sf-login-language select{
-    flex-basis:132px;
-    width:132px;
-    max-width:132px;
-    font-size:14px;
-  }
+  .login-shell .login-card .sf-login-language{margin:0 0 18px}
+  .login-shell .login-card .sf-auth-fields{gap:13px}
+  .login-shell .login-card .sf-auth-fields .sf-signin{margin-top:5px}
 }
-@media(max-width:370px){
-  .login-shell .sf-login-art{height:160px}
-  .login-shell .login-card{padding:19px 13px 17px}
+@media (max-width:370px){
+  .login-shell{padding-inline:10px}
+  .login-shell .sf-login-layout{padding:39px 4px 33px}
+  .login-shell .sf-login-art{inset:-22px -7px -26px}
+  .login-shell .login-card{padding:19px 14px 18px}
   .login-shell .login-card .sf-login-language{gap:8px}
   .login-shell .login-card .sf-login-language select{
-    width:124px;
-    max-width:124px;
-    min-width:124px;
     flex-basis:124px;
+    width:124px;
+    min-width:124px;
+    max-width:124px;
     padding-left:9px;
     font-size:13px;
   }
 }
-
-/* Desktop Finder sign-in: a compact login card, not a full-width form.
-   Mobile artwork and form layout are intentionally unaffected. */
-@media (min-width:761px){
-  .login-shell .sf-login-header{
-    width:min(100%,940px);
-    max-width:940px;
-    justify-content:flex-start;
-    padding:4px 0 20px;
-  }
-  .login-shell .sf-login-layout{
-    width:min(100%,940px);
-    max-width:940px;
-    min-height:0;
-    display:grid;
-    grid-template-columns:minmax(0,1fr) minmax(0,420px);
-    gap:clamp(28px,4vw,68px);
-    align-items:center;
-    margin:clamp(38px,7vh,80px) auto 52px;
-    padding:0;
-  }
-  .login-shell .sf-login-art{
-    width:100%;
-    min-width:0;
-    max-width:390px;
-    margin:0 auto;
-    align-self:center;
-  }
-  .login-shell .sf-login-art img{
-    width:100%;
-    height:auto;
-    max-height:390px;
-    object-fit:contain;
-  }
-  .login-shell .sf-login-art h2{
-    font-size:23px;
-    line-height:1.25;
-    margin:14px 0 5px;
-  }
-  .login-shell .login-card{
-    box-sizing:border-box;
-    width:100%;
-    min-width:0;
-    max-width:420px;
-    margin:0 auto;
-    padding:30px 28px 26px;
-    background:#fff;
-    border:1px solid #e5dfea;
-    border-radius:18px;
-    box-shadow:0 16px 45px rgba(45,30,69,.10);
-    backdrop-filter:none;
-  }
-  .login-shell .login-card h1{
-    font-size:clamp(26px,2.5vw,31px);
-    line-height:1.2;
-    margin:0 0 20px;
-  }
-  .login-shell .login-card .sf-auth-fields{
-    gap:15px;
-  }
-  .login-shell .login-card .sf-login-language{
-    margin:0 0 21px;
-  }
-  .login-shell .login-card .sf-auth-footer{
-    margin:16px 0 0;
-  }
+@media (prefers-reduced-transparency:reduce){
+  .login-shell .login-card{background:#fff;backdrop-filter:none}
 }
