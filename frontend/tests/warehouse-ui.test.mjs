@@ -39,7 +39,7 @@ test('More offers scan as a task without unrelated filters or setup banners',asy
  assert.ok(src.includes("['find','catalogue','locations'].includes(page)&&<button type=\"button\" className=\"sf-header-scan\""));
  assert.ok(src.includes("onClick={()=>D({type:'lookup'})}><span className=\"sf-more-icon\"><Glyph name=\"scan\"/>"));
  assert.ok(src.includes("meta&&!['find','account','business','more','settings'].includes(page)"));
- assert.ok(src.includes("!meta.settings.configured&&page==='find'"));
+ assert.ok(src.includes("!meta.settings.configured&&!user.is_challenge&&page==='find'"));
 });
 
 test('mobile Find navigation keeps a compact label while desktop keeps the full label',async()=>{
@@ -263,7 +263,7 @@ test('Prisma V3 offers ten selectable recognition languages and optional hints',
 
 test('setup guidance is limited to Find when workspace setup is unfinished',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(src,/!meta\.settings\.configured&&page==='find'/);
+ assert.match(src,/!meta\.settings\.configured&&!user\.is_challenge&&page==='find'/);
  assert.match(src,/owner&&<button onClick=\{\(\)=>navigate\('business'\)\}>Set up my store/);
  assert.doesNotMatch(src,/!meta\.settings\.configured&&!\['business','more','settings'\]\.includes\(page\)/);
 });
