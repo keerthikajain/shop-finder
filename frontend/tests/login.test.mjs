@@ -63,7 +63,7 @@ test('guided join screen keeps both registration paths without exposing them on 
  const source=await (await import('node:fs/promises')).readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
  assert.match(source,/I have a workspace code/);
  assert.match(source,/I have a one-time invitation/);
- assert.match(source,/onRegister\(\{code/);
+ assert.match(source,/const handler=joinMethod==='workspace'\?onRegister:onJoin/);
  assert.match(source,/await handler\(\{code/);
  assert.match(source,/navigate\('login',\{clearFeedback:false\}\)/);
  assert.match(source,/setJoinMethod\(null\)/);
