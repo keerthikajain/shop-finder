@@ -264,6 +264,12 @@ def install_accounts(app,path,required=True):
    if c.execute('SELECT count(*) FROM login_attempts WHERE bucket=?',(bucket,)).fetchone()[0]>=12:
     raise HTTPException(429,'Public preview limit reached. Try later.')
    c.execute('INSERT INTO login_attempts(bucket,at) VALUES (?,?)',(bucket,now))
+   # Expired preview sessions and their private worklists are not permanent accounts.
+   expired=[row[0] for row in c.execute("SELECT a.id FROM accounts a WHERE a.is_demo=1 AND NOT EXISTS (SELECT 1 FROM account_sessions s WHERE s.user_id=a.id AND s.expires>?)",(now,))]
+   for old_uid in expired:
+    c.execute('DELETE FROM wh_tasks WHERE owner=?',(old_uid,))
+    c.execute('DELETE FROM account_sessions WHERE user_id=?',(old_uid,))
+    c.execute('DELETE FROM accounts WHERE id=?',(old_uid,))
    uid=secrets.token_hex(16);name='visitor_'+secrets.token_hex(8)
    c.execute("INSERT INTO accounts(id,username,password_hash,role,language,tour_done,active,is_demo) VALUES (?,?,?,?,?,?,?,1)",(uid,name,hash_password(secrets.token_urlsafe(32)),'staff','en',0,1))
    token=secrets.token_urlsafe(32)

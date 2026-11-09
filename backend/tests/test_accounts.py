@@ -192,3 +192,50 @@ def test_public_preview_is_off_by_default_and_cannot_be_entered(setup):
  c,_=setup
  assert c.get('/api/auth/status').json()['demo_enabled'] is False
  assert c.post('/api/demo/enter',headers=H).status_code==404
+
+def test_demo_public_preview_permissions_and_feedback(setup,monkeypatch):
+ c,_=setup
+ monkeypatch.setenv('SHOP_FINDER_PUBLIC_DEMO','true')
+ monkeypatch.setenv('SHOP_FINDER_SEED_DEMO','true')
+ status=c.get('/api/auth/status').json()
+ assert status['demo_enabled'] is True
+ enter=c.post('/api/demo/enter',headers=H)
+ assert enter.status_code==200,enter.text
+ assert enter.json()['role']=='staff' and enter.json()['is_demo'] is True
+ assert enter.json()['username'].startswith('visitor_')
+ assert c.get('/api/warehouse/meta').status_code==200
+ products=c.get('/api/warehouse/items?collection=all')
+ assert products.status_code==200 and products.json()
+ assert all(p['synthetic'] for p in products.json())
+ found=c.post('/api/warehouse/search',headers=H,json={'collection':'clothing','query':'CLO-001','language':'en-IN'})
+ assert found.status_code==200,found.text
+ assert found.json()['lines'][0]['selected']['sku']=='CLO-001'
+ task_id=found.json()['id']
+ assert c.get('/api/warehouse/tasks/'+task_id).status_code==200
+ assert c.post('/api/warehouse/tasks/'+task_id+'/picking/start',headers=H).status_code==200
+ assert c.post('/api/warehouse/tasks/'+task_id+'/scan',headers=H,json={'line':0,'kind':'manual','value':'confirmed'}).status_code==200
+ assert c.post('/api/warehouse/tasks/'+task_id+'/picking/finish',headers=H).status_code==200
+ for method,url in [('get','/api/users'),('get','/api/warehouse/history'),('get','/api/warehouse/issues'),
+                    ('post','/api/warehouse/issues'),('get','/api/demo/feedback'),
+                    ('put','/api/warehouse/items'),('post','/api/warehouse/imports'),
+                    ('post','/api/registrations/workspace-code'),('put','/api/auth/profile')]:
+  resp=getattr(c,method)(url,headers=H)
+  assert resp.status_code==403,(method,url,resp.text)
+ too_short=c.post('/api/demo/feedback',headers=H,json={'comment':'Hi'})
+ assert too_short.status_code==422
+ ok=c.post('/api/demo/feedback',headers=H,json={'comment':'The preview was helpful. I want clearer buttons.'})
+ assert ok.status_code==200,ok.text
+ assert c.get('/api/demo/feedback').status_code==403
+ login(c,'owner')
+ review=c.get('/api/demo/feedback')
+ assert review.status_code==200 and any('clearer buttons' in x['comment'] for x in review.json())
+
+def test_guest_preview_not_available_when_non_synthetic_items_exist(setup,monkeypatch):
+ from app.database import connect
+ c,path=setup
+ monkeypatch.setenv('SHOP_FINDER_PUBLIC_DEMO','true')
+ monkeypatch.setenv('SHOP_FINDER_SEED_DEMO','true')
+ with connect(path) as db:
+  db.execute("UPDATE wh_items SET payload=json_set(payload,'$.synthetic',false) WHERE sku='CLO-001' AND collection='clothing'")
+ assert c.get('/api/auth/status').json()['demo_enabled'] is False
+ assert c.post('/api/demo/enter',headers=H).status_code==404
