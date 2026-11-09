@@ -239,7 +239,8 @@ def match(query,items,collection):
  for p in items:
   names=tokens(' '.join([p['name'],p['category'],p.get('brand',''),*p['aliases'],*p.get('translations',{}).values()]))
   spec_tokens=tokens(' '.join(p['specs'].values()))
-  if not codes and not (qt&names):continue
+  exact_saved_name=any(q==normal_query(value) for value in [p['name'],*p['aliases'],*p.get('translations',{}).values()] if value)
+  if not codes and not exact_saved_name and not (qt&names):continue
   if numeric and not numeric<=set(re.findall(r'\d+(?:\.\d+)?',' '.join(p['specs'].values()))):continue
   if sizes and not sizes<=set(norm(v) for v in p['specs'].values()):continue
   if colours:
@@ -248,7 +249,7 @@ def match(query,items,collection):
   if any(norm(p['specs'].get(k,''))!=v for k,v in constraints.items()):continue
   # Every meaningful query word must be explained by catalogue names, aliases or specs.
   leftovers=qt-names-spec_tokens-set(['size','watt','watts','litre','litres','liter','liters'])
-  if leftovers:continue
+  if leftovers and not exact_saved_name:continue
   found.append(p)
  return found
 def speak_task(task):
