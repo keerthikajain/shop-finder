@@ -1134,7 +1134,7 @@ def test_new_product_translated_names_are_searchable(lang,phrase):
  item=Item(sku='APP-NEW-991',collection='appliances',name='Stainless steel hose clamp',
   category='Hardware',brand='Workshop',aliases=['pipe clamp'],
   translations={'en':'Stainless steel hose clamp','hi':'स्टेनलेस स्टील होज़ क्लैंप',
-   'hi_latn':'steel pipe clamp','te':'స్టెయిన్లెస్ స్టీల్ పైపు క్లాంప್',
+   'hi_latn':'steel pipe clamp','te':'స్టెయిన్లెస్ స్టీల్ పైపు క్లాంప్',
    'kn':'ಸ್ಟೇನ್ಲೆಸ್ ಸ್ಟೀಲ್ ಪೈಪ್ ಕ್ಲಾಂಪ್'},
   specs={'size':'16 mm'},placements=[{'facility':'Warehouse','rack':'Z','shelf':'5','bin':'07'}],
   synthetic=False).model_dump()
