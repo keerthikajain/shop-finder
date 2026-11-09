@@ -41,6 +41,11 @@ def test_separate_judge_workspaces_use_real_owner_permissions_and_catalogues(mon
   assert distinct.status_code==200
   assert not any(x['sku']=='REVIEW-OWN-991' for x in distinct.json())
   assert first.get('/api/warehouse/items?collection=all').status_code==200
+  photo=first.post('/api/media',headers=H,content=b'\\x89PNG\\r\\n\\x1a\\n-private-example-image')
+  assert photo.status_code==200,photo.text
+  photo_url=photo.json()['url']
+  assert first.get(photo_url).status_code==200
+  assert second.get(photo_url).status_code==404
   assert first.get('/api/users').status_code==200
   assert second.get('/api/users').status_code==200
   assert first.get('/api/auth/status').json()['user']['username']=='judge_one'
