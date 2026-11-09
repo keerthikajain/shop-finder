@@ -468,7 +468,7 @@ def install_warehouse(app,path):
     l=available[0] if len(available)==1 else None
     lines.append({'query':q,'candidates':candidates,'selected':p if l else None,'location':l,'product_scanned':False,'complete':False,'confirmation':None,'location_feedback':None,**location_status(c,p,l)})
     # A search result, including no match, never creates a report by itself.
-   unknowns.capture(c,(line['query'] for line in lines if not line['candidates']),body.collection,rows(c,'all'),match)
+   if not u.get('is_demo'):unknowns.capture(c,(line['query'] for line in lines if not line['candidates']),body.collection,rows(c,'all'),match)
    tid=secrets.token_urlsafe(24);t={'id':tid,'collection':body.collection,'language':body.language,'query':body.query,'lines':lines,'picking':{'status':'ready','started_at':None,'completed_at':None}};t['spoken_text']=speak_task(t);t['display_text']=display_task(t)
    c.execute('DELETE FROM wh_tasks WHERE created<?',(time.time()-86400,));c.execute('INSERT INTO wh_tasks VALUES(?,?,?,?)',(tid,u['id'],time.time(),encode(t)))
    return t

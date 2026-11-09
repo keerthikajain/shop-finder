@@ -187,3 +187,8 @@ def test_staff_account_can_store_all_supported_interface_languages(tmp_path,lang
   resp=client.post('/api/auth/login',headers=H,json={'username':'worker','password':'staff-password-1234'})
   assert resp.status_code==200,resp.text
   assert resp.json()['language']==language
+
+def test_public_preview_is_off_by_default_and_cannot_be_entered(setup):
+ c,_=setup
+ assert c.get('/api/auth/status').json()['demo_enabled'] is False
+ assert c.post('/api/demo/enter',headers=H).status_code==404
