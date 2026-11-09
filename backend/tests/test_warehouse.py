@@ -1191,3 +1191,24 @@ def test_import_translation_suggestions_require_explicit_review(setup,monkeypatc
  assert approved.status_code==200,approved.text
  saved=next(p for p in items(c,'appliances') if p['sku']=='APP-NEW-990')
  assert saved['translations']['te']=='స్టీల్ వాషర్'
+
+@pytest.mark.parametrize('language,phrase',[
+ ('en-IN','Where is the stainless steel hose clamp?'),
+ ('hi-IN','स्टेनलेस स्टील होज़ क्लैंप कहाँ है?'),
+ ('hi-en','steel pipe clamp kaha hai'),
+ ('te-IN','స్టెయిన్లెస్ స్టీల్ పైపు క్లాంప్ ఎక్కడుంది?'),
+ ('kn-IN','ಸ್ಟೇನ್ಲೆಸ್ ಸ್ಟೀಲ್ ಪೈಪ್ ಕ್ಲಾಂಪ್ ಎಲ್ಲಿದೆ?'),
+ ('te-IN','steel pipe clamp ఎక్కడుంది?'),
+ ('kn-IN','steel pipe clamp ಎಲ್ಲಿದೆ?'),
+])
+def test_novel_imported_product_location_questions_in_five_languages(language,phrase):
+ from app.warehouse import match,Item
+ product=Item(sku='APP-NEW-991',collection='appliances',name='Stainless steel hose clamp',
+  category='Hardware',brand='Workshop',aliases=['pipe clamp'],
+  translations={'en':'Stainless steel hose clamp','hi':'स्टेनलेस स्टील होज़ क्लैंप',
+   'hi_latn':'steel pipe clamp','te':'స్టెయిన్లెస్ స్టీల్ పైపు క్లాంప్',
+   'kn':'ಸ್ಟೇನ್ಲೆಸ್ ಸ್ಟೀಲ್ ಪೈಪ್ ಕ್ಲಾಂಪ್'},
+  specs={'size':'16 mm'},placements=[{'facility':'Warehouse','rack':'Z','shelf':'5','bin':'07'}],
+  synthetic=False).model_dump()
+ assert [p['sku'] for p in match(phrase,[product],'all')]==['APP-NEW-991'],(language,phrase)
+ assert match('steel pipe clamp size 20 mm',[product],'all')==[]
