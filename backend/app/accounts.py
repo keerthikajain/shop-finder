@@ -226,7 +226,7 @@ def install_accounts(app,path,required=True):
     if request.headers.get('X-Shop-Request')!='1' or not origin_valid(request):
      return apply_security_headers(JSONResponse({'detail':'Request origin or header not allowed.'},403),request)
    user=current(request);request.state.user=user
-   if request.url.path not in ('/api/health','/api/auth/login','/api/auth/status','/api/auth/join','/api/auth/register','/api/auth/logout','/api/demo/enter'):
+   if request.url.path not in ('/api/health','/api/auth/login','/api/auth/status','/api/auth/join','/api/auth/register','/api/auth/logout','/api/demo/enter','/api/challenge/signup','/api/challenge/try'):
     if not user:
      return apply_security_headers(JSONResponse({'detail':'Please log in.'},401),request)
     route=request.url.path
@@ -252,7 +252,7 @@ def install_accounts(app,path,required=True):
  @app.get('/api/auth/status')
  def status(request:Request):
   with connect(path) as c:configured=bool(c.execute('SELECT 1 FROM accounts WHERE role=\'owner\'').fetchone())
-  return {'configured':configured,'demo_enabled':demo_enabled(path),'user':current(request)}
+  return {'configured':configured or os.getenv('SHOP_FINDER_CHALLENGE_SIGNUP')=='true','demo_enabled':demo_enabled(path) and os.getenv('SHOP_FINDER_CHALLENGE_SIGNUP')!='true','signup_enabled':os.getenv('SHOP_FINDER_CHALLENGE_SIGNUP')=='true','user':current(request)}
  @app.post('/api/demo/enter')
  def enter_public_preview(request:Request,response:Response):
   if not demo_enabled(path):raise HTTPException(404,'The public preview is not available.')

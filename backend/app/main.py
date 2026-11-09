@@ -85,4 +85,11 @@ def create_app(db_path=None, seed_demo=None, *, auth_required=True):
         app.mount('/',StaticFiles(directory=web,html=True),name='web')
     return app
 
-app = create_app()
+if os.getenv('SHOP_FINDER_CHALLENGE_SIGNUP','false').lower()=='true':
+    from .challenge_workspaces import install_challenge_routes,ChallengeDispatcher
+    _root=create_app()
+    _base=Path(os.environ.get('SHOP_FINDER_DB',DEFAULT_DB))
+    install_challenge_routes(_root,_base)
+    app=ChallengeDispatcher(_root,_base)
+else:
+    app=create_app()

@@ -451,3 +451,12 @@ test('a fully unmatched request does not show unusable picking commands and sear
  assert.match(css,/\.sf-find-page \.wh-work-grid\{grid-template-columns:minmax\(0,1fr\) minmax\(0,280px\)\}/);
  assert.match(css,/@media\(max-width:900px\)/);
 });
+
+test('judge access uses a single account flow and a separate full-feature workspace',async()=>{
+ const account=await readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
+ assert.match(account,/Create a free workspace/);
+ assert.match(account,/Or explore instantly, without signing up/);
+ assert.match(account,/challenge\/signup/);
+ assert.match(account,/challenge\/try/);
+ assert.match(account,/Your products and changes stay separate/);
+});
