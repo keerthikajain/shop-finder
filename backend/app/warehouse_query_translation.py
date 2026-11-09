@@ -67,7 +67,8 @@ async def translate_to_catalogue(query,language,items):
 def preserves_explicit_details(original,translated,product):
     """Never erase written digits, Latin model codes or obvious colour constraints."""
     original_numbers=set(re.findall(r'(?<![\w.])\d+(?:\.\d+)?(?![\w.])',original))
-    candidate_numbers=set(re.findall(r'\d+(?:\.\d+)?',' '.join(str(v) for v in product.get('specs',{}).values())))
+    recorded=' '.join([str(product.get('sku','')),str(product.get('barcode','')),str(product.get('name','')),*map(str,product.get('specs',{}).values())])
+    candidate_numbers=set(re.findall(r'\d+(?:\.\d+)?',recorded))
     if original_numbers and not original_numbers<=candidate_numbers:
         return False
     # Translation is fallible: an explicitly written original SKU or barcode
