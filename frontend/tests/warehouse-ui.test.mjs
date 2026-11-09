@@ -414,3 +414,11 @@ test('example locations and voice controls use readable labels',async()=>{
  assert.match(parts,/example=false/);
  assert.match(parts,/Example shelf/);
 });
+
+test('synthetic catalogue locations are explicitly examples in spoken and visual responses',async()=>{
+ const backend=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
+ const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(backend,/Example shelf/);
+ assert.match(ui,/These are example items and locations/);
+ assert.match(ui,/friendlyPath\(ls\[0\]\.location,!!ls\[0\]\.selected\?\.synthetic\)/);
+});
