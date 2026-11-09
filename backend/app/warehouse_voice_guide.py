@@ -81,7 +81,9 @@ def guide(task,action,requested_line,check_line):
  label_hi={'rack':'रैक','shelf':'शेल्फ','bin':'बिन','aisle':'गलियारा','zone':'भाग','facility':'गोदाम','floor':'मंज़िल'}
  label_keys=('facility','floor','zone','aisle','rack','shelf','bin')
  place=', '.join(f"{labels.get(k,k) if regional else (label_hi.get(k,k) if hi else k)} {location[k]}" for k in label_keys if location.get(k))
- name=f"{product['name']}, {product['sku']}"
+ name_language_key={'en-IN':'en','hi-IN':'hi','hi-en':'hi_latn','te-IN':'te','kn-IN':'kn'}.get(language)
+ localized=product.get('translations',{}).get(name_language_key) or product['name']
+ name=f"{localized}, {product['sku']}"
  if regional:
   text=messages['next' if action=='next' else action].format(name=name,place=place)
  elif action in ('next','repeat'):
