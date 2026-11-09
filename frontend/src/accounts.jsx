@@ -57,11 +57,7 @@ export function Login({ready,configured,language,L,error,busy,notice='',onSubmit
 
  return <main className="login-shell">
   <header className="sf-login-header">
-   <div className="wh-brand"><Mark/><span>shopfinder</span></div>
-   <label className="sf-login-language">
-    <span className="sr-only">{t('App language')}</span>
-    <select aria-label={t('App language')} value={language} onChange={e=>L(e.target.value)}><option value="en">English</option><option value="hi">हिन्दी</option></select>
-   </label>
+   <div className="wh-brand"><Mark/><span>finder</span></div>
   </header>
   <div className="sf-login-layout">
    <section className="sf-login-art" aria-label={t('Your workspace, within reach.')}>
@@ -70,6 +66,10 @@ export function Login({ready,configured,language,L,error,busy,notice='',onSubmit
    </section>
    <section className="glass login-card" aria-label={heading}>
     <h1>{heading}</h1>
+    <label className="sf-login-language">
+     <span>{t('App language')}</span>
+     <select aria-label={t('App language')} value={language} onChange={e=>L(e.target.value)}><option value="en">English</option><option value="hi">हिन्दी</option></select>
+    </label>
     {intro&&<p className="sf-auth-intro">{intro}</p>}
     {!ready?<p role="status">{t('Loading…')}</p>:!configured?<p role="status">{t('This workspace is not set up yet. Ask the installer to create the first owner account.')}</p>:!joining?
     <form className="sf-auth-fields" onSubmit={onSubmit} aria-busy={busy}>

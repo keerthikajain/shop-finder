@@ -16,7 +16,7 @@ test('warehouse location displays all six levels and preserves leading-zero bin 
 test('Hindi labels do not translate identifiers or stored location names',()=>{const html=location(place,'hi');assert.match(html,/गलियारा/);assert.match(html,/शेल्फ/);assert.match(html,/Hub A/);assert.match(html,/>008</)});
 test('specifications keep size systems and units visible',()=>{const html=specs({specs:{size_uk:'7',capacity_l:'1.5'}});assert.match(html,/Size \(UK\)/);assert.match(html,/1.5 L/)});
 test('catalogue text cannot inject HTML into location or specification surfaces',()=>{assert.ok(!location({...place,zone:'<img src=x onerror=alert(1)>'}).includes('<img'));assert.match(specs({specs:{size_uk:'<script>x</script>'}}),/&lt;script&gt;/)});
-test('logo is labelled for assistive technology',()=>{assert.match(logo(),/aria-label="Shop Finder logo"/)});
+test('logo is labelled for assistive technology',()=>{assert.match(logo(),/aria-label="Finder logo"/)});
 
 test('mobile More is a page with an explicit back path, not a blocking dialog',async()=>{
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');

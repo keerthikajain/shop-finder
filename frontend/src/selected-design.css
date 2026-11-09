@@ -1916,3 +1916,125 @@ body,.wh-app{
 @media(prefers-reduced-transparency:reduce){
  .login-shell .login-card{backdrop-filter:none;background:#fff}
 }
+
+/* Finder branding and visible mobile artwork (login + join screens).
+   Language belongs to the form card, not the global header. */
+.login-shell .sf-login-header{
+  justify-content:flex-start;
+}
+.login-shell .login-card .sf-login-language{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:0 0 20px;
+  min-width:0;
+  color:#534c5b;
+  font-size:12px;
+  font-weight:650;
+}
+.login-shell .login-card .sf-login-language span{
+  flex:1 1 auto;
+  white-space:nowrap;
+}
+.login-shell .login-card .sf-login-language select{
+  box-sizing:border-box;
+  display:block;
+  flex:0 0 132px;
+  width:132px;
+  max-width:132px;
+  min-width:118px;
+  height:42px;
+  min-height:42px;
+  margin:0;
+  padding:0 32px 0 12px;
+  border:1px solid #d8d6dc;
+  border-radius:11px;
+  background:#fff;
+  color:#25242a;
+  font-size:14px;
+  line-height:1.2;
+  font-weight:600;
+  text-overflow:clip;
+}
+@media(max-width:700px){
+  .login-shell .sf-login-header{
+    justify-content:flex-start;
+    padding:0 0 13px;
+  }
+  .login-shell .sf-login-layout{
+    position:relative;
+    isolation:auto;
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:0;
+    width:100%;
+    max-width:510px;
+    min-height:0;
+    padding:0;
+    margin:0 auto;
+  }
+  .login-shell .sf-login-art{
+    position:relative;
+    inset:auto;
+    z-index:auto;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:clamp(170px,48vw,210px);
+    width:100%;
+    min-width:0;
+    margin:0;
+    opacity:1;
+    overflow:visible;
+    pointer-events:none;
+  }
+  .login-shell .sf-login-art img{
+    display:block;
+    width:100%;
+    max-width:100%;
+    height:100%;
+    max-height:none;
+    object-fit:contain;
+    object-position:center;
+    opacity:1;
+    border-radius:0;
+  }
+  .login-shell .sf-login-art>div{display:none}
+  .login-shell .login-card{
+    position:relative;
+    z-index:1;
+    width:100%;
+    max-width:100%;
+    margin:-13px 0 0;
+    padding:21px 18px 19px;
+    background:#fff;
+    border:1px solid #e1dbe9;
+    border-radius:17px;
+    box-shadow:0 12px 32px rgba(48,31,69,.09);
+    backdrop-filter:none;
+  }
+  .login-shell .login-card .sf-login-language{
+    margin:0 0 18px;
+  }
+  .login-shell .login-card .sf-login-language select{
+    flex-basis:132px;
+    width:132px;
+    max-width:132px;
+    font-size:14px;
+  }
+}
+@media(max-width:370px){
+  .login-shell .sf-login-art{height:160px}
+  .login-shell .login-card{padding:19px 13px 17px}
+  .login-shell .login-card .sf-login-language{gap:8px}
+  .login-shell .login-card .sf-login-language select{
+    width:124px;
+    max-width:124px;
+    min-width:124px;
+    flex-basis:124px;
+    padding-left:9px;
+    font-size:13px;
+  }
+}

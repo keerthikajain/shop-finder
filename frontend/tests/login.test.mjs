@@ -81,21 +81,33 @@ test('auth layout retains compact spacing and a soft illustrated mobile backdrop
  assert.match(styles,/@media\(max-width:480px\)/);
 });
 
-test('login header has one compact accessible language selector and no repeated sign-in tab',()=>{
+test('login has Finder branding and a readable language control inside the form card',()=>{
  const html=render();
  assert.match(html,/<header class="sf-login-header">/);
+ assert.match(html,/<span>finder<\/span>/);
+ assert.doesNotMatch(html,/shopfinder/);
+ assert.match(html,/<section[^>]*class="glass login-card"[^>]*>[\s\S]*?<h1>Welcome back<\/h1>[\s\S]*?<label class="sf-login-language">/);
  assert.match(html,/aria-label="App language"/);
- assert.match(html,/class="sf-login-language"/);
- assert.match(html,/<h1>Welcome back<\/h1>/);
- // The primary button contains a decorative SVG icon after its text.
+ const header=html.split('</header>')[0];
+ assert.doesNotMatch(header,/sf-login-language|<select/);
  assert.match(html,/<button[^>]*class="primary full-width sf-signin"[^>]*>Sign in/);
  assert.equal((html.match(/class="primary full-width sf-signin"/g)||[]).length,1);
  assert.doesNotMatch(html,/sf-login-kicker|sf-auth-modes/);
 });
-test('mobile login preserves the workspace illustration behind a readable form',async()=>{
+test('mobile artwork stays fully visible above the card and language fits in the form',async()=>{
  const css=await (await import('node:fs/promises')).readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
- assert.match(css,/Mobile auth and navigation polish/);
- assert.match(css,/\.login-shell \.sf-login-art\{[\s\S]*?position:absolute/);
- assert.match(css,/\.login-shell \.login-card\{[\s\S]*?background:rgba\(255,255,255,\.91\)/);
- assert.match(css,/\.sf-login-header \.sf-login-language select/);
+ const latest=css.slice(css.indexOf('/* Finder branding and visible mobile artwork'));
+ assert.match(latest,/@media\(max-width:700px\)/);
+ assert.match(latest,/\.login-shell \.sf-login-art\{[\s\S]*?position:relative/);
+ assert.match(latest,/\.login-shell \.sf-login-art img\{[\s\S]*?opacity:1/);
+ assert.match(latest,/\.login-shell \.login-card\{[\s\S]*?background:#fff/);
+ assert.match(latest,/\.login-shell \.login-card \.sf-login-language select\{[\s\S]*?width:132px/);
+});
+
+test('Finder appears in the browser title and installed app name',async()=>{
+ const {readFile}=await import('node:fs/promises');
+ const index=await readFile(new URL('../index.html',import.meta.url),'utf8');
+ const manifest=JSON.parse(await readFile(new URL('../public/manifest.webmanifest',import.meta.url),'utf8'));
+ assert.match(index,/<title>Finder · Voice workspace<\/title>/);
+ assert.equal(manifest.short_name,'Finder');
 });
