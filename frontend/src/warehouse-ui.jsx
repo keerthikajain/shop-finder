@@ -2,7 +2,7 @@ import React,{useEffect,useRef,useState,useContext,createContext} from 'react';
 import {useT} from './locale.js';
 
 export const Feedback=createContext({error:'',notice:''});
-export function Mark({large=false}){return <svg className={large?'sf-mark large':'sf-mark'} viewBox="0 0 48 48" aria-label="Shop Finder logo" role="img" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12v31m37-20v20M5 19h22M5 30h37M5 40h37M11 13h10v6M11 24h8v6"/><path d="M42 11c0 6-8 14-8 14s-8-8-8-14a8 8 0 1 1 16 0Z"/><circle cx="34" cy="11" r="2.5"/></svg>}
+export function Mark({large=false}){return <svg className={large?'sf-mark large':'sf-mark'} viewBox="0 0 48 48" aria-label="Finder logo" role="img" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12v31m37-20v20M5 19h22M5 30h37M5 40h37M11 13h10v6M11 24h8v6"/><path d="M42 11c0 6-8 14-8 14s-8-8-8-14a8 8 0 1 1 16 0Z"/><circle cx="34" cy="11" r="2.5"/></svg>}
 
 const paths={
  search:<><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></>,mic:<><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v3m-4 0h8"/></>,

@@ -1,6 +1,6 @@
 {
-  "name": "Shop Finder Voice Workspace",
-  "short_name": "Shop Finder",
+  "name": "Finder Voice Workspace",
+  "short_name": "Finder",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#faf9f6",
