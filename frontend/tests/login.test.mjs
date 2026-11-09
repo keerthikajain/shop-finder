@@ -111,3 +111,16 @@ test('Finder appears in the browser title and installed app name',async()=>{
  assert.match(index,/<title>Finder · Voice workspace<\/title>/);
  assert.equal(manifest.short_name,'Finder');
 });
+
+test('desktop login is constrained to a centered shadow card and leaves phone styling alone',async()=>{
+ const styles=await (await import('node:fs/promises')).readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ const desktop=styles.slice(styles.indexOf('/* Desktop Finder sign-in: a compact login card'));
+ assert.match(desktop,/@media \(min-width:761px\)/);
+ assert.match(desktop,/\.login-shell \.sf-login-layout\{[\s\S]*?max-width:940px/);
+ assert.match(desktop,/grid-template-columns:minmax\(0,1fr\) minmax\(0,420px\)/);
+ assert.match(desktop,/\.login-shell \.login-card\{[\s\S]*?max-width:420px/);
+ assert.match(desktop,/box-shadow:0 16px 45px/);
+ assert.match(desktop,/background:#fff/);
+ assert.match(desktop,/min-height:0/);
+ assert.doesNotMatch(desktop,/@media\s*\(max-width:/);
+});
