@@ -36,6 +36,10 @@ async def translate_to_catalogue(query,language,items):
     """Return limited alternative phrases, not matches, with a transparent status."""
     if language not in _SUPPORTED or not items or len(query)>300:
         return [],'not_applicable'
+    # A fully English request has already been searched verbatim. Translating
+    # it into English again would risk a misleading, broader product match.
+    if language=='en-IN' and not any(0x0900<=ord(c)<=0x097f or 0x0c00<=ord(c)<=0x0cff for c in query):
+        return [],'not_applicable'
     targets=target_languages(items,language)
     if not targets:
         return [],'not_applicable'
