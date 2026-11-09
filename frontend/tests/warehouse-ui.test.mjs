@@ -326,3 +326,21 @@ test('warehouse uses translated display text without changing the spoken audio p
  assert.match(backendText,/def display_task\(task\)/);
  assert.match(backendText,/t\['display_text'\]=display_task\(t\)/);
 });
+
+test('guided picking has explicit start, resume, verified progress, next stop and finish controls',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(src,/async function pickAction\(kind\)/);
+ assert.match(src,/async function resumePick\(id\)/);
+ assert.match(src,/tasks\/'\+task\.id\+'\/picking\/'\+kind/);
+ assert.match(src,/r\.picking\?\.status==='active'\?resumePick\(r\.id\)/);
+ assert.match(src,/className="wh-panel sf-guided-picking"/);
+ assert.match(src,/className="sf-picking-head"/);
+ assert.match(src,/pickAction\('start'\)/);
+ assert.match(src,/pickAction\('finish'\)/);
+ assert.match(src,/verifiedCount!==task\.lines\.length/);
+ assert.match(src,/id=\{'sf-picking-line-'\+line\.index\}/);
+ assert.match(src,/task\?\.lines\.filter\(l=>l\.complete\)\.length/);
+ assert.match(css,/\.sf-guided-picking\{/);
+ assert.match(css,/@media\(max-width:700px\)/);
+});

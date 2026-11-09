@@ -351,3 +351,15 @@ Object.assign(hindi,warehouseHindi);
 Object.assign(hindi,{'Scan a label':'लेबल स्कैन करें','Choose the matching workspace before scanning this item.':'इस सामान को स्कैन करने से पहले सही कार्यक्षेत्र चुनें।'});
 
 Object.assign(hindi,{'Keep the revision column from exports to detect old spreadsheets. External files without revisions require careful before-and-after review.':'पुरानी फ़ाइल पहचानने के लिए एक्सपोर्ट का revision कॉलम रखें। बिना revision वाली बाहरी फ़ाइलों में पहले और बाद की जानकारी ध्यान से जाँचें।'});
+
+Object.assign(hindi,{
+ 'Guided picking':'चुनने की चरणबद्ध प्रक्रिया','Picking completed':'सामान चुनना पूरा हुआ','Picking in progress':'सामान चुना जा रहा है','Ready to pick':'सामान चुनने के लिए तैयार',
+ 'Picking progress':'सामान चुनने की प्रगति','Start picking':'सामान चुनना शुरू करें','Finish picking':'सामान चुनना पूरा करें','Next item':'अगला सामान','Go to next item':'अगले सामान पर जाएँ',
+ 'items verified':'सामान सत्यापित','Resolve all item variants and shelf locations before starting.':'शुरू करने से पहले सभी सामान के प्रकार और शेल्फ स्थान तय करें।',
+ 'Verify exact items at the recorded shelf. Checking a location alone does not complete a pick.':'रिकॉर्ड किए गए शेल्फ पर सही सामान सत्यापित करें। केवल स्थान जाँचने से सामान चुनना पूरा नहीं होता।',
+ 'All items verified. Finish the pick.':'सभी सामान सत्यापित हैं। प्रक्रिया पूरी करें।',
+ 'All requested items were verified. Picking is recorded without changing stock.':'सभी अनुरोधित सामान सत्यापित हैं। स्टॉक बदले बिना प्रक्रिया दर्ज की गई है।',
+ 'Picking started. Check each item at its recorded shelf.':'सामान चुनना शुरू हुआ। हर सामान को दर्ज शेल्फ पर जाँचें।',
+ 'Picking completed. No stock quantities were changed.':'सामान चुनना पूरा हुआ। स्टॉक की मात्रा नहीं बदली।',
+ 'Picking session restored.':'सामान चुनने की प्रक्रिया फिर खोली गई।'
+});
