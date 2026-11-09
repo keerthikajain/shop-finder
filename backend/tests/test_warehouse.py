@@ -975,3 +975,14 @@ def test_failed_search_validation_and_match_ambiguity_not_autolinked(setup):
  assert result.status_code==409
  assert row['status']=='open'
  assert 'glimmer gizmo' not in next(x for x in items(c) if x['sku']=='CLO-001')['aliases']
+
+def test_remove_unresolved_worklist_line_preserves_other_lines(setup):
+ c,_=setup
+ task=search(c,'Blue T-shirt and black jeans, 37')
+ assert len(task['lines'])==3
+ assert task['lines'][2]['selected'] is None
+ deleted=c.delete('/api/warehouse/tasks/'+task['id']+'/lines/2')
+ assert deleted.status_code==200,deleted.text
+ assert len(deleted.json()['lines'])==2
+ assert [line['query'] for line in deleted.json()['lines']]==[line['query'] for line in task['lines'][:2]]
+ assert c.delete('/api/warehouse/tasks/'+task['id']+'/lines/99').status_code==422

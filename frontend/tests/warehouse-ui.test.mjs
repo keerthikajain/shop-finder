@@ -393,3 +393,14 @@ test('owner-only activity tab exposes unmatched-search review without modifying 
  assert.match(css,/\.sf-search-intelligence\{/);
  assert.match(css,/\.sf-unknown-confirm input\{/);
 });
+
+test('voice picking is discoverable before starting and unmatched requests can be removed',async()=>{
+ const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
+ assert.match(ui,/picking.status!=='completed'&&<div className="sf-voice-guide"/);
+ assert.match(ui,/Start picking to enable voice commands/);
+ assert.match(ui,/enabled={picking.status==='active'&&voice&&!busy&&!voiceGuidePaused}/);
+ assert.match(ui,/async function removeUnresolvedLine\(index\)/);
+ assert.match(ui,/Remove from worklist/);
+ assert.match(server,/def remove_unresolved_line\(tid:str,index:int,request:Request\)/);
+});

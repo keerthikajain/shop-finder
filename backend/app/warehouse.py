@@ -526,6 +526,19 @@ def install_warehouse(app,path):
    picking_check(c,task)
    state.update(status='completed',completed_at=now())
    return task_put(c,task)
+ @app.delete('/api/warehouse/tasks/{tid}/lines/{index}')
+ def remove_unresolved_line(tid:str,index:int,request:Request):
+  """Remove an unresolved request from a ready task, never from inventory."""
+  u=identity(request)
+  with connect(path) as c:
+   c.execute('BEGIN IMMEDIATE')
+   t=task_get(c,tid,u)
+   picking_mutable(t)
+   if index<0 or index>=len(t['lines']):raise HTTPException(422,'Invalid task line.')
+   if len(t['lines'])<=1:raise HTTPException(409,'Keep one item. Edit and search again to replace it.')
+   if t['lines'][index].get('selected'):raise HTTPException(409,'Only unresolved requests can be removed.')
+   t['lines'].pop(index)
+   return task_put(c,t)
  @app.post('/api/warehouse/tasks/{tid}/choose')
  def choose(tid:str,body:Choose,request:Request):
   u=identity(request)
