@@ -1071,3 +1071,43 @@ def test_all_search_languages_find_real_items_without_guessing_size(setup,langua
  assert len(lines)==1
  assert len(lines[0]['candidates'])==2
  assert lines[0]['selected'] is None # user must choose the size
+
+
+@pytest.mark.parametrize('language,query,colour',[
+ ('kn-IN','ಕಪ್ಪು ಜೀನ್ಸ್ ಎಲ್ಲಿದೆ','black'),
+ ('ta-IN','கருப்பு ஜீன்ஸ் எங்கே','black'),
+ ('te-IN','నల్ల జీన్స్ ఎక్కడుంది','black'),
+ ('ml-IN','കറുപ്പ് ജീൻസ് എവിടെയാണ്','black'),
+ ('mr-IN','काळी जीन्स कुठे आहे','black'),
+ ('bn-IN','কালো জিন্স কোথায় আছে','black'),
+ ('gu-IN','કાળા જીન્સ ક્યાં છે','black'),
+ ('pa-IN','ਕਾਲੀ ਜੀਨਸ ਕਿੱਥੇ ਹੈ','black'),
+ ('hi-IN','काली jeans kaha hai','black'),
+ ('en-IN','black jeans where is it','black'),
+])
+def test_native_regional_jeans_words_keep_colour_and_require_size(setup,language,query,colour):
+ from app.warehouse_language import tokens
+ words=tokens(query)
+ assert colour in words and 'jeans' in words,(language,words)
+ c,_=setup
+ found=post(c,'/search',{'collection':'clothing','query':query,'language':language})
+ assert found.status_code==200,found.text
+ assert len(found.json()['lines'])==1
+ assert len(found.json()['lines'][0]['candidates'])==2
+ assert found.json()['lines'][0]['selected'] is None
+
+@pytest.mark.parametrize('language,query',[
+ ('kn-IN','ನೀಲಿ ಜೀನ್ಸ್ ಎಲ್ಲಿದೆ'),
+ ('ta-IN','நீலம் ஜீன்ஸ் எங்கே'),
+ ('te-IN','నీలం జీన్స్ ఎక్కడుంది'),
+ ('ml-IN','നീല ജീൻസ് എവിടെയാണ്'),
+ ('mr-IN','निळी जीन्स कुठे आहे'),
+ ('bn-IN','নীল জিন্স কোথায় আছে'),
+ ('gu-IN','વાદળી જીન્સ ક્યાં છે'),
+ ('pa-IN','ਨੀਲੀ ਜੀਨਸ ਕਿੱਥੇ ਹੈ'),
+])
+def test_native_blue_jeans_does_not_match_black_sample(setup,language,query):
+ c,_=setup
+ result=post(c,'/search',{'collection':'clothing','query':query,'language':language})
+ assert result.status_code==200,result.text
+ assert result.json()['lines'][0]['candidates']==[]

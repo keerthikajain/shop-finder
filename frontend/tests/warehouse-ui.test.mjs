@@ -422,3 +422,15 @@ test('synthetic catalogue locations are explicitly examples in spoken and visual
  assert.match(ui,/These are example items and locations/);
  assert.match(ui,/friendlyPath\(ls\[0\]\.location,!!ls\[0\]\.selected\?\.synthetic\)/);
 });
+
+
+test('only settings page exposes appearance control and manager empty state is actionable',async()=>{
+ const warehouse=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const accounts=await readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
+ assert.doesNotMatch(warehouse,/className="wh-icon-button sf-header-theme"/);
+ assert.match(warehouse,/sf-settings-preferences/);
+ assert.match(accounts,/managersEligible\.length===0/);
+ assert.match(accounts,/No staff members are ready to become managers yet/);
+ assert.match(accounts,/sf-staff-create/);
+ assert.match(accounts,/owner_password:d\.get\('password'\)/);
+});

@@ -91,6 +91,20 @@ SYNONYMS = {
     'towels':'towel', 'boxes':'box',
 }
 
+# Verified basic product words in the native scripts. These are lexical
+# equivalents, not similarity guesses; explicit colours remain mandatory.
+REGIONAL_PRODUCT_SYNONYMS = {
+ 'ಜೀನ್ಸ್':'jeans', 'ಕಪ್ಪು':'black', 'ಕಪ್ಪುಬಣ್ಣದ':'black', 'ನೀಲಿ':'blue',
+ 'ஜீன்ஸ்':'jeans', 'கருப்பு':'black', 'நீல':'blue', 'நீலம்':'blue',
+ 'జీన్స్':'jeans', 'నల్ల':'black', 'నీలం':'blue', 'నీలి':'blue',
+ 'ജീൻസ്':'jeans', 'കറുപ്പ്':'black', 'നീല':'blue',
+ 'जीन्स':'jeans', 'काळी':'black', 'काळा':'black', 'निळी':'blue', 'निळा':'blue',
+ 'জিন্স':'jeans', 'কালো':'black', 'নীল':'blue',
+ 'જીન્સ':'jeans', 'કાળા':'black', 'કાળી':'black', 'વાદળી':'blue',
+ 'ਜੀਨਸ':'jeans', 'ਜੀਨਜ਼':'jeans', 'ਕਾਲੀ':'black', 'ਕਾਲਾ':'black', 'ਨੀਲੀ':'blue',
+}
+SYNONYMS.update(REGIONAL_PRODUCT_SYNONYMS)
+
 # Only generic request words are removed. Do NOT remove units, ratings,
 # sizes, package counts, brands, locations or product descriptors.
 
@@ -114,7 +128,7 @@ INDIC_REQUEST_FILLERS = set(' '.join(REGIONAL_REQUEST_WORDS.values()).split())
 
 STOP = set("""
 find where is are the a an i can do you have me please show need want
-get locate in stock of for at my this that which
+get locate in stock of for at my this that which it them there
 mujhe muje chahiye chahie chahiyeh kahan kahaan kaha kidhar
 hai hain he h kya batao btao dikhao dhundo dhoondo milega milegi milenge
 rakha rakhi rakhe rakhega rakhiye ka ki ke ko par se mujko zara
@@ -128,7 +142,7 @@ size uk colour color power capacity brand w l
 
 _DEVANAGARI = '\u0900-\u097f'
 # Match a whole Devanagari/Latin phrase, never part of another word.
-_BOUNDARY = r'[\w' + _DEVANAGARI + r']'
+_BOUNDARY = r'[\w\u0900-\u0d7f]'
 _RULES = [
     (re.compile(r'(?<!' + _BOUNDARY + r')' + re.escape(src) +
                 r'(?!' + _BOUNDARY + r')', re.IGNORECASE), dst)
