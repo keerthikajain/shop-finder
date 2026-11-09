@@ -791,7 +791,7 @@ def test_voice_pick_guide_synthesizes_authenticated_text_only(setup,monkeypatch)
  assert r.headers['cache-control']=='no-store'
  assert c.get('/api/warehouse/tasks/'+t['id']).json()['lines'][0]['complete'] is False
 
-def test_voice_pick_command_is_user_private_and_regional_unsupported(setup):
+def test_voice_pick_command_is_user_private_and_regional_supported(setup,monkeypatch):
  c,_=setup
  t=search(c,'CLO-001')
  assert post(c,'/tasks/'+t['id']+'/picking/start').status_code==200
@@ -801,8 +801,19 @@ def test_voice_pick_command_is_user_private_and_regional_unsupported(setup):
  login(c)
  regional=post(c,'/search',{'collection':'clothing','query':'CLO-001','language':'kn-IN'}).json()
  assert post(c,'/tasks/'+regional['id']+'/picking/start').status_code==200
- assert post(c,'/tasks/'+regional['id']+'/picking/command',{'transcript':'next item'}).status_code==422
- assert post(c,'/tasks/'+regional['id']+'/picking/guide-audio',{'command':'next'}).status_code==422
+ result=post(c,'/tasks/'+regional['id']+'/picking/command',{'transcript':'ಮುಂದಿನ ವಸ್ತು'})
+ assert result.status_code==200,result.text
+ assert result.json()['action']=='next'
+ assert 'ರ್ಯಾಕ್' in result.json()['text']
+ spoken=[]
+ async def fake_speak(text,language):
+  spoken.append((text,language))
+  return b'RIFF'+b'0'*20
+ monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
+ audio=post(c,'/tasks/'+regional['id']+'/picking/guide-audio',{'command':'next'})
+ assert audio.status_code==200,audio.text
+ assert spoken[0][1]=='kn-IN'
+ assert 'CLO-001' in spoken[0][0]
 
 def test_voice_pick_commands_preserve_hindi_shelf_and_existing_revision_guard(setup):
  c,_=setup
@@ -817,3 +828,53 @@ def test_voice_pick_commands_preserve_hindi_shelf_and_existing_revision_guard(se
  product['name']='Changed product'
  assert save(c,product,product['revision']).status_code==200
  assert post(c,'/tasks/'+t['id']+'/picking/command',{'transcript':'next item'}).status_code==409
+
+@pytest.mark.parametrize('language', ['kn-IN','ta-IN','te-IN','ml-IN','mr-IN','bn-IN','gu-IN','pa-IN'])
+def test_regional_voice_commands_are_exact_and_preserve_native_script(language):
+ from app.warehouse_voice_languages import REGIONAL
+ from app.warehouse_voice_guide import intent
+ phrases=REGIONAL[language]['commands']
+ for command,alternatives in phrases.items():
+  for phrase in alternatives:
+   assert intent(phrase,language)==command,(language,phrase,command)
+   assert intent(phrase+'!',language)==command
+ for unsupported in ('not found','next item then found it','finish picking','delete product','yes','confirmed',''):
+  assert intent(unsupported,language)=='unknown',(language,unsupported)
+
+
+@pytest.mark.parametrize('language', ['kn-IN','ta-IN','te-IN','ml-IN','mr-IN','bn-IN','gu-IN','pa-IN'])
+def test_regional_voice_guidance_and_timbre_language_never_mutate_picks(setup,monkeypatch,language):
+ from app.warehouse_voice_languages import REGIONAL
+ c,_=setup
+ task=post(c,'/search',{'collection':'clothing','query':'CLO-001','language':language}).json()
+ assert post(c,'/tasks/'+task['id']+'/picking/start').status_code==200
+ base=c.get('/api/warehouse/tasks/'+task['id']).json()
+ url='/tasks/'+task['id']+'/picking/command'
+ for command in ('next','repeat','verify','report','stop','help'):
+  phrase=REGIONAL[language]['commands'][command][0]
+  r=post(c,url,{'transcript':phrase,'line':0})
+  assert r.status_code==200,r.text
+  result=r.json()
+  assert result['action']==command
+  assert result['language']==language
+  assert result['text']
+  if command in ('next','repeat'):
+   assert 'CLO-001' in result['text']
+   assert REGIONAL[language]['labels'][4] in result['text']
+  if command in ('report','verify'):
+   assert result['line']==0
+ # Even a perfect "found it" transcript must not complete the task.
+ assert c.get('/api/warehouse/tasks/'+task['id']).json()==base
+ assert post(c,'/tasks/'+task['id']+'/picking/finish').status_code==409
+ assert c.get('/api/warehouse/issues').json()==[]
+ spoken=[]
+ async def fake_speak(text,locale):
+  spoken.append((text,locale))
+  return b'RIFF'+b'0'*24
+ monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
+ audio=post(c,'/tasks/'+task['id']+'/picking/guide-audio',{'command':'repeat','line':0})
+ assert audio.status_code==200,audio.text
+ assert audio.headers['content-type'].startswith('audio/wav')
+ assert spoken[0][1]==language
+ assert 'CLO-001' in spoken[0][0]
+ assert REGIONAL[language]['labels'][4] in spoken[0][0]

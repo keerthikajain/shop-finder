@@ -361,3 +361,19 @@ test('voice-guided picking uses real Prisma transcript and Timbre audio with saf
  const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
  assert.match(css,/\.sf-voice-guide\{/);
 });
+
+test('native voice picking commands are wired for every supported input language',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const terms=await readFile(new URL('../src/picking-voice-phrases.js',import.meta.url),'utf8');
+ const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
+ assert.match(src,/PICKING_VOICE_LANGUAGES\.includes\(task\.language\)/);
+ assert.match(src,/PICKING_VOICE_LANGUAGES\.includes\(next\.language\)/);
+ assert.match(src,/pickVoicePhrase\(task\.language,'next'\)/);
+ assert.match(src,/pickVoicePhrase\(task\.language,'repeat'\)/);
+ assert.match(src,/pickVoicePhrase\(task\.language,'verify'\)/);
+ assert.match(src,/pickVoicePhrase\(task\.language,'report'\)/);
+ assert.match(src,/pickVoicePhrase\(task\.language,'stop'\)/);
+ for(const code of ['kn-IN','ta-IN','te-IN','ml-IN','mr-IN','bn-IN','gu-IN','pa-IN'])assert.ok(terms.includes('"'+code+'"'),code);
+ assert.match(server,/voice_guide\.intent\(body\.transcript,task\['language'\]\)/);
+ assert.doesNotMatch(src,/PICKING_VOICE_LANGUAGES\.includes\(task\.language\)\?[^]*?kind:'manual',value:'confirmed'/);
+});
