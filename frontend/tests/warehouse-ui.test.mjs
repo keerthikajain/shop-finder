@@ -131,14 +131,11 @@ test('secondary Back is available only in phone layout while desktop uses the si
  assert.match(css,/@media \(min-width:701px\)\{\s*\.sf-compact-app \.sf-page-back\{display:none!important\}/);
  assert.match(css,/@media \(max-width:700px\)/);
 });
-test('authenticated header exposes working light and dark theme toggle on desktop and mobile',async()=>{
+test('appearance is controlled only from Settings, on both desktop and mobile',async()=>{
  const jsx=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
- assert.match(jsx,/className="wh-icon-button sf-header-theme"/);
- assert.match(jsx,/aria-pressed=\{theme==='dark'\}/);
+ assert.doesNotMatch(jsx,/className="wh-icon-button sf-header-theme"/);
+ assert.match(jsx,/<span>\{t\('Appearance'\)\}<\/span>/);
  assert.match(jsx,/onClick=\{\(\)=>TH\(theme==='dark'\?'light':'dark'\)\}/);
- assert.match(css,/\.sf-compact-app \.wh-top-actions \.sf-header-theme\{/);
- assert.match(css,/display:inline-flex!important/);
 });
 
 test('account actions are grouped and logout is separate from staff creation',async()=>{

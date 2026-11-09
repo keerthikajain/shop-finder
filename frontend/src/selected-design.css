@@ -2222,3 +2222,5 @@ body,.wh-app{
 
 /* Clearer mixed-language search results and touch-friendly actions. */
 .wh-no-match button{min-height:44px;margin:4px 8px 0 0}.wh-place-path span,.wh-response{overflow-wrap:anywhere}.sf-voice-guide-heading small{line-height:1.55}
+
+.sf-manager-empty{display:grid;gap:8px;margin:14px 0;padding:14px;border:1px solid var(--wh-border);border-radius:10px;background:var(--wh-soft)}.sf-manager-empty p{margin:0;line-height:1.5;overflow-wrap:anywhere}.sf-manager-empty button{justify-self:start;min-height:44px;padding:9px 14px}.sf-manager-count{font-size:12px;color:var(--wh-muted);margin:12px 0}
