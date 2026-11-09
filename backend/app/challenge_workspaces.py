@@ -99,6 +99,18 @@ def _create(base,username,password,language,ip,quick=False):
   initialize(db)
   initialize_accounts(db)
   initialize_warehouse(db,True)
+  # Example records keep functioning as real catalogue data while displaying
+  # a neutral sample facility name instead of an internal seed label.
+  with sqlite3.connect(db) as c:
+   for collection,sku,payload in c.execute('SELECT collection,sku,payload FROM wh_items').fetchall():
+    product=json.loads(payload)
+    changed=False
+    for placement in product.get('placements',[]):
+     if placement.get('facility')=='Demo Hub':
+      placement['facility']='Example Store'
+      changed=True
+    if changed:
+     c.execute('UPDATE wh_items SET payload=? WHERE collection=? AND sku=?',(json.dumps(product,ensure_ascii=False),collection,sku))
   seed(db)
   uid=add_account(db,username,password,role='owner',language=language)
   with sqlite3.connect(db) as c:c.execute('UPDATE accounts SET is_challenge=1 WHERE id=?',(uid,))
