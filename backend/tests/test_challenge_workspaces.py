@@ -50,7 +50,7 @@ def test_separate_judge_workspaces_use_real_owner_permissions_and_catalogues(mon
   assert first.get('/api/users').status_code==200
   assert second.get('/api/users').status_code==200
   invitation=first.post('/api/users/invitations',headers=H)
-  assert invitation.status_code==200,invitation.text
+  assert invitation.status_code==201,invitation.text
   with TestClient(app) as staff_browser:
    enrolled=staff_browser.post('/api/auth/join',headers=H,json={'code':invitation.json()['code'],
       'username':'worker_review_1','password':'strong-review-worker-abc','language':'en'})
