@@ -94,7 +94,7 @@ export default function WarehouseApp({user,preferences,logout}){
    N(t('All done! Your picking list is complete.'));
   }else if(next.picking?.status==='active'){
    const index=next.lines.findIndex(line=>!line.complete);
-   if(index>=0){AL(index);N(t('Picked! Moving to the next item.'));if(voice&&auto)await playPickGuidance('next',next,index)}
+   if(index>=0){AL(index);N(t('Picked! Moving to the next item.'));if(window.matchMedia('(max-width:700px)').matches)requestAnimationFrame(()=>document.getElementById('sf-picking-line-'+index)?.scrollIntoView({behavior:'smooth',block:'center'}));if(voice&&auto)await playPickGuidance('next',next,index)}
   }
  }
  async function scan(line,kind,value){await run(async()=>{const next=await api('/tasks/'+task.id+'/scan',{line,kind,value});D(null);PV(null);await progressAfterPick(next,kind!=='product');await reload()})}
@@ -257,12 +257,12 @@ export default function WarehouseApp({user,preferences,logout}){
 }
 function Report({item,location,collection,run,busy,voice,language,onError,onSave}){
  const t=useT(),[reason,R]=useState(location?'Item not found at the recorded location.':''),[suggested,S]=useState('');
- return <div className="sf-report-flow"><p><b>{item.name}</b> · {item.sku}</p>{location&&<><p>{t('Recorded location:')} <strong>{pathText(location)}</strong></p><p>{t('A report asks the owner to verify it. Your suggestion will not automatically change the catalogue.')}</p></>}
+ return <div className="sf-report-flow"><p><b>{item.name}</b> · {item.sku}</p>{location&&<><p>{t('Recorded location:')} <strong>{pathText(location)}</strong></p><p>{t('Thanks for flagging this. Share what you noticed so your manager can check the location.')}</p></>}
  <form onSubmit={e=>{e.preventDefault();run(async()=>{const report=await api('/issues',{collection,sku:item.sku,reason,kind:location?'wrong_location':'general',location_code:location?.code||'',suggested_location:suggested});onSave(report)})}}>
  <label>{t('What needs checking?')}<textarea required minLength={3} maxLength={400} value={reason} onChange={e=>R(e.target.value)}/></label>
  <VoiceButton small enabled={voice&&!busy} {...{language,onError}} onText={R}/>
  {location&&<div className="sf-report-location"><label htmlFor="sf-report-location-input">{t('Where did you find it? (optional)')}</label><div className="sf-report-location-field"><input id="sf-report-location-input" value={suggested} maxLength={200} placeholder={t('Rack, shelf or bin, if known')} onChange={e=>S(e.target.value)}/><VoiceButton iconOnly small enabled={voice&&!busy} {...{language,onError}} label="Dictate suggested shelf location" onText={text=>{if(typeof text==='string'&&text.trim())S(text.trim().slice(0,200))}}/></div>{!voice&&<small>{t('Voice input unavailable. You can enter the shelf location manually.')}</small>}</div>}
- <p>{t('Only submitted issues appear in Activity. A verified owner change updates future searches.')}</p>
+ <p>{t('Your report will appear in Activity. Once your manager verifies a correction, future searches will use the updated location.')}</p>
  <button className="primary" disabled={busy||reason.trim().length<3}>{t('Send for review')}</button>
  </form></div>;
 }
