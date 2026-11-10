@@ -780,7 +780,7 @@ test('one explicit search confirmation starts first shelf narration and automati
  assert.match(src,/\[handsFree,HF\]=useState\(true\)/);
  assert.match(src,/const guided=voice&&PICKING_VOICE_LANGUAGES\.includes\(next\.language\)/);
  assert.match(src,/VGP\(!\(guided&&handsFree\)\)/);
- assert.match(src,/if\(guided\)await playPickGuidance\('next',next/);
+ assert.match(src,/if\(guided\)await playPickGuidance\('start',next/);
  assert.match(src,/onClick=\{\(\)=>pickAction\('start'\)\}/);
  assert.match(src,/!busy&&!speaking&&!modal&&page==='find'/);
  assert.doesNotMatch(src,/if\(fromVoice&&auto\)await speak\(result\)/);
@@ -799,4 +799,42 @@ test('repeat, found it, no, and wrong-location keep the voice loop safe and conv
  assert.match(src,/if\(answer\.action==='report'&&answer\.line!=null\)/);
  assert.match(src,/if\(voice\)await playPickGuidance\(answer\.action,source/);
  assert.match(src,/if\(err\.name!=='AbortError'&&serial===playbackSerial\.current\)\{VGP\(true\)/);
+});
+
+
+test('first item announcement and automatic advance do not require clicking Next',async()=>{
+ const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
+ const guide=await readFile(new URL('../../backend/app/warehouse_voice_guide.py',import.meta.url),'utf8');
+ assert.match(ui,/if\(guided\)await playPickGuidance\('start',next/);
+ assert.match(server,/command:Literal\['start','next'/);
+ assert.match(guide,/elif action==='start':/);
+ assert.match(guide,/First item:/);
+ assert.match(guide,/पहला सामान/);
+ assert.match(guide,/మొదటి వస్తువు:/);
+ assert.match(ui,/async function progressAfterPick\(next,completed\)/);
+ assert.match(ui,/if\(!completed\|\|next\.picking\?\.status!=='active'/);
+ assert.match(ui,/const index=nextPendingPickIndex\(next\.lines\)/);
+ assert.match(ui,/if\(voice&&auto\)await playPickGuidance\('next',next,index\)/);
+ assert.match(ui,/line\.deferred_reason/);
+});
+
+test('denying or reporting leaves item unconfirmed and automatically chooses another',async()=>{
+ const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
+ const guide=await readFile(new URL('../../backend/app/warehouse_voice_guide.py',import.meta.url),'utf8');
+ assert.match(ui,/async function deferPick\(source,line,reason\)/);
+ assert.match(ui,/deferPick\(source,index,'declined'\)/);
+ assert.match(ui,/deferPick\(task,index,'declined'\)/);
+ assert.match(ui,/await deferPick\(task,index,'reported'\)/);
+ assert.match(ui,/await onSave\(report\)/);
+ assert.match(ui,/async function retryPick\(line\)/);
+ assert.match(ui,/Retry this item/);
+ assert.match(ui,/!x\.line\.complete&&!x\.line\.deferred_reason/);
+ assert.match(server,/def defer_picking\(tid:str,body:PickDefer,request:Request\)/);
+ assert.match(server,/def retry_picking\(tid:str,body:PickRetry,request:Request\)/);
+ assert.match(server,/Submit the wrong-location report before moving/);
+ assert.match(server,/Retry this deferred item before confirming it/);
+ assert.match(guide,/not line\.get\('deferred_reason'\)/);
+ assert.match(guide,/Some items remain unconfirmed/);
 });
