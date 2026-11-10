@@ -652,3 +652,30 @@ test('report mic waits until spoken guidance stops to avoid transcribing itself'
  assert.match(src,/VoiceButton small autoStop enabled=\{!busy&&!speaking\}/);
  assert.match(src,/collection=\{modal\.item\.collection\} \{\.\.\.\{run,busy,voice,language,speaking\}\}/);
 });
+
+test('activity report card groups issue, shelf locations and resolution instead of wide scattered flex rows',async()=>{
+ const source=await readFile(new URL('../src/warehouse-manage.jsx',import.meta.url),'utf8');
+ const css=await readFile(new URL('../src/activity-settings-polish.css',import.meta.url),'utf8');
+ assert.match(source,/function TeamReportCard\(\{issue,owner,busy,voice,language,onError,onCorrectLocation,run,reload\}\)/);
+ assert.match(source,/className="sf-team-report-header"/);
+ assert.match(source,/className="sf-team-report-body"/);
+ assert.match(source,/className="sf-team-report-locations"/);
+ assert.match(source,/className="sf-team-report-resolution"/);
+ assert.match(source,/className="sf-team-report-transcript"/);
+ assert.match(source,/issues\.filter\(i=>!filter\|\|i\.status===filter\)\.map\(i=><TeamReportCard/);
+ assert.match(css,/\.sf-compact-app \.wh-review-row\.sf-team-report-card\{/);
+ assert.match(css,/@media\(max-width:700px\)/);
+});
+test('manager dictation writes actual recognized text into editable resolution note and shows errors',async()=>{
+ const source=await readFile(new URL('../src/warehouse-manage.jsx',import.meta.url),'utf8');
+ assert.match(source,/const recognized=String\(text\|\|''\)\.trim\(\)/);
+ assert.match(source,/SetTranscript\(recognized\)/);
+ assert.match(source,/SetNote\(recognized\.slice\(0,300\)\)/);
+ assert.match(source,/autoStop enabled=\{!busy\}/);
+ assert.match(source,/onText=\{captureNote\}/);
+ assert.match(source,/onError=\{message=>\{SetVoiceError/);
+ assert.match(source,/role="alert"/);
+ assert.match(source,/textarea rows=\{2\} value=\{note\}/);
+ assert.match(source,/if\(!owner\|\|!open\|\|busy\|\|note\.trim\(\)\.length<3\)return/);
+ assert.match(source,/await api\('\/issues\/'\+issue\.id\+'\/resolve',\{note:note\.trim\(\)\}\)/);
+});
