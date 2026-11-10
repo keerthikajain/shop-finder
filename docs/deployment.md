@@ -23,7 +23,7 @@ Choose a host that runs a persistent Python/Docker service and provides HTTPS, a
 - Attach a persistent disk mounted at `/data`.
 - Set `SHOP_FINDER_DB=/data/shop_finder.sqlite3`.
 - Set `SHOP_FINDER_SECURE_COOKIE=true` behind the host's HTTPS endpoint.
-- Set `SHOP_FINDER_SEED_DEMO=true` for the synthetic challenge demo. Use a fresh database and `false` for an empty real installation. Switching this flag off does not delete existing demo records.
+- For the **judge workspace experience**, set `SHOP_FINDER_CHALLENGE_SIGNUP=true` on a dedicated deployment and keep `SHOP_FINDER_SEED_DEMO=false`: separate synthetic example workspaces are created when visitors enter. Use a fresh isolated database; don't enable shared demo seeding on the judge instance. Switching a previous seed flag off does not remove already created records.
 - Set the two Gnani settings above only in the host's secrets panel.
 - Use one instance and one worker for this pilot. The entry point listens on the host-provided `PORT` or 8080.
 - Run `python scripts/create_owner.py` in the host shell. Create staff through Account after logging in.
