@@ -602,3 +602,14 @@ test('recording button stays readable in contrast and no repeated actions on com
  assert.match(css,/background:#9c2850!important;color:#fff!important/);
  assert.match(css,/\.sf-pick-complete-message/);
 });
+
+test('review stage has a single microphone path and clears stale voice reply on a new search',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/PV\(null\);VGC\(''\);VGT\(''\);VGP\(false\)/);
+ assert.match(src,/!\(handsFree&&taskVoice\.current&&canStartPick\)&&<VoiceButton small autoStop/);
+ assert.match(src,/picking\.status==='ready'\&\&voice\&\&handsFree\&\&taskVoice\.current\&\&canStartPick/);
+ const {isStartPickingCommand}=await import('../src/picking-voice-phrases.js');
+ assert.equal(isStartPickingCommand('en-IN','Confirm.'),true);
+ assert.equal(isStartPickingCommand('hi-en','confirm'),true);
+ assert.equal(isStartPickingCommand('en-IN','do not confirm'),false);
+});
