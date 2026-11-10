@@ -58,10 +58,11 @@ def create_app(db_path=None, seed_demo=None, *, auth_required=True, challenge_ro
         'en-IN':"Hi there! Welcome to Finder. Let's make finding things easier!",
         'hi-IN':'नमस्ते! फाइंडर में आपका स्वागत है। चलिए, आज का काम आसान बनाते हैं!',
         'hi-en':"Hi there! Finder mein aapka welcome hai. Chaliye, aaj ka kaam aasan banate hain!",
+        'kn-IN':'ನಮಸ್ಕಾರ! ಫೈಂಡರ್‌ಗೆ ಸ್ವಾಗತ. ಇಂದಿನ ಕೆಲಸವನ್ನು ಸುಲಭವಾಗಿ ಮಾಡೋಣ!',
         'te-IN':'నమస్కారం! ఫైండర్‌కు స్వాగతం. ఈ రోజు పని మరింత సులభంగా చేద్దాం!'
     }
     @app.get('/api/welcome/audio')
-    async def public_greeting_audio(request:Request,language:Literal['en-IN','hi-IN','hi-en','te-IN']='en-IN'):
+    async def public_greeting_audio(request:Request,language:Literal['en-IN','hi-IN','hi-en','kn-IN','te-IN']='en-IN'):
         enforce_rate(path,'anonymous-welcome:'+str(request.client.host if request.client else 'unknown'),'/api/welcome/audio')
         if not voice.ready():raise HTTPException(503,'Voice greeting is unavailable.')
         if language not in public_welcome_cache:
@@ -72,7 +73,7 @@ def create_app(db_path=None, seed_demo=None, *, auth_required=True, challenge_ro
 
     class WelcomeSpeechRequest(BaseModel):
         model_config=ConfigDict(extra='forbid')
-        language:Literal['en-IN','hi-IN','hi-en','te-IN']='en-IN'
+        language:Literal['en-IN','hi-IN','hi-en','kn-IN','te-IN']='en-IN'
         hour:int=Field(ge=0,le=23)
 
     @app.post('/api/voice/welcome')
