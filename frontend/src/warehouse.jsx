@@ -282,13 +282,13 @@ function Report({item,location,collection,run,busy,voice,language,onError,onSave
    onSave(report);
   });
  }
- function hearReport(text){
+ async function hearReport(text){
   const phrase=String(text||'').trim(),normalized=phrase.toLocaleLowerCase().replace(/[.,!?।॥]/g,'').trim();
   if(!phrase)return;
   H(phrase);
   if(['send report','submit report','report bhejo','रिपोर्ट भेजो','ವರದಿ ಕಳುಹಿಸಿ','నివేదిక పంపండి'].includes(normalized)){
    if(reason.trim().length<3){onError(t('Describe what needs checking before sending the report.'));return;}
-   submitReport();return;
+   await submitReport();return;
   }
   if(['cancel report','रिपोर्ट रद्द करो'].includes(normalized)){PAUSE(true);return;}
   if(location&&/\b(?:rack|shelf|bin|aisle)\b/i.test(phrase))S(phrase.slice(0,200));
