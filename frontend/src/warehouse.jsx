@@ -147,8 +147,8 @@ export default function WarehouseApp({user,preferences,logout}){
   });
  }
  async function scan(line,kind,value){await run(async()=>{const next=await api('/tasks/'+task.id+'/scan',{line,kind,value});D(null);PV(null);await progressAfterPick(next,kind!=='product');await reload()})}
- async function playPickGuidance(command,source=task,line=activeLine){
-  if(!voice||!source)return;
+ async function playPickGuidance(command,source=task,line=activeLine,manual=false){
+  if(!voice||!source||(!manual&&voiceFlowStopped.current))return;
   stopSpeech();const serial=playbackSerial.current,controller=new AbortController();
   audioRequest.current=controller;SP(true);
   try{
@@ -158,7 +158,7 @@ export default function WarehouseApp({user,preferences,logout}){
    });
    if(!response.ok){const err=await response.json();throw Error(err.detail||'Spoken guidance unavailable.')}
    const blob=await response.blob();
-   if(serial!==playbackSerial.current)return;
+   if(serial!==playbackSerial.current||(!manual&&voiceFlowStopped.current))return;
    if(audioURL.current)URL.revokeObjectURL(audioURL.current);
    audioURL.current=URL.createObjectURL(blob);
    audio.current=new Audio(audioURL.current);
@@ -235,7 +235,7 @@ export default function WarehouseApp({user,preferences,logout}){
     return false; // The voice loop must not restart for this command.
    }
    if(answer.action==='stop'){PV(null);stopVoiceFlow();VGT(t('Voice guidance stopped. Picking progress is saved.'));return false}
-   if(voice)await playPickGuidance(answer.action,source,answer.line??activeLine);
+   if(voice&&!voiceFlowStopped.current)await playPickGuidance(answer.action,source,answer.line??activeLine);
   })
  }
  async function removeUnresolvedLine(index){
@@ -314,7 +314,7 @@ export default function WarehouseApp({user,preferences,logout}){
      
      {picking.status==='active'&&voice&&(!handsFree||voiceGuidePaused)&&<VoiceButton small autoStop enabled={!busy&&!speaking&&!pickPaused} language={task.language} onError={E} onText={transcript=>voicePickCommand(transcript)} label={t('Speak picking command')}/>}
      {picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused&&<HandsFreePicking enabled={!busy&&!speaking&&!modal&&page==='find'} language={task.language} collection={collection} onError={message=>{VGP(true);E(message)}} onCommand={transcript=>voicePickCommand(transcript)}/>}
-     <button type="button" disabled={picking.status!=='active'||(busy&&!speaking)||(!speaking&&(!voice||pickPaused))} onClick={()=>speaking?stopVoiceFlow():playPickGuidance('repeat')}>{t(speaking?'Stop guidance audio':'Read guidance')}</button>
+     <button type="button" disabled={picking.status!=='active'||(busy&&!speaking)||(!speaking&&(!voice||pickPaused))} onClick={()=>speaking?stopVoiceFlow():playPickGuidance('repeat',task,activeLine,true)}>{t(speaking?'Stop guidance audio':'Read guidance')}</button>
      {picking.status==='active'&&voice&&handsFree&&<button type="button" className="sf-voice-listen-toggle" aria-pressed={!voiceGuidePaused} disabled={voiceGuidePaused&&(busy||speaking||pickPaused)} onClick={()=>{if(!voiceGuidePaused){PV(null);stopVoiceFlow();return}voiceFlowStopped.current=false;VGP(false);if(task&&nextPickIndex>=0&&auto)playPickGuidance('repeat',task,nextPickIndex)}}>{t(voiceGuidePaused?'Resume voice guidance':'Stop voice guidance')}</button>}
     </div>
     <div className="sf-voice-guide-choices"><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'next'))}>{pickVoicePhrase(task.language,'next')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'repeat'))}>{pickVoicePhrase(task.language,'repeat')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'verify'))}>{pickVoicePhrase(task.language,'verify')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'report'))}>{pickVoicePhrase(task.language,'report')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'stop'))}>{pickVoicePhrase(task.language,'stop')}</button></div>
