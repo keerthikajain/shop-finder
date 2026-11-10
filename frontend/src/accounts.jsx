@@ -17,10 +17,10 @@ export function AccountGate({children}){
 // Public sign-in is intentionally unauthenticated. Use the browser's own
 // speech engine here, never a public Gnani TTS endpoint or browser API key.
 const WELCOME_TEXT={
- en:'Welcome to Shop Finder. Sign in to continue, or explore a workspace.',
- hi:'शॉप फाइंडर में आपका स्वागत है। आगे बढ़ने के लिए साइन इन करें, या अपना वर्कस्पेस एक्सप्लोर करें।',
- kn:'ಶಾಪ್ ಫೈಂಡರ್‌ಗೆ ಸ್ವಾಗತ. ಮುಂದುವರಿಯಲು ಸೈನ್ ಇನ್ ಮಾಡಿ ಅಥವಾ ವರ್ಕ್‌ಸ್ಪೇಸ್ ನೋಡಿ.',
- te:'షాప్ ఫైండర్‌కు స్వాగతం. కొనసాగించడానికి సైన్ ఇన్ చేయండి లేదా వర్క్‌స్పేస్‌ను చూడండి.'
+ en:'Welcome to Finder. Find what you need, and know exactly where it belongs.',
+ hi:'फाइंडर में आपका स्वागत है। जो चाहिए, उसे आसानी से ढूँढ़ें और जानें कि वह कहाँ रखा है।',
+ kn:'ಫೈಂಡರ್‌ಗೆ ಸ್ವಾಗತ. ನಿಮಗೆ ಬೇಕಾದ ವಸ್ತುವನ್ನು ಸುಲಭವಾಗಿ ಹುಡುಕಿ, ಅದು ಎಲ್ಲಿದೆ ಎಂದು ತಿಳಿಯಿರಿ.',
+ te:'ఫైండర్‌కు స్వాగతం. మీకు కావలసిన వస్తువును సులభంగా కనుగొని, అది ఎక్కడ ఉందో తెలుసుకోండి.'
 };
 const WELCOME_LANGUAGE={en:'en-IN',hi:'hi-IN',kn:'kn-IN',te:'te-IN'};
 export function Login({ready,configured,language,L,error,busy,notice='',demoEnabled=false,signupEnabled=false,onChallenge,onDemo,onSubmit,onJoin,onRegister,onClearFeedback}){
@@ -30,14 +30,22 @@ export function Login({ready,configured,language,L,error,busy,notice='',demoEnab
  const [showPassword,setShowPassword]=useState(false);
  const [welcomeStatus,WS]=useState('idle');
  const welcomeAttempted=useRef(false);
- const greeting=signupEnabled?WELCOME_TEXT[language]||WELCOME_TEXT.en:'Welcome to Shop Finder. Sign in to continue.';
+ const greeting=WELCOME_TEXT[language]||WELCOME_TEXT.en;
  function speakWelcome(){
   if(typeof window==='undefined'||!('speechSynthesis' in window)||!('SpeechSynthesisUtterance' in window)){WS('unavailable');return;}
   try{
    window.speechSynthesis.cancel();
    const speech=new window.SpeechSynthesisUtterance(greeting);
    speech.lang=WELCOME_LANGUAGE[language]||'en-IN';
-   speech.rate=0.94;
+   const available=window.speechSynthesis.getVoices?.()||[];
+   const locale=(WELCOME_LANGUAGE[language]||'en-IN').toLowerCase();
+   const femaleVoice=/\b(zira|heera|veena|samantha|victoria|karen|tessa|moira|fiona|female|woman|aria|jenny|neerja|swara)\b/i;
+   const preferred=available.find(v=>v.lang?.toLowerCase()===locale&&femaleVoice.test(v.name))
+     ||available.find(v=>v.lang?.toLowerCase().split('-')[0]===locale.split('-')[0]&&femaleVoice.test(v.name));
+   if(preferred)speech.voice=preferred;
+   speech.rate=0.92;
+   speech.pitch=1.08;
+   speech.volume=1;
    speech.onstart=()=>WS('speaking');
    speech.onend=()=>WS('done');
    speech.onerror=()=>WS('unavailable');
