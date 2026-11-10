@@ -582,3 +582,50 @@ test('spoken search waits for the worker to approve the proposed picking list',a
  assert.match(src,/if\(!canStartPick\|\|busy\)/);
  assert.doesNotMatch(src,/async function startIfReady\(/);
 });
+
+
+test('voice guidance asks before final completion and never finishes immediately after the last pick',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const server=await readFile(new URL('../../backend/app/warehouse_voice_guide.py',import.meta.url),'utf8');
+ assert.match(src,/\[pendingFinish,PF\]=useState\(false\)/);
+ assert.match(src,/PF\(true\);VGT\(t\('All items picked\. Ready to finish\?/);
+ assert.match(src,/if\(pendingFinish\)/);
+ assert.match(src,/if\(response==='yes'\)/);
+ assert.match(src,/await pickAction\('finish'\)/);
+ assert.match(src,/Review and finish/);
+ assert.match(src,/if\(workflow==='finish'\)/);
+ assert.match(src,/if\(workflow==='missing'\)/);
+ assert.match(server,/Ready to finish\? Say yes to finish, or no to review/);
+});
+test('finish and not-found commands require an exact speech match',async()=>{
+ const {pickingWorkflowIntent}=await import('../src/picking-workflow-intents.js');
+ for(const [language,finish,missing] of [
+  ['en-IN','finish picking','not found'],
+  ['hi-IN','पिकिंग पूरी करो','नहीं मिला'],
+  ['hi-en','picking khatam karo','nahi mila'],
+  ['kn-IN','ಪಿಕಿಂಗ್ ಪೂರ್ಣಗೊಳಿಸಿ','ಸಿಗಲಿಲ್ಲ'],
+  ['te-IN','పికింగ్ పూర్తి చేయండి','దొరకలేదు']
+ ]){
+  assert.equal(pickingWorkflowIntent(language,finish),'finish',language);
+  assert.equal(pickingWorkflowIntent(language,missing),'missing',language);
+  assert.equal(pickingWorkflowIntent(language,'not '+finish),'unknown',language);
+ }
+});
+test('manager can dictate a real report resolution but cannot skip review notes',async()=>{
+ const src=await readFile(new URL('../src/warehouse-manage.jsx',import.meta.url),'utf8');
+ const app=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/async function resolveIssue\(issue\)/);
+ assert.match(src,/!owner\|\|issue\.status!=='open'\|\|note\.length<3/);
+ assert.match(src,/Say resolve report/);
+ assert.match(src,/onText=\{text=>N\(old=>/);
+ assert.match(app,/\.\.\.\{collection,owner,run,busy,language,voice\}/);
+});
+test('responsive candidate artwork and voice shortcuts do not occupy full phone screen',async()=>{
+ const css=await readFile(new URL('../src/activity-settings-polish.css',import.meta.url),'utf8');
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(css,/grid-template-columns:56px minmax\(0,1fr\)/);
+ assert.match(css,/height:60px!important/);
+ assert.match(src,/sf-voice-shortcuts/);
+ assert.doesNotMatch(src,/Hands-free picking commands/);
+ assert.match(src,/recent\.some\(r=>collection==='all'/);
+});
