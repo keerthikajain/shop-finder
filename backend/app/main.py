@@ -88,6 +88,7 @@ def create_app(db_path=None, seed_demo=None, *, auth_required=True, challenge_ro
             'en-IN':{'morning':'Good morning','afternoon':'Good afternoon','evening':'Good evening'},
             'hi-IN':{'morning':'सुप्रभात','afternoon':'नमस्कार','evening':'शुभ संध्या'},
             'hi-en':{'morning':'Good morning','afternoon':'Good afternoon','evening':'Good evening'},
+            'kn-IN':{'morning':'ಶುಭೋದಯ','afternoon':'ನಮಸ್ಕಾರ','evening':'ಶುಭ ಸಂಜೆ'},
             'te-IN':{'morning':'శుభోదయం','afternoon':'శుభ మధ్యాహ్నం','evening':'శుభ సాయంత్రం'}
         }
         if not name:
@@ -98,6 +99,7 @@ def create_app(db_path=None, seed_demo=None, *, auth_required=True, challenge_ro
                 'en-IN':"Welcome back to Finder. Let's make finding things easier!",
                 'hi-IN':'फाइंडर में फिर से स्वागत है। चलिए, आज का काम आसान बनाते हैं!',
                 'hi-en':"Finder mein welcome back! Chaliye, aaj ka kaam aasan banate hain!",
+                'kn-IN':'ಫೈಂಡರ್‌ಗೆ ಮತ್ತೆ ಸ್ವಾಗತ! ಇಂದಿನ ಕೆಲಸವನ್ನು ಸುಲಭವಾಗಿ ಮಾಡೋಣ!',
                 'te-IN':'ఫైండర్‌కు మళ్లీ స్వాగతం! ఈ రోజు పని మరింత సులభంగా చేద్దాం!'
             }
             speech=prefix+remainder[body.language]
