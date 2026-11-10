@@ -92,7 +92,7 @@ export default function WarehouseApp({user,preferences,logout}){
    taskVoice.current=fromVoice;
    P('find');VQ(false);AL(0);
    T(result);
-   N(t('Review the matched items and saved shelves. Say Confirm and start picking, or use the confirmation button.'));
+   N(t('Review the matched items. Confirm the search once to hear the first location and start voice-guided picking.'));
    if(global)N('Label lookup searched across all product types, brands and locations.');
    R(await request('/warehouse/tasks'));
    // Voice search results remain silent until reviewed; the first location is spoken on confirmation.
@@ -132,7 +132,7 @@ export default function WarehouseApp({user,preferences,logout}){
    audio.current=new Audio(audioURL.current);
    audio.current.onended=()=>{if(serial===playbackSerial.current)SP(false)};
    await audio.current.play();
-  }catch(err){if(err.name!=='AbortError'&&serial===playbackSerial.current)E(err.name==='NotAllowedError'?t('Tap Read guidance to allow audio playback.'):err.message);if(serial===playbackSerial.current)SP(false)}
+  }catch(err){if(err.name!=='AbortError'&&serial===playbackSerial.current){VGP(true);E(err.name==='NotAllowedError'?t('Tap Read guidance to allow audio playback. Then start listening when ready.'):err.message)}if(serial===playbackSerial.current)SP(false)}
   finally{if(audioRequest.current===controller)audioRequest.current=null}
  }
  async function voicePickCommand(transcript,source=task){
@@ -140,7 +140,7 @@ export default function WarehouseApp({user,preferences,logout}){
   VGC(transcript);
   if(pendingVoicePick){
    const response=pickConfirmationIntent(source.language,transcript);
-   if(response==='no'){PV(null);VGT(t('No problem. Let me know when you have the item.'));return}
+   if(response==='no'){PV(null);VGT(t('No problem. The item is not confirmed. I will repeat the location.'));if(voice)await playPickGuidance('repeat',source,pendingVoicePick.line);return}
    if(response==='yes'){
     const current=source.lines[pendingVoicePick.line];
     if(source.id!==pendingVoicePick.taskId||!current||current.complete||current.selected?.sku!==pendingVoicePick.sku){
@@ -155,7 +155,29 @@ export default function WarehouseApp({user,preferences,logout}){
     });
     return;
    }
+   // During confirmation, Repeat replays the question rather than losing the pending item.
+   const responseCommand=await api('/tasks/'+source.id+'/picking/command',{transcript,line:pendingVoicePick.line});
+   if(responseCommand.action==='repeat'||responseCommand.action==='verify'){
+    VGT(t('Did you pick the correct item? Say Yes or No.'));
+    if(voice)await playPickGuidance('verify',source,pendingVoicePick.line);
+    return;
+   }
+   if(responseCommand.action==='stop'){
+    PV(null);VGP(true);stopSpeech();VGT(t('Listening stopped. Your picking progress is saved.'));
+    return false;
+   }
+   if(responseCommand.action==='report'){
+    const index=pendingVoicePick.line,selected=source.lines[index];
+    PV(null);VGP(true);
+    if(selected?.selected){
+     D({type:'report',item:selected.selected,location:selected.location,index});
+     VGT(t('Picking listening paused. Explain the wrong location by voice or typing.'));
+     if(voice)await playPickGuidance('report',source,index);
+    }
+    return false;
+   }
    VGT(t('Please say Yes to confirm you picked this item, or No to cancel.'));
+   if(voice)await playPickGuidance('verify',source,pendingVoicePick.line);
    return;
   }
   return await run(async()=>{
@@ -174,7 +196,7 @@ export default function WarehouseApp({user,preferences,logout}){
     return false; // The voice loop must not restart for this command.
    }
    if(answer.action==='stop'){PV(null);VGP(true);stopSpeech();return false}
-   if(answer.action!=='unknown'&&voice){await playPickGuidance(answer.action,source,answer.line??activeLine)}
+   if(voice)await playPickGuidance(answer.action,source,answer.line??activeLine);
   })
  }
  async function removeUnresolvedLine(index){
@@ -250,7 +272,7 @@ export default function WarehouseApp({user,preferences,logout}){
     <div className="sf-voice-guide-actions">
      
      {picking.status==='active'&&voice&&(!handsFree||voiceGuidePaused)&&<VoiceButton small autoStop enabled={!busy&&!speaking&&!pickPaused} language={task.language} onError={E} onText={transcript=>voicePickCommand(transcript)} label={t('Speak picking command')}/>}
-     {picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused&&<HandsFreePicking enabled={!busy&&!speaking&&!modal&&page==='find'} language={task.language} collection={collection} onError={E} onCommand={transcript=>voicePickCommand(transcript)}/>}
+     {picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused&&<HandsFreePicking enabled={!busy&&!speaking&&!modal&&page==='find'} language={task.language} collection={collection} onError={message=>{VGP(true);E(message)}} onCommand={transcript=>voicePickCommand(transcript)}/>}
      <button type="button" disabled={picking.status!=='active'||(busy&&!speaking)||(!speaking&&(!voice||pickPaused))} onClick={()=>speaking?stopSpeech():playPickGuidance('repeat')}>{t(speaking?'Stop guidance audio':'Read guidance')}</button>
      {picking.status==='active'&&voice&&handsFree&&<button type="button" className="sf-voice-listen-toggle" aria-pressed={!voiceGuidePaused} disabled={voiceGuidePaused&&(busy||speaking||pickPaused)} onClick={()=>{VGP(paused=>!paused);PV(null)}}>{t(voiceGuidePaused?'Start hands-free listening':'Stop hands-free listening')}</button>}
     </div>
