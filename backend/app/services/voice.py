@@ -132,7 +132,7 @@ def tts_profile(language):
 async def speak(text,language='en-IN'):
     model,selected_voice=tts_profile(language)
     r=await call('/api/v1/tts/inference',json={
-        'text':text,'model':model,'voice':selected_voice,'language':language,
+        'text':text,'model':model,'voice':selected_voice,'language':('auto' if model=='timbre-v3.0' and language=='hi-en' else language),
         'audio_config':{'encoding':'linear_pcm','container':'wav',
                         'sample_rate':48000,'num_channels':1,'sample_width':2}})
     if not r.content.startswith(b'RIFF'):
