@@ -611,7 +611,7 @@ test('recording button stays readable in contrast and no repeated actions on com
 
 test('review stage has a single microphone path and clears stale voice reply on a new search',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(src,/PV\(null\);VGC\(''\);VGT\(''\);VGP\(false\)/);
+ assert.match(src,/PV\(null\);VGC\(''\);VGT\(''\);VGP\(true\)/);
  assert.match(src,/enabled=\{!busy&&canStartPick\} language=\{task.language\} label=\{t\('Say confirm and start picking'\)\}/);
  assert.match(src,/onText=\{voiceStartPicking\}/);
  assert.doesNotMatch(src,/picking\.status==='ready'&&voice&&handsFree&&taskVoice\.current&&canStartPick/);
@@ -642,7 +642,8 @@ test('spoken report submission leaves pick listening paused until explicitly res
  assert.match(source,/VGP\(true\);D\(null\);N\('Report #'/);
  assert.match(source,/Voice picking is paused; resume when ready/);
  assert.match(source,/onClose=\{\(\)=>\{D\(null\);VGP\(true\)\}\}/);
- assert.match(source,/t\('Resume voice commands'\)/);
+ assert.match(source,/Start hands-free listening/);
+ assert.match(source,/Stop hands-free listening/);
 });
 test('pink disabled and recording buttons have readable, high-contrast foreground',async()=>{
  const css=await readFile(new URL('../src/product-polish.css',import.meta.url),'utf8');
