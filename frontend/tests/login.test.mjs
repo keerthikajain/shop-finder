@@ -145,7 +145,7 @@ test('login and registration expose all ten persistent interface languages',asyn
 
 test('public welcome offers browser speech without requiring an API key or blocking login',async()=>{
  const html=render({signupEnabled:true});
- assert.match(html,/Hear welcome/);
+ assert.doesNotMatch(html,/Hear welcome|Stop welcome/);
  assert.match(html,/Sign in to pick up where you left off\./);
  assert.doesNotMatch(html,/Welcome to Finder\. Your workspace is ready to explore\./);
  assert.doesNotMatch(html,/Welcome to Shop Finder\. Sign in to continue, or explore a workspace/);
@@ -153,7 +153,9 @@ test('public welcome offers browser speech without requiring an API key or block
  const src=await (await import('node:fs/promises')).readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
  assert.match(src,/SpeechSynthesisUtterance/);
  assert.match(src,/welcomeAttempted\.current=true/);
- assert.match(src,/speech\.onerror=\(\)=>WS\('unavailable'\)/);
+ assert.match(src,/welcomeAttempted\.current=true/);
+ assert.match(src,/window\.speechSynthesis\.speak\(speech\)/);
+ assert.doesNotMatch(src,/onClick=\{speakWelcome\}/);
  assert.doesNotMatch(src,/GNANI_API_KEY|\/voice\/speak/);
 });
 

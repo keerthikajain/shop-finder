@@ -397,7 +397,7 @@ test('voice picking is discoverable before starting and unmatched requests can b
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
  assert.match(ui,/picking.status!=='completed'&&<div className="sf-voice-guide"/);
- assert.match(ui,/Confirm once to hear the first shelf and begin guided picking automatically/);
+ assert.match(ui,/All items are ready\. Confirm search once/);
  assert.match(ui,/picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused/);
   assert.match(ui,/HandsFreePicking enabled=/);
  assert.match(ui,/async function removeUnresolvedLine\(index\)/);
@@ -586,7 +586,7 @@ test('spoken search waits for the worker to approve the proposed picking list',a
  assert.doesNotMatch(src,/picking.status==='ready'&&voice&&handsFree&&taskVoice.current&&canStartPick/);
  assert.match(src,/onText=\{voiceStartPicking\}/);
  assert.match(src,/onClick=\{\(\)=>pickAction\('start'\)\}/);
- assert.match(src,/Confirm once to hear the first shelf and begin guided picking automatically/);
+ assert.match(src,/All items are ready\. Confirm search once/);
  assert.match(src,/if\(!canStartPick\|\|busy\)/);
  assert.doesNotMatch(src,/async function startIfReady\(/);
 });
@@ -712,8 +712,9 @@ test('welcome voice uses browser speech without exposing a TTS credential',async
  assert.match(account,/new window\.SpeechSynthesisUtterance\(greeting\)/);
  assert.match(account,/window\.speechSynthesis\.getVoices/);
  assert.match(account,/if\(preferred\)speech\.voice=preferred/);
- assert.match(account,/onClick=\{speakWelcome\}/);
- assert.match(account,/speech\.onerror=\(\)=>WS\('unavailable'\)/);
+ assert.doesNotMatch(account,/onClick=\{speakWelcome\}/);
+ assert.match(account,/welcomeAttempted\.current=true/);
+ assert.match(account,/window\.speechSynthesis\.speak\(speech\)/);
  assert.doesNotMatch(account,/GNANI_API_KEY/);
 });
 
@@ -776,8 +777,8 @@ test('spoken answers guidance welcome and reports expose explicit stop buttons',
  assert.match(src,/onClick=\{\(\)=>speaking\?stopSpeech\(\):speak\(task\)\}/);
  assert.match(src,/speaking\?'Stop guidance audio':'Read guidance'/);
  assert.match(src,/className="sf-report-stop-audio" onClick=\{onStopSpeaking\}/);
- assert.match(account,/welcomeStatus==='speaking'\|\|welcomeStatus==='starting'/);
- assert.match(account,/\?'Stop welcome':'Hear welcome'/);
+ assert.doesNotMatch(account,/welcomeStatus==='speaking'\|\|welcomeStatus==='starting'/);
+ assert.doesNotMatch(account,/\?'Stop welcome':'Hear welcome'/);
 });
 
 
@@ -867,4 +868,15 @@ test('voice picking keeps speaker and microphone turn-taking automatic but respe
  assert.match(listener,/if\(!enabled\)\{Status\('paused'\);return;/);
  assert.match(listener,/if\(cancelled\)return/);
  assert.match(listener,/recorder\?\.stop\(true\)/);
+});
+
+test('blocked search confirmation leads directly to unresolved variant choices',async()=>{
+ const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(ui,/disabled=\{busy\|\|!canStartPick\}/);
+ assert.match(ui,/Review unresolved items/);
+ assert.match(ui,/sf-pick-review-needed/);
+ assert.match(ui,/findIndex\(line=>!line.selected\|\|!line.location\|\|line.location_report_open\)/);
+ assert.match(ui,/scrollIntoView\(\{behavior:'smooth',block:'center'\}\)/);
+ assert.match(ui,/tabIndex=\{-1\} key=\{line.index\}/);
+ assert.match(ui,/Finder will not guess a size or version/);
 });

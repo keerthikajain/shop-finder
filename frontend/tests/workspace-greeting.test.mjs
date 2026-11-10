@@ -34,7 +34,7 @@ test('time-based welcome uses current local hour and only once per workspace mou
  const src=await readFile(new URL('../src/workspace-greeting.jsx',import.meta.url),'utf8');
  assert.match(src,/if\(attempted\.current\)return/);
  assert.match(src,/attempted\.current=true/);
- assert.match(src,/if\(!muted&&!interrupt\)speakGreeting\(\)/);
+ assert.match(src,/if\(!interrupt\)speakGreeting\(\)/);
 });
 
 test('localized spoken greetings and guest fallback never invent a name',()=>{
@@ -49,7 +49,7 @@ test('localized spoken greetings and guest fallback never invent a name',()=>{
  }
 });
 
-test('signed-in workspace has manual Hear/Stop, mute and voice-interruption safeguards',async()=>{
+test('workspace plays only one automatic warm greeting and no replay button',async()=>{
  const src=await readFile(new URL('../src/workspace-greeting.jsx',import.meta.url),'utf8');
  const app=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const css=await readFile(new URL('../src/workspace-greeting.css',import.meta.url),'utf8');
@@ -57,12 +57,11 @@ test('signed-in workspace has manual Hear/Stop, mute and voice-interruption safe
  assert.match(app,/<WorkspaceGreeting user=\{user\} voiceLanguage=\{language\} interrupt=/);
  assert.match(src,/SpeechSynthesisUtterance\(message\)/);
  assert.match(src,/FEMALE_VOICE\.test\(v\.name\)/);
- assert.match(src,/storageKey='finder-auto-greeting-muted:'/);
+ assert.match(src,/if\(attempted\.current\)return/);
+ assert.match(src,/if\(!interrupt\)speakGreeting\(\)/);
  assert.match(src,/if\(interrupt&&activeSpeech\.current\)stopGreeting\(\)/);
  assert.match(src,/window\.speechSynthesis\?\.cancel\(\)/);
- assert.match(src,/Hear greeting/);
- assert.match(src,/Stop greeting/);
- assert.match(src,/Mute automatic greeting/);
+ assert.doesNotMatch(src,/Hear greeting|Stop greeting|Mute automatic greeting/);
  assert.match(css,/@media\(max-width:480px\)/);
  assert.doesNotMatch(src,/GNANI_API_KEY|apiKey=/);
 });

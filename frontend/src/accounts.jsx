@@ -28,12 +28,10 @@ export function Login({ready,configured,language,L,error,busy,notice='',demoEnab
  const [screen,setScreen]=useState('login');
  const [joinMethod,setJoinMethod]=useState(null);
  const [showPassword,setShowPassword]=useState(false);
- const [welcomeStatus,WS]=useState('idle');
  const welcomeAttempted=useRef(false);
  const greeting=WELCOME_TEXT[language]||WELCOME_TEXT.en;
  function speakWelcome(){
-  if(typeof window!=='undefined'&&(welcomeStatus==='speaking'||welcomeStatus==='starting')){window.speechSynthesis?.cancel();WS('idle');return;}
-  if(typeof window==='undefined'||!('speechSynthesis' in window)||!('SpeechSynthesisUtterance' in window)){WS('unavailable');return;}
+  if(typeof window==='undefined'||!('speechSynthesis' in window)||!('SpeechSynthesisUtterance' in window))return;
   try{
    window.speechSynthesis.cancel();
    const speech=new window.SpeechSynthesisUtterance(greeting);
@@ -47,17 +45,13 @@ export function Login({ready,configured,language,L,error,busy,notice='',demoEnab
    speech.rate=0.92;
    speech.pitch=1.08;
    speech.volume=1;
-   speech.onstart=()=>WS('speaking');
-   speech.onend=()=>WS('done');
-   speech.onerror=()=>WS('unavailable');
-   WS('starting');
    window.speechSynthesis.speak(speech);
-  }catch{WS('unavailable');}
+  }catch{/* Browser autoplay can be unavailable; sign-in remains accessible. */}
  }
  useEffect(()=>{
   if(!ready||!configured||welcomeAttempted.current)return;
   welcomeAttempted.current=true;
-  speakWelcome(); // Browser may block unsolicited playback; button remains available.
+  speakWelcome(); // One attempt on page entry; browsers can block unsolicited speech.
  },[ready,configured]);
  useEffect(()=>()=>{try{window.speechSynthesis?.cancel()}catch{}},[]);
 
@@ -113,9 +107,7 @@ export function Login({ready,configured,language,L,error,busy,notice='',demoEnab
     <h1>{heading}</h1>
     <div className="sf-auth-welcome-row">
      <p className="sf-auth-page-subtitle">{subtitle}</p>
-    {ready&&configured&&<div className="sf-welcome-audio" aria-label={t('Welcome message')}>
-     <button type="button" onClick={speakWelcome} aria-label={t(welcomeStatus==='speaking'||welcomeStatus==='starting'?'Stop welcome message':'Hear welcome message')}><Glyph name="sound"/>{t(welcomeStatus==='speaking'||welcomeStatus==='starting'?'Stop welcome':'Hear welcome')}</button>
-    </div>}
+
     </div>
     <label className="sf-login-language">
      <span>{t('App language')}</span>

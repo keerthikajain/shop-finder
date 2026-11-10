@@ -1,42 +1,20 @@
-/* Personal, unobtrusive greeting visible once when the workspace opens. */
+/* One unobtrusive welcome, no replay controls. */
 .sf-workspace-greeting{
- display:flex;align-items:center;justify-content:space-between;gap:16px;
- margin:0 0 16px;padding:13px 17px;border:1px solid var(--wh-border,#ded9e4);
- border-radius:15px;background:var(--wh-soft,#f0e9fa);color:var(--wh-text,#25242a);
+ margin:0 0 14px;
+ padding:12px 16px;
+ border:1px solid var(--wh-border,#ded9e4);
+ border-radius:14px;
+ background:var(--wh-soft,#f0e9fa);
+ color:var(--wh-text,#25242a);
 }
-.sf-workspace-greeting-copy{display:flex;align-items:center;gap:12px;min-width:0}
-.sf-workspace-greeting-icon{
- display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
- width:35px;height:35px;border-radius:11px;background:var(--wh-surface,#fff);
- color:var(--wh-accent,#7035c6);
-}
-.sf-workspace-greeting-copy p{margin:0;font-size:14px;line-height:1.5;font-weight:600;overflow-wrap:anywhere}
-.sf-workspace-greeting-controls{display:flex;align-items:center;gap:12px;flex-shrink:0}
-.sf-workspace-greeting .sf-greeting-play{
- display:inline-flex;align-items:center;justify-content:center;gap:7px;
- border:1px solid var(--wh-border,#dcdadf);background:var(--wh-surface,#fff);
- color:var(--wh-text,#25242a);border-radius:10px;min-height:40px;padding:8px 12px;
- font-weight:600;cursor:pointer;white-space:nowrap;
-}
-.sf-workspace-greeting .sf-greeting-play:hover,
-.sf-workspace-greeting .sf-greeting-play:focus-visible{
- border-color:var(--wh-accent,#7035c6);color:var(--wh-accent,#7035c6);
-}
-.sf-workspace-greeting .sf-greeting-mute{
- display:inline-flex;align-items:center;gap:6px;font-size:12px;
- color:var(--wh-muted,#69666e);cursor:pointer;white-space:nowrap;
-}
-.sf-workspace-greeting .sf-greeting-mute input{
- width:16px;height:16px;accent-color:var(--wh-accent,#7035c6);
-}
-@media(max-width:860px){
- .sf-workspace-greeting{flex-wrap:wrap;align-items:flex-start}
- .sf-workspace-greeting-controls{width:100%;justify-content:space-between;flex-wrap:wrap}
+.sf-workspace-greeting p{
+ margin:0;
+ font-size:14px;
+ line-height:1.5;
+ font-weight:600;
+ overflow-wrap:anywhere;
 }
 @media(max-width:480px){
- .sf-workspace-greeting{padding:12px;margin-bottom:12px;gap:11px}
- .sf-workspace-greeting-copy p{font-size:13px}
- .sf-workspace-greeting-controls{gap:10px;align-items:stretch}
- .sf-workspace-greeting .sf-greeting-play{flex:1}
- .sf-workspace-greeting .sf-greeting-mute{white-space:normal}
+ .sf-workspace-greeting{padding:11px 12px;margin-bottom:12px}
+ .sf-workspace-greeting p{font-size:13px}
 }
