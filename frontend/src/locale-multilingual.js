@@ -7,10 +7,10 @@ export const additionalLocales=Object.fromEntries(
  Object.entries(translated).map(([code,values])=>
   [code,Object.fromEntries(keys.map((key,i)=>[key,values[i]]))])
 );
+// Limited release languages. Other translation dictionaries are retained for
+// existing accounts and future releases, not shown in user-facing selectors.
 export const APP_LANGUAGES=Object.freeze([
- ['en','English'],['hi','हिन्दी'],['bn','বাংলা'],['mr','मराठी'],
- ['gu','ગુજરાતી'],['pa','ਪੰਜਾਬੀ'],['kn','ಕನ್ನಡ'],['te','తెలుగు'],
- ['ta','தமிழ்'],['ml','മലയാളം']
+ ['hi','हिन्दी / Hindi'],['hi-en','Hinglish'],['te','తెలుగు / Telugu']
 ]);
 export const SUPPORTED_APP_CODES=APP_LANGUAGES.map(([code])=>code);
 const operationalKeys=["Approve","Reject","Pending approval","Staff registration requests","Refresh requests","No pending staff registrations.","Self-registration","Generate workspace code","Rotate workspace code","Disable registration","Enable registration","Generate staff invitation","Invite staff securely","Save changes","Save profile","Change password and log out","New password (12+ characters)","Current location","New location","Confirm location change","Report status","Reports","Change history","No items match this filter.","No recorded match.","No matching catalogue record.","Recorded locations","Shelf label","Scan or enter code","No scanner? Mark as manually checked","Read answer","Your recent requests will appear here. Start with a name, size or item code."];
