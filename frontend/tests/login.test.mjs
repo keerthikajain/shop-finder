@@ -146,7 +146,8 @@ test('login and registration expose all ten persistent interface languages',asyn
 test('public welcome offers browser speech without requiring an API key or blocking login',async()=>{
  const html=render({signupEnabled:true});
  assert.match(html,/Hear welcome/);
- assert.match(html,/Welcome to Shop Finder\. Sign in to continue, or explore a workspace/);
+ assert.match(html,/Welcome to Finder\. Find what you need, and know exactly where it belongs\./);
+ assert.doesNotMatch(html,/Welcome to Shop Finder\. Sign in to continue, or explore a workspace/);
  assert.match(html,/name="username"/);
  const src=await (await import('node:fs/promises')).readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
  assert.match(src,/SpeechSynthesisUtterance/);
