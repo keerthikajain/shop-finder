@@ -1,7 +1,7 @@
-import os
+import os,asyncio,re
 from pathlib import Path
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from typing import Literal
 from pydantic import BaseModel, Field, ConfigDict
 from .services.matching import search
@@ -9,7 +9,7 @@ from .services import voice
 from .workflows import install
 from .reports import install_reports
 from .warehouse import initialize_warehouse, install_warehouse
-from .accounts import initialize_accounts, install_accounts
+from .accounts import initialize_accounts, install_accounts, enforce_rate
 from .streaming import install_streaming
 
 class Constraints(BaseModel):
@@ -49,6 +49,59 @@ def create_app(db_path=None, seed_demo=None, *, auth_required=True, challenge_ro
     if challenge_root:
         from .challenge_workspaces import install_challenge_routes
         install_challenge_routes(app,path)
+
+    # Public sign-in can request only four fixed welcome clips. Cache provider audio
+    # by language to avoid anonymous users triggering arbitrary paid synthesis.
+    public_welcome_cache={}
+    public_welcome_lock=asyncio.Lock()
+    PUBLIC_GREETING={
+        'en-IN':"Hi there! Welcome to Finder. Let's make finding things easier!",
+        'hi-IN':'नमस्ते! फाइंडर में आपका स्वागत है। चलिए, आज का काम आसान बनाते हैं!',
+        'hi-en':"Hi there! Finder mein aapka welcome hai. Chaliye, aaj ka kaam aasan banate hain!",
+        'te-IN':'నమస్కారం! ఫైండర్‌కు స్వాగతం. ఈ రోజు పని మరింత సులభంగా చేద్దాం!'
+    }
+    @app.get('/api/welcome/audio')
+    async def public_greeting_audio(request:Request,language:Literal['en-IN','hi-IN','hi-en','te-IN']='en-IN'):
+        enforce_rate(path,'anonymous-welcome:'+str(request.client.host if request.client else 'unknown'),'/api/welcome/audio')
+        if not voice.ready():raise HTTPException(503,'Voice greeting is unavailable.')
+        if language not in public_welcome_cache:
+            async with public_welcome_lock:
+                if language not in public_welcome_cache:
+                    public_welcome_cache[language]=await voice.speak(PUBLIC_GREETING[language],language,voice_override='Riyaa')
+        return Response(public_welcome_cache[language],media_type='audio/wav',headers={'Cache-Control':'public, max-age=86400','X-Content-Type-Options':'nosniff'})
+
+    class WelcomeSpeechRequest(BaseModel):
+        model_config=ConfigDict(extra='forbid')
+        language:Literal['en-IN','hi-IN','hi-en','te-IN']='en-IN'
+        hour:int=Field(ge=0,le=23)
+
+    @app.post('/api/voice/welcome')
+    async def private_greeting_audio(body:WelcomeSpeechRequest,request:Request):
+        user=getattr(request.state,'user',None)
+        if not user:raise HTTPException(401,'Please log in.')
+        if not voice.ready():raise HTTPException(503,'Voice greeting is unavailable.')
+        # Never trust a name supplied by the browser. Use the stored account.
+        name='' if user.get('is_demo') else re.sub(r"[^\\w-]",'',str(user.get('display_name') or user.get('username') or '').split(' ')[0],flags=re.UNICODE)[:32]
+        greeting_time='morning' if body.hour<12 else 'afternoon' if body.hour<17 else 'evening'
+        salutation={
+            'en-IN':{'morning':'Good morning','afternoon':'Good afternoon','evening':'Good evening'},
+            'hi-IN':{'morning':'सुप्रभात','afternoon':'नमस्कार','evening':'शुभ संध्या'},
+            'hi-en':{'morning':'Good morning','afternoon':'Good afternoon','evening':'Good evening'},
+            'te-IN':{'morning':'శుభోదయం','afternoon':'శుభ మధ్యాహ్నం','evening':'శుభ సాయంత్రం'}
+        }
+        if not name:
+            speech=PUBLIC_GREETING[body.language]
+        else:
+            prefix=salutation[body.language][greeting_time]+', '+name+'! '
+            remainder={
+                'en-IN':"Welcome back to Finder. Let's make finding things easier!",
+                'hi-IN':'फाइंडर में फिर से स्वागत है। चलिए, आज का काम आसान बनाते हैं!',
+                'hi-en':"Finder mein welcome back! Chaliye, aaj ka kaam aasan banate hain!",
+                'te-IN':'ఫైండర్‌కు మళ్లీ స్వాగతం! ఈ రోజు పని మరింత సులభంగా చేద్దాం!'
+            }
+            speech=prefix+remainder[body.language]
+        audio=await voice.speak(speech,body.language,voice_override='Riyaa')
+        return Response(audio,media_type='audio/wav',headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'})
 
     @app.get('/api/health')
     def health(request: Request):
