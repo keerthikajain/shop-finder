@@ -510,7 +510,7 @@ test('hands-free picking is bounded and pauses while sound, modals or work is ac
  const listener=await readFile(new URL('../src/hands-free-picking.jsx',import.meta.url),'utf8');
  const recording=await readFile(new URL('../src/recording.js',import.meta.url),'utf8');
  assert.match(source,/HandsFreePicking enabled=\{!busy\&\&!speaking\&\&!modal\&\&!voiceGuidePaused\&\&page==='find'\}/);
- assert.match(source,/Pause hands-free microphone/);
+ assert.match(source,/Pause listening/);
  assert.match(listener,/stopOnSilence:true/);
  assert.match(listener,/\.stop\(true\)/);
  assert.match(listener,/request\('\/voice\/transcribe\?'/);
