@@ -1,4 +1,4 @@
-import React,{useState,useEffect} from 'react';
+import React,{useState,useEffect,useRef} from 'react';
 import {Mark,Glyph} from './warehouse-ui.jsx';
 import {Locale,useT,APP_LANGUAGES} from './locale.js';
 export async function request(path,options={}){
@@ -14,11 +14,44 @@ export function AccountGate({children}){
  async function logout(){await request('/auth/logout',{method:'POST'});setUser(null)}
  return <Locale.Provider value={user?.language||language}>{user?children({user,preferences,logout}):<Login {...{ready,configured,language,L,error,busy,notice,demoEnabled,signupEnabled}} onChallenge={async({username,password,quick=false})=>{B(true);E('');try{const visitor=await request(quick?'/challenge/try':'/challenge/signup',{method:'POST',body:quick?'{}':JSON.stringify({username,password,language})});setUser(visitor);L(visitor.language)}catch(err){E(err.message);throw err}finally{B(false)}}} onDemo={async()=>{B(true);E('');try{const visitor=await request('/demo/enter',{method:'POST'});setUser(visitor);L(visitor.language)}catch(err){E(err.message)}finally{B(false)}}} onRegister={async ({code,username,password,display_name})=>{B(true);E('');N('');try{await request('/auth/register',{method:'POST',body:JSON.stringify({code,username,password,display_name,language})});N('Registration requested. An owner or manager must approve your account before you can sign in.')}catch(err){E(err.message);throw err}finally{B(false)}}} onJoin={async ({code,username,password})=>{B(true);E('');N('');try{await request('/auth/join',{method:'POST',body:JSON.stringify({code,username,password,language})});N('Staff account created. Sign in with your new credentials.')}catch(err){E(err.message);throw err}finally{B(false)}}} onClearFeedback={()=>{E('');N('')}} onSubmit={async e=>{e.preventDefault();const data=new FormData(e.currentTarget);B(true);E('');N('');try{const next=await request('/auth/login',{method:'POST',body:JSON.stringify({username:data.get('username'),password:data.get('password')})});setUser(next);L(next.language)}catch(err){E(err.message)}finally{B(false)}}}/>}</Locale.Provider>;
 }
+// Public sign-in is intentionally unauthenticated. Use the browser's own
+// speech engine here, never a public Gnani TTS endpoint or browser API key.
+const WELCOME_TEXT={
+ en:'Welcome to Shop Finder. Sign in to continue, or explore a workspace.',
+ hi:'शॉप फाइंडर में आपका स्वागत है। आगे बढ़ने के लिए साइन इन करें, या अपना वर्कस्पेस एक्सप्लोर करें।',
+ kn:'ಶಾಪ್ ಫೈಂಡರ್‌ಗೆ ಸ್ವಾಗತ. ಮುಂದುವರಿಯಲು ಸೈನ್ ಇನ್ ಮಾಡಿ ಅಥವಾ ವರ್ಕ್‌ಸ್ಪೇಸ್ ನೋಡಿ.',
+ te:'షాప్ ఫైండర్‌కు స్వాగతం. కొనసాగించడానికి సైన్ ఇన్ చేయండి లేదా వర్క్‌స్పేస్‌ను చూడండి.'
+};
+const WELCOME_LANGUAGE={en:'en-IN',hi:'hi-IN',kn:'kn-IN',te:'te-IN'};
 export function Login({ready,configured,language,L,error,busy,notice='',demoEnabled=false,signupEnabled=false,onChallenge,onDemo,onSubmit,onJoin,onRegister,onClearFeedback}){
  const t=useT();
  const [screen,setScreen]=useState('login');
  const [joinMethod,setJoinMethod]=useState(null);
  const [showPassword,setShowPassword]=useState(false);
+ const [welcomeStatus,WS]=useState('idle');
+ const welcomeAttempted=useRef(false);
+ const greeting=signupEnabled?WELCOME_TEXT[language]||WELCOME_TEXT.en:'Welcome to Shop Finder. Sign in to continue.';
+ function speakWelcome(){
+  if(typeof window==='undefined'||!('speechSynthesis' in window)||!('SpeechSynthesisUtterance' in window)){WS('unavailable');return;}
+  try{
+   window.speechSynthesis.cancel();
+   const speech=new window.SpeechSynthesisUtterance(greeting);
+   speech.lang=WELCOME_LANGUAGE[language]||'en-IN';
+   speech.rate=0.94;
+   speech.onstart=()=>WS('speaking');
+   speech.onend=()=>WS('done');
+   speech.onerror=()=>WS('unavailable');
+   WS('starting');
+   window.speechSynthesis.speak(speech);
+  }catch{WS('unavailable');}
+ }
+ useEffect(()=>{
+  if(!ready||!configured||welcomeAttempted.current)return;
+  welcomeAttempted.current=true;
+  speakWelcome(); // Browser may block unsolicited playback; button remains available.
+ },[ready,configured]);
+ useEffect(()=>()=>{try{window.speechSynthesis?.cancel()}catch{}},[]);
+
  const joining=screen==='join';
  const signingUp=screen==='signup';
 
@@ -68,6 +101,10 @@ export function Login({ready,configured,language,L,error,busy,notice='',demoEnab
    </section>
    <section className="glass login-card" aria-label={heading}>
     <h1>{heading}</h1>
+    {ready&&configured&&<div className="sf-welcome-audio" aria-label={t('Welcome message')}>
+     <p>{greeting}</p>
+     <button type="button" onClick={speakWelcome} aria-label={t('Hear welcome message')}><Glyph name="volume"/>{t(welcomeStatus==='speaking'?'Replay welcome':'Hear welcome')}</button>
+    </div>}
     <label className="sf-login-language">
      <span>{t('App language')}</span>
      <select aria-label={t('App language')} value={language} onChange={e=>L(e.target.value)}>{APP_LANGUAGES.map(([code,label])=><option key={code} value={code}>{label}</option>)}</select>
