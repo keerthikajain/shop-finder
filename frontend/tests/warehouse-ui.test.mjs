@@ -471,7 +471,8 @@ test('voice-first search requires transcript review before matching products',as
  assert.match(source,/Check or edit the transcript, then press Find items/);
  assert.match(source,/className="sf-request-review"/);
  assert.match(source,/task\.query/);
- assert.match(source,/spokenLanguage\|\|detectedSearchLanguage/);
+ assert.match(source,/language,\s*brand:/);
+ assert.doesNotMatch(source,/language:language==='auto'/);
  assert.doesNotMatch(source,/if\(fromVoice\&\&auto\)await speak\(result\)/);
   assert.match(source,/T\(result\)/);
   assert.doesNotMatch(source,/const next=await startIfReady\(result\)/);
