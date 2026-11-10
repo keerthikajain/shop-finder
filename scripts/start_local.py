@@ -3,6 +3,23 @@ import os,secrets,getpass,subprocess,sys,shutil,importlib.util
 if os.name=='posix':os.umask(0o077)
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
+# Read only approved backend configuration keys from the private local .env.
+# The file is never copied to the frontend or printed in logs.
+config_keys={'GNANI_ENABLED','GNANI_API_KEY','GNANI_STT_MODEL','GNANI_TTS_MODEL',
+             'GNANI_TTS_VOICE','SHOP_FINDER_SEED_DEMO','SHOP_FINDER_PUBLIC_DEMO',
+             'SHOP_FINDER_CHALLENGE_SIGNUP','SHOP_FINDER_CHALLENGE_DATA_DIR',
+             'SHOP_FINDER_SECURE_COOKIE','SHOP_FINDER_DB'}
+private_env=root/'.env'
+if private_env.is_file():
+    for raw in private_env.read_text(encoding='utf-8-sig').splitlines():
+        line=raw.strip()
+        if not line or line.startswith('#') or '=' not in line:continue
+        key,value=line.split('=',1)
+        key=key.strip()
+        if key in config_keys:
+            value=value.strip().strip('"').strip("'")
+            if value and value!='PASTE_YOUR_ACTUAL_API_KEY_HERE':
+                os.environ.setdefault(key,value)
 if importlib.util.find_spec('uvicorn') is None:
     raise SystemExit(f'Backend dependencies are missing. Run:\n"{sys.executable}" -m pip install -r backend/requirements-lock.txt')
 if shutil.which('node') is None:
@@ -31,7 +48,10 @@ if not has_owner:
 else:print('Log in with your owner or staff account in the browser.')
 env['GNANI_ENABLED']='false'
 if input('Enable live Gnani calls using your account credits? [y/N] ').strip().lower()=='y':
-    env['GNANI_API_KEY']=getpass.getpass('Gnani API key (hidden, not saved): ')
+    if not env.get('GNANI_API_KEY'):
+        env['GNANI_API_KEY']=getpass.getpass('Gnani API key (hidden, not saved): ')
+    if not env.get('GNANI_API_KEY'):
+        raise SystemExit('Gnani API key is required for live voice.')
     env['GNANI_ENABLED']='true'
 try:subprocess.run(['node','scripts/dev.mjs'],cwd=root,env=env,check=True)
 except KeyboardInterrupt:pass
