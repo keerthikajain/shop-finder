@@ -71,12 +71,12 @@ def guide(task,action,requested_line,check_line):
  index=pending_line(task)
  if index is None:
   completion={
-   'kn-IN':'ಎಲ್ಲಾ ವಸ್ತುಗಳ ಪರಿಶೀಲನೆ ಮುಗಿದಿದೆ. ಪಟ್ಟಿಯನ್ನು ಪೂರ್ಣಗೊಳಿಸುತ್ತಿದ್ದೇವೆ.',
-   'te-IN':'అన్ని వస్తువులను తనిఖీ చేశాం. జాబితాను పూర్తి చేస్తున్నాం.'
+   'kn-IN':'ಎಲ್ಲಾ ವಸ್ತುಗಳನ್ನು ತೆಗೆದುಕೊಂಡಿದ್ದೀರಿ. ಪಿಕಿಂಗ್ ಪೂರ್ಣಗೊಳಿಸಬೇಕೇ? ಹೌದು ಅಥವಾ ಇಲ್ಲ ಎಂದು ಹೇಳಿ.',
+   'te-IN':'అన్ని వస్తువులు తీసుకున్నారు. పికింగ్ పూర్తి చేయాలా? అవును లేదా కాదు అని చెప్పండి.'
   }
   spoken=completion.get(language,messages['done'] if regional else
-    ('सारा सामान जाँच लिया गया है। सूची पूरी हो रही है।' if hi else
-     'Everything is checked. Finishing your picking list now.'))
+    ('सारा सामान मिल गया। क्या पिकिंग पूरी कर दें? हाँ या नहीं कहें।' if hi else
+     'All items are picked. Ready to finish? Say yes to finish, or no to review.'))
   return {'action':'done','line':None,'text':spoken,'language':language}
  if action in ('repeat','verify','report') and 0<=requested_line<len(task['lines']) and not task['lines'][requested_line].get('complete'):
   index=requested_line
