@@ -399,7 +399,7 @@ test('voice picking is discoverable before starting and unmatched requests can b
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
  assert.match(ui,/picking.status!=='completed'&&<div className="sf-voice-guide"/);
- assert.match(ui,/Nothing will start until you confirm/);
+ assert.match(ui,/Nothing will start until you press Confirm and start picking or explicitly say that command/);
  assert.match(ui,/enabled={picking.status==='active'&&voice&&!busy&&!voiceGuidePaused}/);
   assert.match(ui,/HandsFreePicking enabled=/);
  assert.match(ui,/async function removeUnresolvedLine\(index\)/);
@@ -580,7 +580,7 @@ test('spoken search waits for the worker to approve the proposed picking list',a
  assert.doesNotMatch(src,/picking.status==='ready'&&voice&&handsFree&&taskVoice.current&&canStartPick/);
  assert.match(src,/onText=\{voiceStartPicking\}/);
  assert.match(src,/onClick=\{\(\)=>pickAction\('start'\)\}/);
- assert.match(src,/Nothing will start until you confirm/);
+ assert.match(src,/Nothing will start until you press Confirm and start picking or explicitly say that command/);
  assert.match(src,/if\(!canStartPick\|\|busy\)/);
  assert.doesNotMatch(src,/async function startIfReady\(/);
 });
@@ -609,8 +609,10 @@ test('recording button stays readable in contrast and no repeated actions on com
 test('review stage has a single microphone path and clears stale voice reply on a new search',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/PV\(null\);VGC\(''\);VGT\(''\);VGP\(false\)/);
- assert.match(src,/!\(handsFree&&taskVoice\.current&&canStartPick\)&&<VoiceButton small autoStop/);
- assert.match(src,/picking\.status==='ready'\&\&voice\&\&handsFree\&\&taskVoice\.current\&\&canStartPick/);
+ assert.match(src,/enabled=\{!busy&&canStartPick\} language=\{task.language\} label=\{t\('Say confirm and start picking'\)\}/);
+ assert.match(src,/onText=\{voiceStartPicking\}/);
+ assert.doesNotMatch(src,/picking\.status==='ready'&&voice&&handsFree&&taskVoice\.current&&canStartPick/);
+ assert.match(src,/picking\.status==='active'&&voice&&handsFree&&<HandsFreePicking/);
  const {isStartPickingCommand}=await import('../src/picking-voice-phrases.js');
  assert.equal(isStartPickingCommand('en-IN','Confirm.'),true);
  assert.equal(isStartPickingCommand('hi-en','confirm'),true);
