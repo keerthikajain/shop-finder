@@ -252,13 +252,45 @@ export default function WarehouseApp({user,preferences,logout}){
  </div></Feedback.Provider>
 }
 function Report({item,location,collection,run,busy,voice,language,onError,onSave}){
- const t=useT(),[reason,R]=useState(location?'Item not found at the recorded location.':''),[suggested,S]=useState('');
- return <div className="sf-report-flow"><p><b>{item.name}</b> · {item.sku}</p>{location&&<><p>{t('Recorded location:')} <strong>{pathText(location)}</strong></p><p>{t('Thanks for flagging this. Share what you noticed so your manager can check the location.')}</p></>}
- <form onSubmit={e=>{e.preventDefault();run(async()=>{const report=await api('/issues',{collection,sku:item.sku,reason,kind:location?'wrong_location':'general',location_code:location?.code||'',suggested_location:suggested});onSave(report)})}}>
+ const t=useT(),[reason,R]=useState(location?'Item not found at the recorded location.':''),[suggested,S]=useState(''),[heard,H]=useState(''),[heardField,HF]=useState(''),[pendingSubmit,PS]=useState(false);
+ async function submitReport(){
+  if(busy||reason.trim().length<3)return;
+  await run(async()=>{
+   const report=await api('/issues',{collection,sku:item.sku,reason:reason.trim(),kind:location?'wrong_location':'general',location_code:location?.code||'',suggested_location:suggested.trim()});
+   onSave(report);
+  });
+ }
+ async function voiceCommand(text){
+  const transcript=String(text||'').trim(),normalized=transcript.toLocaleLowerCase().replace(/[.,!?।॥]/g,'').trim();
+  if(!transcript)return;
+  H(transcript);HF('command');
+  if(['send report','submit report','report bhejo','रिपोर्ट भेजो','ವರದಿ ಕಳುಹಿಸಿ','నివేదిక పంపండి'].includes(normalized)){
+   if(reason.trim().length<3){onError(t('Tell me what needs checking before sending the report.'));return;}
+   PS(true);return;
+  }
+  if(pendingSubmit){
+   const yes=['yes','confirm','हाँ','हां','haan','ಹೌದು','అవును'].includes(normalized);
+   const no=['no','cancel','नहीं','nahi','ಇಲ್ಲ','కాదు'].includes(normalized);
+   if(yes){PS(false);await submitReport();return;}
+   if(no){PS(false);return;}
+  }
+  if(location&&/\b(?:rack|shelf|bin|aisle)\b/i.test(transcript)){S(transcript.slice(0,200));HF('shelf');}
+  else{R(transcript.slice(0,400));HF('reason');}
+ }
+ return <div className="sf-report-flow">
+ <p><b>{item.name}</b> · {item.sku}</p>
+ {location&&<><p>{t('Recorded location:')} <strong>{pathText(location)}</strong></p><p>{t('Thanks for letting us know. Tell us what happened, and your manager can review the location.')}</p></>}
+ {voice&&<div className="sf-report-voice-panel" aria-label={t('Voice report')}>
+   <strong>{t('Tell us what happened')}</strong>
+   <small>{t('Speak the problem or the shelf where you found it. The words we hear will appear below.')}</small>
+   <VoiceButton small autoStop enabled={!busy} {...{language,onError}} label={t('Speak report')} onText={voiceCommand} onPartial={text=>{H(text);HF('listening')}}/>
+   <div className="sf-report-transcript" role="status" aria-live="polite"><span>{t('Recognized speech')}</span><p>{heard||t('Your spoken words will appear here after recognition.')}</p>{heardField==='reason'&&<small>{t('Added to the report description. Check it before sending.')}</small>}{heardField==='shelf'&&<small>{t('Added as a suggested location.')}</small>}</div>
+   {pendingSubmit&&<div className="sf-report-send-approval" role="status"><strong>{t('Send this report to your manager?')}</strong><p>{t('Say Yes to send, or No to keep editing.')}</p><button type="button" disabled={busy} onClick={submitReport}>{t('Yes, send report')}</button><button type="button" onClick={()=>PS(false)}>{t('Not yet')}</button></div>}
+  </div>}
+ <form onSubmit={e=>{e.preventDefault();submitReport()}}>
  <label>{t('What needs checking?')}<textarea required minLength={3} maxLength={400} value={reason} onChange={e=>R(e.target.value)}/></label>
- <VoiceButton small enabled={voice&&!busy} {...{language,onError}} onText={R}/>
- {location&&<div className="sf-report-location"><label htmlFor="sf-report-location-input">{t('Where did you find it? (optional)')}</label><div className="sf-report-location-field"><input id="sf-report-location-input" value={suggested} maxLength={200} placeholder={t('Rack, shelf or bin, if known')} onChange={e=>S(e.target.value)}/><VoiceButton iconOnly small enabled={voice&&!busy} {...{language,onError}} label="Dictate suggested shelf location" onText={text=>{if(typeof text==='string'&&text.trim())S(text.trim().slice(0,200))}}/></div>{!voice&&<small>{t('Voice input unavailable. You can enter the shelf location manually.')}</small>}</div>}
- <p>{t('Your report will appear in Activity. Once your manager verifies a correction, future searches will use the updated location.')}</p>
+ {location&&<div className="sf-report-location"><label htmlFor="sf-report-location-input">{t('Where did you find it? (optional)')}</label><div className="sf-report-location-field"><input id="sf-report-location-input" value={suggested} maxLength={200} placeholder={t('Rack, shelf or bin, if known')} onChange={e=>S(e.target.value)}/></div></div>}
+ <p>{t('Your report will appear in Activity. Your manager can review it and update the saved shelf if needed.')}</p>
  <button className="primary" disabled={busy||reason.trim().length<3}>{t('Send for review')}</button>
  </form></div>;
 }
