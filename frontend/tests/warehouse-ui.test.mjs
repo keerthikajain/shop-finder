@@ -399,7 +399,7 @@ test('voice picking is discoverable before starting and unmatched requests can b
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
  assert.match(ui,/picking.status!=='completed'&&<div className="sf-voice-guide"/);
- assert.match(ui,/Nothing will start until you press Confirm and start picking or explicitly say that command/);
+ assert.match(ui,/Confirm once to hear the first shelf and begin guided picking automatically/);
  assert.match(ui,/picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused/);
   assert.match(ui,/HandsFreePicking enabled=/);
  assert.match(ui,/async function removeUnresolvedLine\(index\)/);
@@ -475,7 +475,7 @@ test('voice-first search requires transcript review before matching products',as
  assert.match(source,/className="sf-request-review"/);
  assert.match(source,/task\.query/);
  assert.match(source,/spokenLanguage\|\|detectedSearchLanguage/);
- assert.match(source,/if\(fromVoice\&\&auto\)await speak\(result\)/);
+ assert.doesNotMatch(source,/if\(fromVoice\&\&auto\)await speak\(result\)/);
   assert.match(source,/T\(result\)/);
   assert.doesNotMatch(source,/const next=await startIfReady\(result\)/);
 });
@@ -498,9 +498,9 @@ test('search shows a review stage until the worker confirms the picking list',as
  assert.doesNotMatch(source,/async function startIfReady\(result\)/);
  assert.doesNotMatch(source,/const next=await startIfReady\(result\)/);
  assert.match(source,/T\(result\)/);
- assert.match(source,/Review the matched items and saved shelves/);
+ assert.match(source,/Review the matched items\. Confirm the search once to hear the first location/);
  assert.match(source,/Confirm and start picking/);
- assert.match(source,/Say confirm and start picking/);
+ assert.match(source,/Confirm search by voice/);
  assert.match(source,/await pickAction\('start'\)/);
  assert.match(source,/api\('\/tasks\/'\+task\.id\+'\/picking\/'\+kind/);
  assert.match(source,/if\(!canStartPick\|\|busy\)/);
@@ -513,7 +513,7 @@ test('hands-free picking is bounded and pauses while sound, modals or work is ac
  const listener=await readFile(new URL('../src/hands-free-picking.jsx',import.meta.url),'utf8');
  const recording=await readFile(new URL('../src/recording.js',import.meta.url),'utf8');
  assert.match(source,/HandsFreePicking enabled=\{!busy&&!speaking&&!modal&&page==='find'\}/);
- assert.match(source,/\[handsFree,HF\]=useState\(false\)/);
+ assert.match(source,/\[handsFree,HF\]=useState\(true\)/);
  assert.match(source,/\[voiceGuidePaused,VGP\]=useState\(true\)/);
  assert.match(source,/Stop hands-free listening/);
  assert.match(source,/Start hands-free listening/);
@@ -583,7 +583,7 @@ test('spoken search waits for the worker to approve the proposed picking list',a
  assert.doesNotMatch(src,/picking.status==='ready'&&voice&&handsFree&&taskVoice.current&&canStartPick/);
  assert.match(src,/onText=\{voiceStartPicking\}/);
  assert.match(src,/onClick=\{\(\)=>pickAction\('start'\)\}/);
- assert.match(src,/Nothing will start until you press Confirm and start picking or explicitly say that command/);
+ assert.match(src,/Confirm once to hear the first shelf and begin guided picking automatically/);
  assert.match(src,/if\(!canStartPick\|\|busy\)/);
  assert.doesNotMatch(src,/async function startIfReady\(/);
 });
@@ -612,7 +612,7 @@ test('recording button stays readable in contrast and no repeated actions on com
 test('review stage has a single microphone path and clears stale voice reply on a new search',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/PV\(null\);VGC\(''\);VGT\(''\);VGP\(true\)/);
- assert.match(src,/enabled=\{!busy&&canStartPick\} language=\{task.language\} label=\{t\('Say confirm and start picking'\)\}/);
+ assert.match(src,/enabled=\{!busy&&canStartPick\} language=\{task.language\} label=\{t\('Confirm search by voice'\)\}/);
  assert.match(src,/onText=\{voiceStartPicking\}/);
  assert.doesNotMatch(src,/picking\.status==='ready'&&voice&&handsFree&&taskVoice\.current&&canStartPick/);
  assert.match(src,/picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused&&<HandsFreePicking/);
@@ -745,14 +745,14 @@ test('manual microphone can always stop recording even when a parent becomes una
  assert.match(src,/aria-pressed=\{state==='recording'\}/);
 });
 
-test('picking controls pause and resume persisted progress and never start listening automatically',async()=>{
+test('picking pause and resume persist progress while automatic listening starts only after confirmation',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const backend=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
  assert.match(src,/async function togglePickPause\(\)/);
  assert.match(src,/task\.picking\?\.paused\?'resume':'pause'/);
  assert.match(src,/className="sf-pick-pause-toggle"/);
  assert.match(src,/pickPaused\?'Resume picking':'Pause picking'/);
- assert.match(src,/\[handsFree,HF\]=useState\(false\)/);
+ assert.match(src,/\[handsFree,HF\]=useState\(true\)/);
  assert.match(src,/\[voiceGuidePaused,VGP\]=useState\(true\)/);
  assert.match(src,/onClick=\{\(\)=>\{VGP\(paused=>!paused\);PV\(null\)\}\}/);
  assert.match(src,/disabled=\{busy\|\|pickPaused\|\|verifiedCount!==task\.lines\.length\}/);
@@ -772,4 +772,30 @@ test('spoken answers guidance welcome and reports expose explicit stop buttons',
  assert.match(src,/className="sf-report-stop-audio" onClick=\{onStopSpeaking\}/);
  assert.match(account,/welcomeStatus==='speaking'\|\|welcomeStatus==='starting'/);
  assert.match(account,/\?'Stop welcome':'Hear welcome'/);
+});
+
+
+test('one explicit search confirmation starts first shelf narration and automatic listening',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/\[handsFree,HF\]=useState\(true\)/);
+ assert.match(src,/const guided=voice&&PICKING_VOICE_LANGUAGES\.includes\(next\.language\)/);
+ assert.match(src,/VGP\(!\(guided&&handsFree\)\)/);
+ assert.match(src,/if\(guided\)await playPickGuidance\('next',next/);
+ assert.match(src,/onClick=\{\(\)=>pickAction\('start'\)\}/);
+ assert.match(src,/!busy&&!speaking&&!modal&&page==='find'/);
+ assert.doesNotMatch(src,/if\(fromVoice&&auto\)await speak\(result\)/);
+});
+
+test('repeat, found it, no, and wrong-location keep the voice loop safe and conversational',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/if\(answer\.action==='verify'&&answer\.line!=null\)/);
+ assert.match(src,/await playPickGuidance\('verify',source,answer\.line\)/);
+ assert.match(src,/if\(response==='yes'\)/);
+ assert.match(src,/if\(response==='no'\)/);
+ assert.match(src,/await playPickGuidance\('repeat',source,pendingVoicePick\.line\)/);
+ assert.match(src,/if\(responseCommand\.action==='repeat'\|\|responseCommand\.action==='verify'\)/);
+ assert.match(src,/if\(responseCommand\.action==='report'\)/);
+ assert.match(src,/if\(answer\.action==='report'&&answer\.line!=null\)/);
+ assert.match(src,/if\(voice\)await playPickGuidance\(answer\.action,source/);
+ assert.match(src,/if\(err\.name!=='AbortError'&&serial===playbackSerial\.current\)\{VGP\(true\)/);
 });
