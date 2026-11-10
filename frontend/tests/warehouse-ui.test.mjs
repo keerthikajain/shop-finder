@@ -793,7 +793,8 @@ test('repeat, found it, no, and wrong-location keep the voice loop safe and conv
  assert.match(src,/if\(response==='yes'\)/);
  assert.match(src,/if\(response==='no'\)/);
  assert.match(src,/await playPickGuidance\('repeat',source,pendingVoicePick\.line\)/);
- assert.match(src,/if\(responseCommand\.action==='repeat'\|\|responseCommand\.action==='verify'\)/);
+ assert.match(src,/if\(responseCommand\.action==='repeat'\)/);
+ assert.match(src,/if\(responseCommand\.action==='verify'\)/);
  assert.match(src,/if\(responseCommand\.action==='report'\)/);
  assert.match(src,/if\(answer\.action==='report'&&answer\.line!=null\)/);
  assert.match(src,/if\(voice\)await playPickGuidance\(answer\.action,source/);
