@@ -44,10 +44,10 @@ export default function HandsFreePicking({enabled,language,collection='all',onCo
  },[enabled,language,collection,cycle,halted]);
  return <div className="sf-hands-free-status" role="status" aria-live="polite">
   <span className={'sf-listen-dot '+(enabled&&!halted&&status==='listening'?'active':'')}/>
-  <span>{halted?'Microphone paused after an error. Use the manual microphone or retry.':
+  <span>{halted?'Voice is paused. Retry listening or use the on-screen shortcuts.':
    !enabled?'Voice listening paused.':
    status==='transcribing'?'Recognizing your command…':
-   status==='listening'?'Listening for a picking command…':'Preparing microphone…'}</span>
-  {halted&&<button type="button" onClick={()=>{Halt(false);Next(n=>n+1)}}>Retry voice</button>}
+   status==='listening'?'Listening for your response…':'Preparing microphone…'}</span>
+  {halted&&<button type="button" onClick={()=>{Halt(false);Next(n=>n+1)}}>Retry listening</button>}
  </div>;
 }
