@@ -613,3 +613,26 @@ test('review stage has a single microphone path and clears stale voice reply on 
  assert.equal(isStartPickingCommand('hi-en','confirm'),true);
  assert.equal(isStartPickingCommand('en-IN','do not confirm'),false);
 });
+
+test('wrong-location speech pauses warehouse mic and opens a manual report form',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/if\(answer\.action==='report'&&answer\.line!=null\)\{PV\(null\);VGP\(true\)/);
+ assert.match(src,/audio\.current\?\.pause\(\);SP\(false\)/);
+ assert.match(src,/D\(\{type:'report',item:selected\.selected,location:selected\.location,index:answer\.line\}\)/);
+ assert.match(src,/className="sf-report-quick-actions"/);
+ assert.match(src,/Item not here/);
+ assert.match(src,/Different shelf/);
+ assert.match(src,/Label unclear/);
+ assert.match(src,/Recording stops after your statement/);
+ assert.match(src,/Speak report/);
+ assert.match(src,/onText=\{voiceCommand\}/);
+ assert.match(src,/onClick=\{\(\)=>VGP\(false\)\}/);
+});
+test('last-loaded CSS ensures recording text is not pink on pink',async()=>{
+ const css=await readFile(new URL('../src/control-alignment.css',import.meta.url),'utf8');
+ assert.match(css,/\.sf-compact-app button\.wh-voice\.recording/);
+ assert.match(css,/background:#a62e55!important/);
+ assert.match(css,/color:#fff!important/);
+ assert.match(css,/-webkit-text-fill-color:#fff!important/);
+ assert.match(css,/\.sf-report-flow \.sf-report-quick-actions/);
+});
