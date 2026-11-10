@@ -274,12 +274,31 @@ export default function WarehouseApp({user,preferences,logout}){
  </div></Feedback.Provider>
 }
 function Report({item,location,collection,run,busy,voice,language,onError,onSave}){
- const t=useT(),[reason,R]=useState(location?'Item not found at the recorded location.':''),[suggested,S]=useState('');
+ const t=useT(),[reason,R]=useState(location?'Item not found at the recorded location.':''),[suggested,S]=useState(''),[heard,H]=useState(''),[paused,PAUSE]=useState(false);
+ async function submitReport(){
+  if(busy||reason.trim().length<3)return;
+  await run(async()=>{
+   const report=await api('/issues',{collection,sku:item.sku,reason:reason.trim(),kind:location?'wrong_location':'general',location_code:location?.code||'',suggested_location:suggested.trim()});
+   onSave(report);
+  });
+ }
+ function hearReport(text){
+  const phrase=String(text||'').trim(),normalized=phrase.toLocaleLowerCase().replace(/[.,!?।॥]/g,'').trim();
+  if(!phrase)return;
+  H(phrase);
+  if(['send report','submit report','report bhejo','रिपोर्ट भेजो','ವರದಿ ಕಳುಹಿಸಿ','నివేదిక పంపండి'].includes(normalized)){
+   if(reason.trim().length<3){onError(t('Describe what needs checking before sending the report.'));return;}
+   submitReport();return;
+  }
+  if(['cancel report','रिपोर्ट रद्द करो'].includes(normalized)){PAUSE(true);return;}
+  if(location&&/\b(?:rack|shelf|bin|aisle)\b/i.test(phrase))S(phrase.slice(0,200));
+  else R(phrase.slice(0,400));
+ }
  return <div className="sf-report-flow"><p><b>{item.name}</b> · {item.sku}</p>{location&&<><p>{t('Recorded location:')} <strong>{pathText(location)}</strong></p><p>{t('Thanks for flagging this. Share what you noticed so your manager can check the location.')}</p></>}
- <form onSubmit={e=>{e.preventDefault();run(async()=>{const report=await api('/issues',{collection,sku:item.sku,reason,kind:location?'wrong_location':'general',location_code:location?.code||'',suggested_location:suggested});onSave(report)})}}>
+ {voice&&<div className="sf-report-speech"><strong>{t('Report with your voice')}</strong><small>{t('Tell us what is wrong or where you found it. Then say Send report. Nothing is submitted until you confirm.')}</small><HandsFreePicking enabled={!busy&&!paused} language={language} collection={collection} onError={onError} onCommand={hearReport}/>{heard&&<small role="status">{t('Heard')}: {heard}</small>}{paused&&<button type="button" onClick={()=>PAUSE(false)}>{t('Resume listening')}</button>}<button type="button" disabled={paused} onClick={()=>PAUSE(true)}>{t('Pause listening')}</button></div>}
+ <form onSubmit={e=>{e.preventDefault();submitReport()}}>
  <label>{t('What needs checking?')}<textarea required minLength={3} maxLength={400} value={reason} onChange={e=>R(e.target.value)}/></label>
- <VoiceButton small enabled={voice&&!busy} {...{language,onError}} onText={R}/>
- {location&&<div className="sf-report-location"><label htmlFor="sf-report-location-input">{t('Where did you find it? (optional)')}</label><div className="sf-report-location-field"><input id="sf-report-location-input" value={suggested} maxLength={200} placeholder={t('Rack, shelf or bin, if known')} onChange={e=>S(e.target.value)}/><VoiceButton iconOnly small enabled={voice&&!busy} {...{language,onError}} label="Dictate suggested shelf location" onText={text=>{if(typeof text==='string'&&text.trim())S(text.trim().slice(0,200))}}/></div>{!voice&&<small>{t('Voice input unavailable. You can enter the shelf location manually.')}</small>}</div>}
+ {location&&<div className="sf-report-location"><label htmlFor="sf-report-location-input">{t('Where did you find it? (optional)')}</label><div className="sf-report-location-field"><input id="sf-report-location-input" value={suggested} maxLength={200} placeholder={t('Rack, shelf or bin, if known')} onChange={e=>S(e.target.value)}/></div></div>}
  <p>{t('Your report will appear in Activity. Once your manager verifies a correction, future searches will use the updated location.')}</p>
  <button className="primary" disabled={busy||reason.trim().length<3}>{t('Send for review')}</button>
  </form></div>;
