@@ -499,7 +499,7 @@ test('search shows a review stage until the worker confirms the picking list',as
  assert.doesNotMatch(source,/const next=await startIfReady\(result\)/);
  assert.match(source,/T\(result\)/);
  assert.match(source,/Review the matched items\. Confirm the search once to hear the first location/);
- assert.match(source,/Confirm and start picking/);
+ assert.match(source,/Confirm search and begin picking/);
  assert.match(source,/Confirm search by voice/);
  assert.match(source,/await pickAction\('start'\)/);
  assert.match(source,/api\('\/tasks\/'\+task\.id\+'\/picking\/'\+kind/);
@@ -733,7 +733,7 @@ test('sample shelf labels do not repeat on every item and recent requests are st
  assert.doesNotMatch(backend,/\{'Example shelf/);
  assert.match(ui,/example=\{false\}/);
  assert.match(ui,/Confirm your request/);
- assert.match(ui,/Confirm and start picking/);
+ assert.match(ui,/Confirm search and begin picking/);
 });
 
 
