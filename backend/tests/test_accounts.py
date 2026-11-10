@@ -263,7 +263,7 @@ def test_gnani_public_welcome_fixed_text_cached_and_rate_limited(setup,monkeypat
  assert calls[-1][1]=='kn-IN'
  assert c.post('/api/voice/welcome',headers=H,json={'hour':9,'language':'en-IN'}).status_code==401
  # IP bucket persists regardless of the number of cached/static language clips.
- for i in range(6):
+ for i in range(7):
   assert c.get('/api/welcome/audio?language=en-IN').status_code==200
  assert c.get('/api/welcome/audio?language=en-IN').status_code==429
 
