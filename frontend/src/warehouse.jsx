@@ -47,7 +47,37 @@ export default function WarehouseApp({user,preferences,logout}){
  async function run(fn){B(true);E('');N('');try{return await fn()}catch(e){E(e.message)}finally{B(false)}}
  async function reload(){I(await request('/warehouse/items?collection='+collection));M(await request('/warehouse/meta'));R(await request('/warehouse/tasks'))}
  async function speak(result){if(!voice)return;audio.current?.pause();SP(true);try{const r=await fetch('/api/warehouse/tasks/'+result.id+'/speak',{method:'POST',headers:{'X-Shop-Request':'1'},signal:AbortSignal.timeout(45000)});if(!r.ok){const data=await r.json();throw Error(data.detail||'Voice playback failed.')}const blob=await r.blob();if(audioURL.current)URL.revokeObjectURL(audioURL.current);audioURL.current=URL.createObjectURL(blob);audio.current=new Audio(audioURL.current);audio.current.onended=()=>SP(false);await audio.current.play()}catch(e){E(e.name==='NotAllowedError'?'Tap Read answer to allow audio playback.':e.message);SP(false)}}
- async function search(text=query,fromVoice=voiceQuery,global=false,spokenLanguage=null){await run(async()=>{const result=await api('/search',{collection:global?'all':collection,query:!global&&sizeFilter&&text.trim()&&!text.toLowerCase().includes('size '+String(sizeFilter).toLowerCase())?text+' size '+sizeFilter:text,language:language==='auto'?(spokenLanguage||detectedSearchLanguage||'hi-en'):language,brand:global?'':brand,location:global?'':locationFilter});T(result);AL(0);if(global)N('Label lookup searched across all product types, brands and locations.');taskVoice.current=fromVoice;P('find');VQ(false);R(await request('/warehouse/tasks'));if(fromVoice&&auto)await speak(result)})}
+ async function startIfReady(result){
+  // Finding a uniquely saved product and shelf is not a stock verification.
+  // Starting the guide only changes session status and needs no extra tap.
+  if(!result?.lines?.length||result.picking?.status!=='ready'||
+     result.lines.some(line=>!line.selected||!line.location||line.location_report_open))return result;
+  const started=await api('/tasks/'+result.id+'/picking/start',{});
+  G('location');VGP(false);VGC('');VGT('');
+  const first=Math.max(0,started.lines.findIndex(line=>!line.complete));
+  AL(first);
+  if(voice&&auto&&PICKING_VOICE_LANGUAGES.includes(started.language)){
+    await playPickGuidance('next',started,first);
+  }
+  return started;
+ }
+ async function search(text=query,fromVoice=voiceQuery,global=false,spokenLanguage=null){
+  await run(async()=>{
+   const result=await api('/search',{
+    collection:global?'all':collection,
+    query:!global&&sizeFilter&&text.trim()&&!text.toLowerCase().includes('size '+String(sizeFilter).toLowerCase())?text+' size '+sizeFilter:text,
+    language:language==='auto'?(spokenLanguage||detectedSearchLanguage||'hi-en'):language,
+    brand:global?'':brand,location:global?'':locationFilter
+   });
+   taskVoice.current=fromVoice;
+   P('find');VQ(false);AL(0);
+   const next=await startIfReady(result);
+   T(next);
+   if(global)N('Label lookup searched across all product types, brands and locations.');
+   R(await request('/warehouse/tasks'));
+   if(next.picking?.status==='ready'&&fromVoice&&auto)await speak(next);
+  });
+ }
  function navigate(p){if(p===page)return;audio.current?.pause();SP(false);P(p);E('');N('');D(null);if(p!=='find')TOUR(null);main.current?.focus();window.scrollTo(0,0)}
  function goBack(){navigate('more')}
  async function choose(line,p,l){await run(async()=>{const next=await api('/tasks/'+task.id+'/choose',{line,collection:p.collection,sku:p.sku,location:l.code});T(next);AL(line);if(auto&&voice&&taskVoice.current)await speak(next)})}
