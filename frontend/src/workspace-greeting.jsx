@@ -69,6 +69,7 @@ export default function WorkspaceGreeting({user,voiceLanguage='en-IN',interrupt=
  }
  function speakGreeting(){
   if(status==='starting'||status==='speaking'){stopGreeting();return}
+  if(interrupt)return; // Never start greeting over picking, report or other active speech.
   if(typeof window==='undefined'||!window.speechSynthesis||!window.SpeechSynthesisUtterance){
    SetStatus('unavailable');return;
   }
@@ -122,7 +123,7 @@ export default function WorkspaceGreeting({user,voiceLanguage='en-IN',interrupt=
    <p>{message}</p>
   </div>
   <div className="sf-workspace-greeting-controls">
-   <button type="button" className="sf-greeting-play" onClick={speakGreeting} aria-label={status==='speaking'||status==='starting'?'Stop greeting':'Hear greeting'}>
+   <button type="button" className="sf-greeting-play" onClick={speakGreeting} disabled={interrupt} aria-label={status==='speaking'||status==='starting'?'Stop greeting':'Hear greeting'}>
     <Glyph name="sound"/>{status==='speaking'||status==='starting'?'Stop greeting':'Hear greeting'}
    </button>
    <label className="sf-greeting-mute"><input type="checkbox" checked={muted} onChange={e=>setMuted(e.target.checked)}/><span>Mute automatic greeting</span></label>
