@@ -35,3 +35,24 @@
  .sf-compact-app .sf-settings-preferences .sf-more-preference-row select,.sf-compact-app .sf-settings-preferences .sf-more-preference-row button{width:100%;max-width:100%}
 }
 @media(max-width:360px){.sf-compact-app .sf-activity-overview{grid-template-columns:1fr}.sf-compact-app .sf-activity-metric:last-child{grid-column:auto}}
+
+/* Real Prisma transcript and hands-free warehouse picking affordances. */
+.sf-compact-app .sf-visible-transcript{border:1px solid var(--wh-border,#dedbe5);border-radius:12px;background:var(--wh-soft,#f8f6fc);padding:13px 16px;margin:0 0 16px;overflow-wrap:anywhere}
+.sf-compact-app .sf-visible-transcript strong{display:block;font-size:12px;letter-spacing:.02em;margin-bottom:5px}
+.sf-compact-app .sf-visible-transcript p{font-size:15px;font-weight:600;line-height:1.5;margin:0 0 5px;white-space:pre-wrap}
+.sf-compact-app .sf-visible-transcript small{display:block;line-height:1.4;color:var(--wh-muted,#76717b)}
+.sf-compact-app .sf-guide-transcript{border:1px solid var(--wh-border,#dedbe5);border-radius:10px;padding:10px 12px;background:#fff;display:block;overflow-wrap:anywhere;font-size:13px;line-height:1.5}
+.sf-compact-app .sf-hands-free-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;line-height:1.5;min-width:0}
+.sf-compact-app .sf-listen-dot{display:block;width:9px;height:9px;flex:0 0 9px;background:#96939b;border-radius:50%}
+.sf-compact-app .sf-listen-dot.active{background:#16a37a;box-shadow:0 0 0 4px rgba(22,163,122,.12)}
+.sf-compact-app .sf-hands-free-status button,.sf-compact-app .sf-stop-listening{border:1px solid var(--wh-border,#dedbe5);border-radius:9px;min-height:38px;padding:7px 12px;font-size:12px;max-width:100%;white-space:normal}
+.sf-compact-app .sf-voice-guide-actions{flex-wrap:wrap;align-items:center;gap:9px;min-width:0}
+.sf-compact-app .sf-voice-guide-heading{min-width:0}
+.sf-compact-app .sf-voice-guide-choices{display:flex;flex-wrap:wrap;gap:8px}
+.sf-compact-app .sf-voice-guide-choices button{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+@media(max-width:600px){.sf-compact-app .sf-guide-transcript,.sf-compact-app .sf-visible-transcript{padding:11px 12px}.sf-compact-app .sf-voice-guide-actions>button{flex:1 1 130px}.sf-compact-app .sf-hands-free-status{width:100%}}
+
+/* Keep longer mixed-script responses and shelf paths inside the phone viewport. */
+.sf-compact-app .wh-response,.sf-compact-app .sf-sample-info,.sf-compact-app .sf-picking-actions,.sf-compact-app .wh-task,.sf-compact-app .wh-task-heading,.sf-compact-app .sf-voice-guide{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.sf-compact-app .wh-response{white-space:normal;line-height:1.65}
+.sf-compact-app .sf-picking-actions{flex-wrap:wrap;gap:10px}

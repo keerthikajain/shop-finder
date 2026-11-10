@@ -1,3 +1,19 @@
+## Current voice-first picking acceptance (PR #64)
+
+Use the latest `feature/judge-self-service-workspaces` branch rather than the older `main` branch when verifying these changes.
+
+1. With `GNANI_ENABLED=true`, a valid private key, `GNANI_TTS_MODEL=timbre-v3.0`, and `GNANI_TTS_VOICE=Prakash`, grant the browser microphone permission on localhost or HTTPS. The local `scripts/start_local.py` now reads approved private `.env` settings; it does not print the key.
+2. Speak a known product and **pause**. Confirm the search recording stops automatically, the actual Prisma transcript appears under **You said**, the stored catalogue item is selected, and the saved shelf is displayed.
+3. When **every** item has a unique saved item and location, picking should start automatically. There must be no need to press **Start picking**. If a variant is ambiguous or a shelf is missing, picking must not start until the worker resolves it.
+4. In active picking, with **Hands-free picking commands** enabled, the UI should display **Listening for a picking command** once Timbre finishes reading guidance. Say **repeat location**, pause, and confirm the recognized command is visible and the actual shelf is repeated by Timbre. Repeat with **next item**, **found it**, **wrong location**, and **stop**. The microphone must pause during audio playback and while a scan/report modal is open.
+5. Say **found it**: scan the item and shelf, or explicitly choose a manual check. Voice alone must not confirm the item, adjust stock or record a shelf correction.
+6. Say **wrong location**: the app must show a report form, but not submit a report or change the recorded shelf without worker confirmation.
+7. Test no speech, microphone permission denial, network failure, and **Pause hands-free microphone**. An idle recording should not send audio for transcription, and repeated provider failures should pause the listener rather than retry forever. The manual microphone and text search remain fallbacks.
+8. Test English, Hindi, Hinglish, Kannada and Telugu with real microphones (quiet and moderate noise). Measure actual transcription, command accuracy, final location, pronunciation of alphanumeric shelf codes, and recovery from recognition errors. Automated mocked tests **do not** establish these figures.
+9. If Prakash does not speak, inspect the backend/network error, verify account access to Timbre v3 and confirm the local launcher loaded the private env. The existing fallback is `GNANI_TTS_MODEL=timbre-v2.5`; this uses the older per-language voice map, **not** Prakash.
+
+This is a release acceptance checklist, not a claim that live Gnani and mobile/browser testing has passed. Browser permission and audio-autoplay restrictions can still require a user action.
+
 # Shop Finder — voice-first preflight and acceptance
 
 This is the **manual testing plan**, not a report of real Gnani accuracy. Automated tests use mocks and run without paid API calls. Do not use real customer recordings or private store records for the synthetic challenge demo.

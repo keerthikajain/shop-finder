@@ -102,15 +102,39 @@ async def transcribe(data,language,*,output_style='transcribe',enhanced=True,key
                                     enhanced=enhanced,keywords=keywords,
                                     language_candidates=language_candidates))['transcript']
 
+# Timbre v3 voices are multilingual. Keep v2.5 as a deliberate rollback,
+# never use a v3 voice with the v2.5 model (Gnani rejects cross-model voices).
+TIMBRE_V3_VOICES=frozenset((
+    'Avinash','Chetana','Devansh','Harshad','Kalpana','Lakshmi',
+    'Prakash','Riyaa','Shivani','Shubham','Tarika','Vasudha','Yashraj'
+))
+TIMBRE_V25_VOICES={
+    'en-IN':'Kaveri','hi-IN':'Nalini','hi-en':'Poorvi',
+    'bn-IN':'Kirra','mr-IN':'Ishaan','gu-IN':'Falak','pa-IN':'Zayan',
+    'kn-IN':'Kavin','te-IN':'Varuni','ta-IN':'Trisha','ml-IN':'Reshma'
+}
+
+def tts_profile(language):
+    if language not in TIMBRE_V25_VOICES:
+        raise HTTPException(422,'Language not enabled.')
+    model=os.getenv('GNANI_TTS_MODEL','timbre-v3.0').strip().lower()
+    if model=='timbre-v3.0':
+        voice=os.getenv('GNANI_TTS_VOICE','Prakash').strip()
+        if voice not in TIMBRE_V3_VOICES:
+            raise HTTPException(503,'Choose a supported Timbre v3.0 voice in server settings.')
+    elif model=='timbre-v2.5':
+        # Rollback preserves the previously validated per-language routing.
+        voice=TIMBRE_V25_VOICES[language]
+    else:
+        raise HTTPException(503,'Unsupported Timbre model. Select timbre-v3.0 or timbre-v2.5.')
+    return model,voice
+
 async def speak(text,language='en-IN'):
-    # Gnani Timbre v2.5 official Preferred Voices by Language catalog.
-    # These voices must be live-tested with the deployed API key before release.
-    voices={
-      'en-IN':'Kaveri','hi-IN':'Nalini','hi-en':'Poorvi',
-      'bn-IN':'Kirra','mr-IN':'Ishaan','gu-IN':'Falak','pa-IN':'Zayan',
-      'kn-IN':'Kavin','te-IN':'Varuni','ta-IN':'Trisha','ml-IN':'Reshma'
-    }
-    if language not in voices:raise HTTPException(422,'Language not enabled.')
-    r=await call('/api/v1/tts/inference',json={'text':text,'model':'timbre-v2.5','voice':voices[language],'language':language,'audio_config':{'encoding':'linear_pcm','container':'wav','sample_rate':48000,'num_channels':1,'sample_width':2}})
-    if not r.content.startswith(b'RIFF'):raise HTTPException(502,'Invalid speech audio response.')
+    model,selected_voice=tts_profile(language)
+    r=await call('/api/v1/tts/inference',json={
+        'text':text,'model':model,'voice':selected_voice,'language':('auto' if model=='timbre-v3.0' and language=='hi-en' else language),
+        'audio_config':{'encoding':'linear_pcm','container':'wav',
+                        'sample_rate':48000,'num_channels':1,'sample_width':2}})
+    if not r.content.startswith(b'RIFF'):
+        raise HTTPException(502,'Invalid speech audio response.')
     return r.content

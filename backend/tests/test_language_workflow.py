@@ -56,7 +56,7 @@ def wav(seconds=1):
     with wave.open(b,'wb') as w:w.setnchannels(1);w.setsampwidth(2);w.setframerate(16000);w.writeframes(b'\0\0'*16000*seconds)
     return b.getvalue()
 
-@pytest.mark.parametrize('language,provider_language,selected_voice',[('en-IN','en-IN','Kaveri'),('hi-IN','hi-IN','Nalini'),('hi-en','indic-auto','Poorvi')])
+@pytest.mark.parametrize('language,provider_language,selected_voice',[('en-IN','en-IN','Prakash'),('hi-IN','hi-IN','Prakash'),('hi-en','indic-auto','Prakash')])
 def test_provider_contracts_and_session_bound_reply(client,monkeypatch,language,provider_language,selected_voice):
     calls=[]
     async def fake(endpoint,**kwargs):
@@ -76,7 +76,7 @@ def test_provider_contracts_and_session_bound_reply(client,monkeypatch,language,
     assert audio.status_code==200
     body=calls[-1][1]['json']
     assert body['text']==result['spoken_text']
-    assert body['voice']==selected_voice and body['language']==language and body['model']=='timbre-v2.5'
+    assert body['voice']==selected_voice and body['language']==('auto' if language=='hi-en' else language) and body['model']=='timbre-v3.0'
 
 def test_bad_language_and_overlong_audio_rejected(client):
     assert client.post('/api/search',json={'query':'fan','language':'xx'}).status_code==422
@@ -176,6 +176,7 @@ def test_auto_detection_keeps_kannada_code_and_warehouse_accepts_native_alias(cl
  ('ta-IN','Trisha'),('ml-IN','Reshma')
 ])
 def test_timbre_25_uses_official_voice_for_each_language(monkeypatch,language,preferred):
+ monkeypatch.setenv('GNANI_TTS_MODEL','timbre-v2.5')
  calls=[]
  async def fake(endpoint,**kwargs):
   calls.append((endpoint,kwargs))
@@ -196,3 +197,26 @@ def test_timbre_rejects_unsupported_language_without_silent_english_fallback(mon
  monkeypatch.setattr(voice,'call',no_call)
  with pytest.raises(Exception) as error:asyncio.run(voice.speak('hello','xx-IN'))
  assert error.value.status_code==422
+
+
+@pytest.mark.parametrize('language',['en-IN','hi-IN','hi-en','kn-IN','te-IN'])
+def test_timbre_v3_uses_prakash_for_five_focus_modes(monkeypatch,language):
+ calls=[]
+ async def fake(endpoint,**kwargs):
+  calls.append((endpoint,kwargs))
+  return httpx.Response(200,content=wav())
+ monkeypatch.setattr(voice,'call',fake)
+ monkeypatch.setenv('GNANI_TTS_MODEL','timbre-v3.0')
+ monkeypatch.setenv('GNANI_TTS_VOICE','Prakash')
+ assert asyncio.run(voice.speak('Rack B, shelf 4',language)).startswith(b'RIFF')
+ payload=calls[-1][1]['json']
+ assert payload['model']=='timbre-v3.0'
+ assert payload['voice']=='Prakash'
+ assert payload['language']==('auto' if language=='hi-en' else language)
+ assert payload['audio_config']['container']=='wav'
+
+def test_timbre_voice_configuration_rejects_unknown_voice(monkeypatch):
+ monkeypatch.setenv('GNANI_TTS_MODEL','timbre-v3.0')
+ monkeypatch.setenv('GNANI_TTS_VOICE','NotAVoice')
+ with pytest.raises(Exception) as error:asyncio.run(voice.speak('Hello','en-IN'))
+ assert error.value.status_code==503

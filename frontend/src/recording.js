@@ -14,12 +14,22 @@ export function encodeWav(chunks, sourceRate) {
   for(let i=0;i<count;i++){let sum=0,n=0;const begin=Math.floor(i*sourceRate/rate),end=Math.max(begin+1,Math.floor((i+1)*sourceRate/rate));for(let j=begin;j<end&&j<source.length;j++){sum+=source[j];n++;}const v=Math.max(-1,Math.min(1,sum/(n||1)));view.setInt16(44+i*2,v*(v<0?32768:32767),true);}
   return new Blob([buffer],{type:'audio/wav'});
 }
-export async function startRecording(onComplete,onError) {
+export async function startRecording(onComplete,onError,{stopOnSilence=false}={}) {
   if(!navigator.mediaDevices?.getUserMedia)throw Error('Microphone unavailable. Open the app on localhost or HTTPS.');
   let stream,context,source,processor,timer,stopped=false;const chunks=[];
+  let heardSpeech=false,lastSpeech=0,startedAt=Date.now(),speechFrames=0;
   function release(){clearTimeout(timer);if(processor){processor.onaudioprocess=null;processor.disconnect()}source?.disconnect();stream?.getTracks().forEach(t=>t.stop());context?.close().catch(()=>{});}
-  function stop(cancel=false){if(stopped)return;stopped=true;const rate=context?.sampleRate;release();if(cancel)return;try{onComplete(encodeWav(chunks,rate))}catch(e){onError(e)}}
-  try{stream=await navigator.mediaDevices.getUserMedia({audio:true});context=new AudioContext();await context.resume();source=context.createMediaStreamSource(stream);processor=context.createScriptProcessor(4096,1,1);processor.onaudioprocess=e=>chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));source.connect(processor);processor.connect(context.destination);timer=setTimeout(()=>stop(),28000);return {stop};}
+  function stop(cancel=false){if(stopped)return;stopped=true;const rate=context?.sampleRate;release();if(cancel)return;if(stopOnSilence&&!heardSpeech){onError(Error('No speech detected.'));return}try{onComplete(encodeWav(chunks,rate))}catch(e){onError(e)}}
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:true});context=new AudioContext();await context.resume();source=context.createMediaStreamSource(stream);processor=context.createScriptProcessor(4096,1,1);processor.onaudioprocess=e=>{
+    const values=new Float32Array(e.inputBuffer.getChannelData(0));
+    chunks.push(values);
+    if(!stopOnSilence)return;
+    let power=0;
+    for(let i=0;i<values.length;i++)power+=values[i]*values[i];
+    const rms=Math.sqrt(power/values.length),now=Date.now();
+    if(rms>0.018){speechFrames++;lastSpeech=now;if(speechFrames>=3)heardSpeech=true;}
+    if(heardSpeech&&now-lastSpeech>1100&&now-startedAt>800)stop();
+  };source.connect(processor);processor.connect(context.destination);timer=setTimeout(()=>stop(),28000);return {stop};}
   catch(e){release();throw Error(e.name==='NotAllowedError'?'Microphone permission denied. Allow it in the browser or type your question.':e.message)}
 }
 

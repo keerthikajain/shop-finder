@@ -74,7 +74,8 @@ def test_voice_contract_without_network(monkeypatch):
     assert asyncio.run(voice.transcribe(wav(),'en-IN'))=='fan condenser'
     assert asyncio.run(voice.speak('Synthetic demo')).startswith(b'RIFF')
     assert calls[0][1]['data']['language_code']=='en-IN'
-    assert calls[1][1]['json']['model']=='timbre-v2.5'
+    assert calls[1][1]['json']['model']=='timbre-v3.0'
+    assert calls[1][1]['json']['voice']=='Prakash'
     assert calls[1][1]['json']['audio_config']['container']=='wav'
 
 def test_evaluation_regressions(client):

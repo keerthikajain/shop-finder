@@ -35,6 +35,8 @@ SHOP_FINDER_SEED_DEMO=false
 SHOP_FINDER_PUBLIC_DEMO=false
 GNANI_ENABLED=true
 GNANI_API_KEY=<set privately in your hosting platform>
+GNANI_TTS_MODEL=timbre-v3.0
+GNANI_TTS_VOICE=Prakash
 ```
 
 Do **not** commit a populated `.env` file. The credential placeholder above is not an actual key. Provide the key only through the host's secret manager. Keep exactly one app instance with persistent storage; this SQLite build is not for multiple independent replicas. When configured behind a public HTTPS reverse proxy, `SHOP_FINDER_SECURE_COOKIE=true` is required. Do not open the Compose loopback-only port directly to the internet; publish through your host's HTTPS routing.
@@ -62,3 +64,9 @@ Public signup is disabled unless `SHOP_FINDER_CHALLENGE_SIGNUP=true`. Normal Sho
 > We retained the actual application workflows for reviewers, but isolated every judge in a separate workspace to prevent changes from interfering with each other. The example records are clearly sample data, and the search always uses the saved SKU and shelf. In a production business rollout, organisation provisioning, staff approvals, access roles, audit events and persistent storage remain controlled; we would add operational controls such as email verification, account recovery and capacity monitoring before multi-customer adoption.
 
 **Do not claim live Gnani multilingual accuracy or production-grade multitenant safety without independent testing.**
+
+## Choosing the spoken guide voice
+
+The server sends generated warehouse instructions to Gnani Timbre using `POST /api/v1/tts/inference`, with the configured model, voice and selected language. The recommended default is **Prakash** on **Timbre v3.0**. It is configured using `GNANI_TTS_MODEL=timbre-v3.0` and `GNANI_TTS_VOICE=Prakash` on the backend, and does not require any frontend/API key changes. The same voice setting applies to search answers and spoken picking directions. Browser microphone input is handled separately by Prisma STT.
+
+If your Gnani key is not entitled to Timbre v3.0 or you encounter provider errors, restore the earlier per-language voice mapping with `GNANI_TTS_MODEL=timbre-v2.5` and restart the server. Do not switch to a v2.5 model while specifying Prakash as its voice. Validate Prakash reading sample rack codes, SKU and numbers in English, Hindi, Hinglish, Kannada and Telugu before describing speech as tested. No live-provider verification is implied by the mock contract tests.
