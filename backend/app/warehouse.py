@@ -94,7 +94,7 @@ class PickDefer(Strict):
 class PickRetry(Strict):
  line:int=Field(ge=0,le=9)
 class PickGuideAudio(Strict):
- command:Literal['next','repeat','verify','report','stop','help','unknown']
+ command:Literal['start','next','repeat','verify','report','stop','help','unknown']
  line:int=Field(default=0,ge=0,le=9)
 class Move(Strict):
  collection:str=Field(max_length=40)
@@ -299,10 +299,11 @@ def picking_state(task):
 def picking_mutable(task):
  if picking_state(task)['status']!='ready':
   raise HTTPException(409,'This picking session has started. Search again to change selected products.')
-def picking_check(c,task):
+def picking_check(c,task,allow_deferred=False):
  if not task['lines'] or any(not line.get('selected') or not line.get('location') for line in task['lines']):
   raise HTTPException(409,'Resolve every requested item and location before starting or finishing the pick.')
  for i,line in enumerate(task['lines']):
+  if allow_deferred and line.get('deferred_reason'):continue
   _,item=current_line(c,task,i)
   location=line['location']
   if not any(p['code']==location['code'] for p in item['placements']):
@@ -528,7 +529,7 @@ def install_warehouse(app,path):
   with connect(path) as c:
    c.execute('BEGIN IMMEDIATE');task=task_get(c,tid,u)
    if picking_state(task)['status']!='active':raise HTTPException(409,'Only active picking sessions can be resumed.')
-   picking_check(c,task)
+   picking_check(c,task,allow_deferred=True)
    task['picking']['paused']=False
    return task_put(c,task)
  @app.post('/api/warehouse/tasks/{tid}/picking/defer')
@@ -569,7 +570,7 @@ def install_warehouse(app,path):
    task=task_get(c,tid,u)
    if task['language'] not in SUPPORTED_PICKING_LANGUAGES:
     raise HTTPException(422,'Unsupported language for voice picking commands.')
-   picking_check(c,task)
+   picking_check(c,task,allow_deferred=True)
    if picking_state(task).get('paused'):raise HTTPException(409,'Resume picking before giving a picking command.')
    return voice_guide.guide(task,voice_guide.intent(body.transcript,task['language']),body.line,
                             lambda index:current_line(c,task,index))
@@ -580,7 +581,7 @@ def install_warehouse(app,path):
    task=task_get(c,tid,u)
    if task['language'] not in SUPPORTED_PICKING_LANGUAGES:
     raise HTTPException(422,'Unsupported language for voice guidance.')
-   picking_check(c,task)
+   picking_check(c,task,allow_deferred=True)
    guidance=voice_guide.guide(task,body.command,body.line,
                               lambda index:current_line(c,task,index))
   audio=await voice.speak(guidance['text'],task['language'])
