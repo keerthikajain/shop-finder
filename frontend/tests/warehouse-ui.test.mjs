@@ -354,7 +354,10 @@ test('voice-guided picking uses real Prisma transcript and Timbre audio with saf
  assert.match(src,/answer\.action==='report'&&answer\.line!=null/);
  assert.match(src,/D\(\{type:'report',item:selected\.selected,location:selected\.location,index:answer\.line\}\)/);
  assert.match(src,/answer\.action==='stop'/);
- assert.doesNotMatch(src,/voicePickCommand\([^]*?kind:'manual',value:'confirmed'/);
+ assert.match(src,/if\(pendingVoicePick\)/);
+  assert.match(src,/if\(response==='yes'\)/);
+  assert.match(src,/if\(response==='no'\)/);
+  assert.match(src,/current.selected\?\.sku!==pendingVoicePick.sku/);
  const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
  assert.match(css,/\.sf-voice-guide\{/);
 });
