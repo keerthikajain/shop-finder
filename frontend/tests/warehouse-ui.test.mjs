@@ -471,3 +471,16 @@ test('voice-first search uses the actual Prisma transcript and preserves an opt-
  assert.match(source,/spokenLanguage\|\|detectedSearchLanguage/);
  assert.match(source,/if\(fromVoice\&\&auto\)await speak\(result\)/);
 });
+
+test('voice-start picking requires exact, unambiguous speech in all five focus modes',async()=>{
+ const {isStartPickingCommand}=await import('../src/picking-voice-phrases.js');
+ for(const [language,phrase] of [['en-IN','start picking'],['hi-IN','पिकिंग शुरू करो'],['hi-en','picking shuru karo'],['kn-IN','ಪಿಕಿಂಗ್ ಪ್ರಾರಂಭಿಸಿ'],['te-IN','పికింగ్ ప్రారంభించండి']]){
+  assert.equal(isStartPickingCommand(language,phrase),true,language);
+  assert.equal(isStartPickingCommand(language,'not '+phrase),false,language);
+  assert.equal(isStartPickingCommand(language,''),false,language);
+ }
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(source,/PICKING_START_VOICE_LANGUAGES.includes\(task.language\)/);
+ assert.match(source,/if\(!canStartPick\|\|busy\)/);
+ assert.match(source,/await pickAction\('start'\)/);
+});
