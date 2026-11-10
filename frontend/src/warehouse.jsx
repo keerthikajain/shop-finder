@@ -103,7 +103,8 @@ export default function WarehouseApp({user,preferences,logout}){
  async function choose(line,p,l){await run(async()=>{const next=await api('/tasks/'+task.id+'/choose',{line,collection:p.collection,sku:p.sku,location:l.code});T(next);AL(line);N(t('Item choice saved. Review the full list before starting picking.'));/* Choice stays in review until search confirmation. */})}
  async function progressAfterPick(next,completed){
   T(next);
-  if(next.picking?.status!=='active'||next.picking?.paused)return;
+  // A product barcode alone does not finish the pick: wait for shelf verification.
+  if(!completed||next.picking?.status!=='active'||next.picking?.paused)return;
   const deferred=next.lines.filter(line=>line.deferred_reason&&!line.complete).length;
   const index=nextPendingPickIndex(next.lines);
   if(index<0){
@@ -127,7 +128,7 @@ export default function WarehouseApp({user,preferences,logout}){
  async function deferPick(source,line,reason){
   const next=await api('/tasks/'+source.id+'/picking/defer',{line,reason});
   PV(null);
-  await progressAfterPick(next,false);
+  await progressAfterPick(next,true);
   R(await request('/warehouse/tasks'));
  }
  async function retryPick(line){
