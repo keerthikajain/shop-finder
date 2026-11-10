@@ -251,11 +251,11 @@ def speak_task(task):
   if p:
    l=line['location'];labels={'facility':'facility','floor':'floor','zone':'section','aisle':'aisle','rack':'rack','shelf':'shelf','bin':'bin'}
    if hi:labels.update(facility='गोदाम',floor='मंज़िल',zone='भाग',aisle='गलियारा',rack='रैक',shelf='शेल्फ',bin='बिन')
-   place=', '.join(f"{labels[k]} {l[k]}" for k in LOCATION_FIELDS if l.get(k) and not (p.get('synthetic') and k=='facility' and l[k]=='Demo Hub'))
+   place=', '.join(f"{labels[k]} {l[k]}" for k in LOCATION_FIELDS if l.get(k) and not (p.get('synthetic') and k=='facility'))
    parts.append(f"{p.get('brand','')} {p['name']}, {p['sku']}. {place}.".strip())
   elif line['candidates']:parts.append((f"{line['query']}: कृपया सही आकार या प्रकार चुनें।" if hi else f"{line['query']}: choose the size or variant before going to a location."))
   else:parts.append((f"{line['query']}: सूची में नहीं मिला।" if hi else f"{line['query']}: we couldn't find this exact item. Try another name or browse your saved items."))
- return (('Sample catalogue locations, not verified for your store. ' if any(line.get('selected',{}).get('synthetic') for line in task['lines'] if line.get('selected')) else '')+' '.join(parts))[:2400]
+ return ' '.join(parts)[:2400]
 # Display-only translations for spoken-result captions. Product names, SKUs,
 # brands and stored location values are never translated or inferred.
 # Speech audio remains English/Hindi until verified per-language TTS voices are configured.
@@ -280,13 +280,13 @@ def display_task(task):
   if product:
    loc=line['location']
    # Values are taken only from the verified selected catalogue record.
-   where=', '.join(f"{labels[k]} {loc[k]}" for k in LOCATION_FIELDS if loc.get(k) and not (product.get('synthetic') and k=='facility' and loc[k]=='Demo Hub'))
+   where=', '.join(f"{labels[k]} {loc[k]}" for k in LOCATION_FIELDS if loc.get(k) and not (product.get('synthetic') and k=='facility'))
    parts.append(f"{product.get('brand','')} {product['name']}, {product['sku']}. {where}.")
   elif line['candidates']:
    parts.append(f"{line['query']}: {choose}")
   else:
    parts.append(f"{line['query']}: {missing}")
- return (('Sample catalogue locations, not verified for your store. ' if any(line.get('selected',{}).get('synthetic') for line in task['lines'] if line.get('selected')) else '')+' '.join(parts))[:2400]
+ return ' '.join(parts)[:2400]
 
 def location_status(c,p,l):
  if not p or not l:return {'last_confirmed_at':None,'location_report_open':False}
