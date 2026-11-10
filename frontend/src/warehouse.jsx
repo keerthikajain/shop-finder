@@ -144,6 +144,7 @@ export default function WarehouseApp({user,preferences,logout}){
     if(selected?.selected){
      D({type:'report',item:selected.selected,location:selected.location,index:answer.line});
      VGT(t('Picking paused. Describe the issue in the report using speech or typing.'));
+     if(voice)await playPickGuidance('report',source,answer.line);
     }
     return false; // The voice loop must not restart for this command.
    }
@@ -250,7 +251,7 @@ export default function WarehouseApp({user,preferences,logout}){
  {modal?.type==='stock'&&<Modal title="Update recorded stock" onClose={()=>D(null)} wide><StockEditor {...{owner,locations,run,busy,voice,language}} fields={meta.settings.location_fields} item={modal.item} source={modal.location} onError={E} onSave={async()=>{D(null);T(null);await reload();N('Stock updated. The change is recorded in history.')}}/></Modal>}
  {modal?.type==='edit'&&<Modal title={t(modal.item?'Edit item':'Add item')} onClose={()=>D(null)} wide><ItemEditor item={modal.item} collection={modal.item?.collection||(collection==='all'?meta.settings.collections[0]:collection)} pack={meta.collections.find(c=>c.id===(modal.item?.collection||(collection==='all'?meta.settings.collections[0]:collection)))} collections={meta.collections.filter(c=>meta.settings.collections.includes(c.id))} settings={meta.settings} {...{labels,run,busy}} onSave={async()=>{D(null);await reload();N(t('Item saved.'))}}/></Modal>}
  {modal?.type==='move'&&<Modal title={t('Correct location')} onClose={()=>D(null)} wide><MoveEditor collection={modal.item.collection} fields={meta.settings.location_fields} {...{run,busy,language,voice}} item={modal.item} source={modal.location} onError={E} onSave={async()=>{const previous=task?.query;D(null);await reload();RV(v=>v+1);if(previous&&page==='find'){await search(previous,false);N(t('Location saved. Search results now show the updated shelf. Review the new list before picking.'))}else{T(null);N(t('Verified location saved and shown in future searches.'))}}}/></Modal>}
- {modal?.type==='report'&&<Modal title={t('Report an issue')} onClose={()=>{D(null);VGP(true)}}><Report item={modal.item} location={modal.location} collection={modal.item.collection} {...{run,busy,voice,language}} onError={E} onSave={report=>{if(modal.index!=null)T(prev=>prev?{...prev,lines:prev.lines.map((line,i)=>i===modal.index?{...line,location_report_open:true}:line)}:prev);D(null);N('Report #'+report.id+' sent for owner review.')}}/></Modal>}
+ {modal?.type==='report'&&<Modal title={t('Report an issue')} onClose={()=>{D(null);VGP(true)}}><Report item={modal.item} location={modal.location} collection={modal.item.collection} {...{run,busy,voice,language}} onError={E} onSave={report=>{if(modal.index!=null)T(prev=>prev?{...prev,lines:prev.lines.map((line,i)=>i===modal.index?{...line,location_report_open:true}:line)}:prev);VGP(true);D(null);N('Report #'+report.id+' sent to your manager. Voice picking is paused; resume when ready.')}}/></Modal>}
  {modal?.type==='scan'&&task&&<Modal title={t('Confirm picked item')} onClose={()=>D(null)}><ScanTask line={task.lines[modal.index]} onRead={value=>scan(modal.index,task.lines[modal.index].product_scanned?'location':'product',value)} onManual={()=>scan(modal.index,'manual','confirmed')} busy={busy} onError={E}/></Modal>}
  {modal?.type==='lookup'&&<Modal title={t('Scan a label')} onClose={()=>D(null)}><ScanBox onError={E} onRead={value=>{const location=locations.find(l=>l.code===value);D(null);if(location){P('locations');F(pathText(location))}else{const parts=value.split(':');Q(value);search(value,false,true)}}}/></Modal>}
  {modal?.type==='label'&&<Modal title={t('Print labels')} onClose={()=>D(null)} wide><div className="wh-print-area">{modal.item&&<Label value={'ITEM:'+modal.item.collection+':'+modal.item.sku} name={modal.item.name} subtitle={modal.item.sku+' · '+Object.values(modal.item.specs).join(' / ')}/>}<Label value={modal.location.code} name={t('Storage location')} subtitle={pathText(modal.location)}/></div><button className="primary" onClick={()=>window.print()}>{t('Print labels')}</button></Modal>}
@@ -285,15 +286,16 @@ function Report({item,location,collection,run,busy,voice,language,onError,onSave
  return <div className="sf-report-flow">
  <p><b>{item.name}</b> · {item.sku}</p>
  {location&&<><p>{t('Recorded location:')} <strong>{pathText(location)}</strong></p><p>{t('Thanks for letting us know. Tell us what happened, and your manager can review the location.')}</p></>}
+ <div className="sf-report-step-note" role="status"><strong>{t('Picking is paused — report the problem')}</strong>{t('Step 1: Say or type what is wrong. Step 2: Review the text. Step 3: Send to your manager. Return to picking when ready.')}</div>
  {voice&&<div className="sf-report-voice-panel" aria-label={t('Voice report')}>
    <strong>{t('Tell us what happened')}</strong>
-   <small>{t('Speak the problem or the shelf where you found it. The words we hear will appear below.')}</small>
+   <small>{t('Speak once and pause. Recording stops after your sentence. You can also type below, and nothing is sent until you confirm.')}</small>
    <VoiceButton small autoStop enabled={!busy} {...{language,onError}} label={t('Speak report')} onText={voiceCommand} onPartial={text=>{H(text);HF('listening')}}/>
    <div className="sf-report-transcript" role="status" aria-live="polite"><span>{t('Recognized speech')}</span><p>{heard||t('Your spoken words will appear here after recognition.')}</p>{heardField==='reason'&&<small>{t('Added to the report description. Check it before sending.')}</small>}{heardField==='shelf'&&<small>{t('Added as a suggested location.')}</small>}</div>
    {pendingSubmit&&<div className="sf-report-send-approval" role="status"><strong>{t('Send this report to your manager?')}</strong><p>{t('Say Yes to send, or No to keep editing.')}</p><button type="button" disabled={busy} onClick={submitReport}>{t('Yes, send report')}</button><button type="button" onClick={()=>PS(false)}>{t('Not yet')}</button></div>}
   </div>}
  <form onSubmit={e=>{e.preventDefault();submitReport()}}>
- <label>{t('What needs checking?')}<textarea required minLength={3} maxLength={400} value={reason} onChange={e=>R(e.target.value)}/></label>
+ <label>{t('Write or edit what needs checking')}<textarea required minLength={3} maxLength={400} value={reason} onChange={e=>R(e.target.value)}/></label>
  {location&&<div className="sf-report-location"><label htmlFor="sf-report-location-input">{t('Where did you find it? (optional)')}</label><div className="sf-report-location-field"><input id="sf-report-location-input" value={suggested} maxLength={200} placeholder={t('Rack, shelf or bin, if known')} onChange={e=>S(e.target.value)}/></div></div>}
  <p>{t('Your report will appear in Activity. Your manager can review it and update the saved shelf if needed.')}</p>
  <button className="primary" disabled={busy||reason.trim().length<3}>{t('Send for review')}</button>
