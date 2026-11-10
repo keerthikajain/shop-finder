@@ -132,3 +132,30 @@
 .login-shell .sf-welcome-audio button{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--wh-border,#dedbe5);border-radius:10px;background:transparent;font-size:12px;font-weight:600;min-height:40px;padding:7px 10px;white-space:normal}
 .login-shell .sf-welcome-audio button svg{width:17px;height:17px;flex-shrink:0}
 @media(max-width:600px){.login-shell .sf-welcome-audio{gap:6px;margin:6px 0 10px}.login-shell .sf-welcome-audio p{font-size:12px;flex-basis:100%}.login-shell .sf-welcome-audio button{width:100%}}
+
+/* Voice controls must retain readable labels in recording, busy and paused states.
+   Avoid the inherited low-contrast red/pink style used for the search mic. */
+.sf-compact-app .sf-find-page .wh-voice.recording,
+.sf-compact-app.sf-find-page .wh-voice.recording,
+.sf-compact-app .sf-guided-picking .wh-voice.recording,
+.sf-compact-app .wh-modal .wh-voice.recording,
+.wh-modal .wh-voice.recording {
+ background:#9c2850!important;color:#fff!important;border-color:#9c2850!important;
+ opacity:1!important;box-shadow:0 0 0 2px rgba(156,40,80,.12);
+ font-weight:700!important;text-shadow:none!important;
+}
+.sf-compact-app .sf-find-page .wh-voice.recording svg,
+.sf-compact-app .sf-guided-picking .wh-voice.recording svg,
+.wh-modal .wh-voice.recording svg{color:#fff!important;stroke:#fff!important}
+.sf-compact-app .sf-find-page .wh-voice,
+.sf-compact-app .sf-guided-picking .wh-voice,
+.wh-modal .wh-voice{
+ min-width:0;min-height:44px;line-height:1.35;white-space:normal;
+ overflow-wrap:anywhere;word-break:normal;display:inline-flex;align-items:center;gap:8px;
+}
+.sf-compact-app .sf-pick-complete-message{border:1px solid #c6dfc1;border-radius:10px;background:#e6f2e2;color:#31592f;line-height:1.5;padding:11px 13px;font-weight:650;font-size:13px;margin:10px 0}
+@media(max-width:600px){
+ .sf-compact-app .sf-find-page .wh-voice,
+ .sf-compact-app .sf-guided-picking .wh-voice,
+ .wh-modal .wh-voice{font-size:13px}
+}

@@ -98,9 +98,9 @@ export function pickVoicePhrase(language,action){
 /* These exact, explicit start phrases do not verify goods or modify stock.
    Keep live speech accuracy validation separate from vocabulary coverage. */
 const START_PICKING_PHRASES=Object.freeze({
- "en-IN":["confirm and start picking","confirm picking list","start picking","begin picking"],
+ "en-IN":["confirm and start picking","confirm picking list","start picking","begin picking","confirm"],
  "hi-IN":["पुष्टि करके पिकिंग शुरू करो","पिकिंग शुरू करो","सामान उठाना शुरू करो"],
- "hi-en":["confirm and start picking","confirm picking","start picking","picking shuru karo","पिकिंग शुरू करो"],
+ "hi-en":["confirm and start picking","confirm picking","start picking","picking shuru karo","पिकिंग शुरू करो","confirm"],
  "kn-IN":["ದೃಢೀಕರಿಸಿ ಪಿಕಿಂಗ್ ಪ್ರಾರಂಭಿಸಿ","ಪಿಕಿಂಗ್ ಪ್ರಾರಂಭಿಸಿ","ವಸ್ತುಗಳನ್ನು ತೆಗೆದುಕೊಳ್ಳಲು ಪ್ರಾರಂಭಿಸಿ"],
  "te-IN":["నిర్ధారించి పికింగ్ ప్రారంభించండి","పికింగ్ ప్రారంభించండి","వస్తువులు తీసుకోవడం ప్రారంభించండి"]
 });
