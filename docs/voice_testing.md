@@ -1,3 +1,17 @@
+## Conversational picking and report acceptance
+
+On the current PR #67 release candidate, verify this end-to-end sequence with **real** Prisma and Timbre, not only mock CI:
+
+- Say the search request. Review the saved product and shelf matches. Say **Confirm and start picking**; search must never start a picking session without this approval.
+- In active picking, say **Found it**. The system asks whether the correct item was picked. Say **Yes** to record the item or **No** to cancel; a single misunderstood utterance must not mark a pick complete.
+- Say **Not found** or **Wrong location** to open a report. Dictate what needs checking and optionally the shelf, then explicitly say **Send report**. A worker must never be able to change the owner-verified catalogue directly by reporting.
+- Once every item is verified, the system must ask **Ready to finish?**. Say **Yes** to finish or **No** to review. The UI must not silently finish after the last pick.
+- In **Activity > Team reports** (owner/manager), dictate a resolution note and say **Resolve report**. The note must be at least three characters and only an authorized account may mark it resolved. Changing shelf locations still requires the verified location-correction workflow.
+- The microphone should return to listening after a completed utterance, including unknown speech. Test silence, noise, denial, permission loss and backend 401/502/503 failures; the application must show a clear retry state and never claim that speech succeeded when the provider returned an error.
+- On a phone, check that T-shirt variant images are small and text, sizes, shelf options and recent requests fit without unnecessary scrolling. The shortcut controls should be collapsed until needed.
+
+The actual model output may not exactly match every command phrase. Record recognized transcripts and observed errors; do not equate voice-grammar unit tests with live recognition accuracy.
+
 ## Current voice-first picking acceptance (PR #64)
 
 Use the latest `feature/judge-self-service-workspaces` branch rather than the older `main` branch when verifying these changes.
