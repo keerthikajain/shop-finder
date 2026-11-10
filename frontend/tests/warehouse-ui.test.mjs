@@ -380,7 +380,9 @@ test('owner-only activity tab exposes unmatched-search review without modifying 
  const panel=await readFile(new URL('../src/failed-search-panel.jsx',import.meta.url),'utf8');
  const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
  assert.match(manage,/import FailedSearchPanel from '.\/failed-search-panel.jsx'/);
- assert.match(manage,/owner&&<button aria-pressed=\{tab==='unknowns'\}/);
+ assert.match(manage,/owner&&<button type="button" aria-pressed=\{tab==='unknowns'\}/);
+  assert.match(manage,/sf-activity-overview/);
+  assert.match(manage,/sf-activity-tabs/);
  assert.match(manage,/tab==='unknowns'&&owner\?<FailedSearchPanel/);
  assert.match(panel,/\/warehouse\/failed-searches\?/);
  assert.match(panel,/I verified that this phrase refers to the exact selected product and variant/);
