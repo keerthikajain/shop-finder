@@ -113,11 +113,11 @@ test('More includes Settings with language, appearance and account controls',asy
 
 test('one-tap mobile Speak starts a Gnani recording from any section',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(src,/id==='locations'&&\(voice\?<VoiceButton nav enabled=\{!busy\}/);
+ assert.match(src,/id==='locations'&&\(voice\?<VoiceButton nav autoStop enabled=\{!busy\}/);
  assert.match(src,/if\(page!=='find'\)navigate\('find'\)/);
- assert.match(src,/Q\(text\);DSL\(detected\);VQ\(true\);taskVoice.current=true/);
+ assert.match(src,/Q\(text\);ST\(text\);DSL\(detected\);VQ\(true\);taskVoice.current=true/);
  // When voice is unavailable, the center shortcut becomes Scan (not a second Find).
- assert.match(src,/id==='locations'&&\(voice\?<VoiceButton nav enabled=\{!busy\}/);
+ assert.match(src,/id==='locations'&&\(voice\?<VoiceButton nav autoStop enabled=\{!busy\}/);
  assert.match(src,/className="sf-mobile-speak" type="button" aria-label=\{t\('Scan a label'\)\}/);
  assert.match(src,/onClick=\{\(\)=>D\(\{type:'lookup'\}\)\}/);
  assert.doesNotMatch(src,/Voice unavailable\. Open text search/);
@@ -399,6 +399,7 @@ test('voice picking is discoverable before starting and unmatched requests can b
  assert.match(ui,/picking.status!=='completed'&&<div className="sf-voice-guide"/);
  assert.match(ui,/Picking starts automatically when each item and shelf is resolved/);
  assert.match(ui,/enabled={picking.status==='active'&&voice&&!busy&&!voiceGuidePaused}/);
+  assert.match(ui,/HandsFreePicking enabled=/);
  assert.match(ui,/async function removeUnresolvedLine\(index\)/);
  assert.match(ui,/Remove from worklist/);
  assert.match(server,/def remove_unresolved_line\(tid:str,index:int,request:Request\)/);
