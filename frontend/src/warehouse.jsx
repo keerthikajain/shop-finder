@@ -157,7 +157,12 @@ export default function WarehouseApp({user,preferences,logout}){
    }
    // During confirmation, Repeat replays the question rather than losing the pending item.
    const responseCommand=await api('/tasks/'+source.id+'/picking/command',{transcript,line:pendingVoicePick.line});
-   if(responseCommand.action==='repeat'||responseCommand.action==='verify'){
+   if(responseCommand.action==='repeat'){
+    VGT(t('Repeating the saved location. You can still say Yes or No to confirm.'));
+    if(voice)await playPickGuidance('repeat',source,pendingVoicePick.line);
+    return;
+   }
+   if(responseCommand.action==='verify'){
     VGT(t('Did you pick the correct item? Say Yes or No.'));
     if(voice)await playPickGuidance('verify',source,pendingVoicePick.line);
     return;
