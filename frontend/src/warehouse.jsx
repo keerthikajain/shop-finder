@@ -4,6 +4,7 @@ import {useT,APP_LANGUAGES} from './locale.js';
 import {PICKING_VOICE_LANGUAGES,PICKING_START_VOICE_LANGUAGES,pickVoicePhrase,isStartPickingCommand} from './picking-voice-phrases.js';
 import {startRecording,startLiveRecording} from './recording.js';
 import HandsFreePicking from './hands-free-picking.jsx';
+import {pickConfirmationIntent} from './picking-confirmations.js';
 import {getThemePreference,resolveTheme} from './theme.js';
 import {Mark,Glyph,Modal,Place,Specs,ItemArt,ScanBox,Label,Feedback} from './warehouse-ui.jsx';
 import {ImportPanel,ItemEditor,MoveEditor,ReviewPanel} from './warehouse-manage.jsx';
@@ -34,7 +35,7 @@ export function VoiceButton({language,enabled,onText,onError,onPartial,live=fals
 }
 export default function WarehouseApp({user,preferences,logout}){
  const t=useT(),owner=user.role==='owner';
- const [feedbackText,FB]=useState(''),[feedbackSent,FBS]=useState(false),[ownerFeedback,OF]=useState([]),[voiceGuideText,VGT]=useState(''),[voiceGuideCommand,VGC]=useState(''),[voiceGuidePaused,VGP]=useState(false),[meta,M]=useState(null),[items,I]=useState([]),[collection,C]=useState('all'),[page,P]=useState('find'),[brand,BR]=useState(''),[locationFilter,LF]=useState(''),[query,Q]=useState(''),[task,T]=useState(null),[recent,R]=useState([]),[busy,B]=useState(false),[error,E]=useState(''),[notice,N]=useState(''),[modal,D]=useState(null),[group,G]=useState('request'),[filter,F]=useState(''),[category,CAT]=useState(''),[language,L]=useState(()=>localStorage.getItem('sf-voice-'+user.id)||(VOICE_LANGUAGE_DEFAULT[user.language]||'en-IN')),[liveMode,LM]=useState(false),[detectedSearchLanguage,DSL]=useState(null),[hintLanguages,HL]=useState([]),[auto,AUTO]=useState(true),[voiceAutoSearch,VAS]=useState(true),[handsFree,HF]=useState(true),[searchTranscript,ST]=useState(''),[voiceQuery,VQ]=useState(false),[tour,TOUR]=useState(user.tour_done?null:0),[theme,TH]=useState(()=>getThemePreference(localStorage)),[speaking,SP]=useState(false),[filtersOpen,FO]=useState(false),[sizeFilter,SZ]=useState(''),[activeLine,AL]=useState(0),[reviewNonce,RV]=useState(0);
+ const [feedbackText,FB]=useState(''),[feedbackSent,FBS]=useState(false),[ownerFeedback,OF]=useState([]),[voiceGuideText,VGT]=useState(''),[voiceGuideCommand,VGC]=useState(''),[voiceGuidePaused,VGP]=useState(false),[meta,M]=useState(null),[items,I]=useState([]),[collection,C]=useState('all'),[page,P]=useState('find'),[brand,BR]=useState(''),[locationFilter,LF]=useState(''),[query,Q]=useState(''),[task,T]=useState(null),[recent,R]=useState([]),[busy,B]=useState(false),[error,E]=useState(''),[notice,N]=useState(''),[modal,D]=useState(null),[group,G]=useState('request'),[filter,F]=useState(''),[category,CAT]=useState(''),[language,L]=useState(()=>localStorage.getItem('sf-voice-'+user.id)||(VOICE_LANGUAGE_DEFAULT[user.language]||'en-IN')),[liveMode,LM]=useState(false),[detectedSearchLanguage,DSL]=useState(null),[hintLanguages,HL]=useState([]),[auto,AUTO]=useState(true),[voiceAutoSearch,VAS]=useState(true),[handsFree,HF]=useState(true),[pendingVoicePick,PV]=useState(null),[searchTranscript,ST]=useState(''),[voiceQuery,VQ]=useState(false),[tour,TOUR]=useState(user.tour_done?null:0),[theme,TH]=useState(()=>getThemePreference(localStorage)),[speaking,SP]=useState(false),[filtersOpen,FO]=useState(false),[sizeFilter,SZ]=useState(''),[activeLine,AL]=useState(0),[reviewNonce,RV]=useState(0);
  const audio=useRef(),audioURL=useRef(),generation=useRef(0),main=useRef(),taskVoice=useRef(false),pendingResume=useRef(null);
  const pack=collection==='all'?{id:'all',name:'Whole store',fields:[...new Set(meta?.collections.flatMap(c=>[...c.fields,...(meta.settings.custom_fields[c.id]||[])])||[])]}:meta?.collections.find(c=>c.id===collection),labels=meta?.field_labels||{},voice=!!meta?.voice,prismaV3=meta?.stt_model!=='prisma-v2.5';
  const invalidHints=language==='auto'&&hintLanguages.length===1;
@@ -62,6 +63,7 @@ export default function WarehouseApp({user,preferences,logout}){
   return started;
  }
  async function search(text=query,fromVoice=voiceQuery,global=false,spokenLanguage=null){
+  PV(null);
   if(!fromVoice)ST('');
   await run(async()=>{
    const result=await api('/search',{
@@ -79,10 +81,10 @@ export default function WarehouseApp({user,preferences,logout}){
    if(next.picking?.status==='ready'&&fromVoice&&auto)await speak(next);
   });
  }
- function navigate(p){if(p===page)return;audio.current?.pause();SP(false);P(p);E('');N('');D(null);if(p!=='find')TOUR(null);main.current?.focus();window.scrollTo(0,0)}
+ function navigate(p){if(p===page)return;PV(null);audio.current?.pause();SP(false);P(p);E('');N('');D(null);if(p!=='find')TOUR(null);main.current?.focus();window.scrollTo(0,0)}
  function goBack(){navigate('more')}
  async function choose(line,p,l){await run(async()=>{const next=await api('/tasks/'+task.id+'/choose',{line,collection:p.collection,sku:p.sku,location:l.code});const picked=await startIfReady(next);T(picked);AL(picked.picking?.status==='active'?Math.max(0,picked.lines.findIndex(x=>!x.complete)):line);if(picked.picking?.status==='ready'&&auto&&voice&&taskVoice.current)await speak(picked)})}
- async function scan(line,kind,value){await run(async()=>{const next=await api('/tasks/'+task.id+'/scan',{line,kind,value});T(next);if(kind==='manual')D(null);N(t(kind==='product'?'Item matched. Now scan the location.':'Location confirmed.'));await reload()})}
+ async function scan(line,kind,value){await run(async()=>{const next=await api('/tasks/'+task.id+'/scan',{line,kind,value});D(null);PV(null);await progressAfterPick(next,kind!=='product');await reload()})}
  async function playPickGuidance(command,source=task,line=activeLine){
   if(!voice||!source)return;
   audio.current?.pause();SP(true);
@@ -107,12 +109,12 @@ export default function WarehouseApp({user,preferences,logout}){
    const answer=await api('/tasks/'+source.id+'/picking/command',{transcript,line:activeLine});
    VGT(answer.text);
    if(answer.line!=null)AL(answer.line);
-   if(answer.action==='verify'&&answer.line!=null)D({type:'scan',index:answer.line});
-   if(answer.action==='report'&&answer.line!=null){
+   if(answer.action==='verify'&&answer.line!=null){PV({taskId:source.id,line:answer.line,sku:source.lines[answer.line]?.selected?.sku});VGT(t('Did you pick the correct item? Say Yes to confirm, or No to cancel.'));}
+   if(answer.action==='report'&&answer.line!=null){PV(null);
     const selected=source.lines[answer.line];
     D({type:'report',item:selected.selected,location:selected.location,index:answer.line});
    }
-   if(answer.action==='stop'){VGP(true);audio.current?.pause();SP(false);return}
+   if(answer.action==='stop'){PV(null);VGP(true);audio.current?.pause();SP(false);return}
    if(answer.action!=='unknown'&&voice){VGP(false);await playPickGuidance(answer.action,source,answer.line??activeLine)}
   })
  }
@@ -131,7 +133,7 @@ export default function WarehouseApp({user,preferences,logout}){
   if(!canStartPick||busy){N(t('First resolve each item before starting the pick.'));return}
   await pickAction('start');
  }
- async function pickAction(kind){if(!task)return;await run(async()=>{const next=await api('/tasks/'+task.id+'/picking/'+kind,{});T(next);G('location');if(kind==='start'){AL(Math.max(0,next.lines.findIndex(l=>!l.complete)));VGP(false);VGC('');VGT('');N(t('Picking started. Check each item at its recorded shelf.'));if(voice&&PICKING_VOICE_LANGUAGES.includes(next.language))await playPickGuidance('next',next,Math.max(0,next.lines.findIndex(l=>!l.complete)))}else{VGP(true);VGT('');N(t('Picking completed. No stock quantities were changed.'))}R(await request('/warehouse/tasks'))})}
+ async function pickAction(kind){if(!task)return;await run(async()=>{const next=await api('/tasks/'+task.id+'/picking/'+kind,{});T(next);G('location');if(kind==='start'){PV(null);AL(Math.max(0,next.lines.findIndex(l=>!l.complete)));VGP(false);VGC('');VGT('');N(t('Picking started. Check each item at its recorded shelf.'));if(voice&&PICKING_VOICE_LANGUAGES.includes(next.language))await playPickGuidance('next',next,Math.max(0,next.lines.findIndex(l=>!l.complete)))}else{VGP(true);VGT('');N(t('Picking completed. No stock quantities were changed.'))}R(await request('/warehouse/tasks'))})}
  async function resumePick(id){await run(async()=>{const restored=await request('/warehouse/tasks/'+encodeURIComponent(id));if(restored.collection!==collection){pendingResume.current=restored;C(restored.collection)}else{T(restored);Q(restored.query);G('location');AL(Math.max(0,restored.lines.findIndex(l=>!l.complete)))}P('find');N(t('Picking session restored.'))})}
  const picking=task?.picking||{status:'ready'},hasSearchCandidates=!!task?.lines.some(l=>l.selected||l.candidates.length),verifiedCount=task?.lines.filter(l=>l.complete).length||0,unresolvedLines=task?.lines.filter(l=>!l.selected||!l.location||l.location_report_open)||[],canStartPick=!!task?.lines.length&&unresolvedLines.length===0,nextPickIndex=task?.lines.findIndex(l=>!l.complete)??-1;
  const selected=task?.lines.filter(l=>l.selected)||[],locations=[...new Map(items.flatMap(p=>p.placements.map(l=>[l.code,l]))).values()],filtered=items.filter(p=>(!category||p.category===category)&&(!filter||[p.sku,p.name,p.brand,p.category,p.barcode,...p.aliases,...Object.values(p.specs),...p.placements.map(pathText)].join(' ').toLowerCase().includes(filter.toLowerCase())));
