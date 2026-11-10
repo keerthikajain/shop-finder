@@ -2392,3 +2392,79 @@ html,body,#root{max-width:100%;overflow-x:clip}
   .login-shell .sf-login-layout{background:#f7f3fc}
   .login-shell .login-card{background:transparent;backdrop-filter:none}
 }
+
+
+/* Finder onboarding hierarchy: brand belongs once in the header; spoken
+   welcome is an action, while form instructions remain short and specific. */
+.login-shell .sf-login-header{
+  justify-content:flex-start;
+  width:min(100%,940px);
+  max-width:940px;
+}
+.login-shell .sf-auth-welcome-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-width:0;
+  margin:0 0 16px;
+}
+.login-shell .sf-auth-page-subtitle{
+  min-width:0;
+  flex:1 1 auto;
+  margin:0;
+  font-size:13px;
+  line-height:1.55;
+  color:#625c68;
+  overflow-wrap:break-word;
+}
+.login-shell .sf-auth-welcome-row .sf-welcome-audio{
+  display:flex;
+  align-items:center;
+  flex:0 0 auto;
+  margin:0;
+}
+.login-shell .sf-auth-welcome-row .sf-welcome-audio button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-height:44px;
+  max-width:100%;
+  white-space:nowrap;
+  background:rgba(255,255,255,.66);
+  border:1px solid #ddd5e6;
+  border-radius:12px;
+  color:#30273e;
+  padding:9px 12px;
+}
+.login-shell .sf-auth-welcome-row .sf-welcome-audio button:hover:not(:disabled),
+.login-shell .sf-auth-welcome-row .sf-welcome-audio button:focus-visible{
+  background:#ede5fa;
+  border-color:#b9a7d6;
+  color:#30273e;
+}
+@media(max-width:760px){
+  .login-shell .sf-auth-welcome-row{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:flex-start;
+    margin-bottom:15px;
+  }
+  .login-shell .sf-auth-page-subtitle{
+    flex:1 1 185px;
+  }
+}
+@media(max-width:480px){
+  .login-shell .sf-auth-welcome-row{
+    flex-direction:column;
+    align-items:stretch;
+    gap:10px;
+  }
+  .login-shell .sf-auth-page-subtitle{width:100%;font-size:13px}
+  .login-shell .sf-auth-welcome-row .sf-welcome-audio{width:100%}
+  .login-shell .sf-auth-welcome-row .sf-welcome-audio button{
+    width:100%;
+    justify-content:center;
+  }
+}

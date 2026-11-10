@@ -146,7 +146,8 @@ test('login and registration expose all ten persistent interface languages',asyn
 test('public welcome offers browser speech without requiring an API key or blocking login',async()=>{
  const html=render({signupEnabled:true});
  assert.match(html,/Hear welcome/);
- assert.match(html,/Welcome to Finder\. Find what you need, and know exactly where it belongs\./);
+ assert.match(html,/Sign in to pick up where you left off\./);
+ assert.doesNotMatch(html,/Welcome to Finder\. Your workspace is ready to explore\./);
  assert.doesNotMatch(html,/Welcome to Shop Finder\. Sign in to continue, or explore a workspace/);
  assert.match(html,/name="username"/);
  const src=await (await import('node:fs/promises')).readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
@@ -154,4 +155,20 @@ test('public welcome offers browser speech without requiring an API key or block
  assert.match(src,/welcomeAttempted\.current=true/);
  assert.match(src,/speech\.onerror=\(\)=>WS\('unavailable'\)/);
  assert.doesNotMatch(src,/GNANI_API_KEY|\/voice\/speak/);
+});
+
+test('signup has a dedicated setup subtitle while welcome speech stays separate',async()=>{
+ const signup=render({signupEnabled:true});
+ assert.match(signup,/class="wh-brand"/);
+ assert.match(signup,/class="sf-auth-welcome-row"/);
+ assert.match(signup,/class="sf-auth-page-subtitle"/);
+ assert.match(signup,/Sign in to pick up where you left off/);
+ const src=await (await import('node:fs/promises')).readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
+ assert.match(src,/Set up your space, organize your items, and find everything with ease/);
+ assert.match(src,/Welcome to Finder\. Your workspace is ready to explore/);
+ assert.doesNotMatch(src,/<p>\{greeting\}<\/p>/);
+ const css=await (await import('node:fs/promises')).readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(css,/\.login-shell \.sf-auth-welcome-row\{/);
+ assert.match(css,/\.login-shell \.sf-login-header\{\s*justify-content:flex-start/);
+ assert.match(css,/@media\(max-width:480px\)\{[\s\S]*?\.login-shell \.sf-auth-welcome-row\{/);
 });

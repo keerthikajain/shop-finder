@@ -17,10 +17,10 @@ export function AccountGate({children}){
 // Public sign-in is intentionally unauthenticated. Use the browser's own
 // speech engine here, never a public Gnani TTS endpoint or browser API key.
 const WELCOME_TEXT={
- en:'Welcome to Finder. Find what you need, and know exactly where it belongs.',
- hi:'फाइंडर में आपका स्वागत है। जो चाहिए, उसे आसानी से ढूँढ़ें और जानें कि वह कहाँ रखा है।',
- kn:'ಫೈಂಡರ್‌ಗೆ ಸ್ವಾಗತ. ನಿಮಗೆ ಬೇಕಾದ ವಸ್ತುವನ್ನು ಸುಲಭವಾಗಿ ಹುಡುಕಿ, ಅದು ಎಲ್ಲಿದೆ ಎಂದು ತಿಳಿಯಿರಿ.',
- te:'ఫైండర్‌కు స్వాగతం. మీకు కావలసిన వస్తువును సులభంగా కనుగొని, అది ఎక్కడ ఉందో తెలుసుకోండి.'
+ en:"Welcome to Finder. Your workspace is ready to explore. Let's find what you need.",
+ hi:'फाइंडर में आपका स्वागत है। आपका वर्कस्पेस देखने के लिए तैयार है। आइए, जो चाहिए उसे ढूँढ़ते हैं।',
+ kn:'ಫೈಂಡರ್‌ಗೆ ಸ್ವಾಗತ. ನಿಮ್ಮ ಕಾರ್ಯಕ್ಷೇತ್ರವನ್ನು ಅನ್ವೇಷಿಸಲು ಸಿದ್ಧವಾಗಿದೆ. ನಿಮಗೆ ಬೇಕಾದ ವಸ್ತುವನ್ನು ಹುಡುಕೋಣ.',
+ te:'ఫైండర్‌కు స్వాగతం. మీ వర్క్‌స్పేస్‌ను అన్వేషించడానికి సిద్ధంగా ఉంది. మీకు కావలసిన వస్తువును వెతుకుదాం.'
 };
 const WELCOME_LANGUAGE={en:'en-IN',hi:'hi-IN',kn:'kn-IN',te:'te-IN'};
 export function Login({ready,configured,language,L,error,busy,notice='',demoEnabled=false,signupEnabled=false,onChallenge,onDemo,onSubmit,onJoin,onRegister,onClearFeedback}){
@@ -95,6 +95,7 @@ export function Login({ready,configured,language,L,error,busy,notice='',demoEnab
  }
 
  const heading=joining?t('Join workspace'):signingUp?t('Create your workspace'):t('Welcome back');
+ const subtitle=signingUp?'Set up your space, organize your items, and find everything with ease.':joining?t('Find your team and start working in your shared workspace.'):t('Sign in to pick up where you left off.');
  const intro=joining&&!joinMethod?t('Choose how you would like to join your team.'):'';
  const codeLabel=joinMethod==='workspace'?t('Workspace code'):t('Staff invitation code');
  const joinWithWorkspace=joinMethod==='workspace';
@@ -110,10 +111,12 @@ export function Login({ready,configured,language,L,error,busy,notice='',demoEnab
    </section>
    <section className="glass login-card" aria-label={heading}>
     <h1>{heading}</h1>
+    <div className="sf-auth-welcome-row">
+     <p className="sf-auth-page-subtitle">{subtitle}</p>
     {ready&&configured&&<div className="sf-welcome-audio" aria-label={t('Welcome message')}>
-     <p>{greeting}</p>
-     <button type="button" onClick={speakWelcome} aria-label={t('Hear welcome message')}><Glyph name="sound"/>{t(welcomeStatus==='speaking'||welcomeStatus==='starting'?'Stop welcome':'Hear welcome')}</button>
+     <button type="button" onClick={speakWelcome} aria-label={t(welcomeStatus==='speaking'||welcomeStatus==='starting'?'Stop welcome message':'Hear welcome message')}><Glyph name="sound"/>{t(welcomeStatus==='speaking'||welcomeStatus==='starting'?'Stop welcome':'Hear welcome')}</button>
     </div>}
+    </div>
     <label className="sf-login-language">
      <span>{t('App language')}</span>
      <select aria-label={t('App language')} value={language} onChange={e=>L(e.target.value)}>{APP_LANGUAGES.map(([code,label])=><option key={code} value={code}>{label}</option>)}</select>
