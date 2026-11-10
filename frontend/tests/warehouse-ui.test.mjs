@@ -509,3 +509,33 @@ test('hands-free picking is bounded and pauses while sound, modals or work is ac
  assert.match(recording,/if\(stopOnSilence\&\&!heardSpeech\)/);
  assert.match(recording,/now-lastSpeech>1100/);
 });
+
+
+test('voice confirmation requires a prior found-item request and explicitly named second response',async()=>{
+ const {pickConfirmationIntent}=await import('../src/picking-confirmations.js');
+ for(const [language,yes,no] of [
+  ['en-IN','yes','no'],['hi-IN','हाँ','नहीं'],['hi-en','haan','nahi'],
+  ['kn-IN','ಹೌದು','ಇಲ್ಲ'],['te-IN','అవును','కాదు']
+ ]){
+  assert.equal(pickConfirmationIntent(language,yes),'yes',language);
+  assert.equal(pickConfirmationIntent(language,no),'no',language);
+  assert.equal(pickConfirmationIntent(language,'not '+yes),'unknown',language);
+ }
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(source,/if\(pendingVoicePick\)/);
+ assert.match(source,/pickConfirmationIntent\(source.language,transcript\)/);
+ assert.match(source,/source.id!==pendingVoicePick.taskId/);
+ assert.match(source,/current.selected\?\.sku!==pendingVoicePick.sku/);
+ assert.match(source,/kind:'manual',value:'confirmed'/);
+ assert.match(source,/await progressAfterPick\(next,true\)/);
+ assert.match(source,/await api\('\/tasks\/'\+next.id\+'\/picking\/finish'/);
+ assert.match(source,/className="sf-voice-pick-confirm"/);
+});
+
+test('mobile picking UI stays compact without shrinking actionable controls',async()=>{
+ const css=await readFile(new URL('../src/activity-settings-polish.css',import.meta.url),'utf8');
+ assert.match(css,/@media\(max-width:700px\)/);
+ assert.match(css,/\.sf-compact-app \.wh-task h3\{font-size:16px/);
+ assert.match(css,/\.sf-compact-app \.wh-panel \.wh-button,\.sf-compact-app \.wh-panel button\{min-height:40px/);
+ assert.match(css,/\.sf-compact-app \.sf-voice-pick-confirm button\{min-height:42px/);
+});
