@@ -151,10 +151,12 @@ test('public welcome offers browser speech without requiring an API key or block
  assert.doesNotMatch(html,/Welcome to Shop Finder\. Sign in to continue, or explore a workspace/);
  assert.match(html,/name="username"/);
  const src=await (await import('node:fs/promises')).readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
- assert.match(src,/SpeechSynthesisUtterance/);
+ assert.match(src,/playWelcomeOnce/);
+ assert.match(src,/\/api\/welcome\/audio\?language=/);
+ assert.match(src,/stopWelcome\(playback\)/);
  assert.match(src,/welcomeAttempted\.current=true/);
  assert.match(src,/welcomeAttempted\.current=true/);
- assert.match(src,/window\.speechSynthesis\.speak\(speech\)/);
+ assert.match(src,/url:'\/api\/welcome\/audio\?language='/);
  assert.doesNotMatch(src,/onClick=\{speakWelcome\}/);
  assert.doesNotMatch(src,/GNANI_API_KEY|\/voice\/speak/);
 });
