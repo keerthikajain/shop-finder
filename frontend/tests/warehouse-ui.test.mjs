@@ -637,10 +637,12 @@ test('wrong-location handoff pauses pick capture and opens an editable report st
  assert.match(source,/Write or edit what needs checking/);
  assert.match(source,/Speak once and pause/);
 });
-test('spoken report submission leaves pick listening paused until explicitly resumed',async()=>{
+test('spoken report submission resumes the next eligible item only after report is saved',async()=>{
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(source,/VGP\(true\);D\(null\);N\('Report #'/);
- assert.match(source,/Voice picking is paused; resume when ready/);
+ assert.match(source,/VGP\(true\);D\(null\)/);
+ assert.match(source,/await deferPick\(task,index,'reported'\)/);
+ assert.match(source,/VGP\(!\(voice&&handsFree\)\)/);
+ assert.match(source,/The item remains unconfirmed; Finder moved to the next available item/);
  assert.match(source,/onClose=\{\(\)=>\{D\(null\);VGP\(true\)\}\}/);
  assert.match(source,/Start hands-free listening/);
  assert.match(source,/Stop hands-free listening/);
@@ -809,7 +811,7 @@ test('first item announcement and automatic advance do not require clicking Next
  const guide=await readFile(new URL('../../backend/app/warehouse_voice_guide.py',import.meta.url),'utf8');
  assert.match(ui,/if\(guided\)await playPickGuidance\('start',next/);
  assert.match(server,/command:Literal\['start','next'/);
- assert.match(guide,/elif action==='start':/);
+ assert.match(guide,/elif action=='start':/);
  assert.match(guide,/First item:/);
  assert.match(guide,/पहला सामान/);
  assert.match(guide,/మొదటి వస్తువు:/);
