@@ -88,6 +88,11 @@ class Scan(Strict):
 class PickCommand(Strict):
  transcript:str=Field(min_length=1,max_length=120)
  line:int=Field(default=0,ge=0,le=9)
+class PickDefer(Strict):
+ line:int=Field(ge=0,le=9)
+ reason:Literal['declined','reported']
+class PickRetry(Strict):
+ line:int=Field(ge=0,le=9)
 class PickGuideAudio(Strict):
  command:Literal['next','repeat','verify','report','stop','help','unknown']
  line:int=Field(default=0,ge=0,le=9)
@@ -526,6 +531,37 @@ def install_warehouse(app,path):
    picking_check(c,task)
    task['picking']['paused']=False
    return task_put(c,task)
+ @app.post('/api/warehouse/tasks/{tid}/picking/defer')
+ def defer_picking(tid:str,body:PickDefer,request:Request):
+  """Keep an unpicked item unresolved and guide the worker to another item."""
+  u=identity(request)
+  with connect(path) as c:
+   c.execute('BEGIN IMMEDIATE');task=task_get(c,tid,u)
+   if picking_state(task)['status']!='active' or picking_state(task).get('paused'):
+    raise HTTPException(409,'Resume active picking before deferring an item.')
+   line,p=current_line(c,task,body.line)
+   if line.get('complete'):raise HTTPException(409,'A confirmed pick cannot be deferred.')
+   if body.reason=='reported':
+    report=c.execute("SELECT id FROM wh_issues WHERE collection=? AND sku=? AND kind='wrong_location' AND location_code=? AND status='open' LIMIT 1",(p['collection'],p['sku'],line['location']['code'])).fetchone()
+    if not report:raise HTTPException(409,'Submit the wrong-location report before moving to another item.')
+   line['deferred_reason']=body.reason
+   if body.reason=='reported':line['location_report_open']=True
+   return task_put(c,task)
+ @app.post('/api/warehouse/tasks/{tid}/picking/retry')
+ def retry_picking(tid:str,body:PickRetry,request:Request):
+  """Let the worker explicitly retry a deferred item, never mark it picked."""
+  u=identity(request)
+  with connect(path) as c:
+   c.execute('BEGIN IMMEDIATE');task=task_get(c,tid,u)
+   if picking_state(task)['status']!='active' or picking_state(task).get('paused'):
+    raise HTTPException(409,'Resume active picking before retrying an item.')
+   line,p=current_line(c,task,body.line)
+   if line.get('complete'):raise HTTPException(409,'This item was already confirmed.')
+   if not line.get('deferred_reason'):raise HTTPException(409,'Only deferred items can be retried.')
+   if location_status(c,p,line['location'])['location_report_open']:
+    raise HTTPException(409,'This shelf report is still open. Ask the owner to verify the location before retrying.')
+   line.pop('deferred_reason',None)
+   return task_put(c,task)
  @app.post('/api/warehouse/tasks/{tid}/picking/command')
  def picking_voice_command(tid:str,body:PickCommand,request:Request):
   u=identity(request)
@@ -633,6 +669,7 @@ def install_warehouse(app,path):
    if picking_state(t).get('paused'):raise HTTPException(409,'Resume picking before confirming an item.')
    line,p=current_line(c,t,body.line)
    if line.get('complete'):raise HTTPException(409,'This item is already verified.')
+   if line.get('deferred_reason'):raise HTTPException(409,'Retry this deferred item before confirming it.')
    if body.kind=='product':
     if body.value not in [p['sku'],p['barcode'],f"ITEM:{p['collection']}:{p['sku']}"]:raise HTTPException(409,'Different item scanned. Check the SKU and variant.')
     line['product_scanned']=True
