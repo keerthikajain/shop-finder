@@ -54,13 +54,16 @@ else:
             del password,confirm
             print('Owner account created. Log in in the browser.');break
     else:print('Log in with your owner or staff account in the browser.')
-env['GNANI_ENABLED']='false'
-if input('Enable live Gnani calls using your account credits? [y/N] ').strip().lower()=='y':
-    if not env.get('GNANI_API_KEY'):
-        env['GNANI_API_KEY']=getpass.getpass('Gnani API key (hidden, not saved): ')
-    if not env.get('GNANI_API_KEY'):
-        raise SystemExit('Gnani API key is required for live voice.')
-    env['GNANI_ENABLED']='true'
+if env.get('GNANI_ENABLED')=='true' and env.get('GNANI_API_KEY'):
+    print('Live Gnani enabled using private local configuration.')
+else:
+    env['GNANI_ENABLED']='false'
+    if input('Enable live Gnani calls using your account credits? [y/N] ').strip().lower()=='y':
+        if not env.get('GNANI_API_KEY'):
+            env['GNANI_API_KEY']=getpass.getpass('Gnani API key (hidden, not saved): ')
+        if not env.get('GNANI_API_KEY'):
+            raise SystemExit('Gnani API key is required for live voice.')
+        env['GNANI_ENABLED']='true'
 try:subprocess.run(['node','scripts/dev.mjs'],cwd=root,env=env,check=True)
 except KeyboardInterrupt:pass
 except subprocess.CalledProcessError as e:raise SystemExit(f'Application stopped with code {e.returncode}. Read the error above; fix it before restarting.')
