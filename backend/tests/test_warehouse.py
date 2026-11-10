@@ -1133,7 +1133,8 @@ def test_query_time_translation_finds_newly_imported_product_without_translated_
  assert save(c,product,0).status_code==200
  assert not next(p for p in items(c,'appliances') if p['sku']=='APP-TRANS-991').get('translations')
  async def translate(query,language,products):
-  assert query=='स्टेनलेस स्टील होज़ क्लैंप कहाँ है?'
+  # Search normalizes terminal punctuation before the translation fallback.
+   assert query=='स्टेनलेस स्टील होज़ क्लैंप कहाँ है'
   assert language=='hi-IN'
   return ['Stainless steel hose clamp'],'attempted'
  monkeypatch.setattr(warehouse_query_translation,'translate_to_catalogue',translate)
