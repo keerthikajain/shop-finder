@@ -6,6 +6,8 @@ services:
     environment:
       GNANI_ENABLED: ${GNANI_ENABLED:-false}
       GNANI_API_KEY: ${GNANI_API_KEY:-}
+      GNANI_TTS_MODEL: ${GNANI_TTS_MODEL:-timbre-v3.0}
+      GNANI_TTS_VOICE: ${GNANI_TTS_VOICE:-Prakash}
       SHOP_FINDER_SEED_DEMO: ${SHOP_FINDER_SEED_DEMO:-false}
       SHOP_FINDER_SECURE_COOKIE: ${SHOP_FINDER_SECURE_COOKIE:-false}
       # Enable only on a dedicated synthetic-data challenge deployment.
