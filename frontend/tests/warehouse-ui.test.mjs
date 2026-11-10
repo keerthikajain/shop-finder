@@ -246,18 +246,15 @@ test('report displays recognized voice text and keeps reporting separate from ca
  assert.match(src,/pendingSubmit/);
 });
 
-test('Prisma V3 offers ten selectable recognition languages and optional hints',async()=>{
+test('Finder offers only Hindi Hinglish and Telugu recognition modes',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- const recording=await readFile(new URL('../src/recording.js',import.meta.url),'utf8');
- assert.match(src,/const VOICE_INPUT_LANGUAGES=\[/);
- for(const code of ['en-IN','hi-IN','kn-IN','ta-IN','te-IN','ml-IN','mr-IN','bn-IN','gu-IN','pa-IN']){
-  assert.ok(src.includes("['"+code+"'"),code);
- }
- assert.match(src,/Auto-detect \(10 languages\)/);
- assert.match(src,/candidates=\{language==='auto'\?hintLanguages:\[\]\}/);
- assert.match(src,/candidates\.join\(','\)/);
- assert.match(recording,/params\.set\('candidates',candidates\.join\(','\)\)/);
- assert.match(src,/hintLanguages\.length>=4/);
+ const match=src.match(/const VOICE_INPUT_LANGUAGES=\[([\s\S]*?)\];/);
+ assert.ok(match,'Voice-language options must be declared');
+ for(const code of ['hi-IN','hi-en','te-IN'])assert.ok(match[1].includes("['"+code+"'"),code);
+ for(const code of ['en-IN','kn-IN','ta-IN','ml-IN','mr-IN','bn-IN','gu-IN','pa-IN'])assert.ok(!match[1].includes("['"+code+"'"),code);
+ assert.doesNotMatch(src,/<option value="auto">Auto-detect/);
+ assert.match(src,/const ACTIVE_VOICE_CODES=new Set/);
+ assert.match(src,/candidates=\{\[\]\}/);
 });
 
 test('setup guidance is limited to Find when workspace setup is unfinished',async()=>{
@@ -295,12 +292,16 @@ test('mobile header names the active section and shows a single Find navigation 
  assert.match(css,/\.sf-compact-app\.sf-voice-unavailable \.wh-top-actions \.sf-header-scan\{display:none\}/);
 });
 
-test('Finder settings expose ten interface languages with stored preferences',async()=>{
+test('Finder settings expose the three release languages and preserve legacy dictionaries',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/APP_LANGUAGES\.map\(\(\[code,name\]\)/);
  assert.match(src,/VOICE_LANGUAGE_DEFAULT\[user\.language\]/);
  assert.match(src,/id="sf-settings-language"/);
  const locale=await readFile(new URL('../src/locale-multilingual.js',import.meta.url),'utf8');
+ const choices=locale.match(/export const APP_LANGUAGES=Object\.freeze\(\[([\s\S]*?)\]\);/);
+ assert.ok(choices);
+ for(const code of ['hi','hi-en','te'])assert.ok(choices[1].includes("['"+code+"'"),code);
+ assert.equal((choices[1].match(/\['/g)||[]).length,3);
  for(const code of ['bn','mr','gu','pa','kn','te','ta','ml'])assert.match(locale,new RegExp('"'+code+'":'));
 });
 
