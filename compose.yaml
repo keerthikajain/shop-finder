@@ -5,6 +5,7 @@ services:
       - "127.0.0.1:8080:8080"
     environment:
       GNANI_ENABLED: ${GNANI_ENABLED:-false}
+      GNANI_STT_MODEL: ${GNANI_STT_MODEL:-prisma-v3.0}
       GNANI_API_KEY: ${GNANI_API_KEY:-}
       GNANI_TTS_MODEL: ${GNANI_TTS_MODEL:-timbre-v3.0}
       GNANI_TTS_VOICE: ${GNANI_TTS_VOICE:-Prakash}
