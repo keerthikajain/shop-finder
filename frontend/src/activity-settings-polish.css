@@ -125,3 +125,10 @@
 .sf-compact-app .sf-review-voice .wh-voice{justify-self:start;min-height:42px;max-width:100%;padding:8px 13px;background:var(--wh-soft,#f2ebff);color:var(--wh-accent,#6e37d2)}
 .sf-compact-app .sf-review-voice p{padding:10px 12px;margin:0;border:1px solid var(--wh-border,#dedbe5);border-radius:9px;overflow-wrap:anywhere;font-size:13px;line-height:1.5}
 @media(max-width:600px){.sf-compact-app .sf-review-voice .wh-voice{width:100%}}
+
+/* Sign-in greeting stays secondary to authentication, even on small screens. */
+.login-shell .sf-welcome-audio{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:8px 0 14px;min-width:0}
+.login-shell .sf-welcome-audio p{font-size:12px;line-height:1.5;margin:0;flex:1 1 230px;max-width:52ch}
+.login-shell .sf-welcome-audio button{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--wh-border,#dedbe5);border-radius:10px;background:transparent;font-size:12px;font-weight:600;min-height:40px;padding:7px 10px;white-space:normal}
+.login-shell .sf-welcome-audio button svg{width:17px;height:17px;flex-shrink:0}
+@media(max-width:600px){.login-shell .sf-welcome-audio{gap:6px;margin:6px 0 10px}.login-shell .sf-welcome-audio p{font-size:12px;flex-basis:100%}.login-shell .sf-welcome-audio button{width:100%}}
