@@ -21,6 +21,15 @@ const VOICE_INPUT_LANGUAGES=[
 const VOICE_LANGUAGE_DEFAULT={en:'en-IN',hi:'hi-IN',bn:'bn-IN',mr:'mr-IN',gu:'gu-IN',pa:'pa-IN',kn:'kn-IN',te:'te-IN',ta:'ta-IN',ml:'ml-IN'};
 export const locationFields=['facility','floor','zone','aisle','rack','shelf','bin'];
 export const pathText=l=>locationFields.map(k=>l?.[k]).filter(Boolean).join(' / ');
+export function nextPendingPickIndex(lines=[]){
+ const entries=lines.map((line,index)=>({line,index})).filter(x=>!x.line.complete);
+ const key=line=>locationFields.map(field=>String(line.location?.[field]||'').toLocaleLowerCase()).join('\u0001');
+ entries.sort((a,b)=>{
+  const left=key(a.line),right=key(b.line);
+  return (left<right?-1:left>right?1:0)||a.index-b.index;
+ });
+ return entries[0]?.index??-1;
+}
 const friendlyPath=(l,example=false)=>locationFields.filter(k=>l?.[k]&&!(example&&k==='facility'&&l[k]==='Demo Hub')).map(k=>l[k]).join(' / ');
 export const cleanItem=p=>({sku:p.sku,collection:p.collection,name:p.name,category:p.category,brand:p.brand||'',aliases:p.aliases,barcode:p.barcode,photo_url:p.photo_url||'',specs:p.specs,synthetic:p.synthetic,placements:p.placements.map(l=>({...Object.fromEntries(locationFields.map(k=>[k,l[k]||''])),quantity:l.quantity??null}))});
 export function VoiceButton({language,enabled,onText,onError,onPartial,live=false,autoStop=false,small=false,nav=false,iconOnly=false,label='',style='transcribe',enhanced=true,collection='all',candidates=[]}){
@@ -55,7 +64,7 @@ export default function WarehouseApp({user,preferences,logout}){
      result.lines.some(line=>!line.selected||!line.location||line.location_report_open))return result;
   const started=await api('/tasks/'+result.id+'/picking/start',{});
   G('location');VGP(false);VGC('');VGT('');
-  const first=Math.max(0,started.lines.findIndex(line=>!line.complete));
+  const first=Math.max(0,nextPendingPickIndex(started.lines));
   AL(first);
   if(voice&&auto&&PICKING_VOICE_LANGUAGES.includes(started.language)){
     await playPickGuidance('next',started,first);
@@ -83,7 +92,7 @@ export default function WarehouseApp({user,preferences,logout}){
  }
  function navigate(p){if(p===page)return;PV(null);audio.current?.pause();SP(false);P(p);E('');N('');D(null);if(p!=='find')TOUR(null);main.current?.focus();window.scrollTo(0,0)}
  function goBack(){navigate('more')}
- async function choose(line,p,l){await run(async()=>{const next=await api('/tasks/'+task.id+'/choose',{line,collection:p.collection,sku:p.sku,location:l.code});const picked=await startIfReady(next);T(picked);AL(picked.picking?.status==='active'?Math.max(0,picked.lines.findIndex(x=>!x.complete)):line);if(picked.picking?.status==='ready'&&auto&&voice&&taskVoice.current)await speak(picked)})}
+ async function choose(line,p,l){await run(async()=>{const next=await api('/tasks/'+task.id+'/choose',{line,collection:p.collection,sku:p.sku,location:l.code});const picked=await startIfReady(next);T(picked);AL(picked.picking?.status==='active'?Math.max(0,nextPendingPickIndex(picked.lines)):line);if(picked.picking?.status==='ready'&&auto&&voice&&taskVoice.current)await speak(picked)})}
  async function progressAfterPick(next,completed){
   T(next);
   if(!completed||!next.lines.every(line=>line.complete)&&next.picking?.status!=='active')return;
@@ -93,7 +102,7 @@ export default function WarehouseApp({user,preferences,logout}){
    T(finished);VGP(true);AL(0);
    N(t('All done! Your picking list is complete.'));
   }else if(next.picking?.status==='active'){
-   const index=next.lines.findIndex(line=>!line.complete);
+   const index=nextPendingPickIndex(next.lines);
    if(index>=0){AL(index);N(t('Picked! Moving to the next item.'));if(window.matchMedia('(max-width:700px)').matches)requestAnimationFrame(()=>document.getElementById('sf-picking-line-'+index)?.scrollIntoView({behavior:'smooth',block:'center'}));if(voice&&auto)await playPickGuidance('next',next,index)}
   }
  }
@@ -166,9 +175,9 @@ export default function WarehouseApp({user,preferences,logout}){
   if(!canStartPick||busy){N(t('First resolve each item before starting the pick.'));return}
   await pickAction('start');
  }
- async function pickAction(kind){if(!task)return;await run(async()=>{const next=await api('/tasks/'+task.id+'/picking/'+kind,{});T(next);G('location');if(kind==='start'){PV(null);AL(Math.max(0,next.lines.findIndex(l=>!l.complete)));VGP(false);VGC('');VGT('');N(t('Picking started. Check each item at its recorded shelf.'));if(voice&&PICKING_VOICE_LANGUAGES.includes(next.language))await playPickGuidance('next',next,Math.max(0,next.lines.findIndex(l=>!l.complete)))}else{VGP(true);VGT('');N(t('Picking completed. No stock quantities were changed.'))}R(await request('/warehouse/tasks'))})}
- async function resumePick(id){await run(async()=>{const restored=await request('/warehouse/tasks/'+encodeURIComponent(id));if(restored.collection!==collection){pendingResume.current=restored;C(restored.collection)}else{T(restored);Q(restored.query);G('location');AL(Math.max(0,restored.lines.findIndex(l=>!l.complete)))}P('find');N(t('Picking session restored.'))})}
- const picking=task?.picking||{status:'ready'},hasSearchCandidates=!!task?.lines.some(l=>l.selected||l.candidates.length),verifiedCount=task?.lines.filter(l=>l.complete).length||0,unresolvedLines=task?.lines.filter(l=>!l.selected||!l.location||l.location_report_open)||[],canStartPick=!!task?.lines.length&&unresolvedLines.length===0,nextPickIndex=task?.lines.findIndex(l=>!l.complete)??-1;
+ async function pickAction(kind){if(!task)return;await run(async()=>{const next=await api('/tasks/'+task.id+'/picking/'+kind,{});T(next);G('location');if(kind==='start'){PV(null);AL(Math.max(0,nextPendingPickIndex(next.lines)));VGP(false);VGC('');VGT('');N(t('Picking started. Check each item at its recorded shelf.'));if(voice&&PICKING_VOICE_LANGUAGES.includes(next.language))await playPickGuidance('next',next,Math.max(0,nextPendingPickIndex(next.lines)))}else{VGP(true);VGT('');N(t('Picking completed. No stock quantities were changed.'))}R(await request('/warehouse/tasks'))})}
+ async function resumePick(id){await run(async()=>{const restored=await request('/warehouse/tasks/'+encodeURIComponent(id));if(restored.collection!==collection){pendingResume.current=restored;C(restored.collection)}else{T(restored);Q(restored.query);G('location');AL(Math.max(0,nextPendingPickIndex(restored.lines)))}P('find');N(t('Picking session restored.'))})}
+ const picking=task?.picking||{status:'ready'},hasSearchCandidates=!!task?.lines.some(l=>l.selected||l.candidates.length),verifiedCount=task?.lines.filter(l=>l.complete).length||0,unresolvedLines=task?.lines.filter(l=>!l.selected||!l.location||l.location_report_open)||[],canStartPick=!!task?.lines.length&&unresolvedLines.length===0,nextPickIndex=nextPendingPickIndex(task?.lines);
  const selected=task?.lines.filter(l=>l.selected)||[],locations=[...new Map(items.flatMap(p=>p.placements.map(l=>[l.code,l]))).values()],filtered=items.filter(p=>(!category||p.category===category)&&(!filter||[p.sku,p.name,p.brand,p.category,p.barcode,...p.aliases,...Object.values(p.specs),...p.placements.map(pathText)].join(' ').toLowerCase().includes(filter.toLowerCase())));
  const sizeOptions=[...new Set(items.flatMap(p=>['size','size_uk','size_eu'].map(k=>p.specs?.[k]).filter(Boolean).map(String)))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
  const guideLine=task?.lines[activeLine]?.selected?task.lines[activeLine]:selected[0];
