@@ -34,7 +34,8 @@ test('time-based welcome uses current local hour and only once per workspace mou
  const src=await readFile(new URL('../src/workspace-greeting.jsx',import.meta.url),'utf8');
  assert.match(src,/if\(attempted\.current\)return/);
  assert.match(src,/attempted\.current=true/);
- assert.match(src,/if\(!interrupt\)speakGreeting\(\)/);
+ assert.match(src,/if\(interrupt\)return/);
+ assert.match(src,/playWelcomeOnce\(/);
 });
 
 test('localized spoken greetings and guest fallback never invent a name',()=>{
@@ -59,8 +60,9 @@ test('workspace requests authenticated Gnani female welcome once with no replay 
  assert.match(src,/url:'\/api\/voice\/welcome'/);
  assert.match(src,/body:\{language,hour:entryHour\.current\}/);
  assert.match(src,/if\(attempted\.current\)return/);
- assert.match(src,/if\(!interrupt\)speakGreeting\(\)/);
- assert.match(src,/if\(interrupt&&activeSpeech\.current\)stopGreeting\(\)/);
+ assert.match(src,/if\(interrupt\)return/);
+ assert.match(src,/playWelcomeOnce\(/);
+ assert.match(src,/if\(interrupt\)stopGreeting\(\)/);
  assert.match(src,/stopWelcome\(activeSpeech\.current\)/);
  assert.doesNotMatch(src,/Hear greeting|Stop greeting|Mute automatic greeting/);
  assert.match(css,/@media\(max-width:480px\)/);
