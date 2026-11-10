@@ -163,12 +163,12 @@ class SignIn(Login):
 
 class NewAccount(Login):
  password:str=Field(min_length=12,max_length=128)
- language:Literal['en','hi','hi-en','bn','mr','gu','pa','kn','te','ta','ml']='en'
+ language:Literal['en','hi','bn','mr','gu','pa','kn','te','ta','ml']='en'
 class StaffJoin(NewAccount):
  code:str=Field(min_length=24,max_length=100,pattern=r'^[A-Za-z0-9_-]+$')
 class Preference(BaseModel):
  model_config=ConfigDict(extra='forbid')
- language:Literal['en','hi','hi-en','bn','mr','gu','pa','kn','te','ta','ml']
+ language:Literal['en','hi','bn','mr','gu','pa','kn','te','ta','ml']
  tour_done:bool
 class Profile(BaseModel):
  model_config=ConfigDict(extra='forbid',str_strip_whitespace=True)
