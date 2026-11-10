@@ -397,7 +397,7 @@ test('voice picking is discoverable before starting and unmatched requests can b
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
  assert.match(ui,/picking.status!=='completed'&&<div className="sf-voice-guide"/);
- assert.match(ui,/Choose your items, then tap Start picking to use voice commands/);
+ assert.match(ui,/Picking starts automatically when each item and shelf is resolved/);
  assert.match(ui,/enabled={picking.status==='active'&&voice&&!busy&&!voiceGuidePaused}/);
  assert.match(ui,/async function removeUnresolvedLine\(index\)/);
  assert.match(ui,/Remove from worklist/);
@@ -469,7 +469,7 @@ test('voice-first search uses the actual Prisma transcript and preserves an opt-
  assert.match(source,/Search automatically after speaking/);
  assert.match(source,/if\(text\?\.trim\(\)\&\&voiceAutoSearch\)\{search\(text,true,false,detected\)\}/);
  assert.match(source,/spokenLanguage\|\|detectedSearchLanguage/);
- assert.match(source,/if\(fromVoice\&\&auto\)await speak\(result\)/);
+ assert.match(source,/if\(next.picking\?\.status==='ready'\&\&fromVoice\&\&auto\)await speak\(next\)/);
 });
 
 test('voice-start picking requires exact, unambiguous speech in all five focus modes',async()=>{
@@ -483,4 +483,28 @@ test('voice-start picking requires exact, unambiguous speech in all five focus m
  assert.match(source,/PICKING_START_VOICE_LANGUAGES.includes\(task.language\)/);
  assert.match(source,/if\(!canStartPick\|\|busy\)/);
  assert.match(source,/await pickAction\('start'\)/);
+});
+
+test('resolved search enters the real picking session without another click',async()=>{
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(source,/async function startIfReady\(result\)/);
+ assert.match(source,/result\.lines\.some\(line=>!line\.selected\|\|!line\.location\|\|line\.location_report_open\)/);
+ assert.match(source,/api\('\/tasks\/'\+result\.id\+'\/picking\/start'/);
+ assert.match(source,/const next=await startIfReady\(result\)/);
+ assert.match(source,/const picked=await startIfReady\(next\)/);
+ assert.match(source,/className="sf-visible-transcript"/);
+ assert.match(source,/searchTranscript\&\&/);
+});
+
+test('hands-free picking is bounded and pauses while sound, modals or work is active',async()=>{
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const listener=await readFile(new URL('../src/hands-free-picking.jsx',import.meta.url),'utf8');
+ const recording=await readFile(new URL('../src/recording.js',import.meta.url),'utf8');
+ assert.match(source,/HandsFreePicking enabled=\{!busy\&\&!speaking\&\&!modal\&\&!voiceGuidePaused\&\&page==='find'\}/);
+ assert.match(source,/Pause hands-free microphone/);
+ assert.match(listener,/stopOnSilence:true/);
+ assert.match(listener,/\.stop\(true\)/);
+ assert.match(listener,/request\('\/voice\/transcribe\?'/);
+ assert.match(recording,/if\(stopOnSilence\&\&!heardSpeech\)/);
+ assert.match(recording,/now-lastSpeech>1100/);
 });
