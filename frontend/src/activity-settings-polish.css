@@ -1,0 +1,37 @@
+/* Activity and settings: factual, responsive product controls. */
+.sf-compact-app .sf-activity-intro{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.sf-compact-app .sf-activity-intro h2{font-size:clamp(18px,2vw,23px);margin:0 0 5px}
+.sf-compact-app .sf-activity-intro p{font-size:13px;line-height:1.5;color:var(--wh-muted);margin:0;max-width:58ch}
+.sf-compact-app .sf-activity-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 18px}
+.sf-compact-app .sf-activity-metric{border:1px solid var(--wh-border);border-radius:12px;background:var(--wh-soft);padding:12px;min-width:0}
+.sf-compact-app .sf-activity-metric strong{display:block;font-size:clamp(20px,2.6vw,27px);font-variant-numeric:tabular-nums;color:var(--wh-text);line-height:1.2}
+.sf-compact-app .sf-activity-metric span{display:block;margin-top:5px;color:var(--wh-muted);font-size:12px;overflow-wrap:anywhere}
+.sf-compact-app .sf-activity-tabs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:13px;margin-bottom:14px;border-bottom:1px solid var(--wh-border)}
+.sf-compact-app .sf-activity-tabs button{min-height:42px;white-space:normal;text-align:center}
+.sf-compact-app .sf-activity-tabs button[aria-pressed="true"]{background:var(--wh-soft);border-color:var(--wh-accent);color:var(--wh-text);font-weight:700}
+.sf-compact-app .sf-activity-tabs .wh-refresh{margin-left:auto}
+.sf-compact-app .sf-activity-filter{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.sf-compact-app .sf-activity-filter h3{margin:0;font-size:16px}
+.sf-compact-app .sf-activity-filter label{display:flex;align-items:center;gap:8px;color:var(--wh-muted);font-size:12px;font-weight:600}
+.sf-compact-app .sf-activity-filter select{width:auto;max-width:100%;min-width:120px;margin:0}
+.sf-compact-app .wh-review-row{min-width:0;overflow-wrap:anywhere}
+.sf-compact-app .wh-review-row code,.sf-compact-app .wh-history-row code{white-space:normal;overflow-wrap:anywhere}
+.sf-compact-app .wh-review-row input,.sf-compact-app .wh-review-row form{min-width:0;max-width:100%}
+.sf-compact-app .sf-settings-page{min-width:0}
+.sf-compact-app .sf-settings-page .sf-more-group,.sf-compact-app .sf-settings-page .sf-account-panel{min-width:0;overflow-wrap:anywhere}
+.sf-compact-app .sf-settings-preferences .sf-more-preference-row{min-width:0;gap:12px;flex-wrap:wrap}
+.sf-compact-app .sf-settings-preferences .sf-more-preference-row select,.sf-compact-app .sf-settings-preferences .sf-more-preference-row button{max-width:100%;box-sizing:border-box}
+.sf-compact-app .sf-settings-page .formgrid>*{min-width:0}
+@media(max-width:700px){
+ .sf-compact-app .sf-activity-overview{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .sf-compact-app .sf-activity-metric:last-child{grid-column:1/-1}
+ .sf-compact-app .sf-activity-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .sf-compact-app .sf-activity-tabs button{width:100%;min-width:0}
+ .sf-compact-app .sf-activity-tabs .wh-refresh{margin:0}
+ .sf-compact-app .sf-activity-filter{align-items:stretch}
+ .sf-compact-app .sf-activity-filter label{width:100%;justify-content:space-between}
+ .sf-compact-app .sf-settings-preferences .sf-more-preference-row{align-items:stretch}
+ .sf-compact-app .sf-settings-preferences .sf-more-preference-row>label,.sf-compact-app .sf-settings-preferences .sf-more-preference-row>span{flex-basis:100%}
+ .sf-compact-app .sf-settings-preferences .sf-more-preference-row select,.sf-compact-app .sf-settings-preferences .sf-more-preference-row button{width:100%;max-width:100%}
+}
+@media(max-width:360px){.sf-compact-app .sf-activity-overview{grid-template-columns:1fr}.sf-compact-app .sf-activity-metric:last-child{grid-column:auto}}

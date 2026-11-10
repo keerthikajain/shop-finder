@@ -259,6 +259,7 @@ def grocery_catalogue(setup):
   ['GRC-024','Tea leaves 500 g','chai patti|चाय पत्ती','500 g'],
   ['GRC-017','White sugar 1 kg','cheeni|चीनी','1 kg'],
   ['GRC-027','Packaged drinking water 500 mL','water bottle|पानी की बोतल','500 ml'],
+  ['GRC-018','Iodised salt 1 kg','salt|iodised salt|नमक','1 kg'],
  ]
  headers=['sku','collection','name','brand','category','barcode','aliases',
           'synthetic','facility','zone','aisle','rack','shelf','bin','quantity','size']
@@ -1168,3 +1169,53 @@ def test_query_time_translation_unavailable_is_nonblocking(setup,monkeypatch):
  line=result.json()['lines'][0]
  assert not line['selected']
  assert line['translation_status'] in ('not_configured','not_applicable')
+
+
+@pytest.mark.parametrize('language,phrase',[
+ ('en-IN','Where is salt?'),
+ ('hi-IN','नमक कहाँ है?'),
+ ('kn-IN','ಉಪ್ಪು ಎಲ್ಲಿದೆ?'),
+ ('ta-IN','உப்பு எங்கே?'),
+ ('te-IN','ఉప్పు ఎక్కడుంది?'),
+ ('ml-IN','ഉപ്പ് എവിടെയാണ്?'),
+ ('mr-IN','मीठ कुठे आहे?'),
+ ('bn-IN','লবণ কোথায় আছে?'),
+ ('gu-IN','મીઠું ક્યાં છે?'),
+ ('pa-IN','ਲੂਣ ਕਿੱਥੇ ਹੈ?'),
+ ('hi-en','uppu where is it?'),
+ ('kn-IN','salt ಎಲ್ಲಿದೆ?'),
+ ('ta-IN','salt எங்கே?'),
+ ('te-IN','salt ఎక్కడుంది?'),
+ ('ml-IN','salt എവിടെയാണ്?'),
+])
+def test_regional_salt_request_finds_imported_item_without_guess(grocery_catalogue,language,phrase):
+ from app.warehouse_language import tokens
+ assert tokens(phrase)=={'salt'},(language,phrase,tokens(phrase))
+ c=grocery_catalogue
+ response=post(c,'/search',{'collection':'all','query':phrase,'language':language})
+ assert response.status_code==200,response.text
+ lines=response.json()['lines']
+ assert len(lines)==1,lines
+ assert [item['sku'] for item in lines[0]['candidates']]==['GRC-018'],lines[0]
+ assert lines[0]['selected']['sku']=='GRC-018'
+ assert lines[0]['location']['rack']=='R01'
+
+@pytest.mark.parametrize('language,phrase',[
+ ('kn-IN','ಉಪ್ಪು ಎಲ್ಲಿದೆ?'),('ta-IN','உப்பு எங்கே?'),
+ ('te-IN','ఉప్పు ఎక్కడుంది?'),('ml-IN','ഉപ്പ് എവിടെയാണ്?'),
+ ('mr-IN','मीठ कुठे आहे?'),('bn-IN','লবণ কোথায় আছে?'),
+ ('gu-IN','મીઠું ક્યાં છે?'),('pa-IN','ਲੂਣ ਕਿੱਥੇ ਹੈ?'),
+])
+def test_regional_salt_request_never_invents_stocked_item(setup,language,phrase):
+ c,_=setup # Basic fixture only seeds clothing, footwear, appliances and home.
+ task=post(c,'/search',{'collection':'all','query':phrase,'language':language}).json()
+ assert len(task['lines'])==1
+ assert task['lines'][0]['selected'] is None
+ assert task['lines'][0]['location'] is None
+ assert task['lines'][0]['candidates']==[]
+
+def test_kannada_salt_qualifier_must_not_be_discarded(grocery_catalogue):
+ c=grocery_catalogue
+ result=post(c,'/search',{'collection':'grocery','query':'ಉಪ್ಪು 2 kg ಎಲ್ಲಿದೆ?','language':'kn-IN'}).json()
+ assert result['lines'][0]['selected'] is None
+ assert result['lines'][0]['candidates']==[]

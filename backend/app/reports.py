@@ -11,6 +11,8 @@ class Report(BaseModel):
  reason:Literal['empty_box','wrong_location','different_part']
  note:str=Field(default='',max_length=1000)
 def install_reports(app,path):
+ # Keep reviewer-uploaded photographs isolated as well as product records.
+ media_dir=Path(path).parent/('photos-'+Path(path).stem if os.getenv('SHOP_FINDER_CHALLENGE_SIGNUP')=='true' and re.fullmatch(r'[0-9a-f]{32}',Path(path).stem) else 'photos')
  @app.post('/api/reports')
  def report(body:Report,request:Request):
   p=get_product(path,body.product_id)
@@ -32,7 +34,7 @@ def install_reports(app,path):
   if data.startswith(b'\x89PNG\r\n\x1a\n'):ext='png'
   elif data.startswith(b'\xff\xd8\xff'):ext='jpg'
   else:raise HTTPException(422,'Use a PNG or JPEG photo.')
-  directory=Path(path).parent/'photos'
+  directory=media_dir
   directory.mkdir(mode=0o700,parents=True,exist_ok=True)
   if os.name=='posix':os.chmod(directory,0o700)
   name=hashlib.sha256(data).hexdigest()+'.'+ext
@@ -43,6 +45,6 @@ def install_reports(app,path):
  @app.get('/api/media/{name}')
  def photo(name:str):
   if not re.fullmatch(r'[a-f0-9]{64}\.(png|jpg)',name):raise HTTPException(404,'Photo not found.')
-  target=Path(path).parent/'photos'/name
+  target=media_dir/name
   if not target.is_file():raise HTTPException(404,'Photo not found.')
   return FileResponse(target,headers={'X-Content-Type-Options':'nosniff'})

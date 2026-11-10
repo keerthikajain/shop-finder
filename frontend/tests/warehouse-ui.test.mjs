@@ -39,7 +39,7 @@ test('More offers scan as a task without unrelated filters or setup banners',asy
  assert.ok(src.includes("['find','catalogue','locations'].includes(page)&&<button type=\"button\" className=\"sf-header-scan\""));
  assert.ok(src.includes("onClick={()=>D({type:'lookup'})}><span className=\"sf-more-icon\"><Glyph name=\"scan\"/>"));
  assert.ok(src.includes("meta&&!['find','account','business','more','settings'].includes(page)"));
- assert.ok(src.includes("!meta.settings.configured&&page==='find'"));
+ assert.ok(src.includes("!meta.settings.configured&&!user.is_challenge&&page==='find'"));
 });
 
 test('mobile Find navigation keeps a compact label while desktop keeps the full label',async()=>{
@@ -263,7 +263,7 @@ test('Prisma V3 offers ten selectable recognition languages and optional hints',
 
 test('setup guidance is limited to Find when workspace setup is unfinished',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(src,/!meta\.settings\.configured&&page==='find'/);
+ assert.match(src,/!meta\.settings\.configured&&!user\.is_challenge&&page==='find'/);
  assert.match(src,/owner&&<button onClick=\{\(\)=>navigate\('business'\)\}>Set up my store/);
  assert.doesNotMatch(src,/!meta\.settings\.configured&&!\['business','more','settings'\]\.includes\(page\)/);
 });
@@ -380,7 +380,9 @@ test('owner-only activity tab exposes unmatched-search review without modifying 
  const panel=await readFile(new URL('../src/failed-search-panel.jsx',import.meta.url),'utf8');
  const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
  assert.match(manage,/import FailedSearchPanel from '.\/failed-search-panel.jsx'/);
- assert.match(manage,/owner&&<button aria-pressed=\{tab==='unknowns'\}/);
+ assert.match(manage,/owner&&<button type="button" aria-pressed=\{tab==='unknowns'\}/);
+  assert.match(manage,/sf-activity-overview/);
+  assert.match(manage,/sf-activity-tabs/);
  assert.match(manage,/tab==='unknowns'&&owner\?<FailedSearchPanel/);
  assert.match(panel,/\/warehouse\/failed-searches\?/);
  assert.match(panel,/I verified that this phrase refers to the exact selected product and variant/);
@@ -450,4 +452,13 @@ test('a fully unmatched request does not show unusable picking commands and sear
  assert.match(jsx,/No items ready to pick/);
  assert.match(css,/\.sf-find-page \.wh-work-grid\{grid-template-columns:minmax\(0,1fr\) minmax\(0,280px\)\}/);
  assert.match(css,/@media\(max-width:900px\)/);
+});
+
+test('judge access uses a single account flow and a separate full-feature workspace',async()=>{
+ const account=await readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
+ assert.match(account,/Create a free workspace/);
+ assert.match(account,/Or explore instantly, without signing up/);
+ assert.match(account,/challenge\/signup/);
+ assert.match(account,/challenge\/try/);
+ assert.match(account,/Your products and changes stay separate/);
 });

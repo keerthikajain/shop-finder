@@ -30,7 +30,7 @@ class SearchRequest(BaseModel):
 from .database import initialize, seed, list_products, get_product, DEFAULT_DB
 from .schemas import Product, Category
 
-def create_app(db_path=None, seed_demo=None, *, auth_required=True):
+def create_app(db_path=None, seed_demo=None, *, auth_required=True, challenge_root=False):
     path = Path(db_path or os.environ.get('SHOP_FINDER_DB', DEFAULT_DB))
     demo = seed_demo if seed_demo is not None else os.environ.get('SHOP_FINDER_SEED_DEMO','false').lower() == 'true'
     @asynccontextmanager
@@ -46,6 +46,9 @@ def create_app(db_path=None, seed_demo=None, *, auth_required=True):
     install_streaming(app,path)
     install_reports(app,path)
     install_warehouse(app,path)
+    if challenge_root:
+        from .challenge_workspaces import install_challenge_routes
+        install_challenge_routes(app,path)
 
     @app.get('/api/health')
     def health(request: Request):
@@ -85,4 +88,10 @@ def create_app(db_path=None, seed_demo=None, *, auth_required=True):
         app.mount('/',StaticFiles(directory=web,html=True),name='web')
     return app
 
-app = create_app()
+if os.getenv('SHOP_FINDER_CHALLENGE_SIGNUP','false').lower()=='true':
+    from .challenge_workspaces import ChallengeDispatcher
+    _root=create_app(challenge_root=True)
+    _base=Path(os.environ.get('SHOP_FINDER_DB',DEFAULT_DB))
+    app=ChallengeDispatcher(_root,_base)
+else:
+    app=create_app()

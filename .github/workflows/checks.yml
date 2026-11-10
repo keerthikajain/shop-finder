@@ -64,3 +64,44 @@ jobs:
               assert response.headers.get('Cache-Control')=='no-store'
           print('Sensitive files are not served; security headers are present.')
           PY
+
+      - name: Verify isolated judge signup in production image
+        run: |
+          docker run --rm -d --name shop-finder-reviewer-ci \
+            -e SHOP_FINDER_CHALLENGE_SIGNUP=true \
+            -e SHOP_FINDER_CHALLENGE_DATA_DIR=/data/reviewer_workspaces \
+            -e SHOP_FINDER_DB=/data/registry.sqlite3 \
+            -e GNANI_ENABLED=false \
+            -p 127.0.0.1:18081:8080 shop-finder:ci
+          trap 'docker logs shop-finder-reviewer-ci; docker stop shop-finder-reviewer-ci' EXIT
+          for i in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:18081/api/health > /dev/null; then break; fi
+            sleep 2
+          done
+          curl --silent --show-error --fail \
+            --cookie-jar /tmp/reviewer-one.cookies \
+            -H 'Content-Type: application/json' -H 'X-Shop-Request: 1' \
+            -d '{"username":"judge_one","password":"strong-judge-password-111","language":"en"}' \
+            http://127.0.0.1:18081/api/challenge/signup > /tmp/reviewer-one.json
+          curl --silent --show-error --fail \
+            --cookie-jar /tmp/reviewer-two.cookies \
+            -H 'Content-Type: application/json' -H 'X-Shop-Request: 1' \
+            -d '{"username":"judge_two","password":"strong-judge-password-222","language":"hi"}' \
+            http://127.0.0.1:18081/api/challenge/signup > /tmp/reviewer-two.json
+          curl --silent --show-error --fail --cookie /tmp/reviewer-one.cookies \
+            http://127.0.0.1:18081/api/warehouse/items?collection=all > /tmp/reviewer-items.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          one=json.loads(Path('/tmp/reviewer-one.json').read_text())
+          two=json.loads(Path('/tmp/reviewer-two.json').read_text())
+          items=json.loads(Path('/tmp/reviewer-items.json').read_text())
+          assert one['role']==two['role']=='owner'
+          assert one['username']=='judge_one' and two['username']=='judge_two'
+          assert len(items)>=10, 'Expected saved example items in the reviewer workspace'
+          def workspace_cookie(path):
+              return next(line.split('\t')[-1] for line in Path(path).read_text().splitlines()
+                          if '\tshop_workspace\t' in line)
+          assert workspace_cookie('/tmp/reviewer-one.cookies') != workspace_cookie('/tmp/reviewer-two.cookies')
+          print('Real judge signup, saved catalogue and isolated workspace cookies passed.')
+          PY

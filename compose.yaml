@@ -8,6 +8,10 @@ services:
       GNANI_API_KEY: ${GNANI_API_KEY:-}
       SHOP_FINDER_SEED_DEMO: ${SHOP_FINDER_SEED_DEMO:-false}
       SHOP_FINDER_SECURE_COOKIE: ${SHOP_FINDER_SECURE_COOKIE:-false}
+      # Enable only on a dedicated synthetic-data challenge deployment.
+      SHOP_FINDER_CHALLENGE_SIGNUP: ${SHOP_FINDER_CHALLENGE_SIGNUP:-false}
+      SHOP_FINDER_CHALLENGE_DATA_DIR: /data/reviewer_workspaces
+      SHOP_FINDER_PUBLIC_DEMO: ${SHOP_FINDER_PUBLIC_DEMO:-false}
     volumes:
       - shopfinder_data:/data
     restart: unless-stopped

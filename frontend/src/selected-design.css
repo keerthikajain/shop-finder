@@ -2238,3 +2238,6 @@ html,body,#root{max-width:100%;overflow-x:clip}
 .sf-find-page .sf-no-picking-results{padding:18px;margin-bottom:14px}
 .sf-find-page .sf-no-picking-results h3{margin:0 0 8px}.sf-find-page .sf-no-picking-results p{margin:0;line-height:1.5}
 @media(max-width:900px){.sf-find-page .wh-work-grid{grid-template-columns:minmax(0,1fr)}.sf-find-page .wh-route{position:static}}
+
+/* Unified public signup: same native product UI and standard sign-in surface */
+.sf-public-invite{gap:12px}.sf-public-invite>.sf-auth-text-link{justify-self:center;min-height:44px;font-weight:600}
