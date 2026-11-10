@@ -38,13 +38,10 @@ export function Login({ready,configured,language,L,error,busy,notice='',demoEnab
   const playback={controller,audio:null,url:null};
   welcomePlayback.current=playback;
   const locale=WELCOME_LANGUAGE[language]||'en-IN';
-  // Four allowlisted, server-cached voices. Kannada uses local fallback
-  // until the greeting API explicitly supports the locale.
-  if(locale==='kn-IN'){
-   playWelcomeOnce({url:'/api/welcome/audio?language=en-IN',language:'kn-IN',text:greeting,controller,playback});
-  }else{
-   playWelcomeOnce({url:'/api/welcome/audio?language='+encodeURIComponent(locale),language:locale,text:greeting,controller,playback});
-  }
+  playWelcomeOnce({
+   url:'/api/welcome/audio?language='+encodeURIComponent(locale),
+   language:locale,text:greeting,controller,playback
+  });
   return ()=>stopWelcome(playback);
  },[ready,configured]);
  useEffect(()=>()=>stopWelcome(welcomePlayback.current),[]);
