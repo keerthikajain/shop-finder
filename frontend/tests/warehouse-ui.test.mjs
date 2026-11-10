@@ -623,7 +623,7 @@ test('wrong-location handoff pauses pick capture and opens an editable report st
  assert.match(source,/D\(\{type:'report',item:selected\.selected,location:selected\.location,index:answer\.line\}\)/);
  assert.match(source,/return false; \/\/ The voice loop must not restart/);
  assert.match(source,/playPickGuidance\('report',source,answer\.line\)/);
- assert.match(listener,/if\(outcome===false\)\{shouldContinue=false;Status\('paused'\)\}/);
+ assert.match(listener,/if\(outcome===false\)\{shouldContinue=false;Status\('paused'\);\}/);
  assert.match(listener,/if\(!cancelled&&shouldContinue\)Next\(/);
  assert.match(source,/Picking is paused — report the problem/);
  assert.match(source,/Write or edit what needs checking/);
