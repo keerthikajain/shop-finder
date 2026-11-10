@@ -505,7 +505,26 @@ def install_warehouse(app,path):
    if state['status']=='completed':raise HTTPException(409,'Completed picks cannot be started again. Create a new search.')
    if state['status']=='active':return task
    picking_check(c,task)
-   state.update(status='active',started_at=now(),completed_at=None)
+   state.update(status='active',started_at=now(),completed_at=None,paused=False)
+   return task_put(c,task)
+ @app.post('/api/warehouse/tasks/{tid}/picking/pause')
+ def pause_picking(tid:str,request:Request):
+  """Pause an active picking session without losing verified progress."""
+  u=identity(request)
+  with connect(path) as c:
+   c.execute('BEGIN IMMEDIATE');task=task_get(c,tid,u)
+   if picking_state(task)['status']!='active':raise HTTPException(409,'Only active picking sessions can be paused.')
+   task['picking']['paused']=True
+   return task_put(c,task)
+ @app.post('/api/warehouse/tasks/{tid}/picking/resume')
+ def resume_picking(tid:str,request:Request):
+  """Resume after an explicit worker action; never alter inventory."""
+  u=identity(request)
+  with connect(path) as c:
+   c.execute('BEGIN IMMEDIATE');task=task_get(c,tid,u)
+   if picking_state(task)['status']!='active':raise HTTPException(409,'Only active picking sessions can be resumed.')
+   picking_check(c,task)
+   task['picking']['paused']=False
    return task_put(c,task)
  @app.post('/api/warehouse/tasks/{tid}/picking/command')
  def picking_voice_command(tid:str,body:PickCommand,request:Request):
@@ -515,6 +534,7 @@ def install_warehouse(app,path):
    if task['language'] not in SUPPORTED_PICKING_LANGUAGES:
     raise HTTPException(422,'Unsupported language for voice picking commands.')
    picking_check(c,task)
+   if picking_state(task).get('paused'):raise HTTPException(409,'Resume picking before giving a picking command.')
    return voice_guide.guide(task,voice_guide.intent(body.transcript,task['language']),body.line,
                             lambda index:current_line(c,task,index))
  @app.post('/api/warehouse/tasks/{tid}/picking/guide-audio')
@@ -537,6 +557,7 @@ def install_warehouse(app,path):
    state=picking_state(task)
    if state['status']=='completed':return task
    if state['status']!='active':raise HTTPException(409,'Start the picking session before completing it.')
+   if state.get('paused'):raise HTTPException(409,'Resume picking before finishing.')
    if not all(line.get('complete') for line in task['lines']):
     raise HTTPException(409,'Verify every item and recorded shelf before completing this picking session.')
    picking_check(c,task)
@@ -591,6 +612,7 @@ def install_warehouse(app,path):
    c.execute('BEGIN IMMEDIATE')
    t=task_get(c,tid,u)
    if picking_state(t)['status']=='completed':raise HTTPException(409,'This picking session is already completed.')
+   if picking_state(t).get('paused'):raise HTTPException(409,'Resume picking before recording item checks.')
    line,p=current_line(c,t,body.line)
    location=line['location']
    if not any(l['code']==location['code'] for l in p['placements']):raise HTTPException(409,'Location changed. Search again.')
@@ -608,6 +630,7 @@ def install_warehouse(app,path):
   with connect(path) as c:
    c.execute('BEGIN IMMEDIATE');t=task_get(c,tid,u)
    if picking_state(t)['status']=='completed':raise HTTPException(409,'This picking session is already completed.')
+   if picking_state(t).get('paused'):raise HTTPException(409,'Resume picking before confirming an item.')
    line,p=current_line(c,t,body.line)
    if line.get('complete'):raise HTTPException(409,'This item is already verified.')
    if body.kind=='product':

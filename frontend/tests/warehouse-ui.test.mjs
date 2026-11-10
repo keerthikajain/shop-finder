@@ -400,7 +400,7 @@ test('voice picking is discoverable before starting and unmatched requests can b
  const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
  assert.match(ui,/picking.status!=='completed'&&<div className="sf-voice-guide"/);
  assert.match(ui,/Nothing will start until you press Confirm and start picking or explicitly say that command/);
- assert.match(ui,/enabled={picking.status==='active'&&voice&&!busy&&!voiceGuidePaused}/);
+ assert.match(ui,/picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused/);
   assert.match(ui,/HandsFreePicking enabled=/);
  assert.match(ui,/async function removeUnresolvedLine\(index\)/);
  assert.match(ui,/Remove from worklist/);
@@ -512,8 +512,11 @@ test('hands-free picking is bounded and pauses while sound, modals or work is ac
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const listener=await readFile(new URL('../src/hands-free-picking.jsx',import.meta.url),'utf8');
  const recording=await readFile(new URL('../src/recording.js',import.meta.url),'utf8');
- assert.match(source,/HandsFreePicking enabled=\{!busy\&\&!speaking\&\&!modal\&\&!voiceGuidePaused\&\&page==='find'\}/);
- assert.match(source,/Pause listening/);
+ assert.match(source,/HandsFreePicking enabled=\{!busy&&!speaking&&!modal&&page==='find'\}/);
+ assert.match(source,/\[handsFree,HF\]=useState\(false\)/);
+ assert.match(source,/\[voiceGuidePaused,VGP\]=useState\(true\)/);
+ assert.match(source,/Stop hands-free listening/);
+ assert.match(source,/Start hands-free listening/);
  assert.match(listener,/stopOnSilence:true/);
  assert.match(listener,/\.stop\(true\)/);
  assert.match(listener,/request\('\/voice\/transcribe\?'/);
@@ -608,11 +611,11 @@ test('recording button stays readable in contrast and no repeated actions on com
 
 test('review stage has a single microphone path and clears stale voice reply on a new search',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(src,/PV\(null\);VGC\(''\);VGT\(''\);VGP\(false\)/);
+ assert.match(src,/PV\(null\);VGC\(''\);VGT\(''\);VGP\(true\)/);
  assert.match(src,/enabled=\{!busy&&canStartPick\} language=\{task.language\} label=\{t\('Say confirm and start picking'\)\}/);
  assert.match(src,/onText=\{voiceStartPicking\}/);
  assert.doesNotMatch(src,/picking\.status==='ready'&&voice&&handsFree&&taskVoice\.current&&canStartPick/);
- assert.match(src,/picking\.status==='active'&&voice&&handsFree&&<HandsFreePicking/);
+ assert.match(src,/picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused&&<HandsFreePicking/);
  const {isStartPickingCommand}=await import('../src/picking-voice-phrases.js');
  assert.equal(isStartPickingCommand('en-IN','Confirm.'),true);
  assert.equal(isStartPickingCommand('hi-en','confirm'),true);
@@ -639,7 +642,8 @@ test('spoken report submission leaves pick listening paused until explicitly res
  assert.match(source,/VGP\(true\);D\(null\);N\('Report #'/);
  assert.match(source,/Voice picking is paused; resume when ready/);
  assert.match(source,/onClose=\{\(\)=>\{D\(null\);VGP\(true\)\}\}/);
- assert.match(source,/t\('Resume voice commands'\)/);
+ assert.match(source,/Start hands-free listening/);
+ assert.match(source,/Stop hands-free listening/);
 });
 test('pink disabled and recording buttons have readable, high-contrast foreground',async()=>{
  const css=await readFile(new URL('../src/product-polish.css',import.meta.url),'utf8');
@@ -730,4 +734,42 @@ test('sample shelf labels do not repeat on every item and recent requests are st
  assert.match(ui,/example=\{false\}/);
  assert.match(ui,/Confirm your request/);
  assert.match(ui,/Confirm and start picking/);
+});
+
+
+test('manual microphone can always stop recording even when a parent becomes unavailable',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/disabled=\{\(state!=='recording'&&!enabled\)\|\|state==='starting'\|\|state==='processing'\}/);
+ assert.match(src,/if\(state==='recording'\)\{S\('processing'\);ref\.current\?\.stop\(\);return\}/);
+ assert.match(src,/\{stopOnSilence:autoStop\}/);
+ assert.match(src,/aria-pressed=\{state==='recording'\}/);
+});
+
+test('picking controls pause and resume persisted progress and never start listening automatically',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const backend=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
+ assert.match(src,/async function togglePickPause\(\)/);
+ assert.match(src,/task\.picking\?\.paused\?'resume':'pause'/);
+ assert.match(src,/className="sf-pick-pause-toggle"/);
+ assert.match(src,/pickPaused\?'Resume picking':'Pause picking'/);
+ assert.match(src,/\[handsFree,HF\]=useState\(false\)/);
+ assert.match(src,/\[voiceGuidePaused,VGP\]=useState\(true\)/);
+ assert.match(src,/onClick=\{\(\)=>\{VGP\(paused=>!paused\);PV\(null\)\}\}/);
+ assert.match(src,/disabled=\{busy\|\|pickPaused\|\|verifiedCount!==task\.lines\.length\}/);
+ assert.match(backend,/def pause_picking\(tid:str,request:Request\)/);
+ assert.match(backend,/def resume_picking\(tid:str,request:Request\)/);
+ assert.match(backend,/picking_state\(t\)\.get\('paused'\)/);
+});
+
+test('spoken answers guidance welcome and reports expose explicit stop buttons',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const account=await readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
+ assert.match(src,/function stopSpeech\(\)/);
+ assert.match(src,/playbackSerial\.current\+\+/);
+ assert.match(src,/audioRequest\.current\?\.abort\(\)/);
+ assert.match(src,/onClick=\{\(\)=>speaking\?stopSpeech\(\):speak\(task\)\}/);
+ assert.match(src,/speaking\?'Stop guidance audio':'Read guidance'/);
+ assert.match(src,/className="sf-report-stop-audio" onClick=\{onStopSpeaking\}/);
+ assert.match(account,/welcomeStatus==='speaking'\|\|welcomeStatus==='starting'/);
+ assert.match(account,/\?'Stop welcome':'Hear welcome'/);
 });

@@ -1220,3 +1220,41 @@ def test_kannada_salt_qualifier_must_not_be_discarded(grocery_catalogue):
  result=post(c,'/search',{'collection':'grocery','query':'ಉಪ್ಪು 2 kg ಎಲ್ಲಿದೆ?','language':'kn-IN'}).json()
  assert result['lines'][0]['selected'] is None
  assert result['lines'][0]['candidates']==[]
+
+
+def test_manual_pause_and_resume_picking_persist_progress_without_stock_changes(setup):
+ c,path=setup
+ original=items(c)
+ task=search(c,'CLO-001 and CLO-004')
+ tid=task['id']
+ assert post(c,'/tasks/'+tid+'/picking/pause').status_code==409
+ started=post(c,'/tasks/'+tid+'/picking/start')
+ assert started.status_code==200
+ assert started.json()['picking']['paused'] is False
+ first=post(c,'/tasks/'+tid+'/scan',{'line':0,'kind':'manual','value':'confirmed'})
+ assert first.status_code==200,first.text
+ assert first.json()['lines'][0]['complete']
+ paused=post(c,'/tasks/'+tid+'/picking/pause')
+ assert paused.status_code==200,paused.text
+ assert paused.json()['picking']['status']=='active'
+ assert paused.json()['picking']['paused'] is True
+ assert paused.json()['lines'][0]['complete']
+ assert post(c,'/tasks/'+tid+'/scan',{'line':1,'kind':'manual','value':'confirmed'}).status_code==409
+ assert post(c,'/tasks/'+tid+'/location-check',{'line':1}).status_code==409
+ assert post(c,'/tasks/'+tid+'/picking/command',{'transcript':'next item','line':1}).status_code==409
+ assert post(c,'/tasks/'+tid+'/picking/finish').status_code==409
+ with TestClient(create_app(path,seed_demo=True)) as reopened:
+  login(reopened)
+  restored=reopened.get('/api/warehouse/tasks/'+tid)
+  assert restored.status_code==200
+  assert restored.json()['picking']['paused'] is True
+  assert restored.json()['lines'][0]['complete']
+ resumed=post(c,'/tasks/'+tid+'/picking/resume')
+ assert resumed.status_code==200,resumed.text
+ assert resumed.json()['picking']['paused'] is False
+ assert resumed.json()['lines'][0]['complete']
+ assert post(c,'/tasks/'+tid+'/scan',{'line':1,'kind':'manual','value':'confirmed'}).status_code==200
+ finished=post(c,'/tasks/'+tid+'/picking/finish')
+ assert finished.status_code==200,finished.text
+ assert post(c,'/tasks/'+tid+'/picking/pause').status_code==409
+ assert items(c)==original
