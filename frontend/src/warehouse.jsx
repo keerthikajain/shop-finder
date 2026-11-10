@@ -1,7 +1,7 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {AccountSettings,request} from './accounts.jsx';
 import {useT,APP_LANGUAGES} from './locale.js';
-import {PICKING_VOICE_LANGUAGES,pickVoicePhrase} from './picking-voice-phrases.js';
+import {PICKING_VOICE_LANGUAGES,PICKING_START_VOICE_LANGUAGES,pickVoicePhrase,isStartPickingCommand} from './picking-voice-phrases.js';
 import {startRecording,startLiveRecording} from './recording.js';
 import {getThemePreference,resolveTheme} from './theme.js';
 import {Mark,Glyph,Modal,Place,Specs,ItemArt,ScanBox,Label,Feedback} from './warehouse-ui.jsx';
@@ -93,6 +93,12 @@ export default function WarehouseApp({user,preferences,logout}){
    R(await request('/warehouse/tasks'));
   });
  }
+ async function voiceStartPicking(transcript){
+  VGC(transcript);
+  if(!isStartPickingCommand(task?.language,transcript)){N(t('Command not recognized. Say Start picking or use the Start picking button.'));return}
+  if(!canStartPick||busy){N(t('First resolve each item before starting the pick.'));return}
+  await pickAction('start');
+ }
  async function pickAction(kind){if(!task)return;await run(async()=>{const next=await api('/tasks/'+task.id+'/picking/'+kind,{});T(next);G('location');if(kind==='start'){AL(Math.max(0,next.lines.findIndex(l=>!l.complete)));VGP(false);VGC('');VGT('');N(t('Picking started. Check each item at its recorded shelf.'));if(voice&&PICKING_VOICE_LANGUAGES.includes(next.language))await playPickGuidance('next',next,Math.max(0,next.lines.findIndex(l=>!l.complete)))}else{VGP(true);VGT('');N(t('Picking completed. No stock quantities were changed.'))}R(await request('/warehouse/tasks'))})}
  async function resumePick(id){await run(async()=>{const restored=await request('/warehouse/tasks/'+encodeURIComponent(id));if(restored.collection!==collection){pendingResume.current=restored;C(restored.collection)}else{T(restored);Q(restored.query);G('location');AL(Math.max(0,restored.lines.findIndex(l=>!l.complete)))}P('find');N(t('Picking session restored.'))})}
  const picking=task?.picking||{status:'ready'},hasSearchCandidates=!!task?.lines.some(l=>l.selected||l.candidates.length),verifiedCount=task?.lines.filter(l=>l.complete).length||0,unresolvedLines=task?.lines.filter(l=>!l.selected||!l.location||l.location_report_open)||[],canStartPick=!!task?.lines.length&&unresolvedLines.length===0,nextPickIndex=task?.lines.findIndex(l=>!l.complete)??-1;
@@ -135,7 +141,7 @@ export default function WarehouseApp({user,preferences,logout}){
    {voiceGuideCommand&&<small className="sf-guide-transcript">{t('Recognized command')}: {voiceGuideCommand}</small>}
    {voiceGuideText&&<p className="sf-guide-reply" role="status">{voiceGuideText}</p>}
   </div>}
-  {picking.status==='ready'?<div className="sf-picking-actions"><button className="primary" type="button" disabled={busy||!canStartPick} onClick={()=>pickAction('start')}><Glyph name="check"/>{t('Start picking')}</button>{!canStartPick&&<small>{unresolvedLines.length} {t('item(s) still need your choice. Pick the right version or remove an unwanted search below.')}</small>}</div>:
+  {picking.status==='ready'?<div className="sf-picking-actions"><button className="primary" type="button" disabled={busy||!canStartPick} onClick={()=>pickAction('start')}><Glyph name="check"/>{t('Start picking')}</button>{voice&&PICKING_START_VOICE_LANGUAGES.includes(task.language)&&<VoiceButton small enabled={!busy&&canStartPick} language={task.language} label={t('Say start picking')} onError={E} onText={voiceStartPicking}/>} {!canStartPick&&<small>{unresolvedLines.length} {t('item(s) still need your choice. Pick the right version or remove an unwanted search below.')}</small>}</div>:
    picking.status==='active'?<div className="sf-picking-actions"><span>{nextPickIndex<0?t('All items verified. Finish the pick.'):t('Next item')+': '+task.lines[nextPickIndex].selected.name+' · '+pathText(task.lines[nextPickIndex].location)}</span><div><button type="button" disabled={busy||nextPickIndex<0} onClick={()=>{AL(nextPickIndex);document.getElementById('sf-picking-line-'+nextPickIndex)?.scrollIntoView({behavior:'smooth',block:'center'})}}>{t('Go to next item')}</button><button className="primary" type="button" disabled={busy||verifiedCount!==task.lines.length} onClick={()=>pickAction('finish')}>{t('Finish picking')}</button></div></div>:
    <p className="sf-picking-done">{t('All requested items were verified. Picking is recorded without changing stock.')}</p>}
  </section>:<section className="wh-panel sf-no-picking-results" role="status"><h3>{t('No items ready to pick')}</h3><p>{t('We could not find a saved product for this request. Try another product name, browse the catalogue or ask the owner to add it. You can start picking when an item is found.')}</p></section>}
