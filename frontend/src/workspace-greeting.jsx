@@ -96,6 +96,20 @@ export default function WorkspaceGreeting({user,voiceLanguage='en-IN',interrupt=
   if(!muted&&!interrupt)speakGreeting(); // Autoplay may be blocked; Hear greeting remains available.
  },[]);
  useEffect(()=>{if(interrupt&&activeSpeech.current)stopGreeting()},[interrupt]);
+ // The greeting yields as soon as the worker starts interacting with Finder;
+ // the Hear greeting button is deliberately exempt.
+ useEffect(()=>{
+  const yieldToUser=event=>{
+   if(event.target?.closest?.('.sf-workspace-greeting'))return;
+   if(activeSpeech.current)stopGreeting();
+  };
+  document.addEventListener('pointerdown',yieldToUser,true);
+  document.addEventListener('keydown',yieldToUser,true);
+  return ()=>{
+   document.removeEventListener('pointerdown',yieldToUser,true);
+   document.removeEventListener('keydown',yieldToUser,true);
+  };
+ },[]);
  useEffect(()=>()=>{alive.current=false;activeSpeech.current=null;try{window.speechSynthesis?.cancel()}catch{}},[]);
  function setMuted(next){
   SetMuted(next);
