@@ -10,7 +10,7 @@ const api=(p,b,method='POST')=>request('/warehouse'+p,{method,body:JSON.stringif
 export function ImportPanel({collection,pack,labels,run,busy,reload,onSuccess}){
  const t=useT(),[upload,U]=useState(null),[mapping,M]=useState({}),[preview,P]=useState(null),[name,N]=useState(''),[complete,C]=useState(null);
  const fields=upload?.fields||['sku','collection','name','brand','category','barcode','aliases','synthetic','revision',...locationFields,'quantity',...pack.fields];
- const fieldLabel=k=>t(labels[k]||({sku:'SKU',name:'Item name',category:'Category',barcode:'Barcode',aliases:'Other names in any supported language (separate with |)',synthetic:'Sample data (fictional)'}[k]||k[0].toUpperCase()+k.slice(1)));
+ const fieldLabel=k=>t(labels[k]||({sku:'SKU',name:'Item name',category:'Category',barcode:'Barcode',aliases:'Other names in any supported language (separate with |)',synthetic:'Starter catalogue record'}[k]||k[0].toUpperCase()+k.slice(1)));
  const required=['sku','name','category',...(collection==='all'?['collection']:[])];
  const mappingIssues=getMappingIssues(mapping,required,locationFields);
  const invalidMapping=!!(mappingIssues.missing.length||mappingIssues.missingLocation||mappingIssues.duplicates.length);
