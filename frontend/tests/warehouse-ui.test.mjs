@@ -234,17 +234,16 @@ test('worklist sort dropdown stays readable beside Read answer',async()=>{
   assert.match(css,/@media \(max-width: 480px\)/);
 });
 
-test('report supports optional shelf voice transcription without changing recorded location',async()=>{
-  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
-  const css=await readFile(new URL('../src/control-alignment.css',import.meta.url),'utf8');
-  assert.match(source,/className="sf-report-location-field"/);
-  assert.match(source,/VoiceButton iconOnly small enabled=\{voice&&!busy\}/);
-  assert.match(source,/label="Dictate suggested shelf location"/);
-  assert.match(source,/S\(text.trim\(\).slice\(0,200\)\)/);
-  assert.match(source,/suggested_location:suggested/);
-  assert.match(source,/kind:location\?'wrong_location':'general'/);
-  assert.match(source,/type="button" className=\{'wh-voice '/);
-  assert.match(css,/\.sf-report-location-field > \.wh-voice\.icon-only/);
+test('report displays recognized voice text and keeps reporting separate from catalogue updates',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/className="sf-report-voice-panel"/);
+ assert.match(src,/className="sf-report-transcript"/);
+ assert.match(src,/Speak report/);
+ assert.match(src,/onText=\{voiceCommand\}/);
+ assert.match(src,/onPartial=\{text=>\{H\(text\);HF\('listening'\)\}\}/);
+ assert.match(src,/suggested_location:suggested\.trim\(\)/);
+ assert.match(src,/kind:location\?'wrong_location':'general'/);
+ assert.match(src,/pendingSubmit/);
 });
 
 test('Prisma V3 offers ten selectable recognition languages and optional hints',async()=>{

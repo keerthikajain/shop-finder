@@ -104,3 +104,24 @@
  .sf-compact-app .wh-task-heading{row-gap:6px}
  .sf-compact-app .sf-picking-head{gap:8px}
 }
+
+/* Speech in report modals must be visibly readable, never a large empty
+   recording banner. All dimensions respond to narrow phone viewports. */
+.sf-compact-app .sf-report-voice-panel{border:1px solid var(--wh-border,#dedbe5);border-radius:12px;padding:12px;display:grid;gap:9px;margin:12px 0;min-width:0}
+.sf-compact-app .sf-report-voice-panel>strong{font-size:14px;line-height:1.35}
+.sf-compact-app .sf-report-voice-panel>small{font-size:12px;line-height:1.5;color:var(--wh-muted,#777);overflow-wrap:anywhere}
+.sf-compact-app .sf-report-voice-panel>.wh-voice{width:max-content;max-width:100%;background:var(--wh-soft,#f2ebff);color:var(--wh-accent,#6e37d2);border:1px solid var(--wh-border,#dedbe5);min-height:42px;padding:8px 15px}
+.sf-compact-app .sf-report-voice-panel>.wh-voice.recording{background:var(--wh-soft,#f2ebff);color:var(--wh-accent,#6e37d2);border:1px solid currentColor}
+.sf-compact-app .sf-report-transcript{min-width:0;border:1px solid var(--wh-border,#dedbe5);background:var(--wh-surface,#fff);border-radius:10px;padding:10px 12px;overflow-wrap:anywhere}
+.sf-compact-app .sf-report-transcript span{display:block;font-size:12px;font-weight:700}
+.sf-compact-app .sf-report-transcript p{margin:4px 0 0;font-size:14px;line-height:1.5;white-space:pre-wrap}
+.sf-compact-app .sf-report-transcript small{display:block;font-size:12px;margin-top:4px;color:var(--wh-muted,#777)}
+.sf-compact-app .sf-report-send-approval{padding:10px;border-radius:10px;background:var(--wh-surface,#fff);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.sf-compact-app .sf-report-send-approval strong,.sf-compact-app .sf-report-send-approval p{flex-basis:100%;margin:0}
+.sf-compact-app .sf-report-send-approval button{border:1px solid var(--wh-border,#dedbe5);border-radius:9px;min-height:42px;padding:8px 12px}
+@media(max-width:600px){.sf-compact-app .sf-report-voice-panel{padding:10px}.sf-compact-app .sf-report-voice-panel>.wh-voice{width:100%;justify-content:center}.sf-compact-app .sf-report-transcript p{font-size:13px}}
+
+.sf-compact-app .sf-review-voice{display:grid;gap:7px;margin:9px 0;min-width:0}
+.sf-compact-app .sf-review-voice .wh-voice{justify-self:start;min-height:42px;max-width:100%;padding:8px 13px;background:var(--wh-soft,#f2ebff);color:var(--wh-accent,#6e37d2)}
+.sf-compact-app .sf-review-voice p{padding:10px 12px;margin:0;border:1px solid var(--wh-border,#dedbe5);border-radius:9px;overflow-wrap:anywhere;font-size:13px;line-height:1.5}
+@media(max-width:600px){.sf-compact-app .sf-review-voice .wh-voice{width:100%}}

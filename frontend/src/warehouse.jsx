@@ -40,7 +40,7 @@ export function VoiceButton({language,enabled,onText,onError,onPartial,live=fals
   try{if(live){ref.current=await startLiveRecording({language,style,enhanced,collection,candidates,onSegment:(text,detected)=>onPartial?.(text,detected),onComplete:(text,detected,details)=>{S('idle');onText(text,detected,details)},onError:e=>{S('idle');onError(e.message)}});S('recording');return}
   ref.current=await startRecording(async blob=>{S('processing');try{const params=new URLSearchParams({language,style,enhanced:String(enhanced),collection});if(candidates.length)params.set('candidates',candidates.join(','));const r=await request('/voice/transcribe?'+params.toString(),{method:'POST',headers:{'Content-Type':'audio/wav'},body:blob});onText(r.transcript,r.search_language,r)}catch(e){onError(e.message)}finally{S('idle')}},e=>{S('idle');onError(e.message)},{stopOnSilence:autoStop});S('recording')}catch(e){S('idle');onError(e.message)}
  }
- return <button type="button" className={'wh-voice '+(small?'small ':'')+(nav?'sf-mobile-speak ':'')+(iconOnly?'icon-only ':'')+(state==='recording'?'recording':'')} aria-label={iconOnly?(state==='recording'?t('Stop recording')+' — ':state==='processing'?t('Transcribing…')+' — ':'')+t(label||'Speak'):t(state==='recording'?'Stop recording':state==='processing'?'Transcribing…':live?'Speak live':'Speak')} title={iconOnly?t(label||'Speak'):undefined} aria-pressed={state==='recording'} disabled={!enabled||state==='starting'||state==='processing'} onClick={record}><Glyph name="mic"/>{iconOnly?null:nav?<span>{t('Speak')}</span>:t(state==='recording'?'Stop recording':state==='processing'?'Transcribing…':live?'Speak live':'Speak')}{!nav&&!iconOnly&&<span className="wh-wave" aria-hidden="true">{Array.from({length:9},(_,i)=><i key={i} style={{height:6+(i*7)%17}}/>)}</span>}</button>
+ return <button type="button" className={'wh-voice '+(small?'small ':'')+(nav?'sf-mobile-speak ':'')+(iconOnly?'icon-only ':'')+(state==='recording'?'recording':'')} aria-label={iconOnly?(state==='recording'?t('Stop recording')+' — ':state==='processing'?t('Transcribing…')+' — ':'')+t(label||'Speak'):t(state==='recording'?'Stop recording':state==='processing'?'Transcribing…':live?'Speak live':'Speak')} title={iconOnly?t(label||'Speak'):undefined} aria-pressed={state==='recording'} disabled={!enabled||state==='starting'||state==='processing'} onClick={record}><Glyph name="mic"/>{iconOnly?null:nav?<span>{t('Speak')}</span>:t(state==='recording'?'Stop recording':state==='processing'?'Transcribing…':live?'Speak live':label||'Speak')}{!nav&&!iconOnly&&<span className="wh-wave" aria-hidden="true">{Array.from({length:9},(_,i)=><i key={i} style={{height:6+(i*7)%17}}/>)}</span>}</button>
 }
 export default function WarehouseApp({user,preferences,logout}){
  const t=useT(),owner=user.role==='owner';
@@ -213,7 +213,7 @@ export default function WarehouseApp({user,preferences,logout}){
  {page==='catalogue'&&<section className="wh-panel wh-catalogue"><div className="wh-toolbar"><label className="wh-filter"><Glyph name="search"/><input aria-label={t('Filter catalogue')} placeholder={t('Search name, size, SKU or location')} value={filter} onChange={e=>F(e.target.value)}/></label><select aria-label={t('Category')} value={category} onChange={e=>CAT(e.target.value)}><option value="">{t('All categories')}</option>{[...new Set(items.map(p=>p.category))].map(c=><option key={c}>{c}</option>)}</select><a className="wh-button" href={'/api/warehouse/export?collection='+collection+'&format=xlsx'}>{t('Export Excel')}</a>{owner&&<button className="primary" onClick={()=>D({type:'edit',item:null})}><Glyph name="plus"/>{t('Add item')}</button>}</div><div className="wh-table-wrap"><table><thead><tr><th>{t('Item')}</th><th>{t('Specifications')}</th><th>{t('Storage')}</th><th>{t('Last updated')}</th><th><span className="sr-only">{t('Open')}</span></th></tr></thead><tbody>{filtered.map(p=><tr key={p.collection+':'+p.sku}><td><div className="wh-table-item"><ItemArt collection={p.collection} photo={p.photo_url} name={p.name}/><div><b>{p.name}</b><small>{p.sku} · {p.category}{p.brand?' · '+p.brand:''}</small></div></div></td><td><Specs item={p} labels={labels}/></td><td>{p.placements.length>1?<b>{p.placements.length} {t('locations')}</b>:<><b>{pathText(p.placements[0])}</b><small>{p.placements[0].quantity==null?'Not counted':p.placements[0].quantity+' units'}</small></>}</td><td><small>{new Date(p.updated_at).toLocaleDateString()}<br/>{p.updated_by}</small></td><td><button aria-label={t('Open')+' '+p.sku} onClick={()=>D({type:'detail',item:p})}><Glyph name="arrow"/></button></td></tr>)}</tbody></table>{!filtered.length&&<p className="wh-empty">{t('No items match this filter.')}</p>}</div><div className="wh-table-footer">{filtered.length} {t('items')}<span>Recorded counts update only after a confirmed stock operation.</span></div></section>}
  {page==='locations'&&<><div className="wh-toolbar"><label className="wh-filter"><Glyph name="search"/><input placeholder={t('Filter locations')} aria-label={t('Filter locations')} value={filter} onChange={e=>F(e.target.value)}/></label></div><div className="wh-location-grid">{locations.filter(l=>pathText(l).toLowerCase().includes(filter.toLowerCase())).map(l=><article className="wh-panel" key={l.code}><Place location={l}/><div className="wh-location-items">{items.filter(p=>p.placements.some(x=>x.code===l.code)).map(p=><button key={p.collection+':'+p.sku} onClick={()=>D({type:'detail',item:p})}><b>{p.name}</b><small>{p.sku}</small><Glyph name="arrow"/></button>)}</div><button onClick={()=>D({type:'label',location:l})}><Glyph name="scan"/>{t('Shelf label')}</button></article>)}</div></>}
  {page==='import'&&owner&&<ImportPanel key={collection} {...{collection,pack,labels,run,busy,reload}} onSuccess={text=>N(t(text))}/>}
- {page==='review'&&<ReviewPanel key={collection+'-'+reviewNonce} {...{collection,owner,run,busy}} onCorrectLocation={issue=>{const item=items.find(p=>p.collection===issue.collection&&p.sku===issue.sku);const location=item?.placements.find(p=>p.code===issue.location_code);if(!item||!location){E(t('Recorded location changed. Refresh the catalogue before correcting.'));return}D({type:'move',item,location})}}/>}
+ {page==='review'&&<ReviewPanel key={collection+'-'+reviewNonce} {...{collection,owner,run,busy,language,voice}} onError={E} onCorrectLocation={issue=>{const item=items.find(p=>p.collection===issue.collection&&p.sku===issue.sku);const location=item?.placements.find(p=>p.code===issue.location_code);if(!item||!location){E(t('Recorded location changed. Refresh the catalogue before correcting.'));return}D({type:'move',item,location})}}/>}
  {page==='more'&&user.is_demo&&<section className="sf-preview-banner"><div><strong>Enjoying the preview?</strong><p>You can help us improve it.</p></div><button type="button" onClick={()=>navigate('feedback')}>Share feedback</button></section>}
  {page==='more'&&<section className="sf-more-page" aria-label={t('More')}>
   <div className="sf-more-intro"><span className="wh-eyebrow">{t('WORKSPACE TOOLS')}</span><h2>{t('More')}</h2><p>{t('Manage tools, reports and workspace settings.')}</p></div>
@@ -252,16 +252,48 @@ export default function WarehouseApp({user,preferences,logout}){
  </div></Feedback.Provider>
 }
 function Report({item,location,collection,run,busy,voice,language,onError,onSave}){
- const t=useT(),[reason,R]=useState(location?'Item not found at the recorded location.':''),[suggested,S]=useState('');
- return <div className="sf-report-flow"><p><b>{item.name}</b> · {item.sku}</p>{location&&<><p>{t('Recorded location:')} <strong>{pathText(location)}</strong></p><p>{t('Thanks for flagging this. Share what you noticed so your manager can check the location.')}</p></>}
- <form onSubmit={e=>{e.preventDefault();run(async()=>{const report=await api('/issues',{collection,sku:item.sku,reason,kind:location?'wrong_location':'general',location_code:location?.code||'',suggested_location:suggested});onSave(report)})}}>
+ const t=useT(),[reason,R]=useState(location?'Item not found at the recorded location.':''),[suggested,S]=useState(''),[heard,H]=useState(''),[heardField,HF]=useState(''),[pendingSubmit,PS]=useState(false);
+ async function submitReport(){
+  if(busy||reason.trim().length<3)return;
+  await run(async()=>{
+   const report=await api('/issues',{collection,sku:item.sku,reason:reason.trim(),kind:location?'wrong_location':'general',location_code:location?.code||'',suggested_location:suggested.trim()});
+   onSave(report);
+  });
+ }
+ async function voiceCommand(text){
+  const transcript=String(text||'').trim(),normalized=transcript.toLocaleLowerCase().replace(/[.,!?।॥]/g,'').trim();
+  if(!transcript)return;
+  H(transcript);HF('command');
+  if(['send report','submit report','report bhejo','रिपोर्ट भेजो','ವರದಿ ಕಳುಹಿಸಿ','నివేదిక పంపండి'].includes(normalized)){
+   if(reason.trim().length<3){onError(t('Tell me what needs checking before sending the report.'));return;}
+   PS(true);return;
+  }
+  if(pendingSubmit){
+   const yes=['yes','confirm','हाँ','हां','haan','ಹೌದು','అవును'].includes(normalized);
+   const no=['no','cancel','नहीं','nahi','ಇಲ್ಲ','కాదు'].includes(normalized);
+   if(yes){PS(false);await submitReport();return;}
+   if(no){PS(false);return;}
+  }
+  if(location&&/\b(?:rack|shelf|bin|aisle)\b/i.test(transcript)){S(transcript.slice(0,200));HF('shelf');}
+  else{R(transcript.slice(0,400));HF('reason');}
+ }
+ return <div className="sf-report-flow">
+ <p><b>{item.name}</b> · {item.sku}</p>
+ {location&&<><p>{t('Recorded location:')} <strong>{pathText(location)}</strong></p><p>{t('Thanks for letting us know. Tell us what happened, and your manager can review the location.')}</p></>}
+ {voice&&<div className="sf-report-voice-panel" aria-label={t('Voice report')}>
+   <strong>{t('Tell us what happened')}</strong>
+   <small>{t('Speak the problem or the shelf where you found it. The words we hear will appear below.')}</small>
+   <VoiceButton small autoStop enabled={!busy} {...{language,onError}} label={t('Speak report')} onText={voiceCommand} onPartial={text=>{H(text);HF('listening')}}/>
+   <div className="sf-report-transcript" role="status" aria-live="polite"><span>{t('Recognized speech')}</span><p>{heard||t('Your spoken words will appear here after recognition.')}</p>{heardField==='reason'&&<small>{t('Added to the report description. Check it before sending.')}</small>}{heardField==='shelf'&&<small>{t('Added as a suggested location.')}</small>}</div>
+   {pendingSubmit&&<div className="sf-report-send-approval" role="status"><strong>{t('Send this report to your manager?')}</strong><p>{t('Say Yes to send, or No to keep editing.')}</p><button type="button" disabled={busy} onClick={submitReport}>{t('Yes, send report')}</button><button type="button" onClick={()=>PS(false)}>{t('Not yet')}</button></div>}
+  </div>}
+ <form onSubmit={e=>{e.preventDefault();submitReport()}}>
  <label>{t('What needs checking?')}<textarea required minLength={3} maxLength={400} value={reason} onChange={e=>R(e.target.value)}/></label>
- <VoiceButton small enabled={voice&&!busy} {...{language,onError}} onText={R}/>
- {location&&<div className="sf-report-location"><label htmlFor="sf-report-location-input">{t('Where did you find it? (optional)')}</label><div className="sf-report-location-field"><input id="sf-report-location-input" value={suggested} maxLength={200} placeholder={t('Rack, shelf or bin, if known')} onChange={e=>S(e.target.value)}/><VoiceButton iconOnly small enabled={voice&&!busy} {...{language,onError}} label="Dictate suggested shelf location" onText={text=>{if(typeof text==='string'&&text.trim())S(text.trim().slice(0,200))}}/></div>{!voice&&<small>{t('Voice input unavailable. You can enter the shelf location manually.')}</small>}</div>}
- <p>{t('Your report will appear in Activity. Once your manager verifies a correction, future searches will use the updated location.')}</p>
+ {location&&<div className="sf-report-location"><label htmlFor="sf-report-location-input">{t('Where did you find it? (optional)')}</label><div className="sf-report-location-field"><input id="sf-report-location-input" value={suggested} maxLength={200} placeholder={t('Rack, shelf or bin, if known')} onChange={e=>S(e.target.value)}/></div></div>}
+ <p>{t('Your report will appear in Activity. Your manager can review it and update the saved shelf if needed.')}</p>
  <button className="primary" disabled={busy||reason.trim().length<3}>{t('Send for review')}</button>
  </form></div>;
 }
 function ScanTask({line,onRead,onManual,busy,onError}){const t=useT();return <><p><b>{line.selected.name}</b> · {line.selected.sku}</p><Place location={line.location}/><div className="wh-scan-steps"><span className={line.product_scanned?'done':''}>1. {t('Scan item')}{line.product_scanned&&' ✓'}</span><span className={line.complete?'done':''}>2. {t('Scan location')}{line.complete&&' ✓'}</span></div>{line.complete?<div className="wh-empty"><Glyph name="check"/><h3>{t('Item and location confirmed.')}</h3></div>:<><h3>{t(line.product_scanned?'Now scan the location label':'Scan the item label')}</h3><ScanBox key={line.product_scanned?'location':'product'} {...{onRead,onError}}/><button className="wh-text-button" disabled={busy} onClick={onManual}>{t('Picked and checked — confirm without scanner')}</button></>}</>}
 
-function Clarification({voice,language,busy,onError,onReply}){const t=useT(),[reply,R]=useState('');return <form className="wh-clarify" onSubmit={e=>{e.preventDefault();onReply(reply)}}><label>{t('Add a size, rating or SKU')}<input value={reply} onChange={e=>R(e.target.value)} maxLength={150} required placeholder={t('For example: size M')}/></label><VoiceButton small enabled={voice&&!busy} {...{language,onError}} onText={R}/><button disabled={busy||!reply.trim()}>{t('Apply detail')}</button></form>}
+function Clarification({voice,language,busy,onError,onReply}){const t=useT(),[reply,R]=useState(''),[heard,H]=useState(false);return <form className="wh-clarify" onSubmit={e=>{e.preventDefault();onReply(reply)}}><label>{t('Add a size, rating or SKU')}<input value={reply} onChange={e=>{R(e.target.value);H(false)}} maxLength={150} required placeholder={t('For example: size M')}/></label><VoiceButton small autoStop enabled={voice&&!busy} label={t('Speak size or SKU')} {...{language,onError}} onText={text=>{R(String(text||'').slice(0,150));H(true)}}/>{heard&&<small className="sf-voice-detail-transcript" role="status">{t('Recognized detail')}: <strong>{reply}</strong></small>}<button disabled={busy||!reply.trim()}>{t('Apply detail')}</button></form>}
