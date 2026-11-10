@@ -156,7 +156,8 @@ test('production workspace chrome avoids status placeholders and broken account 
  assert.doesNotMatch(src,/>\{t\(voice\?'Voice configured':'Text mode'\)\}</);
  assert.match(src,/className="sf-sidebar-account" onClick=\{\(\)=>navigate\('settings'\)\}/);
  assert.match(src,/page==='more'\?'More':nav.find/);
- assert.match(src,/items\.some\(i=>i\.synthetic\)&&<small>/);
+ assert.match(src,/items\.some\(item=>item\.synthetic\)&&<p className="sf-catalogue-provenance"/);
+ assert.doesNotMatch(src,/Public challenge preview · Fictional catalogue · No real stock changes/);
 });
 test('empty fresh catalogue offers a real owner import route',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
@@ -404,23 +405,27 @@ test('voice picking is discoverable before starting and unmatched requests can b
  assert.match(server,/def remove_unresolved_line\(tid:str,index:int,request:Request\)/);
 });
 
-test('example locations and voice controls use readable labels',async()=>{
+test('locations present the recorded rack shelf and bin without repetitive starter labels',async()=>{
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const parts=await readFile(new URL('../src/warehouse-ui.jsx',import.meta.url),'utf8');
- assert.match(ui,/Example products and shelves/);
  assert.match(ui,/Browse saved items/);
  assert.match(ui,/friendlyPath\(l,!!p.synthetic\)/);
+ assert.match(ui,/example=\{!!line.selected\?\.synthetic\}/);
  assert.match(parts,/example=false/);
- assert.match(parts,/Example shelf/);
+ assert.doesNotMatch(parts,/Example shelf/);
+ assert.doesNotMatch(ui,/Example products and shelves/);
 });
 
-test('synthetic catalogue locations are explicitly examples in spoken and visual responses',async()=>{
+test('synthetic provenance is kept in catalogue while speech and picking remain uncluttered',async()=>{
  const backend=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(backend,/Sample catalogue locations, not verified for your store/);
- assert.match(ui,/Sample catalogue: these shelf locations are illustrative/);
+ assert.match(ui,/className="sf-catalogue-provenance"/);
+ assert.match(ui,/Locations in starter records are not physically verified/);
  assert.match(ui,/friendlyPath\(ls\[0\]\.location,!!ls\[0\]\.selected\?\.synthetic\)/);
- assert.doesNotMatch(ui,/\?t\('Example shelf'\)\+' · '/);
+ assert.doesNotMatch(backend,/Sample catalogue locations, not verified for your store/);
+ assert.doesNotMatch(ui,/Sample catalogue: these shelf locations are illustrative/);
+ assert.doesNotMatch(ui,/className="sf-sample-info"/);
+ assert.match(backend,/p.get\('synthetic'\) and k=='facility'/);
 });
 
 
@@ -727,9 +732,9 @@ test('sample shelf labels do not repeat on every item and recent requests are st
  assert.match(ui,/Saved recent requests/);
  assert.match(ui,/request\('\/warehouse\/tasks'\)/);
  assert.match(ui,/recent\.filter\(r=>collection/);
- assert.match(backend,/Sample catalogue locations, not verified for your store/);
+ assert.doesNotMatch(backend,/Sample catalogue locations, not verified for your store/);
  assert.doesNotMatch(backend,/\{'Example shelf/);
- assert.match(ui,/example=\{false\}/);
+ assert.match(ui,/example=\{!!line.selected\?\.synthetic\}/);
  assert.match(ui,/Confirm your request/);
  assert.match(ui,/Confirm search and begin picking/);
 });
