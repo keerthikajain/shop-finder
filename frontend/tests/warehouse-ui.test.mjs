@@ -194,7 +194,7 @@ test('Prisma V3 keeps automatic recognition settings behind a simple staff inter
  assert.doesNotMatch(src,/transcriptStyle,TS/);
  assert.match(src,/URLSearchParams\(\{language,style,enhanced:String\(enhanced\),collection\}\)/);
  assert.match(src,/onText\(r\.transcript,r\.search_language,r\)/);
- assert.match(src,/language:language==='auto'\?\(detectedSearchLanguage\|\|'hi-en'\):language/);
+ assert.match(src,/language:language==='auto'\?\(spokenLanguage\|\|detectedSearchLanguage\|\|'hi-en'\):language/);
 });
 
 test('Prisma V3 live voice is opt-in and retains recorded voice fallback',async()=>{
