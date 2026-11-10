@@ -2241,3 +2241,154 @@ html,body,#root{max-width:100%;overflow-x:clip}
 
 /* Unified public signup: same native product UI and standard sign-in surface */
 .sf-public-invite{gap:12px}.sf-public-invite>.sf-auth-text-link{justify-self:center;min-height:44px;font-weight:600}
+
+
+/* Login polish: one connected, responsive surface and a permanently readable signup CTA. */
+.login-shell .sf-login-layout{
+  background:#f7f3fc;
+}
+.login-shell .sf-login-art,
+.login-shell .login-card{
+  background:transparent;
+}
+.login-shell .sf-login-art{
+  border-right:1px solid #e8e0f1;
+}
+.login-shell .sf-public-invite button.sf-demo-enter:not(:disabled),
+.login-shell .sf-public-invite button.sf-demo-enter:hover:not(:disabled),
+.login-shell .sf-public-invite button.sf-demo-enter:focus-visible:not(:disabled),
+.login-shell .sf-public-invite button.sf-demo-enter:active:not(:disabled){
+  background:#7027cc;
+  border:1px solid #7027cc;
+  color:#fff;
+  -webkit-text-fill-color:#fff;
+  opacity:1;
+  visibility:visible;
+}
+.login-shell .sf-public-invite button.sf-demo-enter:hover:not(:disabled){
+  background:#6020b3;
+  border-color:#6020b3;
+}
+.login-shell .sf-public-invite button.sf-demo-enter svg,
+.login-shell .sf-public-invite button.sf-demo-enter:hover svg,
+.login-shell .sf-public-invite button.sf-demo-enter:focus-visible svg{
+  color:#fff;
+  stroke:currentColor;
+  opacity:1;
+}
+.login-shell .sf-public-invite button.sf-demo-enter:disabled{
+  background:#e7dcf6;
+  color:#594175;
+  -webkit-text-fill-color:#594175;
+  border-color:#cdb9e9;
+}
+.login-shell .sf-welcome-audio button:hover:not(:disabled){
+  background:#eee7f8;
+  color:#312440;
+}
+@media (max-width:760px){
+  .login-shell .sf-login-layout{
+    display:flex;
+    flex-direction:column;
+    gap:0;
+    width:min(100%,510px);
+    max-width:510px;
+    padding:0;
+    margin:16px auto 24px;
+    min-height:0;
+    overflow:hidden;
+    border:1px solid #e5dfea;
+    border-radius:22px;
+    background:#f7f3fc;
+    box-shadow:0 16px 38px rgba(43,29,68,.09);
+  }
+  .login-shell .sf-login-art{
+    display:flex;
+    position:static;
+    inset:auto;
+    z-index:auto;
+    width:100%;
+    max-width:100%;
+    height:auto;
+    flex-direction:row;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    padding:20px 22px 14px;
+    margin:0;
+    opacity:1;
+    overflow:hidden;
+    pointer-events:auto;
+    background:transparent;
+    border:0;
+    border-bottom:1px solid #e8e0f1;
+  }
+  .login-shell .sf-login-art img{
+    display:block;
+    width:clamp(90px,30%,132px);
+    max-width:132px;
+    height:auto;
+    max-height:160px;
+    margin:0;
+    opacity:1;
+    flex:0 0 auto;
+    object-fit:contain;
+  }
+  .login-shell .sf-login-art>div{
+    display:block;
+    min-width:0;
+    width:auto;
+    max-width:240px;
+  }
+  .login-shell .sf-login-art h2{
+    margin:0 0 5px;
+    font-size:clamp(16px,4vw,20px);
+  }
+  .login-shell .sf-login-art p{
+    display:block;
+    margin:0;
+    font-size:12px;
+    line-height:1.5;
+  }
+  .login-shell .login-card{
+    display:block;
+    position:relative;
+    width:100%;
+    max-width:none;
+    min-width:0;
+    margin:0;
+    padding:24px 22px 26px;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+    backdrop-filter:none;
+  }
+}
+@media (max-width:480px){
+  .login-shell{padding:14px 12px 24px}
+  .login-shell .sf-login-layout{
+    width:100%;
+    padding:0;
+    margin:10px auto 20px;
+    border-radius:18px;
+  }
+  .login-shell .sf-login-art{display:flex;padding:16px 14px 12px;gap:11px}
+  .login-shell .sf-login-art img{width:94px;max-width:94px;height:auto;max-height:120px}
+  .login-shell .sf-login-art>div{display:block}
+  .login-shell .sf-login-art h2{font-size:16px;line-height:1.3}
+  .login-shell .sf-login-art p{display:block;font-size:11px}
+  .login-shell .login-card{padding:22px 16px 24px}
+  .login-shell .sf-public-invite{padding:14px}
+  .login-shell .sf-welcome-audio{align-items:stretch}
+  .login-shell .sf-welcome-audio button{min-height:44px}
+}
+@media(max-width:340px){
+  .login-shell .sf-login-art img{width:76px;max-width:76px}
+  .login-shell .sf-login-art h2{font-size:15px}
+  .login-shell .login-card{padding:19px 13px 22px}
+}
+@media (prefers-reduced-transparency:reduce){
+  .login-shell .sf-login-layout{background:#f7f3fc}
+  .login-shell .login-card{background:transparent;backdrop-filter:none}
+}
