@@ -56,3 +56,33 @@
 .sf-compact-app .wh-response,.sf-compact-app .sf-sample-info,.sf-compact-app .sf-picking-actions,.sf-compact-app .wh-task,.sf-compact-app .wh-task-heading,.sf-compact-app .sf-voice-guide{min-width:0;max-width:100%;overflow-wrap:anywhere}
 .sf-compact-app .wh-response{white-space:normal;line-height:1.65}
 .sf-compact-app .sf-picking-actions{flex-wrap:wrap;gap:10px}
+
+/* Compact, readable phone workflow: fewer repeated tall panels and no tiny tap targets. */
+.sf-compact-app .sf-voice-pick-confirm{display:grid;gap:6px;border:1px solid var(--wh-border,#dedbe5);padding:12px;border-radius:12px;background:var(--wh-soft,#f8f6fc);font-size:13px;line-height:1.45;min-width:0}
+.sf-compact-app .sf-voice-pick-confirm strong{font-size:14px}
+.sf-compact-app .sf-voice-pick-confirm p{margin:0;color:var(--wh-muted,#6e6978)}
+.sf-compact-app .sf-voice-pick-confirm>div{display:flex;gap:8px;flex-wrap:wrap}
+.sf-compact-app .sf-voice-pick-confirm button{min-height:42px;padding:8px 14px;border:1px solid var(--wh-border,#dedbe5);border-radius:9px}
+.sf-compact-app .sf-voice-pick-confirm button:first-child{background:var(--wh-accent,#7139d5);color:white}
+@media(max-width:700px){
+ .sf-compact-app .wh-page-heading h1{font-size:clamp(20px,5.8vw,26px);line-height:1.18}
+ .sf-compact-app .wh-page-heading p{font-size:12px;line-height:1.4}
+ .sf-compact-app .wh-panel h2,.sf-compact-app .sf-picking-head h3{font-size:clamp(16px,4.6vw,20px);line-height:1.3}
+ .sf-compact-app .wh-task h3{font-size:16px;line-height:1.3}
+ .sf-compact-app .wh-task-heading small,.sf-compact-app .wh-item-meta,.sf-compact-app .sf-stock-badge{font-size:12px;line-height:1.45}
+ .sf-compact-app .sf-voice-guide-heading strong{font-size:15px}
+ .sf-compact-app .sf-voice-guide-heading small{font-size:12px;line-height:1.4}
+ .sf-compact-app .sf-voice-guide{padding:12px;gap:10px}
+ .sf-compact-app .wh-task,.sf-compact-app .sf-guided-picking{padding:12px}
+ .sf-compact-app .wh-task-heading{gap:8px}
+ .sf-compact-app .wh-section-title h2{font-size:19px}
+ .sf-compact-app .wh-panel .wh-button,.sf-compact-app .wh-panel button{min-height:40px}
+ .sf-compact-app .wh-task .sf-location-check{padding:10px}
+ .sf-compact-app .wh-task .sf-location-check-intro strong{font-size:13px}
+ .sf-compact-app .wh-task .sf-location-check-intro small{font-size:12px}
+ .sf-compact-app .sf-voice-guide-choices button{font-size:12px;padding:8px 10px;min-height:40px}
+ .sf-compact-app .sf-voice-guide-actions{gap:7px}
+ .sf-compact-app .sf-voice-guide-choices{gap:6px}
+ .sf-compact-app .wh-work-grid{gap:12px}
+ .sf-compact-app .sf-visible-transcript p{font-size:14px}
+}
