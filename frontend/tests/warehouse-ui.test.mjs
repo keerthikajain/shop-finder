@@ -350,7 +350,7 @@ test('voice-guided picking uses real Prisma transcript and Timbre audio with saf
  assert.match(src,/\/picking\/guide-audio/);
  assert.match(src,/onText=\{transcript=>voicePickCommand\(transcript\)\}/);
  assert.match(src,/answer\.action==='verify'&&answer\.line!=null/);
- assert.match(src,/D\(\{type:'scan',index:answer\.line\}\)/);
+ assert.match(src,/PV\(\{taskId:source\.id,line:answer\.line,sku:source\.lines\[answer\.line\]\?\.selected\?\.sku\}\)/);
  assert.match(src,/answer\.action==='report'&&answer\.line!=null/);
  assert.match(src,/D\(\{type:'report',item:selected\.selected,location:selected\.location,index:answer\.line\}\)/);
  assert.match(src,/answer\.action==='stop'/);
@@ -372,7 +372,7 @@ test('native voice picking commands are wired for every supported input language
  assert.match(src,/pickVoicePhrase\(task\.language,'stop'\)/);
  for(const code of ['kn-IN','ta-IN','te-IN','ml-IN','mr-IN','bn-IN','gu-IN','pa-IN'])assert.ok(terms.includes('"'+code+'"'),code);
  assert.match(server,/voice_guide\.intent\(body\.transcript,task\['language'\]\)/);
- assert.match(src,/if\(answer\.action==='verify'&&answer\.line!=null\)D\(\{type:'scan',index:answer\.line\}\)/);
+ assert.match(src,/if\(answer\.action==='verify'&&answer\.line!=null\)\{PV\(/);
 });
 
 test('owner-only activity tab exposes unmatched-search review without modifying staff reports',async()=>{
