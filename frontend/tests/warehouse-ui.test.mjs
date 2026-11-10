@@ -399,7 +399,7 @@ test('voice picking is discoverable before starting and unmatched requests can b
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
  assert.match(ui,/picking.status!=='completed'&&<div className="sf-voice-guide"/);
- assert.match(ui,/Nothing will start until you confirm/);
+ assert.match(ui,/Nothing will start until you press Confirm and start picking or explicitly say that command/);
  assert.match(ui,/enabled={picking.status==='active'&&voice&&!busy&&!voiceGuidePaused}/);
   assert.match(ui,/HandsFreePicking enabled=/);
  assert.match(ui,/async function removeUnresolvedLine\(index\)/);
@@ -420,9 +420,10 @@ test('example locations and voice controls use readable labels',async()=>{
 test('synthetic catalogue locations are explicitly examples in spoken and visual responses',async()=>{
  const backend=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(backend,/Example shelf/);
- assert.match(ui,/These are example items and locations/);
+ assert.match(backend,/Sample catalogue locations, not verified for your store/);
+ assert.match(ui,/Sample catalogue: these shelf locations are illustrative/);
  assert.match(ui,/friendlyPath\(ls\[0\]\.location,!!ls\[0\]\.selected\?\.synthetic\)/);
+ assert.doesNotMatch(ui,/\?t\('Example shelf'\)\+' · '/);
 });
 
 
@@ -466,11 +467,13 @@ test('judge access uses a single account flow and a separate full-feature worksp
  assert.match(account,/Your products and changes stay separate/);
 });
 
-test('voice-first search uses the actual Prisma transcript and preserves an opt-out',async()=>{
+test('voice-first search requires transcript review before matching products',async()=>{
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(source,/\[voiceAutoSearch,VAS\]=useState\(true\)/);
- assert.match(source,/Search automatically after speaking/);
- assert.match(source,/if\(text\?\.trim\(\)\&\&voiceAutoSearch\)\{search\(text,true,false,detected\)\}/);
+ assert.doesNotMatch(source,/\[voiceAutoSearch,VAS\]=useState\(true\)/);
+ assert.doesNotMatch(source,/Search automatically after speaking/);
+ assert.match(source,/Check or edit the transcript, then press Find items/);
+ assert.match(source,/className="sf-request-review"/);
+ assert.match(source,/task\.query/);
  assert.match(source,/spokenLanguage\|\|detectedSearchLanguage/);
  assert.match(source,/if\(fromVoice\&\&auto\)await speak\(result\)/);
   assert.match(source,/T\(result\)/);
@@ -574,10 +577,10 @@ test('voice list confirmation uses exact speech in all five focus modes',async()
 
 test('spoken search waits for the worker to approve the proposed picking list',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(src,/picking.status==='ready'&&voice&&handsFree&&taskVoice.current&&canStartPick/);
- assert.match(src,/onCommand=\{voiceStartPicking\}/);
+ assert.doesNotMatch(src,/picking.status==='ready'&&voice&&handsFree&&taskVoice.current&&canStartPick/);
+ assert.match(src,/onText=\{voiceStartPicking\}/);
  assert.match(src,/onClick=\{\(\)=>pickAction\('start'\)\}/);
- assert.match(src,/Nothing will start until you confirm/);
+ assert.match(src,/Nothing will start until you press Confirm and start picking or explicitly say that command/);
  assert.match(src,/if\(!canStartPick\|\|busy\)/);
  assert.doesNotMatch(src,/async function startIfReady\(/);
 });
@@ -606,8 +609,10 @@ test('recording button stays readable in contrast and no repeated actions on com
 test('review stage has a single microphone path and clears stale voice reply on a new search',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/PV\(null\);VGC\(''\);VGT\(''\);VGP\(false\)/);
- assert.match(src,/!\(handsFree&&taskVoice\.current&&canStartPick\)&&<VoiceButton small autoStop/);
- assert.match(src,/picking\.status==='ready'\&\&voice\&\&handsFree\&\&taskVoice\.current\&\&canStartPick/);
+ assert.match(src,/enabled=\{!busy&&canStartPick\} language=\{task.language\} label=\{t\('Say confirm and start picking'\)\}/);
+ assert.match(src,/onText=\{voiceStartPicking\}/);
+ assert.doesNotMatch(src,/picking\.status==='ready'&&voice&&handsFree&&taskVoice\.current&&canStartPick/);
+ assert.match(src,/picking\.status==='active'&&voice&&handsFree&&<HandsFreePicking/);
  const {isStartPickingCommand}=await import('../src/picking-voice-phrases.js');
  assert.equal(isStartPickingCommand('en-IN','Confirm.'),true);
  assert.equal(isStartPickingCommand('hi-en','confirm'),true);
@@ -712,4 +717,17 @@ test('login illustration and form share one background across desktop and phone'
  assert.match(css,/@media \(max-width:760px\)\{[\s\S]*?\.login-shell \.sf-login-art\{\s*display:flex;\s*position:static/);
  assert.match(css,/@media \(max-width:480px\)\{[\s\S]*?\.login-shell \.sf-login-art\{display:flex/);
  assert.match(css,/\.login-shell \.login-card\{\s*display:block;\s*position:relative/);
+});
+
+test('sample shelf labels do not repeat on every item and recent requests are stored tasks',async()=>{
+ const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const backend=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
+ assert.match(ui,/Saved recent requests/);
+ assert.match(ui,/request\('\/warehouse\/tasks'\)/);
+ assert.match(ui,/recent\.filter\(r=>collection/);
+ assert.match(backend,/Sample catalogue locations, not verified for your store/);
+ assert.doesNotMatch(backend,/\{'Example shelf/);
+ assert.match(ui,/example=\{false\}/);
+ assert.match(ui,/Confirm your request/);
+ assert.match(ui,/Confirm and start picking/);
 });
