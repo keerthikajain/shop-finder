@@ -184,9 +184,9 @@ test('item editor and spreadsheet importer expose the multilingual alias workflo
  assert.match(source,/separate with \|/);
 });
 
-test('Prisma V3 keeps automatic recognition settings behind a simple staff interface',async()=>{
+test('Prisma V3 keeps focus-language recognition settings behind a simple staff interface',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(src,/value="auto">Auto-detect/);
+ assert.doesNotMatch(src,/value="auto">Auto-detect/);
  assert.match(src,/style="transcribe"/);
  assert.match(src,/enhanced=\{prismaV3\}/);
  assert.doesNotMatch(src,/t\('Transcript style'\)/);
@@ -194,7 +194,7 @@ test('Prisma V3 keeps automatic recognition settings behind a simple staff inter
  assert.doesNotMatch(src,/transcriptStyle,TS/);
  assert.match(src,/URLSearchParams\(\{language,style,enhanced:String\(enhanced\),collection\}\)/);
  assert.match(src,/onText\(r\.transcript,r\.search_language,r\)/);
- assert.match(src,/language:language==='auto'\?\(spokenLanguage\|\|detectedSearchLanguage\|\|'hi-en'\):language/);
+ assert.match(src,/language,\s*brand:/);
 });
 
 test('Prisma V3 live voice is opt-in and retains recorded voice fallback',async()=>{
