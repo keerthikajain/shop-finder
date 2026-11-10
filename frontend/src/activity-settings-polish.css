@@ -51,3 +51,8 @@
 .sf-compact-app .sf-voice-guide-choices{display:flex;flex-wrap:wrap;gap:8px}
 .sf-compact-app .sf-voice-guide-choices button{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
 @media(max-width:600px){.sf-compact-app .sf-guide-transcript,.sf-compact-app .sf-visible-transcript{padding:11px 12px}.sf-compact-app .sf-voice-guide-actions>button{flex:1 1 130px}.sf-compact-app .sf-hands-free-status{width:100%}}
+
+/* Keep longer mixed-script responses and shelf paths inside the phone viewport. */
+.sf-compact-app .wh-response,.sf-compact-app .sf-sample-info,.sf-compact-app .sf-picking-actions,.sf-compact-app .wh-task,.sf-compact-app .wh-task-heading,.sf-compact-app .sf-voice-guide{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.sf-compact-app .wh-response{white-space:normal;line-height:1.65}
+.sf-compact-app .sf-picking-actions{flex-wrap:wrap;gap:10px}
