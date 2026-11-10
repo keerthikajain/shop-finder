@@ -679,3 +679,37 @@ test('manager dictation writes actual recognized text into editable resolution n
  assert.match(source,/if\(!owner\|\|!open\|\|busy\|\|note\.trim\(\)\.length<3\)return/);
  assert.match(source,/await api\('\/issues\/'\+issue\.id\+'\/resolve',\{note:note\.trim\(\)\}\)/);
 });
+
+test('login workspace creation CTA remains legible on hover and focus',async()=>{
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ const account=await readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
+ assert.match(account,/className="sf-demo-enter" disabled=\{busy\} onClick=\{\(\)=>navigate\('signup'\)\}/);
+ assert.match(css,/\.login-shell \.sf-public-invite button\.sf-demo-enter:hover:not\(:disabled\)/);
+ assert.match(css,/\.login-shell \.sf-public-invite button\.sf-demo-enter:focus-visible:not\(:disabled\)/);
+ assert.match(css,/background:#6020b3/);
+ assert.match(css,/-webkit-text-fill-color:#fff/);
+ assert.match(css,/\.sf-public-invite button\.sf-demo-enter:hover svg/);
+});
+
+test('welcome voice uses browser speech without exposing a TTS credential',async()=>{
+ const account=await readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
+ assert.match(account,/Welcome to Finder\. Find what you need/);
+ assert.match(account,/new window\.SpeechSynthesisUtterance\(greeting\)/);
+ assert.match(account,/window\.speechSynthesis\.getVoices/);
+ assert.match(account,/if\(preferred\)speech\.voice=preferred/);
+ assert.match(account,/onClick=\{speakWelcome\}/);
+ assert.match(account,/speech\.onerror=\(\)=>WS\('unavailable'\)/);
+ assert.doesNotMatch(account,/GNANI_API_KEY/);
+});
+
+test('login illustration and form share one background across desktop and phone',async()=>{
+ const account=await readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(account,/className="sf-login-layout"/);
+ assert.match(account,/className="sf-login-art"/);
+ assert.match(account,/className="glass login-card"/);
+ assert.match(css,/\.login-shell \.sf-login-layout\{\s*background:#f7f3fc/);
+ assert.match(css,/@media \(max-width:760px\)\{[\s\S]*?\.login-shell \.sf-login-art\{\s*display:flex;\s*position:static/);
+ assert.match(css,/@media \(max-width:480px\)\{[\s\S]*?\.login-shell \.sf-login-art\{display:flex/);
+ assert.match(css,/\.login-shell \.login-card\{\s*display:block;\s*position:relative/);
+});
