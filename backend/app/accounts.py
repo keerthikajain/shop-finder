@@ -84,6 +84,7 @@ RATE_RULES=(
  ('/api/reports',60),
 )
 def rate_bucket(route):
+ if route=='/api/welcome/audio':return '/api/welcome/audio',10
  if route.endswith('/speak'):
   return '/api/voice/speak',20
  for prefix,limit in RATE_RULES:
@@ -203,6 +204,7 @@ def demo_allowed(route,method):
  if route=='/api/warehouse/search' and method=='POST':return True
  if route=='/api/warehouse/tasks' and method=='GET':return True
  if route=='/api/voice/transcribe' and method=='POST':return True
+ if route=='/api/voice/welcome' and method=='POST':return True
  if route.startswith('/api/warehouse/tasks/'):
   parts=route.split('/')
   if len(parts)==5:return method=='GET'
@@ -228,7 +230,7 @@ def install_accounts(app,path,required=True):
     if request.headers.get('X-Shop-Request')!='1' or not origin_valid(request):
      return apply_security_headers(JSONResponse({'detail':'Request origin or header not allowed.'},403),request)
    user=current(request);request.state.user=user
-   if request.url.path not in ('/api/health','/api/auth/login','/api/auth/status','/api/auth/join','/api/auth/register','/api/auth/logout','/api/demo/enter','/api/challenge/signup','/api/challenge/try'):
+   if request.url.path not in ('/api/health','/api/auth/login','/api/auth/status','/api/auth/join','/api/auth/register','/api/auth/logout','/api/demo/enter','/api/challenge/signup','/api/challenge/try','/api/welcome/audio'):
     if not user:
      return apply_security_headers(JSONResponse({'detail':'Please log in.'},401),request)
     route=request.url.path
