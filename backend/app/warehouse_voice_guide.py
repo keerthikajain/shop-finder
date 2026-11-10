@@ -70,6 +70,13 @@ def guide(task,action,requested_line,check_line):
           'language':language}
  index=pending_line(task)
  if index is None:
+  if any(line.get('deferred_reason') and not line.get('complete') for line in task['lines']):
+   unresolved={
+    'te-IN':'మిగిలిన వస్తువులు నిర్ధారించబడలేదు. వాటిని తర్వాత మళ్లీ ప్రయత్నించండి లేదా మేనేజర్ సమీక్ష కోసం ఉంచండి.',
+    'kn-IN':'ಕೆಲವು ವಸ್ತುಗಳು ಇನ್ನೂ ದೃಢಪಟ್ಟಿಲ್ಲ. ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ ಅಥವಾ ಪರಿಶೀಲನೆಗಾಗಿ ಉಳಿಸಿ.'
+   }
+   text=unresolved.get(language,'कुछ सामान अभी पुष्टि नहीं हुआ है। उसे बाद में दोबारा जाँचें।' if hi else 'Some items remain unconfirmed. Retry them manually or leave them for review.')
+   return {'action':'unresolved','line':None,'text':text,'language':language}
   completion={
    'kn-IN':'ಎಲ್ಲಾ ವಸ್ತುಗಳ ಪರಿಶೀಲನೆ ಮುಗಿದಿದೆ. ಪಟ್ಟಿಯನ್ನು ಪೂರ್ಣಗೊಳಿಸುತ್ತಿದ್ದೇವೆ.',
    'te-IN':'అన్ని వస్తువులను తనిఖీ చేశాం. జాబితాను పూర్తి చేస్తున్నాం.'
