@@ -82,7 +82,7 @@ def create_app(db_path=None, seed_demo=None, *, auth_required=True, challenge_ro
         if not user:raise HTTPException(401,'Please log in.')
         if not voice.ready():raise HTTPException(503,'Voice greeting is unavailable.')
         # Never trust a name supplied by the browser. Use the stored account.
-        name='' if user.get('is_demo') else re.sub(r"[^\\w-]",'',str(user.get('display_name') or user.get('username') or '').split(' ')[0],flags=re.UNICODE)[:32]
+        name='' if user.get('is_demo') else re.sub(r"[^\w-]",'',str(user.get('display_name') or user.get('username') or '').split(' ')[0],flags=re.UNICODE)[:32]
         greeting_time='morning' if body.hour<12 else 'afternoon' if body.hour<17 else 'evening'
         salutation={
             'en-IN':{'morning':'Good morning','afternoon':'Good afternoon','evening':'Good evening'},
