@@ -104,3 +104,49 @@
  .sf-compact-app .wh-task-heading{row-gap:6px}
  .sf-compact-app .sf-picking-head{gap:8px}
 }
+
+/* Voice command status stays compact; optional shortcuts don't crowd picking. */
+.sf-compact-app .sf-voice-guide{padding:12px 14px;gap:10px}
+.sf-compact-app .sf-voice-guide-heading{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.sf-compact-app .sf-voice-guide-heading small{line-height:1.45}
+.sf-compact-app .sf-voice-shortcuts{max-width:100%;font-size:12px}
+.sf-compact-app .sf-voice-shortcuts summary{cursor:pointer;min-height:32px;display:flex;align-items:center;color:var(--wh-muted);font-weight:600}
+.sf-compact-app .sf-voice-shortcuts .sf-voice-guide-choices{padding-top:8px}
+.sf-compact-app .sf-voice-guide-actions{min-height:42px;flex-wrap:wrap}
+.sf-compact-app .sf-voice-guide-actions>button{min-height:38px}
+.sf-compact-app .sf-report-voice{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:9px 0}
+.sf-compact-app .sf-report-voice span{flex:1 1 100%;font-size:12px;color:var(--wh-muted)}
+.sf-compact-app .sf-report-voice button{min-height:42px;max-width:100%;white-space:normal}
+/* Variant choices: small optional artwork and space for names, specs and verified shelves. */
+.sf-compact-app.sf-find-page .wh-task-unresolved .wh-candidate,
+.sf-compact-app .sf-find-page .wh-task-unresolved .wh-candidate{
+ display:grid;grid-template-columns:80px minmax(0,1fr);align-items:start;gap:12px;min-width:0;
+}
+.sf-compact-app.sf-find-page .wh-task-unresolved .wh-candidate>.sf-product-art,
+.sf-compact-app .sf-find-page .wh-task-unresolved .wh-candidate>.sf-product-art{
+ grid-column:1;grid-row:1;width:80px!important;min-width:80px!important;max-width:80px;height:84px!important;min-height:0;overflow:hidden;
+}
+.sf-compact-app.sf-find-page .wh-task-unresolved .wh-candidate>.sf-product-art svg,
+.sf-compact-app .sf-find-page .wh-task-unresolved .wh-candidate>.sf-product-art svg{
+ width:70px;max-width:100%;height:70px;
+}
+.sf-compact-app.sf-find-page .wh-task-unresolved .wh-candidate>div:not(.sf-product-art),
+.sf-compact-app .sf-find-page .wh-task-unresolved .wh-candidate>div:not(.sf-product-art){
+ grid-column:2;grid-row:1;min-width:0;overflow-wrap:anywhere;
+}
+.sf-compact-app .wh-candidate-places{display:flex;flex-wrap:wrap;gap:6px}
+.sf-compact-app .wh-candidate-places button{min-height:42px;flex:1 1 160px;max-width:100%;white-space:normal;text-align:left}
+.sf-compact-app .wh-session-card{min-width:0;max-width:100%}
+.sf-compact-app .wh-session-card summary{font-size:13px;font-weight:650}
+@media(max-width:700px){
+ .sf-compact-app .sf-voice-guide{padding:11px;gap:8px}
+ .sf-compact-app .sf-voice-shortcuts summary{min-height:36px}
+ .sf-compact-app .sf-report-voice{align-items:stretch}
+ .sf-compact-app .sf-report-voice button{flex:1 1 120px}
+ .sf-compact-app.sf-find-page .wh-task-unresolved .wh-candidate,
+ .sf-compact-app .sf-find-page .wh-task-unresolved .wh-candidate{grid-template-columns:56px minmax(0,1fr);gap:9px}
+ .sf-compact-app.sf-find-page .wh-task-unresolved .wh-candidate>.sf-product-art,
+ .sf-compact-app .sf-find-page .wh-task-unresolved .wh-candidate>.sf-product-art{width:56px!important;min-width:56px!important;max-width:56px;height:60px!important}
+ .sf-compact-app.sf-find-page .wh-task-unresolved .wh-candidate>.sf-product-art svg,
+ .sf-compact-app .sf-find-page .wh-task-unresolved .wh-candidate>.sf-product-art svg{width:52px;height:52px}
+}
