@@ -1,8 +1,8 @@
 import React,{useEffect,useRef} from 'react';
 import './workspace-greeting.css';
+import {playWelcomeOnce,stopWelcome} from './welcome-audio.js';
 
-const VOICE_LOCALES={'en-IN':'en-IN','hi-IN':'hi-IN','hi-en':'en-IN','te-IN':'te-IN'};
-const FEMALE_VOICE=/\b(zira|heera|veena|samantha|victoria|karen|tessa|moira|fiona|female|woman|aria|jenny|neerja|swara)\b/i;
+const VOICE_LOCALES={'en-IN':'en-IN','hi-IN':'hi-IN','hi-en':'hi-en','te-IN':'te-IN'};
 
 // Use the staff member's saved display name when possible; never fabricate a guest name.
 export function greetingName(user){
@@ -18,80 +18,66 @@ export function greetingMessage(user,language='en-IN',hour=new Date().getHours()
  const first=name?name+', ':'';
  const text={
   'en-IN':{
-   morning:`Good morning, ${first}welcome back to Finder! Ready to find what you need?`,
-   afternoon:`Good afternoon, ${first}welcome back to Finder! Ready to find what you need?`,
-   evening:`Good evening, ${first}welcome back to Finder! Ready to find what you need?`
+   morning:`Good morning, ${first}welcome back to Finder! Let's make finding things easier!`,
+   afternoon:`Good afternoon, ${first}welcome back to Finder! Let's make finding things easier!`,
+   evening:`Good evening, ${first}welcome back to Finder! Let's make finding things easier!`
   },
   'hi-IN':{
-   morning:`सुप्रभात, ${first}फाइंडर में फिर से स्वागत है। चलिए, ज़रूरी सामान ढूँढ़ते हैं।`,
-   afternoon:`नमस्कार, ${first}फाइंडर में फिर से स्वागत है। चलिए, ज़रूरी सामान ढूँढ़ते हैं।`,
-   evening:`शुभ संध्या, ${first}फाइंडर में फिर से स्वागत है। चलिए, ज़रूरी सामान ढूँढ़ते हैं।`
+   morning:`सुप्रभात, ${first}फाइंडर में फिर से स्वागत है। चलिए, आज का काम आसान बनाते हैं!`,
+   afternoon:`नमस्कार, ${first}फाइंडर में फिर से स्वागत है। चलिए, आज का काम आसान बनाते हैं!`,
+   evening:`शुभ संध्या, ${first}फाइंडर में फिर से स्वागत है। चलिए, आज का काम आसान बनाते हैं!`
   },
   'hi-en':{
-   morning:`Good morning, ${first}Finder mein welcome back! Chaliye jo chahiye woh dhoondhte hain.`,
-   afternoon:`Good afternoon, ${first}Finder mein welcome back! Chaliye jo chahiye woh dhoondhte hain.`,
-   evening:`Good evening, ${first}Finder mein welcome back! Chaliye jo chahiye woh dhoondhte hain.`
+   morning:`Good morning, ${first}Finder mein welcome back! Chaliye, aaj ka kaam aasan banate hain!`,
+   afternoon:`Good afternoon, ${first}Finder mein welcome back! Chaliye, aaj ka kaam aasan banate hain!`,
+   evening:`Good evening, ${first}Finder mein welcome back! Chaliye, aaj ka kaam aasan banate hain!`
   },
   'te-IN':{
-   morning:`శుభోదయం, ${first}ఫైండర్‌కు తిరిగి స్వాగతం! మీకు కావాల్సిన వస్తువులను వెతుకుదాం.`,
-   afternoon:`శుభ మధ్యాహ్నం, ${first}ఫైండర్‌కు తిరిగి స్వాగతం! మీకు కావాల్సిన వస్తువులను వెతుకుదాం.`,
-   evening:`శుభ సాయంత్రం, ${first}ఫైండర్‌కు తిరిగి స్వాగతం! మీకు కావాల్సిన వస్తువులను వెతుకుదాం.`
+   morning:`శుభోదయం, ${first}ఫైండర్‌కు మళ్లీ స్వాగతం! ఈ రోజు పని మరింత సులభంగా చేద్దాం!`,
+   afternoon:`శుభ మధ్యాహ్నం, ${first}ఫైండర్‌కు మళ్లీ స్వాగతం! ఈ రోజు పని మరింత సులభంగా చేద్దాం!`,
+   evening:`శుభ సాయంత్రం, ${first}ఫైండర్‌కు మళ్లీ స్వాగతం! ఈ రోజు పని మరింత సులభంగా చేద్దాం!`
   }
  };
  // Guest speech must not suggest the user has a named account.
  if(!name){
   const guest={
-   'en-IN':'Welcome to Finder! Ready to find what you need?',
-   'hi-IN':'फाइंडर में स्वागत है। चलिए, ज़रूरी सामान ढूँढ़ते हैं।',
-   'hi-en':'Finder mein welcome! Chaliye jo chahiye woh dhoondhte hain.',
-   'te-IN':'ఫైండర్‌కు స్వాగతం! మీకు కావాల్సిన వస్తువులను వెతుకుదాం.'
+   'en-IN':'Hi there! Welcome to Finder. Let's make finding things easier!',
+   'hi-IN':'नमस्ते! फाइंडर में आपका स्वागत है। चलिए, आज का काम आसान बनाते हैं!',
+   'hi-en':'Hi there! Finder mein aapka welcome hai. Chaliye, aaj ka kaam aasan banate hain!',
+   'te-IN':'నమస్కారం! ఫైండర్‌కు స్వాగతం. ఈ రోజు పని మరింత సులభంగా చేద్దాం!'
   };
   return guest[language]||guest['en-IN'];
  }
  return (text[language]||text['en-IN'])[time];
 }
 
-// This lightweight welcome uses the browser's speech engine, as does the public
-// login greeting; operational picking continues using authenticated Gnani speech.
+// Use authenticated Gnani speech (Riyaa on Timbre v3), then fall back to
+// browser speech when the provider is disabled or the browser blocks playback.
 export default function WorkspaceGreeting({user,voiceLanguage='en-IN',interrupt=false}){
  const language=VOICE_LOCALES[voiceLanguage]?voiceLanguage:'en-IN';
  const entryHour=useRef(new Date().getHours());
  const message=greetingMessage(user,language,entryHour.current);
- const attempted=useRef(false),activeSpeech=useRef(null),alive=useRef(true);
+ const attempted=useRef(false),activeSpeech=useRef(null);
  function stopGreeting(){
+  if(activeSpeech.current)stopWelcome(activeSpeech.current);
   activeSpeech.current=null;
-  try{window.speechSynthesis?.cancel()}catch{}
-
- }
- function speakGreeting(){
-  if(interrupt)return; // Never start greeting over picking, report or other active speech.
-  if(typeof window==='undefined'||!window.speechSynthesis||!window.SpeechSynthesisUtterance)return;
-  try{
-   window.speechSynthesis.cancel();
-   const speech=new window.SpeechSynthesisUtterance(message);
-   const locale=VOICE_LOCALES[language]||'en-IN';
-   speech.lang=locale;
-   const voices=window.speechSynthesis.getVoices?.()||[];
-   const match=voices.find(v=>v.lang?.toLowerCase()===locale.toLowerCase()&&FEMALE_VOICE.test(v.name))
-    ||voices.find(v=>v.lang?.toLowerCase().split('-')[0]===locale.split('-')[0]&&FEMALE_VOICE.test(v.name))
-    ||voices.find(v=>v.lang?.toLowerCase()===locale.toLowerCase());
-   if(match)speech.voice=match;
-   speech.rate=0.94;speech.pitch=1.05;
-   speech.onend=()=>{if(alive.current&&activeSpeech.current===speech)activeSpeech.current=null};
-   speech.onerror=()=>{if(alive.current&&activeSpeech.current===speech)activeSpeech.current=null};
-   activeSpeech.current=speech;
-   window.speechSynthesis.speak(speech);
-  }catch{activeSpeech.current=null}
  }
  useEffect(()=>{
   if(attempted.current)return;
   attempted.current=true;
-  if(!interrupt)speakGreeting(); // Attempt only once when the signed-in workspace mounts.
+  if(interrupt)return;
+  const controller=new AbortController();
+  const playback={controller,audio:null,url:null};
+  activeSpeech.current=playback;
+  playWelcomeOnce({
+   url:'/api/voice/welcome',language,text:message,
+   body:{language,hour:entryHour.current},controller,playback
+  });
  },[]);
- useEffect(()=>{if(interrupt&&activeSpeech.current)stopGreeting()},[interrupt]);
- // Any normal workspace interaction yields immediately to search, picking or recording.
+ useEffect(()=>{if(interrupt)stopGreeting()},[interrupt]);
+ // Give priority to search, recording, navigation and spoken picking commands.
  useEffect(()=>{
-  const yieldToUser=()=>{if(activeSpeech.current)stopGreeting()};
+  const yieldToUser=()=>stopGreeting();
   document.addEventListener('pointerdown',yieldToUser,true);
   document.addEventListener('keydown',yieldToUser,true);
   return ()=>{
@@ -99,7 +85,7 @@ export default function WorkspaceGreeting({user,voiceLanguage='en-IN',interrupt=
    document.removeEventListener('keydown',yieldToUser,true);
   };
  },[]);
- useEffect(()=>()=>{alive.current=false;activeSpeech.current=null;try{window.speechSynthesis?.cancel()}catch{}},[]);
+ useEffect(()=>()=>stopGreeting(),[]);
  return <section className="sf-workspace-greeting" aria-label="Workspace greeting">
   <p>{message}</p>
  </section>;
