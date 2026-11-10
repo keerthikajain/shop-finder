@@ -175,7 +175,7 @@ def test_logout_remains_idempotent_and_invalidates_all_sessions(setup):
  assert c.post('/api/auth/logout',headers=H).status_code==200
  assert c.get('/api/users').status_code==401
 
-@pytest.mark.parametrize('language', ['en','hi','bn','mr','gu','pa','kn','te','ta','ml'])
+@pytest.mark.parametrize('language', ['en','hi','hi-en','bn','mr','gu','pa','kn','te','ta','ml'])
 def test_staff_account_can_store_all_supported_interface_languages(tmp_path,language):
  from app.accounts import add_account
  from app.database import connect
