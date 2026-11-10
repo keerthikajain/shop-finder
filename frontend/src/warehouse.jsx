@@ -84,6 +84,19 @@ export default function WarehouseApp({user,preferences,logout}){
  function navigate(p){if(p===page)return;PV(null);audio.current?.pause();SP(false);P(p);E('');N('');D(null);if(p!=='find')TOUR(null);main.current?.focus();window.scrollTo(0,0)}
  function goBack(){navigate('more')}
  async function choose(line,p,l){await run(async()=>{const next=await api('/tasks/'+task.id+'/choose',{line,collection:p.collection,sku:p.sku,location:l.code});const picked=await startIfReady(next);T(picked);AL(picked.picking?.status==='active'?Math.max(0,picked.lines.findIndex(x=>!x.complete)):line);if(picked.picking?.status==='ready'&&auto&&voice&&taskVoice.current)await speak(picked)})}
+ async function progressAfterPick(next,completed){
+  T(next);
+  if(!completed||!next.lines.every(line=>line.complete)&&next.picking?.status!=='active')return;
+  if(next.lines.every(line=>line.complete)&&next.picking?.status==='active'){
+   if(voice&&auto)await playPickGuidance('next',next,0);
+   const finished=await api('/tasks/'+next.id+'/picking/finish',{});
+   T(finished);VGP(true);AL(0);
+   N(t('All done! Your picking list is complete.'));
+  }else if(next.picking?.status==='active'){
+   const index=next.lines.findIndex(line=>!line.complete);
+   if(index>=0){AL(index);N(t('Picked! Moving to the next item.'));if(voice&&auto)await playPickGuidance('next',next,index)}
+  }
+ }
  async function scan(line,kind,value){await run(async()=>{const next=await api('/tasks/'+task.id+'/scan',{line,kind,value});D(null);PV(null);await progressAfterPick(next,kind!=='product');await reload()})}
  async function playPickGuidance(command,source=task,line=activeLine){
   if(!voice||!source)return;
@@ -105,6 +118,26 @@ export default function WarehouseApp({user,preferences,logout}){
  async function voicePickCommand(transcript,source=task){
   if(!source||!transcript?.trim())return;
   VGC(transcript);
+  if(pendingVoicePick){
+   const response=pickConfirmationIntent(source.language,transcript);
+   if(response==='no'){PV(null);VGT(t('No problem. Let me know when you have the item.'));return}
+   if(response==='yes'){
+    const current=source.lines[pendingVoicePick.line];
+    if(source.id!==pendingVoicePick.taskId||!current||current.complete||current.selected?.sku!==pendingVoicePick.sku){
+     PV(null);E(t('The picking list changed. Please check the item again.'));return;
+    }
+    PV(null);
+    await run(async()=>{
+     const next=await api('/tasks/'+source.id+'/scan',{line:pendingVoicePick.line,kind:'manual',value:'confirmed'});
+     VGT(t('Great, item confirmed.'));
+     await progressAfterPick(next,true);
+     R(await request('/warehouse/tasks'));
+    });
+    return;
+   }
+   VGT(t('Please say Yes to confirm you picked this item, or No to cancel.'));
+   return;
+  }
   await run(async()=>{
    const answer=await api('/tasks/'+source.id+'/picking/command',{transcript,line:activeLine});
    VGT(answer.text);
@@ -172,7 +205,7 @@ export default function WarehouseApp({user,preferences,logout}){
     </div>
     <div className="sf-voice-guide-choices"><button type="button" disabled={picking.status!=='active'||busy} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'next'))}>{pickVoicePhrase(task.language,'next')}</button><button type="button" disabled={picking.status!=='active'||busy} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'repeat'))}>{pickVoicePhrase(task.language,'repeat')}</button><button type="button" disabled={picking.status!=='active'||busy} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'verify'))}>{pickVoicePhrase(task.language,'verify')}</button><button type="button" disabled={picking.status!=='active'||busy} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'report'))}>{pickVoicePhrase(task.language,'report')}</button><button type="button" disabled={picking.status!=='active'||busy} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'stop'))}>{pickVoicePhrase(task.language,'stop')}</button></div>
    </>:<small>{t('This language is not supported for spoken picking commands. Use scanning or manual verification.')}</small>}
-   {voiceGuideCommand&&<div className="sf-guide-transcript" role="status"><strong>{t('Recognized command')}:</strong> {voiceGuideCommand}</div>}
+   {voiceGuideCommand&&<div className="sf-guide-transcript" role="status"><strong>{t('Recognized command')}:</strong> {voiceGuideCommand}</div>}{pendingVoicePick&&<div className="sf-voice-pick-confirm" role="status"><strong>{t('Did you pick the correct item?')}</strong><span>{task.lines[pendingVoicePick.line]?.selected?.name} · {task.lines[pendingVoicePick.line]?.selected?.sku}</span><p>{t('Say Yes to record the pick, or No to cancel.')}</p><div><button type="button" onClick={()=>voicePickCommand(task.language==='hi-IN'?'हाँ':task.language==='kn-IN'?'ಹೌದು':task.language==='te-IN'?'అవును':'yes')}>{t('Yes, picked')}</button><button type="button" onClick={()=>{PV(null);VGT(t('No problem. Let me know when you have the item.'))}}>{t('Not yet')}</button></div></div>}
    {voiceGuideText&&<p className="sf-guide-reply" role="status">{voiceGuideText}</p>}{picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&<button type="button" className="sf-stop-listening" onClick={()=>VGP(true)}>{t('Pause hands-free microphone')}</button>}
   </div>}
   {picking.status==='ready'?<div className="sf-picking-actions"><button className="primary" type="button" disabled={busy||!canStartPick} onClick={()=>pickAction('start')}><Glyph name="check"/>{t('Start picking')}</button>{voice&&PICKING_START_VOICE_LANGUAGES.includes(task.language)&&<VoiceButton small enabled={!busy&&canStartPick} language={task.language} label={t('Say start picking')} onError={E} onText={voiceStartPicking}/>} {!canStartPick&&<small>{unresolvedLines.length} {t('item(s) still need your choice. Pick the right version or remove an unwanted search below.')}</small>}</div>:
