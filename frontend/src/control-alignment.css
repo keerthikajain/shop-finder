@@ -372,3 +372,41 @@
   flex:0 0 16px;width:16px;min-width:16px;min-height:16px;height:16px;margin:0;accent-color:var(--wh-accent);
 }
 .sf-compact-app.sf-find-page .sf-voice-hints .sf-voice-hint-error{color:#a42c44;font-weight:600}
+
+/* Loaded after selected-design/activity CSS: enforce readable microphone
+   labels in all picking, report and correction recording states. */
+.sf-compact-app button.wh-voice.recording,
+.sf-compact-app.sf-find-page button.wh-voice.recording,
+.wh-modal button.wh-voice.recording,
+.sf-report-flow button.wh-voice.recording {
+ background:#a62e55!important;
+ border:2px solid #a62e55!important;
+ color:#fff!important;
+ -webkit-text-fill-color:#fff!important;
+ opacity:1!important;
+ text-shadow:none!important;
+ font-weight:750!important;
+}
+.sf-compact-app button.wh-voice.recording svg,
+.wh-modal button.wh-voice.recording svg,
+.sf-report-flow button.wh-voice.recording svg {
+ color:#fff!important;stroke:#fff!important;
+}
+.sf-report-flow .sf-report-quick-actions{
+ display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px;
+}
+.sf-report-flow .sf-report-quick-actions button{
+ display:inline-flex;align-items:center;justify-content:center;
+ min-height:42px;max-width:100%;white-space:normal;
+ padding:8px 12px;border:1px solid var(--wh-border);border-radius:9px;
+ background:var(--wh-surface);color:var(--wh-text);font-size:12px;
+}
+.sf-report-flow .sf-report-quick-actions button[aria-pressed="true"]{
+ background:var(--wh-soft);color:var(--wh-accent);
+ border-color:var(--wh-accent);font-weight:650;
+}
+.sf-report-flow .sf-report-submit{display:grid;gap:7px;margin-top:12px}
+.sf-report-flow .sf-report-submit>small{font-size:12px;color:var(--wh-muted);line-height:1.45}
+@media(max-width:600px){
+ .sf-report-flow .sf-report-quick-actions button{flex:1 1 120px}
+}
