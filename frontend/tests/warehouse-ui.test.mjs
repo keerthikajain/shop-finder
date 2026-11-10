@@ -510,7 +510,7 @@ test('hands-free picking is bounded and pauses while sound, modals or work is ac
  const listener=await readFile(new URL('../src/hands-free-picking.jsx',import.meta.url),'utf8');
  const recording=await readFile(new URL('../src/recording.js',import.meta.url),'utf8');
  assert.match(source,/HandsFreePicking enabled=\{!busy\&\&!speaking\&\&!modal\&\&!voiceGuidePaused\&\&page==='find'\}/);
- assert.match(source,/Pause hands-free microphone/);
+ assert.match(source,/Pause listening/);
  assert.match(listener,/stopOnSilence:true/);
  assert.match(listener,/\.stop\(true\)/);
  assert.match(listener,/request\('\/voice\/transcribe\?'/);
@@ -612,6 +612,45 @@ test('review stage has a single microphone path and clears stale voice reply on 
  assert.equal(isStartPickingCommand('en-IN','Confirm.'),true);
  assert.equal(isStartPickingCommand('hi-en','confirm'),true);
  assert.equal(isStartPickingCommand('en-IN','do not confirm'),false);
+});
+
+
+test('wrong-location handoff pauses pick capture and opens an editable report stage',async()=>{
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const listener=await readFile(new URL('../src/hands-free-picking.jsx',import.meta.url),'utf8');
+ assert.match(source,/if\(answer\.action==='report'&&answer\.line!=null\)\{/);
+ assert.match(source,/PV\(null\);VGP\(true\)/);
+ assert.match(source,/D\(\{type:'report',item:selected\.selected,location:selected\.location,index:answer\.line\}\)/);
+ assert.match(source,/return false; \/\/ The voice loop must not restart/);
+ assert.match(source,/playPickGuidance\('report',source,answer\.line\)/);
+ assert.match(listener,/if\(outcome===false\)\{shouldContinue=false;Status\('paused'\);\}/);
+ assert.match(listener,/if\(!cancelled&&shouldContinue\)Next\(/);
+ assert.match(source,/Picking is paused — report the problem/);
+ assert.match(source,/Write or edit what needs checking/);
+ assert.match(source,/Speak once and pause/);
+});
+test('spoken report submission leaves pick listening paused until explicitly resumed',async()=>{
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(source,/VGP\(true\);D\(null\);N\('Report #'/);
+ assert.match(source,/Voice picking is paused; resume when ready/);
+ assert.match(source,/onClose=\{\(\)=>\{D\(null\);VGP\(true\)\}\}/);
+ assert.match(source,/t\('Resume voice commands'\)/);
+});
+test('pink disabled and recording buttons have readable, high-contrast foreground',async()=>{
+ const css=await readFile(new URL('../src/product-polish.css',import.meta.url),'utf8');
+ assert.match(css,/\.wh-app button\.wh-voice\.recording/);
+ assert.match(css,/background:#922647!important/);
+ assert.match(css,/color:#fff!important/);
+ assert.match(css,/-webkit-text-fill-color:#fff!important/);
+ assert.match(css,/button\.primary:disabled/);
+ assert.match(css,/color:#594175!important/);
+});
+
+test('report mic waits until spoken guidance stops to avoid transcribing itself',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/function Report\(\{item,location,collection,run,busy,speaking=false/);
+ assert.match(src,/VoiceButton small autoStop enabled=\{!busy&&!speaking\}/);
+ assert.match(src,/collection=\{modal\.item\.collection\} \{\.\.\.\{run,busy,voice,language,speaking\}\}/);
 });
 
 test('activity report card groups issue, shelf locations and resolution instead of wide scattered flex rows',async()=>{

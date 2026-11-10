@@ -16,6 +16,7 @@ export default function HandsFreePicking({enabled,language,collection='all',onCo
   Status('starting');
   startRecording(async blob=>{
    if(cancelled)return;
+   let shouldContinue=true;
    Status('transcribing');
    try{
     const params=new URLSearchParams({language,style:'transcribe',enhanced:'true',collection});
@@ -23,11 +24,16 @@ export default function HandsFreePicking({enabled,language,collection='all',onCo
      method:'POST',headers:{'Content-Type':'audio/wav'},body:blob
     });
     if(cancelled)return;
-    if(result.transcript?.trim())await commandRef.current(result.transcript);
+    if(result.transcript?.trim()){
+     const outcome=await commandRef.current(result.transcript);
+     // A command that changes workflow (report/stop) owns the handoff.
+     // Never restart this capture cycle after it returns false.
+     if(outcome===false){shouldContinue=false;Status('paused');}
+    }
    }catch(e){
     if(!cancelled){Halt(true);Status('error');errorRef.current(e.message||'Voice command failed.');}
    }finally{
-    if(!cancelled)Next(n=>n+1);
+    if(!cancelled&&shouldContinue)Next(n=>n+1);
    }
   },e=>{
    if(cancelled)return;
