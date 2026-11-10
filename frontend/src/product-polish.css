@@ -81,3 +81,62 @@
 @media(prefers-reduced-motion:reduce){
   .sf-compact-app .sf-business .sf-advanced-settings>summary svg{transition:none}
 }
+
+/* Final, high-contrast controls. This stylesheet is loaded after the design
+   and activity CSS, preventing pink recording/disabled text from disappearing. */
+.wh-app button.wh-voice.recording,
+.wh-modal button.wh-voice.recording,
+.wh-app button.wh-voice.recording:disabled,
+.wh-modal button.wh-voice.recording:disabled {
+ background:#922647!important;
+ border:1px solid #922647!important;
+ color:#fff!important;
+ opacity:1!important;
+ text-shadow:none!important;
+ box-shadow:0 0 0 2px rgba(146,38,71,.12);
+ -webkit-text-fill-color:#fff!important;
+}
+.wh-app button.wh-voice.recording svg,
+.wh-modal button.wh-voice.recording svg {
+ color:#fff!important;
+ stroke:#fff!important;
+}
+.wh-app button.primary:not(:disabled),
+.wh-modal button.primary:not(:disabled),
+.login-shell button.primary:not(:disabled) {
+ color:#fff!important;
+ -webkit-text-fill-color:#fff!important;
+ text-shadow:none!important;
+ opacity:1!important;
+}
+.wh-app button.primary:disabled,
+.wh-modal button.primary:disabled,
+.login-shell button.primary:disabled,
+.wh-app button.wh-voice:disabled:not(.recording),
+.wh-modal button.wh-voice:disabled:not(.recording) {
+ opacity:1!important;
+ background:#e8e0f4!important;
+ color:#594175!important;
+ -webkit-text-fill-color:#594175!important;
+ border:1px solid #cbbde0!important;
+ text-shadow:none!important;
+ cursor:not-allowed;
+}
+.wh-app button.primary svg,
+.wh-modal button.primary svg{color:inherit!important;stroke:currentColor!important}
+.sf-compact-app .sf-report-step-note{
+ padding:10px 12px;
+ border-radius:10px;
+ background:var(--wh-soft,#f3edfb);
+ color:var(--wh-text,#29242f);
+ font-size:13px;
+ line-height:1.55;
+ margin:12px 0;
+ overflow-wrap:anywhere;
+}
+.sf-compact-app .sf-report-step-note strong{display:block;margin-bottom:3px}
+.sf-compact-app .sf-report-voice-panel .wh-voice{white-space:normal;min-height:44px;line-height:1.45}
+.sf-compact-app .sf-voice-guide-actions .wh-voice{white-space:normal;line-height:1.45}
+@media(max-width:600px){
+ .sf-compact-app .sf-report-step-note{padding:9px 10px;font-size:12px}
+}
