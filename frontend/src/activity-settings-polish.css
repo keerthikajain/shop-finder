@@ -150,3 +150,15 @@
  .sf-compact-app.sf-find-page .wh-task-unresolved .wh-candidate>.sf-product-art svg,
  .sf-compact-app .sf-find-page .wh-task-unresolved .wh-candidate>.sf-product-art svg{width:52px;height:52px}
 }
+
+/* A single compact voice status for reporting; no oversized hands-free action card. */
+.sf-compact-app .sf-report-speech{border:1px solid var(--wh-border,#dedbe5);border-radius:12px;padding:12px;margin:12px 0;display:flex;align-items:center;flex-wrap:wrap;gap:8px;min-width:0}
+.sf-compact-app .sf-report-speech strong{font-size:14px;flex-basis:100%}
+.sf-compact-app .sf-report-speech small{font-size:12px;color:var(--wh-muted,#6e6978);line-height:1.45;flex-basis:100%;overflow-wrap:anywhere}
+.sf-compact-app .sf-report-speech>.sf-hands-free-status{flex:1 1 190px}
+.sf-compact-app .sf-report-speech button{min-height:42px;max-width:100%;white-space:normal}
+@media(max-width:600px){
+ .sf-compact-app .sf-report-speech{padding:10px}
+ .sf-compact-app .sf-report-speech>.sf-hands-free-status{flex:1 1 100%}
+ .sf-compact-app .sf-report-speech>button{flex:1 1 120px}
+}
