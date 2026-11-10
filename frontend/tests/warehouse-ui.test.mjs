@@ -400,7 +400,7 @@ test('voice picking is discoverable before starting and unmatched requests can b
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
  assert.match(ui,/picking.status!=='completed'&&<div className="sf-voice-guide"/);
- assert.match(ui,/Review the items and saved shelf locations first\. Confirm to start picking only when everything looks correct/);
+ assert.match(ui,/Nothing will start until you confirm/);
  assert.match(ui,/enabled={picking.status==='active'&&voice&&!busy&&!voiceGuidePaused}/);
   assert.match(ui,/HandsFreePicking enabled=/);
  assert.match(ui,/async function removeUnresolvedLine\(index\)/);
@@ -569,4 +569,14 @@ test('voice list confirmation uses exact speech in all five focus modes',async()
   assert.equal(isStartPickingCommand(locale,phrase),true,locale);
   assert.equal(isStartPickingCommand(locale,'do not '+phrase),false,locale);
  }
+});
+
+test('spoken search waits for the worker to approve the proposed picking list',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/picking.status==='ready'&&voice&&handsFree&&taskVoice.current&&canStartPick/);
+ assert.match(src,/onCommand=\{voiceStartPicking\}/);
+ assert.match(src,/onClick=\{\(\)=>pickAction\('start'\)\}/);
+ assert.match(src,/Nothing will start until you confirm/);
+ assert.match(src,/if\(!canStartPick\|\|busy\)/);
+ assert.doesNotMatch(src,/async function startIfReady\(/);
 });
