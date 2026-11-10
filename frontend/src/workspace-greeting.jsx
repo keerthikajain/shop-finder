@@ -56,7 +56,8 @@ export function greetingMessage(user,language='en-IN',hour=new Date().getHours()
 // login greeting; operational picking continues using authenticated Gnani speech.
 export default function WorkspaceGreeting({user,voiceLanguage='en-IN',interrupt=false}){
  const language=VOICE_LOCALES[voiceLanguage]?voiceLanguage:'en-IN';
- const [message]=useState(()=>greetingMessage(user,language));
+ const entryHour=useRef(new Date().getHours());
+ const message=greetingMessage(user,language,entryHour.current);
  const storageKey='finder-auto-greeting-muted:'+user.id;
  const [muted,SetMuted]=useState(()=>{try{return localStorage.getItem(storageKey)==='true'}catch{return false}});
  const [status,SetStatus]=useState('idle');
