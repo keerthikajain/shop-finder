@@ -86,3 +86,21 @@
  .sf-compact-app .wh-work-grid{gap:12px}
  .sf-compact-app .sf-visible-transcript p{font-size:14px}
 }
+
+/* Illustration blocks were over 200px tall on phones; preserve the asset with
+   object-fit rather than forcing users to scroll past a half-screen image. */
+@media(max-width:700px){
+ .sf-compact-app.sf-find-page .wh-task-heading>.sf-product-art,
+ .sf-compact-app .sf-find-page .wh-task-heading>.sf-product-art{height:132px!important;min-height:0;max-height:132px;overflow:hidden}
+ .sf-compact-app.sf-find-page .wh-task-heading>.sf-product-art svg,
+ .sf-compact-app .sf-find-page .wh-task-heading>.sf-product-art svg{height:100%;max-height:132px}
+ .sf-compact-app .wh-task-heading>.sf-product-art img{object-fit:contain}
+ .sf-compact-app .sf-location-check-actions{gap:7px;flex-wrap:wrap}
+ .sf-compact-app .sf-location-check-actions button{flex:1 1 125px}
+}
+@media(max-width:420px){
+ .sf-compact-app.sf-find-page .wh-task-heading>.sf-product-art,
+ .sf-compact-app .sf-find-page .wh-task-heading>.sf-product-art{height:108px!important;max-height:108px}
+ .sf-compact-app .wh-task-heading{row-gap:6px}
+ .sf-compact-app .sf-picking-head{gap:8px}
+}
