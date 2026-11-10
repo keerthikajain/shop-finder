@@ -169,7 +169,7 @@ test('signup has a dedicated setup subtitle while welcome speech stays separate'
  assert.match(signup,/Sign in to pick up where you left off/);
  const src=await (await import('node:fs/promises')).readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
  assert.match(src,/Set up your space, organize your items, and find everything with ease/);
- assert.match(src,/Welcome to Finder\. Your workspace is ready to explore/);
+ assert.match(src,/Hi there! Welcome to Finder/);
  assert.doesNotMatch(src,/<p>\{greeting\}<\/p>/);
  const css=await (await import('node:fs/promises')).readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
  assert.match(css,/\.login-shell \.sf-auth-welcome-row\{/);
