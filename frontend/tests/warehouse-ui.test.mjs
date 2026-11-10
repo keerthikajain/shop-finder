@@ -542,3 +542,13 @@ test('mobile picking UI stays compact without shrinking actionable controls',asy
  assert.match(css,/\.sf-compact-app \.wh-panel \.wh-button,\.sf-compact-app \.wh-panel button\{min-height:40px/);
  assert.match(css,/\.sf-compact-app \.sf-voice-pick-confirm button\{min-height:42px/);
 });
+
+
+test('highlighted next pick follows the same shelf ordering as spoken guidance',async()=>{
+ // The JSX source is not compiled by Node test runner; inspect the pure helper contract.
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(source,/export function nextPendingPickIndex\(lines=\[\]\)/);
+ assert.match(source,/locationFields\.map\(field=>String\(line\.location\?\.\[field\]/);
+ assert.match(source,/nextPickIndex=nextPendingPickIndex\(task\?\.lines\)/);
+ assert.match(source,/const index=nextPendingPickIndex\(next\.lines\)/);
+});
