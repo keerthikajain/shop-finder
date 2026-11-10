@@ -76,7 +76,7 @@ def test_provider_contracts_and_session_bound_reply(client,monkeypatch,language,
     assert audio.status_code==200
     body=calls[-1][1]['json']
     assert body['text']==result['spoken_text']
-    assert body['voice']==selected_voice and body['language']==language and body['model']=='timbre-v3.0'
+    assert body['voice']==selected_voice and body['language']==('auto' if language=='hi-en' else language) and body['model']=='timbre-v3.0'
 
 def test_bad_language_and_overlong_audio_rejected(client):
     assert client.post('/api/search',json={'query':'fan','language':'xx'}).status_code==422
@@ -212,7 +212,7 @@ def test_timbre_v3_uses_prakash_for_five_focus_modes(monkeypatch,language):
  payload=calls[-1][1]['json']
  assert payload['model']=='timbre-v3.0'
  assert payload['voice']=='Prakash'
- assert payload['language']==language
+ assert payload['language']==('auto' if language=='hi-en' else language)
  assert payload['audio_config']['container']=='wav'
 
 def test_timbre_voice_configuration_rejects_unknown_voice(monkeypatch):
