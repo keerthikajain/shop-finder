@@ -163,7 +163,7 @@ export default function WarehouseApp({user,preferences,logout}){
    <div className="sf-voice-guide-heading"><strong>{t('Voice-guided picking')}</strong><small>{t('Say Next item, Repeat location, Found it, Wrong location or Stop. You can also tap a button. You still need to confirm each item.')}</small></div>
    {PICKING_VOICE_LANGUAGES.includes(task.language)?<>
     <div className="sf-voice-guide-actions">
-     <VoiceButton small autoStop enabled={picking.status==='active'&&voice&&!busy&&!voiceGuidePaused&&!handsFree} language={task.language} onError={E} onText={transcript=>voicePickCommand(transcript)} label={t('Speak picking command')}/>{picking.status==='active'&&voice&&handsFree&&<HandsFreePicking enabled={!busy&&!speaking&&!modal&&!voiceGuidePaused&&page==='find'} language={task.language} collection={collection} onError={E} onCommand={transcript=>voicePickCommand(transcript)}/>}
+     {!handsFree&&<VoiceButton small autoStop enabled={picking.status==='active'&&voice&&!busy&&!voiceGuidePaused} language={task.language} onError={E} onText={transcript=>voicePickCommand(transcript)} label={t('Speak picking command')}/>}{picking.status==='active'&&voice&&handsFree&&<HandsFreePicking enabled={!busy&&!speaking&&!modal&&!voiceGuidePaused&&page==='find'} language={task.language} collection={collection} onError={E} onCommand={transcript=>voicePickCommand(transcript)}/>}
      <button type="button" disabled={picking.status!=='active'||busy||!voice} onClick={()=>playPickGuidance('repeat')}>{t('Read guidance')}</button>
      {picking.status==='active'&&voiceGuidePaused&&<button type="button" onClick={()=>VGP(false)}>{t('Resume voice commands')}</button>}
     </div>
