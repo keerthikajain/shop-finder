@@ -94,3 +94,20 @@ export const PICKING_VOICE_LANGUAGES=Object.freeze(Object.keys(PICK_VOICE_BUTTON
 export function pickVoicePhrase(language,action){
  return (PICK_VOICE_BUTTON_PHRASES[language]||PICK_VOICE_BUTTON_PHRASES['en-IN'])[action]||'help';
 }
+
+/* These exact, explicit start phrases do not verify goods or modify stock.
+   Keep live speech accuracy validation separate from vocabulary coverage. */
+const START_PICKING_PHRASES=Object.freeze({
+ "en-IN":["start picking","begin picking"],
+ "hi-IN":["पिकिंग शुरू करो","सामान उठाना शुरू करो"],
+ "hi-en":["start picking","picking shuru karo","पिकिंग शुरू करो"],
+ "kn-IN":["ಪಿಕಿಂಗ್ ಪ್ರಾರಂಭಿಸಿ","ವಸ್ತುಗಳನ್ನು ತೆಗೆದುಕೊಳ್ಳಲು ಪ್ರಾರಂಭಿಸಿ"],
+ "te-IN":["పికింగ్ ప్రారంభించండి","వస్తువులు తీసుకోవడం ప్రారంభించండి"]
+});
+export const PICKING_START_VOICE_LANGUAGES=Object.freeze(Object.keys(START_PICKING_PHRASES));
+const normalizeVoiceCommand=value=>String(value||'').toLocaleLowerCase().replace(/[.,!?।॥]/g,' ').trim().replace(/\s+/g,' ');
+export function isStartPickingCommand(language,transcript){
+ const phrases=START_PICKING_PHRASES[language]||[];
+ const normalized=normalizeVoiceCommand(transcript);
+ return !!normalized&&phrases.some(phrase=>normalizeVoiceCommand(phrase)===normalized);
+}
