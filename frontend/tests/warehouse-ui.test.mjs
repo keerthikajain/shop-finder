@@ -462,3 +462,12 @@ test('judge access uses a single account flow and a separate full-feature worksp
  assert.match(account,/challenge\/try/);
  assert.match(account,/Your products and changes stay separate/);
 });
+
+test('voice-first search uses the actual Prisma transcript and preserves an opt-out',async()=>{
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(source,/\[voiceAutoSearch,VAS\]=useState\(true\)/);
+ assert.match(source,/Search automatically after speaking/);
+ assert.match(source,/if\(text\?\.trim\(\)\&\&voiceAutoSearch\)\{search\(text,true,false,detected\)\}/);
+ assert.match(source,/spokenLanguage\|\|detectedSearchLanguage/);
+ assert.match(source,/if\(fromVoice\&\&auto\)await speak\(result\)/);
+});
