@@ -546,6 +546,7 @@ def install_warehouse(app,path):
     report=c.execute("SELECT id FROM wh_issues WHERE collection=? AND sku=? AND kind='wrong_location' AND location_code=? AND status='open' LIMIT 1",(p['collection'],p['sku'],line['location']['code'])).fetchone()
     if not report:raise HTTPException(409,'Submit the wrong-location report before moving to another item.')
    line['deferred_reason']=body.reason
+   line['product_scanned']=False  # Partial scans are not confirmation.
    if body.reason=='reported':line['location_report_open']=True
    return task_put(c,task)
  @app.post('/api/warehouse/tasks/{tid}/picking/retry')
@@ -562,6 +563,7 @@ def install_warehouse(app,path):
    if location_status(c,p,line['location'])['location_report_open']:
     raise HTTPException(409,'This shelf report is still open. Ask the owner to verify the location before retrying.')
    line.pop('deferred_reason',None)
+   line['product_scanned']=False  # Require a fresh product scan after retry.
    return task_put(c,task)
  @app.post('/api/warehouse/tasks/{tid}/picking/command')
  def picking_voice_command(tid:str,body:PickCommand,request:Request):
