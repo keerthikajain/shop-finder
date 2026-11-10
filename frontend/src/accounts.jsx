@@ -103,7 +103,7 @@ export function Login({ready,configured,language,L,error,busy,notice='',demoEnab
     <h1>{heading}</h1>
     {ready&&configured&&<div className="sf-welcome-audio" aria-label={t('Welcome message')}>
      <p>{greeting}</p>
-     <button type="button" onClick={speakWelcome} aria-label={t('Hear welcome message')}><Glyph name="volume"/>{t(welcomeStatus==='speaking'?'Replay welcome':'Hear welcome')}</button>
+     <button type="button" onClick={speakWelcome} aria-label={t('Hear welcome message')}><Glyph name="sound"/>{t(welcomeStatus==='speaking'?'Replay welcome':'Hear welcome')}</button>
     </div>}
     <label className="sf-login-language">
      <span>{t('App language')}</span>
