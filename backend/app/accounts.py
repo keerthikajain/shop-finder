@@ -17,6 +17,7 @@ def initialize_accounts(path):
   for name in ('display_name','phone','staff_code'):
    if name not in columns:c.execute(f"ALTER TABLE accounts ADD COLUMN {name} TEXT NOT NULL DEFAULT ''")
   if 'is_demo' not in columns:c.execute("ALTER TABLE accounts ADD COLUMN is_demo INTEGER NOT NULL DEFAULT 0")
+  if 'is_challenge' not in columns:c.execute("ALTER TABLE accounts ADD COLUMN is_challenge INTEGER NOT NULL DEFAULT 0")
   c.execute('CREATE TABLE IF NOT EXISTS demo_feedback(id INTEGER PRIMARY KEY AUTOINCREMENT,visitor TEXT NOT NULL,comment TEXT NOT NULL,created_at REAL NOT NULL)')
   c.execute('CREATE TABLE IF NOT EXISTS account_sessions(digest TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES accounts(id),expires REAL NOT NULL)')
   c.execute('CREATE TABLE IF NOT EXISTS login_attempts(bucket TEXT NOT NULL,at REAL NOT NULL)')
@@ -150,6 +151,7 @@ def public(row):
  result['role']='manager' if row['role']=='staff' and row['access_level']=='manager' else row['role']
  result['approval_status']=row['approval_status']
  result['is_demo']=bool(row['is_demo'])
+ result['is_challenge']=bool(row['is_challenge'])
  return result
 
 class Login(BaseModel):
@@ -226,7 +228,7 @@ def install_accounts(app,path,required=True):
     if request.headers.get('X-Shop-Request')!='1' or not origin_valid(request):
      return apply_security_headers(JSONResponse({'detail':'Request origin or header not allowed.'},403),request)
    user=current(request);request.state.user=user
-   if request.url.path not in ('/api/health','/api/auth/login','/api/auth/status','/api/auth/join','/api/auth/register','/api/auth/logout','/api/demo/enter'):
+   if request.url.path not in ('/api/health','/api/auth/login','/api/auth/status','/api/auth/join','/api/auth/register','/api/auth/logout','/api/demo/enter','/api/challenge/signup','/api/challenge/try'):
     if not user:
      return apply_security_headers(JSONResponse({'detail':'Please log in.'},401),request)
     route=request.url.path
@@ -252,7 +254,7 @@ def install_accounts(app,path,required=True):
  @app.get('/api/auth/status')
  def status(request:Request):
   with connect(path) as c:configured=bool(c.execute('SELECT 1 FROM accounts WHERE role=\'owner\'').fetchone())
-  return {'configured':configured,'demo_enabled':demo_enabled(path),'user':current(request)}
+  return {'configured':configured or os.getenv('SHOP_FINDER_CHALLENGE_SIGNUP')=='true','demo_enabled':demo_enabled(path) and os.getenv('SHOP_FINDER_CHALLENGE_SIGNUP')!='true','signup_enabled':os.getenv('SHOP_FINDER_CHALLENGE_SIGNUP')=='true','user':current(request)}
  @app.post('/api/demo/enter')
  def enter_public_preview(request:Request,response:Response):
   if not demo_enabled(path):raise HTTPException(404,'The public preview is not available.')
