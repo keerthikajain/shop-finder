@@ -350,11 +350,14 @@ test('voice-guided picking uses real Prisma transcript and Timbre audio with saf
  assert.match(src,/\/picking\/guide-audio/);
  assert.match(src,/onText=\{transcript=>voicePickCommand\(transcript\)\}/);
  assert.match(src,/answer\.action==='verify'&&answer\.line!=null/);
- assert.match(src,/D\(\{type:'scan',index:answer\.line\}\)/);
+ assert.match(src,/PV\(\{taskId:source\.id,line:answer\.line,sku:source\.lines\[answer\.line\]\?\.selected\?\.sku\}\)/);
  assert.match(src,/answer\.action==='report'&&answer\.line!=null/);
  assert.match(src,/D\(\{type:'report',item:selected\.selected,location:selected\.location,index:answer\.line\}\)/);
  assert.match(src,/answer\.action==='stop'/);
- assert.doesNotMatch(src,/voicePickCommand\([^]*?kind:'manual',value:'confirmed'/);
+ assert.match(src,/if\(pendingVoicePick\)/);
+  assert.match(src,/if\(response==='yes'\)/);
+  assert.match(src,/if\(response==='no'\)/);
+  assert.match(src,/current.selected\?\.sku!==pendingVoicePick.sku/);
  const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
  assert.match(css,/\.sf-voice-guide\{/);
 });
@@ -372,7 +375,7 @@ test('native voice picking commands are wired for every supported input language
  assert.match(src,/pickVoicePhrase\(task\.language,'stop'\)/);
  for(const code of ['kn-IN','ta-IN','te-IN','ml-IN','mr-IN','bn-IN','gu-IN','pa-IN'])assert.ok(terms.includes('"'+code+'"'),code);
  assert.match(server,/voice_guide\.intent\(body\.transcript,task\['language'\]\)/);
- assert.match(src,/if\(answer\.action==='verify'&&answer\.line!=null\)D\(\{type:'scan',index:answer\.line\}\)/);
+ assert.match(src,/if\(answer\.action==='verify'&&answer\.line!=null\)\{PV\(/);
 });
 
 test('owner-only activity tab exposes unmatched-search review without modifying staff reports',async()=>{
@@ -397,7 +400,7 @@ test('voice picking is discoverable before starting and unmatched requests can b
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
  assert.match(ui,/picking.status!=='completed'&&<div className="sf-voice-guide"/);
- assert.match(ui,/Picking starts automatically when each item and shelf is resolved/);
+ assert.match(ui,/Nothing will start until you confirm/);
  assert.match(ui,/enabled={picking.status==='active'&&voice&&!busy&&!voiceGuidePaused}/);
   assert.match(ui,/HandsFreePicking enabled=/);
  assert.match(ui,/async function removeUnresolvedLine\(index\)/);
@@ -470,7 +473,9 @@ test('voice-first search uses the actual Prisma transcript and preserves an opt-
  assert.match(source,/Search automatically after speaking/);
  assert.match(source,/if\(text\?\.trim\(\)\&\&voiceAutoSearch\)\{search\(text,true,false,detected\)\}/);
  assert.match(source,/spokenLanguage\|\|detectedSearchLanguage/);
- assert.match(source,/if\(next.picking\?\.status==='ready'\&\&fromVoice\&\&auto\)await speak\(next\)/);
+ assert.match(source,/if\(fromVoice\&\&auto\)await speak\(result\)/);
+  assert.match(source,/T\(result\)/);
+  assert.doesNotMatch(source,/const next=await startIfReady\(result\)/);
 });
 
 test('voice-start picking requires exact, unambiguous speech in all five focus modes',async()=>{
@@ -486,13 +491,17 @@ test('voice-start picking requires exact, unambiguous speech in all five focus m
  assert.match(source,/await pickAction\('start'\)/);
 });
 
-test('resolved search enters the real picking session without another click',async()=>{
+test('search shows a review stage until the worker confirms the picking list',async()=>{
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(source,/async function startIfReady\(result\)/);
- assert.match(source,/result\.lines\.some\(line=>!line\.selected\|\|!line\.location\|\|line\.location_report_open\)/);
- assert.match(source,/api\('\/tasks\/'\+result\.id\+'\/picking\/start'/);
- assert.match(source,/const next=await startIfReady\(result\)/);
- assert.match(source,/const picked=await startIfReady\(next\)/);
+ assert.doesNotMatch(source,/async function startIfReady\(result\)/);
+ assert.doesNotMatch(source,/const next=await startIfReady\(result\)/);
+ assert.match(source,/T\(result\)/);
+ assert.match(source,/Review the matched items and saved shelves/);
+ assert.match(source,/Confirm and start picking/);
+ assert.match(source,/Say confirm and start picking/);
+ assert.match(source,/await pickAction\('start'\)/);
+ assert.match(source,/api\('\/tasks\/'\+task\.id\+'\/picking\/'\+kind/);
+ assert.match(source,/if\(!canStartPick\|\|busy\)/);
  assert.match(source,/className="sf-visible-transcript"/);
  assert.match(source,/searchTranscript\&\&/);
 });
@@ -508,4 +517,68 @@ test('hands-free picking is bounded and pauses while sound, modals or work is ac
  assert.match(listener,/request\('\/voice\/transcribe\?'/);
  assert.match(recording,/if\(stopOnSilence\&\&!heardSpeech\)/);
  assert.match(recording,/now-lastSpeech>1100/);
+});
+
+
+test('voice confirmation requires a prior found-item request and explicitly named second response',async()=>{
+ const {pickConfirmationIntent}=await import('../src/picking-confirmations.js');
+ for(const [language,yes,no] of [
+  ['en-IN','yes','no'],['hi-IN','हाँ','नहीं'],['hi-en','haan','nahi'],
+  ['kn-IN','ಹೌದು','ಇಲ್ಲ'],['te-IN','అవును','కాదు']
+ ]){
+  assert.equal(pickConfirmationIntent(language,yes),'yes',language);
+  assert.equal(pickConfirmationIntent(language,no),'no',language);
+  assert.equal(pickConfirmationIntent(language,'not '+yes),'unknown',language);
+ }
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(source,/if\(pendingVoicePick\)/);
+ assert.match(source,/pickConfirmationIntent\(source.language,transcript\)/);
+ assert.match(source,/source.id!==pendingVoicePick.taskId/);
+ assert.match(source,/current.selected\?\.sku!==pendingVoicePick.sku/);
+ assert.match(source,/kind:'manual',value:'confirmed'/);
+ assert.match(source,/await progressAfterPick\(next,true\)/);
+ assert.match(source,/await api\('\/tasks\/'\+next.id\+'\/picking\/finish'/);
+ assert.match(source,/className="sf-voice-pick-confirm"/);
+});
+
+test('mobile picking UI stays compact without shrinking actionable controls',async()=>{
+ const css=await readFile(new URL('../src/activity-settings-polish.css',import.meta.url),'utf8');
+ assert.match(css,/@media\(max-width:700px\)/);
+ assert.match(css,/\.sf-compact-app \.wh-task h3\{font-size:16px/);
+ assert.match(css,/\.sf-compact-app \.wh-panel \.wh-button,\.sf-compact-app \.wh-panel button\{min-height:40px/);
+ assert.match(css,/\.sf-compact-app \.sf-voice-pick-confirm button\{min-height:42px/);
+});
+
+
+test('highlighted next pick follows the same shelf ordering as spoken guidance',async()=>{
+ // The JSX source is not compiled by Node test runner; inspect the pure helper contract.
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(source,/export function nextPendingPickIndex\(lines=\[\]\)/);
+ assert.match(source,/locationFields\.map\(field=>String\(line\.location\?\.\[field\]/);
+ assert.match(source,/nextPickIndex=nextPendingPickIndex\(task\?\.lines\)/);
+ assert.match(source,/const index=nextPendingPickIndex\(next\.lines\)/);
+});
+
+test('voice list confirmation uses exact speech in all five focus modes',async()=>{
+ const {isStartPickingCommand}=await import('../src/picking-voice-phrases.js');
+ for(const [locale,phrase] of [
+  ['en-IN','confirm and start picking'],
+  ['hi-IN','पुष्टि करके पिकिंग शुरू करो'],
+  ['hi-en','confirm picking'],
+  ['kn-IN','ದೃಢೀಕರಿಸಿ ಪಿಕಿಂಗ್ ಪ್ರಾರಂಭಿಸಿ'],
+  ['te-IN','నిర్ధారించి పికింగ్ ప్రారంభించండి']
+ ]){
+  assert.equal(isStartPickingCommand(locale,phrase),true,locale);
+  assert.equal(isStartPickingCommand(locale,'do not '+phrase),false,locale);
+ }
+});
+
+test('spoken search waits for the worker to approve the proposed picking list',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/picking.status==='ready'&&voice&&handsFree&&taskVoice.current&&canStartPick/);
+ assert.match(src,/onCommand=\{voiceStartPicking\}/);
+ assert.match(src,/onClick=\{\(\)=>pickAction\('start'\)\}/);
+ assert.match(src,/Nothing will start until you confirm/);
+ assert.match(src,/if\(!canStartPick\|\|busy\)/);
+ assert.doesNotMatch(src,/async function startIfReady\(/);
 });
