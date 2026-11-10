@@ -702,7 +702,7 @@ test('login workspace creation CTA remains legible on hover and focus',async()=>
 
 test('welcome voice uses browser speech without exposing a TTS credential',async()=>{
  const account=await readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
- assert.match(account,/Welcome to Finder\. Find what you need/);
+ assert.match(account,/Welcome to Finder\. Your workspace is ready to explore/);
  assert.match(account,/new window\.SpeechSynthesisUtterance\(greeting\)/);
  assert.match(account,/window\.speechSynthesis\.getVoices/);
  assert.match(account,/if\(preferred\)speech\.voice=preferred/);
