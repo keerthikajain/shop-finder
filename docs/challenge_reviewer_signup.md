@@ -24,6 +24,25 @@ SHOP_FINDER_PUBLIC_DEMO=false
 SHOP_FINDER_SECURE_COOKIE=true
 ```
 
+For a dedicated Docker Compose installation, the checked-in `compose.yaml` now passes `SHOP_FINDER_CHALLENGE_SIGNUP` and uses the existing named `shopfinder_data` volume for both the registry and private reviewer databases. Configure the deployment secrets/environment with:
+
+```env
+SHOP_FINDER_CHALLENGE_SIGNUP=true
+SHOP_FINDER_DB=/data/shop_finder.sqlite3
+SHOP_FINDER_CHALLENGE_DATA_DIR=/data/reviewer_workspaces
+SHOP_FINDER_SECURE_COOKIE=true
+SHOP_FINDER_SEED_DEMO=false
+SHOP_FINDER_PUBLIC_DEMO=false
+GNANI_ENABLED=true
+GNANI_API_KEY=<set privately in your hosting platform>
+```
+
+Do **not** commit a populated `.env` file. The credential placeholder above is not an actual key. Provide the key only through the host's secret manager. Keep exactly one app instance with persistent storage; this SQLite build is not for multiple independent replicas. When configured behind a public HTTPS reverse proxy, `SHOP_FINDER_SECURE_COOKIE=true` is required. Do not open the Compose loopback-only port directly to the internet; publish through your host's HTTPS routing.
+
+No initial shared owner account is required for judge signup. Reviewers create private owner workspaces using the sign-in screen. The site must remain online with the persistent volume attached; container recreation must not destroy the `shopfinder_data` volume. If you are using a host-managed container instead of Compose, mount a persistent directory at `/data` and supply the same environment values.
+
+**Before sharing the public URL:** confirm both sign-up and instant exploration work, verify two browsers cannot see each other's edits, restart the service to check persistence, and test real Gnani STT and TTS in the browser. Budget for speech API usage and monitor public sign-up capacity. Do not describe automated CI checks as live microphone or production-load validation.
+
 Build and deploy the standard frontend and backend together over HTTPS. Set Gnani keys in backend secrets, never in frontend `VITE_` variables. Configure API usage and rate limits; each visitor can invoke speech APIs, so public voice usage incurs cost. The preview limits workspace creations per IP and caps the total number of registered reviewer workspaces. It does **not** currently provide production multi-tenancy (central billing, password recovery, tenant self-deletion or advanced quotas); do not market it as that.
 
 Public signup is disabled unless `SHOP_FINDER_CHALLENGE_SIGNUP=true`. Normal Shop Finder installations retain invitation/approval-based staff joining.
