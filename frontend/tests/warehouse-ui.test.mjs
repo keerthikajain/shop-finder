@@ -350,11 +350,14 @@ test('voice-guided picking uses real Prisma transcript and Timbre audio with saf
  assert.match(src,/\/picking\/guide-audio/);
  assert.match(src,/onText=\{transcript=>voicePickCommand\(transcript\)\}/);
  assert.match(src,/answer\.action==='verify'&&answer\.line!=null/);
- assert.match(src,/D\(\{type:'scan',index:answer\.line\}\)/);
+ assert.match(src,/PV\(\{taskId:source\.id,line:answer\.line,sku:source\.lines\[answer\.line\]\?\.selected\?\.sku\}\)/);
  assert.match(src,/answer\.action==='report'&&answer\.line!=null/);
  assert.match(src,/D\(\{type:'report',item:selected\.selected,location:selected\.location,index:answer\.line\}\)/);
  assert.match(src,/answer\.action==='stop'/);
- assert.doesNotMatch(src,/voicePickCommand\([^]*?kind:'manual',value:'confirmed'/);
+ assert.match(src,/if\(pendingVoicePick\)/);
+  assert.match(src,/if\(response==='yes'\)/);
+  assert.match(src,/if\(response==='no'\)/);
+  assert.match(src,/current.selected\?\.sku!==pendingVoicePick.sku/);
  const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
  assert.match(css,/\.sf-voice-guide\{/);
 });
@@ -372,7 +375,7 @@ test('native voice picking commands are wired for every supported input language
  assert.match(src,/pickVoicePhrase\(task\.language,'stop'\)/);
  for(const code of ['kn-IN','ta-IN','te-IN','ml-IN','mr-IN','bn-IN','gu-IN','pa-IN'])assert.ok(terms.includes('"'+code+'"'),code);
  assert.match(server,/voice_guide\.intent\(body\.transcript,task\['language'\]\)/);
- assert.match(src,/if\(answer\.action==='verify'&&answer\.line!=null\)D\(\{type:'scan',index:answer\.line\}\)/);
+ assert.match(src,/if\(answer\.action==='verify'&&answer\.line!=null\)\{PV\(/);
 });
 
 test('owner-only activity tab exposes unmatched-search review without modifying staff reports',async()=>{
@@ -508,4 +511,44 @@ test('hands-free picking is bounded and pauses while sound, modals or work is ac
  assert.match(listener,/request\('\/voice\/transcribe\?'/);
  assert.match(recording,/if\(stopOnSilence\&\&!heardSpeech\)/);
  assert.match(recording,/now-lastSpeech>1100/);
+});
+
+
+test('voice confirmation requires a prior found-item request and explicitly named second response',async()=>{
+ const {pickConfirmationIntent}=await import('../src/picking-confirmations.js');
+ for(const [language,yes,no] of [
+  ['en-IN','yes','no'],['hi-IN','हाँ','नहीं'],['hi-en','haan','nahi'],
+  ['kn-IN','ಹೌದು','ಇಲ್ಲ'],['te-IN','అవును','కాదు']
+ ]){
+  assert.equal(pickConfirmationIntent(language,yes),'yes',language);
+  assert.equal(pickConfirmationIntent(language,no),'no',language);
+  assert.equal(pickConfirmationIntent(language,'not '+yes),'unknown',language);
+ }
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(source,/if\(pendingVoicePick\)/);
+ assert.match(source,/pickConfirmationIntent\(source.language,transcript\)/);
+ assert.match(source,/source.id!==pendingVoicePick.taskId/);
+ assert.match(source,/current.selected\?\.sku!==pendingVoicePick.sku/);
+ assert.match(source,/kind:'manual',value:'confirmed'/);
+ assert.match(source,/await progressAfterPick\(next,true\)/);
+ assert.match(source,/await api\('\/tasks\/'\+next.id\+'\/picking\/finish'/);
+ assert.match(source,/className="sf-voice-pick-confirm"/);
+});
+
+test('mobile picking UI stays compact without shrinking actionable controls',async()=>{
+ const css=await readFile(new URL('../src/activity-settings-polish.css',import.meta.url),'utf8');
+ assert.match(css,/@media\(max-width:700px\)/);
+ assert.match(css,/\.sf-compact-app \.wh-task h3\{font-size:16px/);
+ assert.match(css,/\.sf-compact-app \.wh-panel \.wh-button,\.sf-compact-app \.wh-panel button\{min-height:40px/);
+ assert.match(css,/\.sf-compact-app \.sf-voice-pick-confirm button\{min-height:42px/);
+});
+
+
+test('highlighted next pick follows the same shelf ordering as spoken guidance',async()=>{
+ // The JSX source is not compiled by Node test runner; inspect the pure helper contract.
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(source,/export function nextPendingPickIndex\(lines=\[\]\)/);
+ assert.match(source,/locationFields\.map\(field=>String\(line\.location\?\.\[field\]/);
+ assert.match(source,/nextPickIndex=nextPendingPickIndex\(task\?\.lines\)/);
+ assert.match(source,/const index=nextPendingPickIndex\(next\.lines\)/);
 });
