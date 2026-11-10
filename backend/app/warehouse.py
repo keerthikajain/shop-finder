@@ -88,8 +88,13 @@ class Scan(Strict):
 class PickCommand(Strict):
  transcript:str=Field(min_length=1,max_length=120)
  line:int=Field(default=0,ge=0,le=9)
+class PickDefer(Strict):
+ line:int=Field(ge=0,le=9)
+ reason:Literal['declined','reported']
+class PickRetry(Strict):
+ line:int=Field(ge=0,le=9)
 class PickGuideAudio(Strict):
- command:Literal['next','repeat','verify','report','stop','help','unknown']
+ command:Literal['start','next','repeat','verify','report','stop','help','unknown']
  line:int=Field(default=0,ge=0,le=9)
 class Move(Strict):
  collection:str=Field(max_length=40)
@@ -294,10 +299,11 @@ def picking_state(task):
 def picking_mutable(task):
  if picking_state(task)['status']!='ready':
   raise HTTPException(409,'This picking session has started. Search again to change selected products.')
-def picking_check(c,task):
+def picking_check(c,task,allow_deferred=False):
  if not task['lines'] or any(not line.get('selected') or not line.get('location') for line in task['lines']):
   raise HTTPException(409,'Resolve every requested item and location before starting or finishing the pick.')
  for i,line in enumerate(task['lines']):
+  if allow_deferred and line.get('deferred_reason'):continue
   _,item=current_line(c,task,i)
   location=line['location']
   if not any(p['code']==location['code'] for p in item['placements']):
@@ -523,8 +529,41 @@ def install_warehouse(app,path):
   with connect(path) as c:
    c.execute('BEGIN IMMEDIATE');task=task_get(c,tid,u)
    if picking_state(task)['status']!='active':raise HTTPException(409,'Only active picking sessions can be resumed.')
-   picking_check(c,task)
+   picking_check(c,task,allow_deferred=True)
    task['picking']['paused']=False
+   return task_put(c,task)
+ @app.post('/api/warehouse/tasks/{tid}/picking/defer')
+ def defer_picking(tid:str,body:PickDefer,request:Request):
+  """Keep an unpicked item unresolved and guide the worker to another item."""
+  u=identity(request)
+  with connect(path) as c:
+   c.execute('BEGIN IMMEDIATE');task=task_get(c,tid,u)
+   if picking_state(task)['status']!='active' or picking_state(task).get('paused'):
+    raise HTTPException(409,'Resume active picking before deferring an item.')
+   line,p=current_line(c,task,body.line)
+   if line.get('complete'):raise HTTPException(409,'A confirmed pick cannot be deferred.')
+   if body.reason=='reported':
+    report=c.execute("SELECT id FROM wh_issues WHERE collection=? AND sku=? AND kind='wrong_location' AND location_code=? AND status='open' LIMIT 1",(p['collection'],p['sku'],line['location']['code'])).fetchone()
+    if not report:raise HTTPException(409,'Submit the wrong-location report before moving to another item.')
+   line['deferred_reason']=body.reason
+   line['product_scanned']=False  # Partial scans are not confirmation.
+   if body.reason=='reported':line['location_report_open']=True
+   return task_put(c,task)
+ @app.post('/api/warehouse/tasks/{tid}/picking/retry')
+ def retry_picking(tid:str,body:PickRetry,request:Request):
+  """Let the worker explicitly retry a deferred item, never mark it picked."""
+  u=identity(request)
+  with connect(path) as c:
+   c.execute('BEGIN IMMEDIATE');task=task_get(c,tid,u)
+   if picking_state(task)['status']!='active' or picking_state(task).get('paused'):
+    raise HTTPException(409,'Resume active picking before retrying an item.')
+   line,p=current_line(c,task,body.line)
+   if line.get('complete'):raise HTTPException(409,'This item was already confirmed.')
+   if not line.get('deferred_reason'):raise HTTPException(409,'Only deferred items can be retried.')
+   if location_status(c,p,line['location'])['location_report_open']:
+    raise HTTPException(409,'This shelf report is still open. Ask the owner to verify the location before retrying.')
+   line.pop('deferred_reason',None)
+   line['product_scanned']=False  # Require a fresh product scan after retry.
    return task_put(c,task)
  @app.post('/api/warehouse/tasks/{tid}/picking/command')
  def picking_voice_command(tid:str,body:PickCommand,request:Request):
@@ -533,7 +572,7 @@ def install_warehouse(app,path):
    task=task_get(c,tid,u)
    if task['language'] not in SUPPORTED_PICKING_LANGUAGES:
     raise HTTPException(422,'Unsupported language for voice picking commands.')
-   picking_check(c,task)
+   picking_check(c,task,allow_deferred=True)
    if picking_state(task).get('paused'):raise HTTPException(409,'Resume picking before giving a picking command.')
    return voice_guide.guide(task,voice_guide.intent(body.transcript,task['language']),body.line,
                             lambda index:current_line(c,task,index))
@@ -544,7 +583,7 @@ def install_warehouse(app,path):
    task=task_get(c,tid,u)
    if task['language'] not in SUPPORTED_PICKING_LANGUAGES:
     raise HTTPException(422,'Unsupported language for voice guidance.')
-   picking_check(c,task)
+   picking_check(c,task,allow_deferred=True)
    guidance=voice_guide.guide(task,body.command,body.line,
                               lambda index:current_line(c,task,index))
   audio=await voice.speak(guidance['text'],task['language'])
@@ -633,6 +672,7 @@ def install_warehouse(app,path):
    if picking_state(t).get('paused'):raise HTTPException(409,'Resume picking before confirming an item.')
    line,p=current_line(c,t,body.line)
    if line.get('complete'):raise HTTPException(409,'This item is already verified.')
+   if line.get('deferred_reason'):raise HTTPException(409,'Retry this deferred item before confirming it.')
    if body.kind=='product':
     if body.value not in [p['sku'],p['barcode'],f"ITEM:{p['collection']}:{p['sku']}"]:raise HTTPException(409,'Different item scanned. Check the SKU and variant.')
     line['product_scanned']=True

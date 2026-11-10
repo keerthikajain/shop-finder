@@ -38,7 +38,7 @@ def intent(transcript,language='en-IN'):
 
 def pending_line(task):
  # Stable ordered list; no routing-distance claim and no skipped verification.
- choices=[(i,line) for i,line in enumerate(task['lines']) if not line.get('complete')]
+ choices=[(i,line) for i,line in enumerate(task['lines']) if not line.get('complete') and not line.get('deferred_reason')]
  if not choices:return None
  # Group by actual recorded location text, then original request index.
  def location_key(entry):
@@ -50,7 +50,7 @@ def pending_line(task):
 def guide(task,action,requested_line,check_line):
  if task.get('picking',{}).get('status')!='active':
   raise HTTPException(409,'Start picking before using voice guidance.')
- if action not in (*COMMANDS,'unknown'):
+ if action not in (*COMMANDS,'unknown','start'):
   raise HTTPException(422,'Unsupported voice command.')
  language=task.get('language','en-IN')
  regional=language in REGIONAL
@@ -70,6 +70,13 @@ def guide(task,action,requested_line,check_line):
           'language':language}
  index=pending_line(task)
  if index is None:
+  if any(line.get('deferred_reason') and not line.get('complete') for line in task['lines']):
+   unresolved={
+    'te-IN':'మిగిలిన వస్తువులు నిర్ధారించబడలేదు. వాటిని తర్వాత మళ్లీ ప్రయత్నించండి లేదా మేనేజర్ సమీక్ష కోసం ఉంచండి.',
+    'kn-IN':'ಕೆಲವು ವಸ್ತುಗಳು ಇನ್ನೂ ದೃಢಪಟ್ಟಿಲ್ಲ. ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ ಅಥವಾ ಪರಿಶೀಲನೆಗಾಗಿ ಉಳಿಸಿ.'
+   }
+   text=unresolved.get(language,'कुछ सामान अभी पुष्टि नहीं हुआ है। उसे बाद में दोबारा जाँचें।' if hi else 'Some items remain unconfirmed. Retry them manually or leave them for review.')
+   return {'action':'unresolved','line':None,'text':text,'language':language}
   completion={
    'kn-IN':'ಎಲ್ಲಾ ವಸ್ತುಗಳ ಪರಿಶೀಲನೆ ಮುಗಿದಿದೆ. ಪಟ್ಟಿಯನ್ನು ಪೂರ್ಣಗೊಳಿಸುತ್ತಿದ್ದೇವೆ.',
    'te-IN':'అన్ని వస్తువులను తనిఖీ చేశాం. జాబితాను పూర్తి చేస్తున్నాం.'
@@ -78,7 +85,7 @@ def guide(task,action,requested_line,check_line):
     ('सारा सामान जाँच लिया गया है। सूची पूरी हो रही है।' if hi else
      'Everything is checked. Finishing your picking list now.'))
   return {'action':'done','line':None,'text':spoken,'language':language}
- if action in ('repeat','verify','report') and 0<=requested_line<len(task['lines']) and not task['lines'][requested_line].get('complete'):
+ if action in ('start','repeat','verify','report') and 0<=requested_line<len(task['lines']) and not task['lines'][requested_line].get('complete') and not task['lines'][requested_line].get('deferred_reason'):
   index=requested_line
  line=task['lines'][index]
  check_line(index)   # recheck product revision and recorded location
@@ -93,16 +100,21 @@ def guide(task,action,requested_line,check_line):
     'verify':f'{name} ತೆಗೆದುಕೊಂಡಿದ್ದೀರಾ? ಖಚಿತಪಡಿಸಲು ಹೌದು ಎಂದು ಹೇಳಿ. ಇಲ್ಲದಿದ್ದರೆ ಇಲ್ಲ ಎಂದು ಹೇಳಿ.',
     'report':'ತಿಳಿಸಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ ಮ್ಯಾನೇಜರ್‌ಗೆ ತಿಳಿಸಲು ಸ್ಥಳದ ವಿವರಗಳನ್ನು ನೀಡಿ.',
     'next':f'ಮುಂದಿನ ವಸ್ತು: {name}. {place}. ಸಿಕ್ಕಿದ ನಂತರ ತಿಳಿಸಿ.',
+    'start':f'ಮೊದಲ ವಸ್ತು: {name}. {place}. ಸಿಕ್ಕಿದ ನಂತರ ತಿಳಿಸಿ.',
     'repeat':f'ಖಂಡಿತ. {name}. {place}.'
    },
    'te-IN':{
     'verify':f'{name} తీసుకున్నారా? నిర్ధారించడానికి అవును అనండి, లేదా కాదు అనండి.',
     'report':'తెలియజేసినందుకు ధన్యవాదాలు. మీ మేనేజర్‌కు పంపేందుకు స్థాన వివరాలను ఇవ్వండి.',
     'next':f'తదుపరి వస్తువు: {name}. {place}. దొరికిన తర్వాత చెప్పండి.',
+    'start':f'మొదటి వస్తువు: {name}. {place}. దొరికిన తర్వాత చెప్పండి.',
     'repeat':f'తప్పకుండా. {name}. {place}.'
    }
   }
-  text=friendly.get(language,{}).get(action) or messages['next' if action=='next' else action].format(name=name,place=place)
+  text=friendly.get(language,{}).get(action) or messages['next' if action in ('start','next') else action].format(name=name,place=place)
+ elif action=='start':
+  text=(f"पहला सामान {name}। {place}। मिलने पर बताइए।" if hi else
+        f"First item: {name}. {place}. Tell me when you have it.")
  elif action in ('next','repeat'):
   text=(f"अगला सामान {name}। {place}। मिलने पर बताइए।" if hi else
         f"Next up: {name}. {place}. Tell me when you have it.")
