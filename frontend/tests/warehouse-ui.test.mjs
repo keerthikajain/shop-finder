@@ -184,9 +184,9 @@ test('item editor and spreadsheet importer expose the multilingual alias workflo
  assert.match(source,/separate with \|/);
 });
 
-test('Prisma V3 keeps automatic recognition settings behind a simple staff interface',async()=>{
+test('Prisma V3 keeps focus-language recognition settings behind a simple staff interface',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(src,/value="auto">Auto-detect/);
+ assert.doesNotMatch(src,/value="auto">Auto-detect/);
  assert.match(src,/style="transcribe"/);
  assert.match(src,/enhanced=\{prismaV3\}/);
  assert.doesNotMatch(src,/t\('Transcript style'\)/);
@@ -194,7 +194,7 @@ test('Prisma V3 keeps automatic recognition settings behind a simple staff inter
  assert.doesNotMatch(src,/transcriptStyle,TS/);
  assert.match(src,/URLSearchParams\(\{language,style,enhanced:String\(enhanced\),collection\}\)/);
  assert.match(src,/onText\(r\.transcript,r\.search_language,r\)/);
- assert.match(src,/language:language==='auto'\?\(spokenLanguage\|\|detectedSearchLanguage\|\|'hi-en'\):language/);
+ assert.match(src,/language,\s*brand:/);
 });
 
 test('Prisma V3 live voice is opt-in and retains recorded voice fallback',async()=>{
@@ -246,18 +246,15 @@ test('report displays recognized voice text and keeps reporting separate from ca
  assert.match(src,/pendingSubmit/);
 });
 
-test('Prisma V3 offers ten selectable recognition languages and optional hints',async()=>{
+test('Finder offers only English Hindi Hinglish and Telugu recognition modes',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- const recording=await readFile(new URL('../src/recording.js',import.meta.url),'utf8');
- assert.match(src,/const VOICE_INPUT_LANGUAGES=\[/);
- for(const code of ['en-IN','hi-IN','kn-IN','ta-IN','te-IN','ml-IN','mr-IN','bn-IN','gu-IN','pa-IN']){
-  assert.ok(src.includes("['"+code+"'"),code);
- }
- assert.match(src,/Auto-detect \(10 languages\)/);
- assert.match(src,/candidates=\{language==='auto'\?hintLanguages:\[\]\}/);
- assert.match(src,/candidates\.join\(','\)/);
- assert.match(recording,/params\.set\('candidates',candidates\.join\(','\)\)/);
- assert.match(src,/hintLanguages\.length>=4/);
+ const match=src.match(/const VOICE_INPUT_LANGUAGES=\[([\s\S]*?)\];/);
+ assert.ok(match,'Voice-language options must be declared');
+ for(const code of ['en-IN','hi-IN','hi-en','te-IN'])assert.ok(match[1].includes("['"+code+"'"),code);
+ for(const code of ['kn-IN','ta-IN','ml-IN','mr-IN','bn-IN','gu-IN','pa-IN'])assert.ok(!match[1].includes("['"+code+"'"),code);
+ assert.doesNotMatch(src,/<option value="auto">Auto-detect/);
+ assert.match(src,/const ACTIVE_VOICE_CODES=new Set/);
+ assert.match(src,/candidates=\{\[\]\}/);
 });
 
 test('setup guidance is limited to Find when workspace setup is unfinished',async()=>{
@@ -474,7 +471,8 @@ test('voice-first search requires transcript review before matching products',as
  assert.match(source,/Check or edit the transcript, then press Find items/);
  assert.match(source,/className="sf-request-review"/);
  assert.match(source,/task\.query/);
- assert.match(source,/spokenLanguage\|\|detectedSearchLanguage/);
+ assert.match(source,/language,\s*brand:/);
+ assert.doesNotMatch(source,/language:language==='auto'/);
  assert.doesNotMatch(source,/if\(fromVoice\&\&auto\)await speak\(result\)/);
   assert.match(source,/T\(result\)/);
   assert.doesNotMatch(source,/const next=await startIfReady\(result\)/);
