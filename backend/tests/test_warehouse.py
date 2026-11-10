@@ -1258,3 +1258,95 @@ def test_manual_pause_and_resume_picking_persist_progress_without_stock_changes(
  assert finished.status_code==200,finished.text
  assert post(c,'/tasks/'+tid+'/picking/pause').status_code==409
  assert items(c)==original
+
+
+@pytest.mark.parametrize('language,first_word,next_word',[
+ ('en-IN','First item:','Next up:'),
+ ('hi-IN','पहला सामान','अगला सामान'),
+ ('hi-en','पहला सामान','अगला सामान'),
+ ('te-IN','మొదటి వస్తువు:','తదుపరి వస్తువు:')
+])
+def test_first_picking_announcement_does_not_call_it_next(setup,monkeypatch,language,first_word,next_word):
+ c,_=setup
+ created=post(c,'/search',{'collection':'clothing','query':'CLO-001 and CLO-004','language':language})
+ assert created.status_code==200,created.text
+ task=created.json();tid=task['id']
+ assert post(c,f'/tasks/{tid}/picking/start').status_code==200
+ spoken=[]
+ async def fake_speak(text,locale):
+  spoken.append((text,locale))
+  return b'RIFF'+b'0'*20
+ monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
+ first=post(c,f'/tasks/{tid}/picking/guide-audio',{'command':'start','line':0})
+ assert first.status_code==200,first.text
+ assert first_word in spoken[-1][0] and next_word not in spoken[-1][0]
+ assert spoken[-1][1]==language
+ follow=post(c,f'/tasks/{tid}/picking/guide-audio',{'command':'next','line':0})
+ assert follow.status_code==200,follow.text
+ assert next_word in spoken[-1][0]
+ assert not any(line['complete'] for line in c.get('/api/warehouse/tasks/'+tid).json()['lines'])
+
+
+def test_denied_pick_defers_safely_and_continues_to_another_item(setup):
+ c,path=setup
+ original=items(c)
+ task=search(c,'CLO-001 and CLO-004');tid=task['id']
+ assert post(c,f'/tasks/{tid}/picking/start').status_code==200
+ no=post(c,f'/tasks/{tid}/picking/defer',{'line':0,'reason':'declined'})
+ assert no.status_code==200,no.text
+ assert no.json()['lines'][0]['deferred_reason']=='declined'
+ assert no.json()['lines'][0]['complete'] is False
+ assert post(c,f'/tasks/{tid}/scan',{'line':0,'kind':'manual','value':'confirmed'}).status_code==409
+ next_item=post(c,f'/tasks/{tid}/picking/command',{'transcript':'next item','line':0})
+ assert next_item.status_code==200,next_item.text
+ assert next_item.json()['action']=='next' and next_item.json()['line']==1
+ assert post(c,f'/tasks/{tid}/picking/finish').status_code==409
+ picked=post(c,f'/tasks/{tid}/scan',{'line':1,'kind':'manual','value':'confirmed'})
+ assert picked.status_code==200,picked.text
+ assert picked.json()['lines'][0]['complete'] is False
+ pending=post(c,f'/tasks/{tid}/picking/command',{'transcript':'next item','line':1})
+ assert pending.status_code==200 and pending.json()['action']=='unresolved'
+ assert post(c,f'/tasks/{tid}/picking/finish').status_code==409
+ with TestClient(create_app(path,seed_demo=True)) as reopened:
+  login(reopened)
+  restored=reopened.get('/api/warehouse/tasks/'+tid).json()
+  assert restored['lines'][0]['deferred_reason']=='declined'
+ retry=post(c,f'/tasks/{tid}/picking/retry',{'line':0})
+ assert retry.status_code==200,retry.text
+ assert 'deferred_reason' not in retry.json()['lines'][0]
+ assert post(c,f'/tasks/{tid}/scan',{'line':0,'kind':'manual','value':'confirmed'}).status_code==200
+ assert post(c,f'/tasks/{tid}/picking/finish').status_code==200
+ assert items(c)==original
+
+
+def test_submitted_location_report_defers_item_without_blocking_next_location(setup,monkeypatch):
+ c,_=setup
+ task=search(c,'CLO-001 and CLO-004');tid=task['id'];line=task['lines'][0]
+ assert post(c,f'/tasks/{tid}/picking/start').status_code==200
+ assert post(c,f'/tasks/{tid}/picking/defer',{'line':0,'reason':'reported'}).status_code==409
+ issue=post(c,'/issues',{
+  'collection':'clothing','sku':line['selected']['sku'],
+  'kind':'wrong_location','location_code':line['location']['code'],
+  'reason':'The recorded shelf was empty'
+ })
+ assert issue.status_code==200,issue.text
+ deferred=post(c,f'/tasks/{tid}/picking/defer',{'line':0,'reason':'reported'})
+ assert deferred.status_code==200,deferred.text
+ assert deferred.json()['lines'][0]['deferred_reason']=='reported'
+ assert deferred.json()['lines'][0]['complete'] is False
+ assert post(c,f'/tasks/{tid}/picking/retry',{'line':0}).status_code==409
+ next_item=post(c,f'/tasks/{tid}/picking/command',{'transcript':'next item','line':0})
+ assert next_item.status_code==200,next_item.text
+ assert next_item.json()['line']==1
+ texts=[]
+ async def fake_speak(text,locale):
+  texts.append(text)
+  return b'RIFF'+b'0'*20
+ monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
+ guide=post(c,f'/tasks/{tid}/picking/guide-audio',{'command':'next','line':1})
+ assert guide.status_code==200,guide.text
+ assert 'CLO-004' in texts[-1]
+ assert post(c,f'/tasks/{tid}/scan',{'line':1,'kind':'manual','value':'confirmed'}).status_code==200
+ assert post(c,f'/tasks/{tid}/picking/finish').status_code==409
+ assert post(c,f'/tasks/{tid}/picking/pause').status_code==200
+ assert post(c,f'/tasks/{tid}/picking/resume').status_code==200
