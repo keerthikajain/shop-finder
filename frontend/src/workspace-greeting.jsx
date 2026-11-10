@@ -1,5 +1,4 @@
-import React,{useEffect,useRef,useState} from 'react';
-import {Glyph} from './warehouse-ui.jsx';
+import React,{useEffect,useRef} from 'react';
 import './workspace-greeting.css';
 
 const VOICE_LOCALES={'en-IN':'en-IN','hi-IN':'hi-IN','hi-en':'en-IN','te-IN':'te-IN'};
@@ -58,21 +57,15 @@ export default function WorkspaceGreeting({user,voiceLanguage='en-IN',interrupt=
  const language=VOICE_LOCALES[voiceLanguage]?voiceLanguage:'en-IN';
  const entryHour=useRef(new Date().getHours());
  const message=greetingMessage(user,language,entryHour.current);
- const storageKey='finder-auto-greeting-muted:'+user.id;
- const [muted,SetMuted]=useState(()=>{try{return localStorage.getItem(storageKey)==='true'}catch{return false}});
- const [status,SetStatus]=useState('idle');
  const attempted=useRef(false),activeSpeech=useRef(null),alive=useRef(true);
  function stopGreeting(){
   activeSpeech.current=null;
   try{window.speechSynthesis?.cancel()}catch{}
-  if(alive.current)SetStatus('idle');
+
  }
  function speakGreeting(){
-  if(status==='starting'||status==='speaking'){stopGreeting();return}
   if(interrupt)return; // Never start greeting over picking, report or other active speech.
-  if(typeof window==='undefined'||!window.speechSynthesis||!window.SpeechSynthesisUtterance){
-   SetStatus('unavailable');return;
-  }
+  if(typeof window==='undefined'||!window.speechSynthesis||!window.SpeechSynthesisUtterance)return;
   try{
    window.speechSynthesis.cancel();
    const speech=new window.SpeechSynthesisUtterance(message);
@@ -84,26 +77,21 @@ export default function WorkspaceGreeting({user,voiceLanguage='en-IN',interrupt=
     ||voices.find(v=>v.lang?.toLowerCase()===locale.toLowerCase());
    if(match)speech.voice=match;
    speech.rate=0.94;speech.pitch=1.05;
-   speech.onstart=()=>{if(alive.current&&activeSpeech.current===speech)SetStatus('speaking')};
-   speech.onend=()=>{if(alive.current&&activeSpeech.current===speech){activeSpeech.current=null;SetStatus('done')}};
-   speech.onerror=()=>{if(alive.current&&activeSpeech.current===speech){activeSpeech.current=null;SetStatus('unavailable')}};
-   activeSpeech.current=speech;SetStatus('starting');
+   speech.onend=()=>{if(alive.current&&activeSpeech.current===speech)activeSpeech.current=null};
+   speech.onerror=()=>{if(alive.current&&activeSpeech.current===speech)activeSpeech.current=null};
+   activeSpeech.current=speech;
    window.speechSynthesis.speak(speech);
-  }catch{activeSpeech.current=null;SetStatus('unavailable')}
+  }catch{activeSpeech.current=null}
  }
  useEffect(()=>{
   if(attempted.current)return;
   attempted.current=true;
-  if(!muted&&!interrupt)speakGreeting(); // Autoplay may be blocked; Hear greeting remains available.
+  if(!interrupt)speakGreeting(); // Attempt only once when the signed-in workspace mounts.
  },[]);
  useEffect(()=>{if(interrupt&&activeSpeech.current)stopGreeting()},[interrupt]);
- // The greeting yields as soon as the worker starts interacting with Finder;
- // the Hear greeting button is deliberately exempt.
+ // Any normal workspace interaction yields immediately to search, picking or recording.
  useEffect(()=>{
-  const yieldToUser=event=>{
-   if(event.target?.closest?.('.sf-workspace-greeting'))return;
-   if(activeSpeech.current)stopGreeting();
-  };
+  const yieldToUser=()=>{if(activeSpeech.current)stopGreeting()};
   document.addEventListener('pointerdown',yieldToUser,true);
   document.addEventListener('keydown',yieldToUser,true);
   return ()=>{
@@ -112,21 +100,7 @@ export default function WorkspaceGreeting({user,voiceLanguage='en-IN',interrupt=
   };
  },[]);
  useEffect(()=>()=>{alive.current=false;activeSpeech.current=null;try{window.speechSynthesis?.cancel()}catch{}},[]);
- function setMuted(next){
-  SetMuted(next);
-  try{localStorage.setItem(storageKey,String(next))}catch{}
-  if(next)stopGreeting();
- }
  return <section className="sf-workspace-greeting" aria-label="Workspace greeting">
-  <div className="sf-workspace-greeting-copy">
-   <span className="sf-workspace-greeting-icon" aria-hidden="true"><Glyph name="sound"/></span>
-   <p>{message}</p>
-  </div>
-  <div className="sf-workspace-greeting-controls">
-   <button type="button" className="sf-greeting-play" onClick={speakGreeting} disabled={interrupt} aria-label={status==='speaking'||status==='starting'?'Stop greeting':'Hear greeting'}>
-    <Glyph name="sound"/>{status==='speaking'||status==='starting'?'Stop greeting':'Hear greeting'}
-   </button>
-   <label className="sf-greeting-mute"><input type="checkbox" checked={muted} onChange={e=>setMuted(e.target.checked)}/><span>Mute automatic greeting</span></label>
-  </div>
+  <p>{message}</p>
  </section>;
 }
