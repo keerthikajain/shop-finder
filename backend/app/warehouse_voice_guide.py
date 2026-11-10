@@ -83,14 +83,28 @@ def guide(task,action,requested_line,check_line):
  place=', '.join(f"{labels.get(k,k) if regional else (label_hi.get(k,k) if hi else k)} {location[k]}" for k in label_keys if location.get(k))
  name=f"{product['name']}, {product['sku']}"
  if regional:
-  text=messages['next' if action=='next' else action].format(name=name,place=place)
+  friendly={
+   'kn-IN':{
+    'verify':f'{name} ತೆಗೆದುಕೊಂಡಿದ್ದೀರಾ? ಖಚಿತಪಡಿಸಲು ಹೌದು ಎಂದು ಹೇಳಿ. ಇಲ್ಲದಿದ್ದರೆ ಇಲ್ಲ ಎಂದು ಹೇಳಿ.',
+    'report':'ತಿಳಿಸಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ ಮ್ಯಾನೇಜರ್‌ಗೆ ತಿಳಿಸಲು ಸ್ಥಳದ ವಿವರಗಳನ್ನು ನೀಡಿ.',
+    'next':f'ಮುಂದಿನ ವಸ್ತು: {name}. {place}. ಸಿಕ್ಕಿದ ನಂತರ ತಿಳಿಸಿ.',
+    'repeat':f'ಖಂಡಿತ. {name}. {place}.'
+   },
+   'te-IN':{
+    'verify':f'{name} తీసుకున్నారా? నిర్ధారించడానికి అవును అనండి, లేదా కాదు అనండి.',
+    'report':'తెలియజేసినందుకు ధన్యవాదాలు. మీ మేనేజర్‌కు పంపేందుకు స్థాన వివరాలను ఇవ్వండి.',
+    'next':f'తదుపరి వస్తువు: {name}. {place}. దొరికిన తర్వాత చెప్పండి.',
+    'repeat':f'తప్పకుండా. {name}. {place}.'
+   }
+  }
+  text=friendly.get(language,{}).get(action) or messages['next' if action=='next' else action].format(name=name,place=place)
  elif action in ('next','repeat'):
-  text=(f"अगला सामान {name}। {place}। सामान और शेल्फ की पुष्टि करें।" if hi else
-        f"Next item: {name}. {place}. Verify the item and shelf.")
+  text=(f"अगला सामान {name}। {place}। मिलने पर बताइए।" if hi else
+        f"Next up: {name}. {place}. Tell me when you have it.")
  elif action=='verify':
-  text=('सामान मिलने पर आइटम और शेल्फ स्कैन करें, या जाँच करके मैन्युअल पुष्टि करें। केवल बोलने से पुष्टि नहीं होती।' if hi else
-        'Scan the item and shelf, or explicitly confirm a manual check. Saying found it does not verify a pick.')
+  text=(f'क्या आपने {name} उठा लिया? पुष्टि के लिए हाँ कहें, या नहीं कहें।' if hi else
+        f'Did you pick {name}? Say yes to confirm, or no to cancel.')
  else:
-  text=('गलत जगह की रिपोर्ट भरें। मालिक जाँच करेगा। रिकॉर्ड अपने आप नहीं बदलेगा।' if hi else
-        'Please submit the wrong-location report for owner review. The saved shelf will not change automatically.')
+  text=('बताने के लिए धन्यवाद। सही जगह की जानकारी दीजिए, हम मैनेजर को भेज देंगे।' if hi else
+        'Thanks for checking. Tell us where you found it so we can inform your manager.')
  return {'action':action,'line':index,'text':text,'language':language}
