@@ -614,7 +614,7 @@ test('recording button stays readable in contrast and no repeated actions on com
 
 test('review stage has a single microphone path and clears stale voice reply on a new search',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(src,/PV\(null\);VGC\(''\);VGT\(''\);VGP\(true\)/);
+ assert.match(src,/PV\(null\);VGC\(''\);VGT\(''\);stopVoiceFlow\(\)/);
  assert.match(src,/enabled=\{!busy&&canStartPick\} language=\{task.language\} label=\{t\('Confirm search by voice'\)\}/);
  assert.match(src,/onText=\{voiceStartPicking\}/);
  assert.doesNotMatch(src,/picking\.status==='ready'&&voice&&handsFree&&taskVoice\.current&&canStartPick/);
