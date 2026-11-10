@@ -581,3 +581,24 @@ test('spoken search waits for the worker to approve the proposed picking list',a
  assert.match(src,/if\(!canStartPick\|\|busy\)/);
  assert.doesNotMatch(src,/async function startIfReady\(/);
 });
+
+test('completed picks do not show redundant shelf-check or pick verification actions',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/!line\.complete&&picking\.status!=='completed'&&<div className="sf-location-check"/);
+ assert.match(src,/line\.complete&&<p className="sf-pick-complete-message"/);
+ assert.match(src,/!line\.complete&&picking\.status!=='completed'&&<div><button className="primary"/);
+ assert.match(src,/line\.complete\?\(line\.confirmation==='barcode'\?'Scan confirmed':'Manually confirmed'\):line\.location_feedback/);
+});
+test('saved shelf moves reload catalogue and refresh search instead of clearing results',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const manager=await readFile(new URL('../src/warehouse-manage.jsx',import.meta.url),'utf8');
+ assert.match(manager,/await api\('\/moves\/'\+preview\.token\+'\/confirm'/);
+ assert.match(src,/onSave=\{async\(\)=>\{const previous=task\?\.query;D\(null\);await reload\(\);RV\(v=>v\+1\)/);
+ assert.match(src,/await search\(previous,false\);N\(t\('Location saved\. Search results now show the updated shelf/);
+});
+test('recording button stays readable in contrast and no repeated actions on completed tasks',async()=>{
+ const css=await readFile(new URL('../src/activity-settings-polish.css',import.meta.url),'utf8');
+ assert.match(css,/\.sf-compact-app \.sf-guided-picking \.wh-voice\.recording/);
+ assert.match(css,/background:#9c2850!important;color:#fff!important/);
+ assert.match(css,/\.sf-pick-complete-message/);
+});
