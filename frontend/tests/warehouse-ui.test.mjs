@@ -473,7 +473,9 @@ test('voice-first search uses the actual Prisma transcript and preserves an opt-
  assert.match(source,/Search automatically after speaking/);
  assert.match(source,/if\(text\?\.trim\(\)\&\&voiceAutoSearch\)\{search\(text,true,false,detected\)\}/);
  assert.match(source,/spokenLanguage\|\|detectedSearchLanguage/);
- assert.match(source,/if\(next.picking\?\.status==='ready'\&\&fromVoice\&\&auto\)await speak\(next\)/);
+ assert.match(source,/if\(fromVoice\&\&auto\)await speak\(result\)/);
+  assert.match(source,/T\(result\)/);
+  assert.doesNotMatch(source,/const next=await startIfReady\(result\)/);
 });
 
 test('voice-start picking requires exact, unambiguous speech in all five focus modes',async()=>{
