@@ -709,12 +709,12 @@ test('login workspace creation CTA remains legible on hover and focus',async()=>
 test('welcome voice uses browser speech without exposing a TTS credential',async()=>{
  const account=await readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
  assert.match(account,/Welcome to Finder\. Your workspace is ready to explore/);
- assert.match(account,/new window\.SpeechSynthesisUtterance\(greeting\)/);
- assert.match(account,/window\.speechSynthesis\.getVoices/);
- assert.match(account,/if\(preferred\)speech\.voice=preferred/);
+ assert.match(account,/playWelcomeOnce/);
+ assert.match(account,/\/api\/welcome\/audio\?language=/);
+ assert.match(account,/stopWelcome\(playback\)/);
  assert.doesNotMatch(account,/onClick=\{speakWelcome\}/);
  assert.match(account,/welcomeAttempted\.current=true/);
- assert.match(account,/window\.speechSynthesis\.speak\(speech\)/);
+ assert.doesNotMatch(account,/GNANI_API_KEY/);
  assert.doesNotMatch(account,/GNANI_API_KEY/);
 });
 
