@@ -277,24 +277,30 @@ function Report({item,location,collection,run,busy,voice,language,onError,onSave
    if(yes){PS(false);await submitReport();return;}
    if(no){PS(false);return;}
   }
-  if(location&&/\b(?:rack|shelf|bin|aisle)\b/i.test(transcript)){S(transcript.slice(0,200));HF('shelf');}
-  else{R(transcript.slice(0,400));HF('reason');}
+  if(location&&/\b(?:rack|shelf|bin|aisle)\b/i.test(transcript)){S(transcript.slice(0,200));HF('shelf');PS(false);}
+  else{R(transcript.slice(0,400));HF('reason');PS(false);}
  }
  return <div className="sf-report-flow">
  <p><b>{item.name}</b> · {item.sku}</p>
  {location&&<><p>{t('Recorded location:')} <strong>{pathText(location)}</strong></p><p>{t('Thanks for letting us know. Tell us what happened, and your manager can review the location.')}</p></>}
  {voice&&<div className="sf-report-voice-panel" aria-label={t('Voice report')}>
    <strong>{t('Tell us what happened')}</strong>
-   <small>{t('Speak the problem or the shelf where you found it. The words we hear will appear below.')}</small>
+   <small>{t('Tap Speak report once, describe the problem, then pause. Recording stops after your statement. You can also use the manual options below.')}</small>
    <VoiceButton small autoStop enabled={!busy} {...{language,onError}} label={t('Speak report')} onText={voiceCommand} onPartial={text=>{H(text);HF('listening')}}/>
    <div className="sf-report-transcript" role="status" aria-live="polite"><span>{t('Recognized speech')}</span><p>{heard||t('Your spoken words will appear here after recognition.')}</p>{heardField==='reason'&&<small>{t('Added to the report description. Check it before sending.')}</small>}{heardField==='shelf'&&<small>{t('Added as a suggested location.')}</small>}</div>
    {pendingSubmit&&<div className="sf-report-send-approval" role="status"><strong>{t('Send this report to your manager?')}</strong><p>{t('Say Yes to send, or No to keep editing.')}</p><button type="button" disabled={busy} onClick={submitReport}>{t('Yes, send report')}</button><button type="button" onClick={()=>PS(false)}>{t('Not yet')}</button></div>}
   </div>}
  <form onSubmit={e=>{e.preventDefault();submitReport()}}>
- <label>{t('What needs checking?')}<textarea required minLength={3} maxLength={400} value={reason} onChange={e=>R(e.target.value)}/></label>
+ <label>{t('What needs checking?')}</label>
+ <div className="sf-report-quick-actions" role="group" aria-label={t('Common report reasons')}>
+  <button type="button" aria-pressed={reason==='Item not found at the recorded location.'} onClick={()=>{R('Item not found at the recorded location.');PS(false)}}>{t('Item not here')}</button>
+  <button type="button" aria-pressed={reason==='Product is at a different shelf.'} onClick={()=>{R('Product is at a different shelf.');PS(false)}}>{t('Different shelf')}</button>
+  <button type="button" aria-pressed={reason==='Item label or shelf label is unclear.'} onClick={()=>{R('Item label or shelf label is unclear.');PS(false)}}>{t('Label unclear')}</button>
+ </div>
+ <textarea aria-label={t('What needs checking?')} required minLength={3} maxLength={400} value={reason} onChange={e=>{R(e.target.value);PS(false)}}/>
  {location&&<div className="sf-report-location"><label htmlFor="sf-report-location-input">{t('Where did you find it? (optional)')}</label><div className="sf-report-location-field"><input id="sf-report-location-input" value={suggested} maxLength={200} placeholder={t('Rack, shelf or bin, if known')} onChange={e=>S(e.target.value)}/></div></div>}
  <p>{t('Your report will appear in Activity. Your manager can review it and update the saved shelf if needed.')}</p>
- <button className="primary" disabled={busy||reason.trim().length<3}>{t('Send for review')}</button>
+ <div className="sf-report-submit"><button className="primary" disabled={busy||reason.trim().length<3}>{t('Send for review')}</button><small>{t('Nothing is submitted until you choose Send for review.')}</small></div>
  </form></div>;
 }
 function ScanTask({line,onRead,onManual,busy,onError}){const t=useT();return <><p><b>{line.selected.name}</b> · {line.selected.sku}</p><Place location={line.location}/><div className="wh-scan-steps"><span className={line.product_scanned?'done':''}>1. {t('Scan item')}{line.product_scanned&&' ✓'}</span><span className={line.complete?'done':''}>2. {t('Scan location')}{line.complete&&' ✓'}</span></div>{line.complete?<div className="wh-empty"><Glyph name="check"/><h3>{t('Item and location confirmed.')}</h3></div>:<><h3>{t(line.product_scanned?'Now scan the location label':'Scan the item label')}</h3><ScanBox key={line.product_scanned?'location':'product'} {...{onRead,onError}}/><button className="wh-text-button" disabled={busy} onClick={onManual}>{t('Picked and checked — confirm without scanner')}</button></>}</>}
