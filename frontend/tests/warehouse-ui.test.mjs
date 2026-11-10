@@ -641,7 +641,8 @@ test('spoken report submission resumes the next eligible item only after report 
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(source,/VGP\(true\);D\(null\)/);
  assert.match(source,/await deferPick\(task,index,'reported'\)/);
- assert.match(source,/VGP\(!\(voice&&handsFree\)\)/);
+ assert.match(source,/VGP\(!\(voice&&handsFree&&shouldResume\)\)/);
+ assert.match(source,/reportResumeRef\.current=handsFree&&!voiceGuidePaused/);
  assert.match(source,/The item remains unconfirmed; Finder moved to the next available item/);
  assert.match(source,/onClose=\{\(\)=>\{D\(null\);VGP\(true\)\}\}/);
  assert.match(source,/Start hands-free listening/);
