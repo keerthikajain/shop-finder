@@ -41,7 +41,7 @@ export function greetingMessage(user,language='en-IN',hour=new Date().getHours()
  // Guest speech must not suggest the user has a named account.
  if(!name){
   const guest={
-   'en-IN':'Hi there! Welcome to Finder. Let's make finding things easier!',
+    'en-IN':"Hi there! Welcome to Finder. Let's make finding things easier!",
    'hi-IN':'नमस्ते! फाइंडर में आपका स्वागत है। चलिए, आज का काम आसान बनाते हैं!',
    'hi-en':'Hi there! Finder mein aapka welcome hai. Chaliye, aaj ka kaam aasan banate hain!',
    'te-IN':'నమస్కారం! ఫైండర్‌కు స్వాగతం. ఈ రోజు పని మరింత సులభంగా చేద్దాం!'
