@@ -98,6 +98,12 @@ class PickUndo(Strict):
  reason:str=Field(default='Accidental confirmation',min_length=3,max_length=200)
 class ReviewAudio(Strict):
  language:Literal['en-IN','hi-IN','hi-en','te-IN']='en-IN'
+class ReportPreviewAudio(ReviewAudio):
+ collection:str=Field(max_length=40)
+ sku:str=Field(max_length=40)
+ location_code:str=Field(default='',max_length=50)
+ reason:str=Field(min_length=3,max_length=400)
+ suggested_location:str=Field(default='',max_length=200)
 class PickGuideAudio(Strict):
  command:Literal['start','next','repeat','verify','report','stop','help','unknown']
  line:int=Field(default=0,ge=0,le=9)
@@ -792,6 +798,27 @@ def install_warehouse(app,path):
    return {'token':token,'before':source,'after':enrich(destination),'sku':p['sku'],'name':p['name']}
  # Fixed voice prompts cannot synthesize arbitrary caller-provided text.
  # A single authenticated audio turn is played before reopening the microphone.
+ @app.post('/api/warehouse/voice/report-preview-audio')
+ async def report_preview_audio(body:ReportPreviewAudio,request:Request):
+  identity(request)
+  with connect(path) as c:
+   product=public(item_row(c,body.collection,body.sku))
+   recorded=next((loc for loc in product['placements'] if loc['code']==body.location_code),None) if body.location_code else None
+   if body.location_code and not recorded:
+    raise HTTPException(409,'Recorded shelf changed. Refresh the item before reporting.')
+   prefix={
+    'en-IN':'Review your report before submitting.',
+    'hi-IN':'भेजने से पहले रिपोर्ट जाँचें।',
+    'hi-en':'Review your report before sending.',
+    'te-IN':'పంపించే ముందు మీ నివేదికను సమీక్షించండి.'
+   }[body.language]
+   message=f"{prefix} Item: {product['name']}, {product['sku']}. "
+   if recorded:message+=f"Last recorded location: {loc_text(recorded)}. "
+   message+=f"Problem: {body.reason}. "
+   if body.suggested_location:message+=f"Suggested location, not verified: {body.suggested_location}. "
+   message+="The saved shelf will not change. Say send report to submit, back to edit, or stop."
+  audio=await voice.speak(message,body.language)
+  return Response(audio,media_type='audio/wav',headers={'Cache-Control':'no-store'})
  @app.post('/api/warehouse/voice/step-audio')
  async def voice_step_audio(body:ReviewAudio,step:Literal[
   'review_outcome','review_note','review_confirm','review_pending_saved','review_verified_saved',
