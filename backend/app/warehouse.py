@@ -510,7 +510,18 @@ def install_warehouse(app,path):
    state=picking_state(task)
    if state['status']=='completed':raise HTTPException(409,'Completed picks cannot be started again. Create a new search.')
    if state['status']=='active':return task
-   picking_check(c,task)
+   # An open wrong-location report must not block other valid items.
+   # Preserve the reported line as unpicked and defer it for owner review.
+   for i,line in enumerate(task['lines']):
+    if not line.get('selected') or not line.get('location'):continue
+    _,item=current_line(c,task,i)
+    if location_status(c,item,line['location'])['location_report_open']:
+     line['location_report_open']=True
+     line['deferred_reason']='reported'
+     line['product_scanned']=False
+   if not any(not line.get('complete') and not line.get('deferred_reason') for line in task['lines']):
+    raise HTTPException(409,'All requested locations are reported. Ask the owner to verify a shelf before picking.')
+   picking_check(c,task,allow_deferred=True)
    state.update(status='active',started_at=now(),completed_at=None,paused=False)
    return task_put(c,task)
  @app.post('/api/warehouse/tasks/{tid}/picking/pause')
