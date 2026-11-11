@@ -7,6 +7,7 @@ const PHRASES={
   original:['original location verified','found at recorded location','confirm original location'],
   unconfirmed:['location not confirmed','still unconfirmed','keep under review'],
   move:['confirm location change','save verified location'],
+  review:['confirm review','save review'],
   cancel:['cancel','stop','no']
  },
  'hi-IN':{
@@ -14,6 +15,7 @@ const PHRASES={
   original:['पुरानी जगह सही है','दर्ज जगह पर मिला','मूल जगह की पुष्टि'],
   unconfirmed:['जगह की पुष्टि नहीं हुई','अभी पुष्टि नहीं हुई'],
   move:['नई जगह की पुष्टि करो','जगह बदलना मंजूर'],
+  review:['समीक्षा सेव करो','समीक्षा की पुष्टि करो'],
   cancel:['रद्द करो','रुको','नहीं']
  },
  'hi-en':{
@@ -21,6 +23,7 @@ const PHRASES={
   original:['original location verified','purani jagah sahi hai','दर्ज जगह पर मिला'],
   unconfirmed:['still unconfirmed','jagah confirm nahi hai','जगह की पुष्टि नहीं हुई'],
   move:['confirm location change','nayi jagah confirm karo','नई जगह की पुष्टि करो'],
+  review:['confirm review','review save karo','समीक्षा सेव करो'],
   cancel:['cancel','stop','रुको']
  },
  'te-IN':{
@@ -28,6 +31,7 @@ const PHRASES={
   original:['పాత స్థానంలో దొరికింది','నమోదైన స్థానం సరైనదే'],
   unconfirmed:['స్థానం ఇంకా నిర్ధారించలేదు'],
   move:['కొత్త స్థానం నిర్ధారించు'],
+  review:['సమీక్షను నిర్ధారించు','సమీక్షను సేవ్ చేయి'],
   cancel:['రద్దు','ఆపు','వద్దు']
  }
 };
