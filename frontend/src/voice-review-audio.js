@@ -1,5 +1,5 @@
 // Play only server-approved Gnani readbacks. Audio bytes never expose the API key.
-export async function playReviewAudio(endpoint,language){
+export async function playReviewAudio(endpoint,language,onEnd=()=>{}){
  const controller=new AbortController();
  const response=await fetch('/api/warehouse/'+endpoint,{
   method:'POST',
@@ -22,6 +22,7 @@ export async function playReviewAudio(endpoint,language){
   audio.pause();
   audio.removeAttribute('src');
   URL.revokeObjectURL(url);
+  onEnd();
  };
  audio.onended=stop;
  try{await audio.play()}catch(error){stop();throw error}
