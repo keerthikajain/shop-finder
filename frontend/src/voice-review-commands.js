@@ -3,6 +3,8 @@
 // Confirmations never bypass the existing authenticated backend validation.
 const PHRASES={
  'en-IN':{
+  report_send:["send report","submit report"],
+  report_skip:["skip","not found elsewhere","unknown location"],
   help:["help","what can i say","what should i say"],
   back:["back","go back","previous step"],
   repeat:["repeat","say it again","repeat instructions"],
@@ -16,6 +18,8 @@ const PHRASES={
   cancel:['cancel','stop','no']
  },
  'hi-IN':{
+  report_send:["रिपोर्ट भेजो","रिपोर्ट जमा करो"],
+  report_skip:["स्किप","नहीं मिला","पता नहीं"],
   help:["मदद","क्या बोलना है","मुझे क्या कहना चाहिए"],
   back:["वापस","पीछे जाओ","पिछला चरण"],
   repeat:["दोहराओ","फिर से बताओ"],
@@ -29,6 +33,8 @@ const PHRASES={
   cancel:['रद्द करो','रुको','नहीं']
  },
  'hi-en':{
+  report_send:["send report","report bhejo","रिपोर्ट भेजो"],
+  report_skip:["skip","nahi pata","पता नहीं"],
   help:["help","what should i say","मदद","kya bolna hai"],
   back:["back","go back","वापस","wapas jao"],
   repeat:["repeat","dobara bolo","फिर से बताओ"],
@@ -42,6 +48,8 @@ const PHRASES={
   cancel:['cancel','stop','रुको']
  },
  'te-IN':{
+  report_send:["నివేదిక పంపండి","రిపోర్ట్ పంపండి"],
+  report_skip:["స్కిప్","తెలియదు","మరెక్కడా దొరకలేదు"],
   help:["సహాయం","ఏమి చెప్పాలి","ఏం మాట్లాడాలి"],
   back:["వెనక్కి","వెనక్కి వెళ్ళు"],
   repeat:["మళ్లీ చెప్పు","మళ్ళీ చెప్పండి"],
