@@ -60,3 +60,23 @@ test('worker voice flow provides contextual help back and real saved announcemen
  assert.ok(source.includes("!x.line.stale_catalogue"));
  assert.ok(source.includes("audioEndResolve.current?.()"));
 });
+
+
+test('worker report is one guided voice workflow with optional manual verification',async()=>{
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.ok(source.includes("stage={guideStage} context=\"Automatic wrong-location report\""));
+ assert.ok(source.includes("onTranscript={guidedReportAnswer}"));
+ assert.ok(source.includes("onBack={guidedReportBack}"));
+ assert.ok(source.includes("guideStage==='report_confirm'?'voice/report-preview-audio':null"));
+ assert.ok(source.includes("voiceAction(language,'report_send',recognized)"));
+ assert.ok(source.includes("voiceAction(language,'report_skip',recognized)"));
+ assert.ok(source.includes("onActiveChange={SetGuidedActive}"));
+ assert.ok(source.includes("disabled={busy||guidedActive||reason.trim().length<3}"));
+ for(const lang of ['en-IN','hi-IN','hi-en','te-IN']){
+  for(const action of ['report_send','report_skip']){
+   assert.ok(actionPhrases(lang,action).length);
+   assert.equal(voiceAction(lang,action,actionPhrases(lang,action)[0]),true);
+   assert.equal(voiceAction(lang,action,'please '+actionPhrases(lang,action)[0]),false);
+  }
+ }
+});
