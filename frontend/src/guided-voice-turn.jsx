@@ -11,14 +11,14 @@ import {dialogueControl} from './voice-review-commands.js';
  */
 export default function GuidedVoiceTurn({
  language='en-IN',stage,promptEndpoint=null,onTranscript,onBack,onStop,
- onError=()=>{},disabled=false,context='location review'
+ onError=()=>{},onActiveChange=()=>{},disabled=false,context='location review'
 }){
  const [active,SetActive]=useState(false),[cycle,Cycle]=useState(0);
  const [status,Status]=useState('idle'),[error,ErrorMessage]=useState('');
  const [heard,Heard]=useState('');
- const handlers=useRef({onTranscript,onBack,onStop,onError});
+ const handlers=useRef({onTranscript,onBack,onStop,onError,onActiveChange});
  const stageRef=useRef(stage),silence=useRef(0);
- handlers.current={onTranscript,onBack,onStop,onError};
+ handlers.current={onTranscript,onBack,onStop,onError,onActiveChange};
  stageRef.current=stage;
  useEffect(()=>{
   if(!active||disabled||!stage)return;
@@ -31,7 +31,7 @@ export default function GuidedVoiceTurn({
   const fail=(message)=>{
    if(cancelled)return;
    cleanupAudio();Status('paused');ErrorMessage(message);
-   SetActive(false);handlers.current.onError(message);
+   SetActive(false);handlers.current.onActiveChange(false);handlers.current.onError(message);
   };
   const nextTurn=(oldStage)=>{
    if(cancelled)return;
@@ -55,7 +55,7 @@ export default function GuidedVoiceTurn({
       if(!transcript){fail('No words recognized. You can retry or use the form.');return}
       silence.current=0;Heard(transcript);
       const control=dialogueControl(language,transcript);
-      if(control==='stop'){SetActive(false);Status('stopped');handlers.current.onStop?.();return}
+      if(control==='stop'){SetActive(false);handlers.current.onActiveChange(false);Status('stopped');handlers.current.onStop?.();return}
       if(control==='repeat'||control==='help'){nextTurn(stage);return}
       if(control==='back'){
        Status('processing');
@@ -65,7 +65,7 @@ export default function GuidedVoiceTurn({
       Status('processing');
       const outcome=await handlers.current.onTranscript(transcript,stage);
       if(cancelled)return;
-      if(outcome===false){SetActive(false);Status('idle');return}
+      if(outcome===false){SetActive(false);handlers.current.onActiveChange(false);Status('idle');return}
       nextTurn(stage);
      }catch(e){
       if(!cancelled)fail(e.message||'Voice recognition failed. Use retry or type instead.');
@@ -111,10 +111,10 @@ export default function GuidedVoiceTurn({
  },[active,disabled,stage,promptEndpoint,language,cycle]);
 
  function stop(){
-  SetActive(false);Status('stopped');handlers.current.onStop?.();
+  SetActive(false);handlers.current.onActiveChange(false);Status('stopped');handlers.current.onStop?.();
  }
  function start(){
-  silence.current=0;ErrorMessage('');Heard('');SetActive(true);Cycle(v=>v+1);
+  silence.current=0;ErrorMessage('');Heard('');SetActive(true);handlers.current.onActiveChange(true);Cycle(v=>v+1);
  }
  return <section className="sf-guided-owner-voice" aria-label={context}>
   <div className="sf-guided-owner-voice-actions">
