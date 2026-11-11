@@ -612,7 +612,11 @@ def install_warehouse(app,path):
    picking_mutable(t)
    if index<0 or index>=len(t['lines']):raise HTTPException(422,'Invalid task line.')
    if len(t['lines'])<=1:raise HTTPException(409,'Keep one item. Edit and search again to replace it.')
-   if t['lines'][index].get('selected'):raise HTTPException(409,'Only unresolved requests can be removed.')
+   selected=t['lines'][index].get('selected')
+   if selected:
+    _,item=current_line(c,t,index)
+    if not location_status(c,item,t['lines'][index].get('location'))['location_report_open']:
+     raise HTTPException(409,'Only unresolved or reported-location requests can be removed.')
    t['lines'].pop(index)
    return task_put(c,t)
  @app.post('/api/warehouse/tasks/{tid}/choose')
@@ -673,6 +677,8 @@ def install_warehouse(app,path):
    line,p=current_line(c,t,body.line)
    if line.get('complete'):raise HTTPException(409,'This item is already verified.')
    if line.get('deferred_reason'):raise HTTPException(409,'Retry this deferred item before confirming it.')
+   if location_status(c,p,line.get('location'))['location_report_open']:
+    raise HTTPException(409,'This location has an open report. Owner verification is required before picking.')
    if body.kind=='product':
     if body.value not in [p['sku'],p['barcode'],f"ITEM:{p['collection']}:{p['sku']}"]:raise HTTPException(409,'Different item scanned. Check the SKU and variant.')
     line['product_scanned']=True
