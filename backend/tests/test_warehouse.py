@@ -1350,3 +1350,73 @@ def test_submitted_location_report_defers_item_without_blocking_next_location(se
  assert post(c,f'/tasks/{tid}/picking/finish').status_code==409
  assert post(c,f'/tasks/{tid}/picking/pause').status_code==200
  assert post(c,f'/tasks/{tid}/picking/resume').status_code==200
+
+
+def test_existing_wrong_location_report_skips_only_reported_item_when_starting(setup):
+ c,path=setup
+ task=search(c,'CLO-001 and CLO-004')
+ tid=task['id']
+ reported=task['lines'][0]
+ issue=post(c,'/issues',{
+  'collection':'clothing','sku':reported['selected']['sku'],
+  'kind':'wrong_location','location_code':reported['location']['code'],
+  'reason':'Recorded shelf empty during visit'
+ })
+ assert issue.status_code==200,issue.text
+ active=post(c,f'/tasks/{tid}/picking/start')
+ assert active.status_code==200,active.text
+ lines=active.json()['lines']
+ assert active.json()['picking']['status']=='active'
+ assert lines[0]['deferred_reason']=='reported'
+ assert lines[0]['location_report_open'] is True
+ assert lines[0]['complete'] is False
+ assert lines[1]['complete'] is False
+ assert post(c,f'/tasks/{tid}/scan',{'line':0,'kind':'manual','value':'confirmed'}).status_code==409
+ assert post(c,f'/tasks/{tid}/scan',{'line':0,'kind':'product','value':'CLO-001'}).status_code==409
+ assert post(c,f'/tasks/{tid}/scan',{'line':1,'kind':'manual','value':'confirmed'}).status_code==200
+ assert post(c,f'/tasks/{tid}/picking/finish').status_code==409
+ assert c.get('/api/warehouse/issues?collection=clothing').json()[0]['status']=='open'
+ with connect(path) as db:
+  record=db.execute("SELECT payload FROM wh_tasks WHERE id=?",(tid,)).fetchone()
+  assert json.loads(record[0])['lines'][0]['deferred_reason']=='reported'
+
+
+def test_ready_task_can_remove_reported_location_without_deleting_issue(setup):
+ c,_=setup
+ task=search(c,'CLO-001 and CLO-004')
+ tid=task['id']
+ line=task['lines'][0]
+ issue=post(c,'/issues',{
+  'collection':'clothing','sku':line['selected']['sku'],
+  'kind':'wrong_location','location_code':line['location']['code'],
+  'reason':'Unverified shelf'
+ })
+ assert issue.status_code==200,issue.text
+ # Before removal the healthy item can still be picked, but the report cannot.
+ blocked=post(c,f'/tasks/{tid}/scan',{'line':0,'kind':'manual','value':'confirmed'})
+ assert blocked.status_code==409
+ removed=c.delete(f'/api/warehouse/tasks/{tid}/lines/0',headers=H)
+ assert removed.status_code==200,removed.text
+ assert len(removed.json()['lines'])==1
+ assert removed.json()['lines'][0]['selected']['sku']=='CLO-004'
+ assert post(c,f'/tasks/{tid}/picking/start').status_code==200
+ issues=c.get('/api/warehouse/issues?collection=clothing').json()
+ assert len(issues)==1 and issues[0]['status']=='open'
+
+
+def test_all_reported_locations_block_start_without_false_verification(setup):
+ c,_=setup
+ task=search(c,'CLO-001')
+ line=task['lines'][0]
+ issue=post(c,'/issues',{
+  'collection':'clothing','sku':line['selected']['sku'],
+  'kind':'wrong_location','location_code':line['location']['code'],
+  'reason':'Needs owner review'
+ })
+ assert issue.status_code==200
+ blocked=post(c,f"/tasks/{task['id']}/picking/start")
+ assert blocked.status_code==409
+ assert 'All requested locations are reported' in blocked.json()['detail']
+ reloaded=c.get('/api/warehouse/tasks/'+task['id']).json()
+ assert reloaded['picking']['status']=='ready'
+ assert not reloaded['lines'][0]['complete']
