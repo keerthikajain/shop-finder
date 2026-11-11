@@ -96,6 +96,8 @@ class PickRetry(Strict):
 class PickUndo(Strict):
  line:int=Field(ge=0,le=9)
  reason:str=Field(default='Accidental confirmation',min_length=3,max_length=200)
+class ReviewAudio(Strict):
+ language:Literal['en-IN','hi-IN','hi-en','te-IN']='en-IN'
 class PickGuideAudio(Strict):
  command:Literal['start','next','repeat','verify','report','stop','help','unknown']
  line:int=Field(default=0,ge=0,le=9)
@@ -788,6 +790,24 @@ def install_warehouse(app,path):
    if loc_code(destination) in [l['code'] for l in p['placements']]:raise HTTPException(422,'This location is already recorded.')
    payload={**body.model_dump(),'destination':destination};token=pending(c,'move',u,payload)
    return {'token':token,'before':source,'after':enrich(destination),'sku':p['sku'],'name':p['name']}
+ @app.post('/api/warehouse/moves/{token}/review-audio')
+ async def spoken_move_review(token:str,body:ReviewAudio,request:Request):
+  u=identity(request,True)
+  with connect(path) as c:
+   payload=get_pending(c,token,'move',u)
+   p=public(item_row(c,payload['collection'],payload['sku']))
+   if p['revision']!=payload['revision']:raise HTTPException(409,'Catalogue changed. Review the new location first.')
+   source=next((loc for loc in p['placements'] if loc['code']==payload['source']),None)
+   if not source:raise HTTPException(409,'Source location changed. Review again.')
+   destination=payload['destination']
+   phrase={
+    'hi-IN':'स्थान सुधार की समीक्षा करें।',
+    'hi-en':'Review this location correction.',
+    'te-IN':'స్థాన మార్పును సమీక్షించండి.',
+    'en-IN':'Review this location correction.'
+   }[body.language]
+   message=f"{phrase} {p['name']}, {p['sku']}. Previous location: {loc_text(source)}. Proposed location: {loc_text(destination)}. Confirm only after physically verifying the proposed shelf."
+  return Response(await voice.speak(message,body.language),media_type='audio/wav',headers={'Cache-Control':'no-store'})
  @app.post('/api/warehouse/moves/{token}/confirm')
  def move_confirm(token:str,request:Request):
   u=identity(request,True)
@@ -875,6 +895,20 @@ def install_warehouse(app,path):
  def issues(request:Request,collection:str='all'):
   u=identity(request)
   with connect(path) as c:return [dict(r) for r in c.execute('SELECT * FROM wh_issues WHERE (?=\'all\' OR collection=?) AND (?=\'owner\' OR actor=?) ORDER BY id DESC LIMIT 100',(collection,collection,u['role'],u['username']))]
+ @app.post('/api/warehouse/issues/{iid}/review-audio')
+ async def spoken_issue_review(iid:int,body:ReviewAudio,request:Request):
+  identity(request,True)
+  with connect(path) as c:
+   issue=c.execute('SELECT * FROM wh_issues WHERE id=?',(iid,)).fetchone()
+   if not issue:raise HTTPException(404,'Report not found.')
+   if issue['kind']!='wrong_location':raise HTTPException(422,'Voice location review is only for location reports.')
+   p=public(item_row(c,issue['collection'],issue['sku']))
+   old=next((loc for loc in p['placements'] if loc['code']==issue['location_code']),None)
+   if not old:raise HTTPException(409,'Recorded location has changed. Refresh to review.')
+   prefix={'hi-IN':'स्थान की रिपोर्ट की समीक्षा करें।','hi-en':'Review the reported shelf.',
+           'te-IN':'నివేదించిన స్థానాన్ని సమీక్షించండి.','en-IN':'Review the reported shelf.'}[body.language]
+   message=f"{prefix} {p['name']}, {p['sku']}. Last recorded location: {loc_text(old)}. If found here, confirm this location. If not confirmed, keep the report open. If moved, verify a new location before saving."
+  return Response(await voice.speak(message,body.language),media_type='audio/wav',headers={'Cache-Control':'no-store'})
  @app.post('/api/warehouse/issues/{iid}/resolve')
  def resolve(iid:int,body:Resolve,request:Request):
   u=identity(request,True)
