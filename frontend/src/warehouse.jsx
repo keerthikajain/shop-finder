@@ -522,7 +522,7 @@ function Report({item,location,collection,run,busy,speaking=false,voice,language
  return <div className="sf-report-flow">
  <p><b>{item.name}</b> · {item.sku}</p>
  {location&&<><p>{t('Recorded location:')} <strong>{pathText(location)}</strong></p><p>{t('Thanks for letting us know. Tell us what happened, and your manager can review the location.')}</p></>}
- {voice&&<GuidedVoiceTurn language={language} stage={guideStage} context="Automatic wrong-location report" onTranscript={guidedReportAnswer} onBack={guidedReportBack} onActiveChange={SetGuidedActive} onError={onError}/>}
+ {voice&&<GuidedVoiceTurn language={language} stage={guideStage} context="Automatic wrong-location report" promptEndpoint={guideStage==='report_confirm'?'voice/report-preview-audio':null} promptBody={guideStage==='report_confirm'?{collection,sku:item.sku,reason,suggested_location:suggested,location_code:location?.code||''}:null} onTranscript={guidedReportAnswer} onBack={guidedReportBack} onActiveChange={SetGuidedActive} onError={onError}/>}
  <div className="sf-report-step-note" role="status"><strong>{t('Picking is paused — report the problem')}</strong>{t('Step 1: Say or type what is wrong. Step 2: Review the text. Step 3: Send to your manager. Return to picking when ready.')}</div>
  {voice&&<div className="sf-report-voice-panel" aria-label={t('Voice report')}>
    <strong>{t('Tell us what happened')}</strong>
