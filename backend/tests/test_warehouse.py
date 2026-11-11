@@ -1527,3 +1527,44 @@ def test_accidental_pick_can_be_undone_with_audit_and_no_stock_change(setup):
   stored=json.loads(db.execute('SELECT payload FROM wh_tasks WHERE id=?',(tid,)).fetchone()['payload'])
   assert len(stored['pick_adjustments'])==2
   assert stored['lines'][0]['complete'] is False
+
+
+def test_gnani_review_audio_requires_owner_and_reads_saved_locations(setup,monkeypatch):
+ c,path=setup
+ spoken=[]
+ async def fake_speak(text,language):
+  spoken.append((text,language))
+  return b'RIFF-test-wav'
+ monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
+ t=search(c,'CLO-001')
+ line=t['lines'][0]
+ source=line['location']
+ issue=post(c,'/issues',{'collection':'clothing','sku':'CLO-001','kind':'wrong_location',
+                         'location_code':source['code'],'reason':'Reported as empty'})
+ assert issue.status_code==200,issue.text
+ issue_id=issue.json()['id']
+ r=post(c,f'/issues/{issue_id}/review-audio',{'language':'hi-IN'})
+ assert r.status_code==200,r.text
+ assert r.content==b'RIFF-test-wav'
+ assert 'CLO-001' in spoken[-1][0] and source['rack'] in spoken[-1][0]
+ assert spoken[-1][1]=='hi-IN'
+ product=line['selected']
+ destination={k:v for k,v in source.items() if k!='code'}
+ destination['rack']='Z'
+ preview=post(c,'/moves/preview',{'collection':'clothing','sku':'CLO-001','revision':product['revision'],
+                                 'source':source['code'],'destination':destination,'reason':'Shelf physically verified'})
+ assert preview.status_code==200,preview.text
+ token=preview.json()['token']
+ audio=post(c,f'/moves/{token}/review-audio',{'language':'te-IN'})
+ assert audio.status_code==200,audio.text
+ assert audio.content==b'RIFF-test-wav'
+ assert 'CLO-001' in spoken[-1][0] and 'Z' in spoken[-1][0]
+ assert spoken[-1][1]=='te-IN'
+ # Reading a proposed move never mutates the catalogue or resolves a report.
+ assert search(c,'CLO-001')['lines'][0]['location']['rack']==source['rack']
+ assert c.get('/api/warehouse/issues').json()[0]['status']=='open'
+ login(c,'staff')
+ assert post(c,f'/issues/{issue_id}/review-audio',{'language':'en-IN'}).status_code==403
+ assert post(c,f'/moves/{token}/review-audio',{'language':'en-IN'}).status_code==403
+ login(c)
+ assert post(c,f'/moves/{token}/review-audio',{'language':'xx-XX'}).status_code==422
