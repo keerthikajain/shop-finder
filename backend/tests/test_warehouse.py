@@ -1665,3 +1665,36 @@ def test_draft_voice_report_reads_actual_location_and_never_saves_implicitly(set
   assert response.status_code==200,response.text
  login(c,'staff')
  assert c.post('/api/warehouse/voice/report-preview-audio',headers=H,json=draft).status_code==200
+
+
+def test_owner_resolution_readback_is_explicit_and_does_not_close_report(setup,monkeypatch):
+ c,path=setup
+ spoken=[]
+ async def fake_speak(text,language):
+  spoken.append((text,language));return b'RIFF-owner-review'
+ monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
+ task=search(c,'CLO-001')
+ location=task['lines'][0]['location']
+ result=post(c,'/issues',{'collection':'clothing','sku':'CLO-001',
+  'kind':'wrong_location','location_code':location['code'],'reason':'The shelf needs to be verified'})
+ assert result.status_code==200,result.text
+ iid=result.json()['id']
+ body={'language':'en-IN','action':'confirmed_original','note':'I physically checked the original rack and found the correct item'}
+ response=c.post(f'/api/warehouse/issues/{iid}/resolution-preview-audio',headers=H,json=body)
+ assert response.status_code==200,response.text
+ assert b'RIFF' in response.content
+ assert 'physically verified' in spoken[-1][0]
+ assert body['note'] in spoken[-1][0]
+ assert 'save review' in spoken[-1][0].lower()
+ assert c.get('/api/warehouse/issues').json()[0]['status']=='open'
+ unconfirmed=c.post(f'/api/warehouse/issues/{iid}/resolution-preview-audio',headers=H,
+  json={**body,'action':'unconfirmed'})
+ assert unconfirmed.status_code==200,unconfirmed.text
+ assert 'keeping this report open' in spoken[-1][0]
+ with connect(path) as db:
+  assert db.execute('SELECT COUNT(*) FROM wh_location_checks').fetchone()[0]==0
+ login(c,'staff')
+ assert c.post(f'/api/warehouse/issues/{iid}/resolution-preview-audio',headers=H,json=body).status_code==403
+ login(c)
+ assert c.post(f'/api/warehouse/issues/{iid}/resolution-preview-audio',headers=H,
+  json={**body,'action':'unverified_guess'}).status_code==422
