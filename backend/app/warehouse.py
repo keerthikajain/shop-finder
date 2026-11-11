@@ -252,6 +252,9 @@ def speak_task(task):
  for line in task['lines']:
   p=line.get('selected')
   if p:
+   if line.get('stale_catalogue'):
+    parts.append(f"{p['name']}, {p['sku']}. Catalogue location changed. Search again before picking.")
+    continue
    l=line['location'];labels={'facility':'facility','floor':'floor','zone':'section','aisle':'aisle','rack':'rack','shelf':'shelf','bin':'bin'}
    if hi:labels.update(facility='गोदाम',floor='मंज़िल',zone='भाग',aisle='गलियारा',rack='रैक',shelf='शेल्फ',bin='बिन')
    place=', '.join(f"{labels[k]} {l[k]}" for k in LOCATION_FIELDS if l.get(k) and not (p.get('synthetic') and k=='facility'))
@@ -284,6 +287,9 @@ def display_task(task):
  for line in task['lines']:
   product=line.get('selected')
   if product:
+   if line.get('stale_catalogue'):
+    parts.append(f"{product['name']}, {product['sku']}. Catalogue location changed. Search again before picking.")
+    continue
    loc=line['location']
    # Values are taken only from the verified selected catalogue record.
    where=', '.join(f"{labels[k]} {loc[k]}" for k in LOCATION_FIELDS if loc.get(k) and not (product.get('synthetic') and k=='facility'))
@@ -322,7 +328,23 @@ def picking_check(c,task,allow_deferred=False):
 def task_get(c,tid,u):
  r=c.execute('SELECT * FROM wh_tasks WHERE id=? AND owner=?',(tid,u['id'])).fetchone()
  if not r or time.time()-r['created']>86400:raise HTTPException(404,'Search session expired. Search again.')
- task=json.loads(r['payload']);picking_state(task);return task
+ task=json.loads(r['payload']);picking_state(task)
+ # Saved tasks may outlive catalogue changes or new location reports.
+ for line in task['lines']:
+  selected=line.get('selected');location=line.get('location')
+  if not selected or not location:continue
+  current=c.execute('SELECT * FROM wh_items WHERE collection=? AND sku=?',
+                    (selected['collection'],selected['sku'])).fetchone()
+  stale=not current or current['revision']!=selected['revision']
+  line['stale_catalogue']=bool(stale)
+  if stale:
+   line['location_report_open']=False
+   line['last_confirmed_at']=None
+  else:
+   line.update(location_status(c,public(current),location))
+ task['spoken_text']=speak_task(task)
+ task['display_text']=display_task(task)
+ return task
 def task_put(c,t):
  picking_state(t)
  t['spoken_text']=speak_task(t);t['display_text']=display_task(t)
