@@ -875,7 +875,7 @@ test('blocked search confirmation leads directly to unresolved variant choices',
  assert.match(ui,/disabled=\{busy\|\|!canStartPick\}/);
  assert.match(ui,/Review unresolved items/);
  assert.match(ui,/sf-pick-review-needed/);
- assert.match(ui,/findIndex\(line=>!line.selected\|\|!line.location\|\|line.location_report_open\)/);
+ assert.match(ui,/findIndex\(line=>!line.selected\|\|!line.location\)/);
  assert.match(ui,/scrollIntoView\(\{behavior:'smooth',block:'center'\}\)/);
  assert.match(ui,/tabIndex=\{-1\} key=\{line.index\}/);
  assert.match(ui,/Finder will not guess a size or version/);
@@ -900,4 +900,20 @@ test('picking cards use the same responsive layout for paired and odd last resul
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(ui,/className=\{'wh-panel wh-task '/);
  assert.match(ui,/className="wh-task-footer"/);
+});
+
+test('reported location is distinguished from an unresolved variant and cannot be confirmed',async()=>{
+ const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
+ assert.match(ui,/unresolvedLines=task\?\.lines\.filter\(l=>!l.selected\|\|!l.location\)/);
+ assert.match(ui,/reportedLines=task\?\.lines\.filter\(l=>l.location_report_open\)/);
+ assert.match(ui,/eligibleLines=task\?\.lines\.filter\(l=>l.selected&&l.location&&!l.location_report_open\)/);
+ assert.match(ui,/canStartPick=!!task\?\.lines\.length&&unresolvedLines\.length===0&&eligibleLines\.length>0/);
+ assert.match(ui,/reported shelf location\(s\) are excluded from picking until owner review/);
+ assert.match(ui,/Remove reported item from this worklist/);
+ assert.match(ui,/!x\.line\.deferred_reason&&!x\.line\.location_report_open/);
+ assert.match(ui,/disabled=\{busy\|\|pickPaused\|\|!!line.deferred_reason\|\|line.location_report_open\}/);
+ assert.match(server,/line\['deferred_reason'\]='reported'/);
+ assert.match(server,/picking_check\(c,task,allow_deferred=True\)/);
+ assert.match(server,/This location has an open report\. Owner verification is required before picking/);
 });
