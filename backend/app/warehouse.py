@@ -790,6 +790,84 @@ def install_warehouse(app,path):
    if loc_code(destination) in [l['code'] for l in p['placements']]:raise HTTPException(422,'This location is already recorded.')
    payload={**body.model_dump(),'destination':destination};token=pending(c,'move',u,payload)
    return {'token':token,'before':source,'after':enrich(destination),'sku':p['sku'],'name':p['name']}
+ # Fixed voice prompts cannot synthesize arbitrary caller-provided text.
+ # A single authenticated audio turn is played before reopening the microphone.
+ @app.post('/api/warehouse/voice/step-audio')
+ async def voice_step_audio(body:ReviewAudio,step:Literal[
+  'review_outcome','review_note','review_confirm','review_pending_saved','review_verified_saved',
+  'move_destination','move_reason','move_preview','move_confirm','move_saved',
+  'report_saved','pick_done','pick_undo','help_pick','help_verify','unknown_pick'
+ ],request:Request):
+  identity(request,step.startswith(('review_','move_')))
+  prompts={
+   'review_outcome':('Tell me what you verified. Say original location verified, or still unconfirmed. Say help, repeat, back or stop at any time.',
+     'कृपया बताएं कि आपने क्या जाँचा। कहें पुरानी जगह सही है, या जगह की पुष्टि नहीं हुई।',
+     'Tell me what you checked. Say original location verified or still unconfirmed.',
+     'మీరు ఏమి నిర్ధారించారో చెప్పండి. పాత స్థానంలో దొరికింది లేదా స్థానం ఇంకా నిర్ధారించలేదు అని చెప్పండి.'),
+   'review_note':('Describe what you checked. Your report will not be saved until you explicitly confirm.',
+     'आपने क्या जाँचा, यह बताएं। पुष्टि किए बिना रिपोर्ट सेव नहीं होगी।',
+     'Explain what you checked. The report will be saved only after confirmation.',
+     'మీరు ఏమి పరిశీలించారో చెప్పండి. నిర్ధారణ లేకుండా నివేదిక సేవ్ కాదు.'),
+   'review_confirm':('Review your selected outcome and note on screen. Say save review to confirm, back to edit, or stop.',
+     'चुने गए परिणाम और नोट को जाँचें। सेव करने के लिए समीक्षा सेव करो कहें, या वापस जाएं।',
+     'Check the outcome and note. Say confirm review, back, or stop.',
+     'ఫలితం మరియు గమనికను చూడండి. నిర్ధారించడానికి సమీక్షను నిర్ధారించు అని చెప్పండి.'),
+   'review_pending_saved':('Review saved. The location is still unconfirmed and the report remains open.',
+     'समीक्षा सेव हो गई। जगह अभी भी अपुष्ट है और रिपोर्ट खुली रहेगी।',
+     'Review saved. Location remains unconfirmed, report stays open.',
+     'సమీక్ష సేవ్ అయ్యింది. స్థానం ఇంకా నిర్ధారణ కాలేదు, నివేదిక తెరిచే ఉంటుంది.'),
+   'review_verified_saved':('Location verification saved. The report is resolved and future searches use the verified location.',
+     'जगह की पुष्टि सेव हो गई। रिपोर्ट बंद हो गई है और आगे की खोज में सही जगह दिखेगी।',
+     'Location confirmed, report resolved. Next searches use the confirmed shelf.',
+     'స్థాన నిర్ధారణ సేవ్ అయ్యింది. నివేదిక పరిష్కరించబడింది. తర్వాతి వెతుకులాటలో ధృవీకరించిన స్థానం కనిపిస్తుంది.'),
+   'move_destination':('Tell me the new rack, shelf or bin. I will fill the fields for your review.',
+     'नया रैक, शेल्फ या बिन बताएं। सेव करने से पहले जाँच सकेंगे।',
+     'Tell me the new rack, shelf or bin.',
+     'కొత్త ర్యాక్, షెల్ఫ్ లేదా బిన్ చెప్పండి. సేవ్ చేయడానికి ముందు పరిశీలించండి.'),
+   'move_reason':('Check the destination fields. Then tell me why the location must change.',
+     'नई जगह के विवरण जाँचें। फिर बदलाव का कारण बताएं।',
+     'Check the new location. Tell me the reason.',
+     'కొత్త స్థలాన్ని చూడండి. మార్పుకు కారణం చెప్పండి.'),
+   'move_preview':('Check the entered details. Say review location change to hear old and new locations before approval.',
+     'दर्ज जानकारी जाँचें। दोनों जगह सुनने के लिए जगह बदलाव की समीक्षा करो कहें।',
+     'Check the details. Say review location change.',
+     'వివరాలను చూడండి. స్థానం మార్పు సమీక్షించు అని చెప్పండి.'),
+   'move_confirm':('Only after checking the physical shelf, say confirm location change to save, back to edit, or stop.',
+     'वास्तविक शेल्फ जाँचने के बाद नई जगह की पुष्टि करो कहें, या वापस जाएं।',
+     'Only after verifying the shelf, say confirm location change, back, or stop.',
+     'షెల్ఫ్‌ను పరిశీలించిన తరువాత కొత్త స్థానం నిర్ధారించు అని చెప్పండి.'),
+   'move_saved':('Verified location saved. New searches and spoken answers use the corrected shelf.',
+     'सही जगह सेव हो गई। अगली खोज और आवाज में नई जगह बताई जाएगी।',
+     'New verified shelf saved. Future answers will use it.',
+     'ధృవీకరించిన స్థానం సేవ్ అయ్యింది. కొత్త వెతుకులాటలు సరిచేసిన స్థలాన్ని చూపిస్తాయి.'),
+   'report_saved':('Your report was saved. The location remains under review until verified.',
+     'आपकी रिपोर्ट सेव हो गई। पुष्टि होने तक जगह की समीक्षा जारी रहेगी।',
+     'Report saved. Location is under review.',
+     'నివేదిక సేవ్ అయ్యింది. ధృవీకరణ వరకు స్థానం సమీక్షలో ఉంటుంది.'),
+   'pick_done':('Picking complete. Every item was confirmed and your progress was saved.',
+     'पिकिंग पूरी हुई। सभी सामान की पुष्टि हुई और प्रगति सेव हो गई।',
+     'Picking is complete. Confirmed items are saved.',
+     'పికింగ్ పూర్తయింది. నిర్ధారించిన అంశాలు సేవ్ అయ్యాయి.'),
+   'pick_undo':('Last confirmation undone. The item is ready to check again.',
+     'पिछली पुष्टि वापस हो गई। सामान को दोबारा जाँचें।',
+     'Last pick confirmation undone. Check the item again.',
+     'చివరి నిర్ధారణ రద్దయింది. అంశాన్ని మళ్ళీ పరిశీలించండి.'),
+   'help_pick':('Say found it, wrong location, repeat location, next item, undo last confirmation or stop. You can also use the buttons.',
+     'कहें मिल गया, गलत जगह, जगह दोहराओ, अगला सामान, या रुको। बटन भी उपलब्ध हैं।',
+     'Say found it, wrong location, repeat location, undo last confirmation or stop.',
+     'దొరికింది, తప్పు స్థానం, స్థానాన్ని మళ్లీ చెప్పండి, తదుపరి వస్తువు లేదా ఆపు అని చెప్పండి.'),
+   'help_verify':('Say yes to confirm this specific item, no to leave it unconfirmed, repeat, wrong location or stop.',
+     'इस सामान के लिए हाँ, नहीं, जगह दोहराओ, गलत जगह या रुको कहें।',
+     'Say yes, no, repeat, wrong location, or stop.',
+     'ఈ అంశాన్ని నిర్ధారించడానికి అవును, లేకుంటే కాదు అని చెప్పండి.'),
+   'unknown_pick':('I did not understand that command. Say help to hear the available choices, or use the buttons.',
+     'यह आदेश समझ नहीं आया। विकल्प सुनने के लिए मदद कहें या बटन दबाएं।',
+     'I did not understand. Say help, or use the buttons.',
+     'ఆదేశం అర్థం కాలేదు. సహాయం అనండి లేదా బటన్లను వాడండి.')
+  }
+  language_index={'en-IN':0,'hi-IN':1,'hi-en':2,'te-IN':3}[body.language]
+  result=await voice.speak(prompts[step][language_index],body.language)
+  return Response(result,media_type='audio/wav',headers={'Cache-Control':'no-store'})
  @app.post('/api/warehouse/moves/{token}/review-audio')
  async def spoken_move_review(token:str,body:ReviewAudio,request:Request):
   u=identity(request,True)
