@@ -148,6 +148,16 @@ export default function WarehouseApp({user,preferences,logout}){
    R(await request('/warehouse/tasks'));
   });
  }
+ async function undoPick(line){
+  if(!task||line<0||busy)return;
+  await run(async()=>{
+   const next=await api('/tasks/'+task.id+'/picking/undo',{line,reason:'Worker corrected an accidental confirmation'});
+   T(next);AL(line);PV(null);
+   N(t('Confirmation undone. This item is ready to verify again.'));
+   R(await request('/warehouse/tasks'));
+   if(voice&&auto&&!voiceFlowStopped.current)await playPickGuidance('repeat',next,line);
+  });
+ }
  async function scan(line,kind,value){await run(async()=>{const next=await api('/tasks/'+task.id+'/scan',{line,kind,value});D(null);PV(null);await progressAfterPick(next,kind!=='product');await reload()})}
  async function playPickGuidance(command,source=task,line=activeLine,manual=false){
   if(!voice||!source||(!manual&&voiceFlowStopped.current))return;
@@ -283,6 +293,8 @@ export default function WarehouseApp({user,preferences,logout}){
  }
  async function resumePick(id){VGP(true);stopSpeech();await run(async()=>{const restored=await request('/warehouse/tasks/'+encodeURIComponent(id));if(restored.collection!==collection){pendingResume.current=restored;C(restored.collection)}else{T(restored);Q(restored.query);G('location');AL(Math.max(0,nextPendingPickIndex(restored.lines)))}P('find');N(t('Picking session restored.'))})}
  const picking=task?.picking||{status:'ready'},pickPaused=!!picking.paused,hasSearchCandidates=!!task?.lines.some(l=>l.selected||l.candidates.length),verifiedCount=task?.lines.filter(l=>l.complete).length||0,unresolvedLines=task?.lines.filter(l=>!l.selected||!l.location)||[],reportedLines=task?.lines.filter(l=>l.location_report_open)||[],eligibleLines=task?.lines.filter(l=>l.selected&&l.location&&!l.location_report_open)||[],canStartPick=!!task?.lines.length&&unresolvedLines.length===0&&eligibleLines.length>0,nextPickIndex=nextPendingPickIndex(task?.lines);
+ const lastConfirmedIndex=task?.lines.reduce((best,line,i)=>line.complete&&
+   (best<0||String(line.confirmed_at||'')>=String(task.lines[best].confirmed_at||''))?i:best,-1)??-1;
  const selected=task?.lines.filter(l=>l.selected)||[],locations=[...new Map(items.flatMap(p=>p.placements.map(l=>[l.code,l]))).values()],filtered=items.filter(p=>(!category||p.category===category)&&(!filter||[p.sku,p.name,p.brand,p.category,p.barcode,...p.aliases,...Object.values(p.specs),...p.placements.map(pathText)].join(' ').toLowerCase().includes(filter.toLowerCase())));
  const sizeOptions=[...new Set(items.flatMap(p=>['size','size_uk','size_eu'].map(k=>p.specs?.[k]).filter(Boolean).map(String)))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
  const guideLine=task?.lines[activeLine]?.selected?task.lines[activeLine]:selected[0];
@@ -308,6 +320,7 @@ export default function WarehouseApp({user,preferences,logout}){
  {hasSearchCandidates?<section className="wh-panel sf-guided-picking" aria-label={t('Guided picking')}>
   <div className="sf-picking-head"><div><span className="wh-eyebrow">{t('Guided picking')}</span><h3>{t(picking.status==='completed'?'Picking completed':pickPaused?'Picking paused':picking.status==='active'?'Picking in progress':'Ready to pick')}</h3><small>{t('Confirm the search once, then Finder guides you to each shelf. Say Repeat, Found it or Wrong location; buttons work too.')}</small></div><b>{verifiedCount}/{task.lines.length}</b></div>
   <progress aria-label={t('Picking progress')} max={task.lines.length} value={verifiedCount}/>
+  {lastConfirmedIndex>=0&&<div className="sf-picking-undo"><button type="button" disabled={busy||pickPaused} onClick={()=>undoPick(lastConfirmedIndex)}>{t('Undo last confirmation')}</button></div>}
   {picking.status!=='completed'&&<div className="sf-voice-guide">
     {picking.status==='ready'&&<p className="sf-voice-guide-preview" role="status">{unresolvedLines.length>0?t('Choose or remove the unresolved variants below before starting. Finder will not guess a size or version.'):reportedLines.length>0?t('Reported shelf locations are skipped until verified. Confirm to guide the remaining items automatically.'):t('All items are ready. Confirm search once; Finder will speak the first location and then listen automatically.')}</p>}
    <div className="sf-voice-guide-heading"><strong>{t('Voice-guided picking')}</strong><small>{t(picking.status==='ready'?(unresolvedLines.length?'Finish reviewing your choices to begin.':reportedLines.length?'Reported locations are skipped. Finder can guide the remaining items.':'Confirm search once; Finder will guide you without more clicks.'):'Say Repeat location, Found it, Wrong location or Stop. You can also tap a button.')}</small></div>
