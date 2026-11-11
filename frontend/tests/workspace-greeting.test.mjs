@@ -34,7 +34,8 @@ test('time-based welcome uses current local hour and only once per workspace mou
  const src=await readFile(new URL('../src/workspace-greeting.jsx',import.meta.url),'utf8');
  assert.match(src,/if\(attempted\.current\)return/);
  assert.match(src,/attempted\.current=true/);
- assert.match(src,/if\(!interrupt\)speakGreeting\(\)/);
+ assert.match(src,/if\(interrupt\)return/);
+ assert.match(src,/playWelcomeOnce\(/);
 });
 
 test('localized spoken greetings and guest fallback never invent a name',()=>{
@@ -49,18 +50,20 @@ test('localized spoken greetings and guest fallback never invent a name',()=>{
  }
 });
 
-test('workspace plays only one automatic warm greeting and no replay button',async()=>{
+test('workspace requests authenticated Gnani female welcome once with no replay button',async()=>{
  const src=await readFile(new URL('../src/workspace-greeting.jsx',import.meta.url),'utf8');
  const app=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const css=await readFile(new URL('../src/workspace-greeting.css',import.meta.url),'utf8');
  assert.match(app,/import WorkspaceGreeting from '\.\/workspace-greeting\.jsx'/);
  assert.match(app,/<WorkspaceGreeting user=\{user\} voiceLanguage=\{language\} interrupt=/);
- assert.match(src,/SpeechSynthesisUtterance\(message\)/);
- assert.match(src,/FEMALE_VOICE\.test\(v\.name\)/);
+ assert.match(src,/playWelcomeOnce\(/);
+ assert.match(src,/url:'\/api\/voice\/welcome'/);
+ assert.match(src,/body:\{language,hour:entryHour\.current\}/);
  assert.match(src,/if\(attempted\.current\)return/);
- assert.match(src,/if\(!interrupt\)speakGreeting\(\)/);
- assert.match(src,/if\(interrupt&&activeSpeech\.current\)stopGreeting\(\)/);
- assert.match(src,/window\.speechSynthesis\?\.cancel\(\)/);
+ assert.match(src,/if\(interrupt\)return/);
+ assert.match(src,/playWelcomeOnce\(/);
+ assert.match(src,/if\(interrupt\)stopGreeting\(\)/);
+ assert.match(src,/stopWelcome\(activeSpeech\.current\)/);
  assert.doesNotMatch(src,/Hear greeting|Stop greeting|Mute automatic greeting/);
  assert.match(css,/@media\(max-width:480px\)/);
  assert.doesNotMatch(src,/GNANI_API_KEY|apiKey=/);

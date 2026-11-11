@@ -129,8 +129,12 @@ def tts_profile(language):
         raise HTTPException(503,'Unsupported Timbre model. Select timbre-v3.0 or timbre-v2.5.')
     return model,voice
 
-async def speak(text,language='en-IN'):
+async def speak(text,language='en-IN',*,voice_override=None):
     model,selected_voice=tts_profile(language)
+    if voice_override is not None and model=='timbre-v3.0':
+        if voice_override not in TIMBRE_V3_VOICES:
+            raise HTTPException(422,'Unknown Gnani voice.')
+        selected_voice=voice_override
     r=await call('/api/v1/tts/inference',json={
         'text':text,'model':model,'voice':selected_voice,'language':('auto' if model=='timbre-v3.0' and language=='hi-en' else language),
         'audio_config':{'encoding':'linear_pcm','container':'wav',

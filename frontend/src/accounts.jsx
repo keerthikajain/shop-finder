@@ -1,6 +1,7 @@
 import React,{useState,useEffect,useRef} from 'react';
 import {Mark,Glyph} from './warehouse-ui.jsx';
 import {Locale,useT,APP_LANGUAGES} from './locale.js';
+import {playWelcomeOnce,stopWelcome} from './welcome-audio.js';
 export async function request(path,options={}){
  const r=await fetch('/api'+path,{signal:AbortSignal.timeout(45000),...options,headers:{'Content-Type':'application/json','X-Shop-Request':'1',...options.headers}});
  if(r.status===401&&path!='/auth/login')window.dispatchEvent(new Event('session-expired'));
@@ -14,13 +15,13 @@ export function AccountGate({children}){
  async function logout(){await request('/auth/logout',{method:'POST'});setUser(null)}
  return <Locale.Provider value={user?.language||language}>{user?children({user,preferences,logout}):<Login {...{ready,configured,language,L,error,busy,notice,demoEnabled,signupEnabled}} onChallenge={async({username,password,quick=false})=>{B(true);E('');try{const visitor=await request(quick?'/challenge/try':'/challenge/signup',{method:'POST',body:quick?'{}':JSON.stringify({username,password,language})});setUser(visitor);L(visitor.language)}catch(err){E(err.message);throw err}finally{B(false)}}} onDemo={async()=>{B(true);E('');try{const visitor=await request('/demo/enter',{method:'POST'});setUser(visitor);L(visitor.language)}catch(err){E(err.message)}finally{B(false)}}} onRegister={async ({code,username,password,display_name})=>{B(true);E('');N('');try{await request('/auth/register',{method:'POST',body:JSON.stringify({code,username,password,display_name,language})});N('Registration requested. An owner or manager must approve your account before you can sign in.')}catch(err){E(err.message);throw err}finally{B(false)}}} onJoin={async ({code,username,password})=>{B(true);E('');N('');try{await request('/auth/join',{method:'POST',body:JSON.stringify({code,username,password,language})});N('Staff account created. Sign in with your new credentials.')}catch(err){E(err.message);throw err}finally{B(false)}}} onClearFeedback={()=>{E('');N('')}} onSubmit={async e=>{e.preventDefault();const data=new FormData(e.currentTarget);B(true);E('');N('');try{const next=await request('/auth/login',{method:'POST',body:JSON.stringify({username:data.get('username'),password:data.get('password')})});setUser(next);L(next.language)}catch(err){E(err.message)}finally{B(false)}}}/>}</Locale.Provider>;
 }
-// Public sign-in is intentionally unauthenticated. Use the browser's own
-// speech engine here, never a public Gnani TTS endpoint or browser API key.
+// The public sign-in requests a fixed cached welcome clip. No client API key
+// and no arbitrary unauthenticated synthesis request can be made.
 const WELCOME_TEXT={
- en:"Welcome to Finder. Your workspace is ready to explore. Let's find what you need.",
- hi:'फाइंडर में आपका स्वागत है। आपका वर्कस्पेस देखने के लिए तैयार है। आइए, जो चाहिए उसे ढूँढ़ते हैं।',
- kn:'ಫೈಂಡರ್‌ಗೆ ಸ್ವಾಗತ. ನಿಮ್ಮ ಕಾರ್ಯಕ್ಷೇತ್ರವನ್ನು ಅನ್ವೇಷಿಸಲು ಸಿದ್ಧವಾಗಿದೆ. ನಿಮಗೆ ಬೇಕಾದ ವಸ್ತುವನ್ನು ಹುಡುಕೋಣ.',
- te:'ఫైండర్‌కు స్వాగతం. మీ వర్క్‌స్పేస్‌ను అన్వేషించడానికి సిద్ధంగా ఉంది. మీకు కావలసిన వస్తువును వెతుకుదాం.'
+ en:"Hi there! Welcome to Finder. Let's make finding things easier!",
+ hi:'नमस्ते! फाइंडर में आपका स्वागत है। चलिए, आज का काम आसान बनाते हैं!',
+ kn:'ಫೈಂಡರ್‌ಗೆ ಸ್ವಾಗತ! ಬನ್ನಿ, ಇಂದಿನ ಕೆಲಸವನ್ನು ಸುಲಭಗೊಳಿಸೋಣ!',
+ te:'నమస్కారం! ఫైండర్‌కు స్వాగతం. ఈ రోజు పని మరింత సులభంగా చేద్దాం!'
 };
 const WELCOME_LANGUAGE={en:'en-IN',hi:'hi-IN',kn:'kn-IN',te:'te-IN'};
 export function Login({ready,configured,language,L,error,busy,notice='',demoEnabled=false,signupEnabled=false,onChallenge,onDemo,onSubmit,onJoin,onRegister,onClearFeedback}){
@@ -28,32 +29,22 @@ export function Login({ready,configured,language,L,error,busy,notice='',demoEnab
  const [screen,setScreen]=useState('login');
  const [joinMethod,setJoinMethod]=useState(null);
  const [showPassword,setShowPassword]=useState(false);
- const welcomeAttempted=useRef(false);
+ const welcomeAttempted=useRef(false),welcomePlayback=useRef(null);
  const greeting=WELCOME_TEXT[language]||WELCOME_TEXT.en;
- function speakWelcome(){
-  if(typeof window==='undefined'||!('speechSynthesis' in window)||!('SpeechSynthesisUtterance' in window))return;
-  try{
-   window.speechSynthesis.cancel();
-   const speech=new window.SpeechSynthesisUtterance(greeting);
-   speech.lang=WELCOME_LANGUAGE[language]||'en-IN';
-   const available=window.speechSynthesis.getVoices?.()||[];
-   const locale=(WELCOME_LANGUAGE[language]||'en-IN').toLowerCase();
-   const femaleVoice=/\b(zira|heera|veena|samantha|victoria|karen|tessa|moira|fiona|female|woman|aria|jenny|neerja|swara)\b/i;
-   const preferred=available.find(v=>v.lang?.toLowerCase()===locale&&femaleVoice.test(v.name))
-     ||available.find(v=>v.lang?.toLowerCase().split('-')[0]===locale.split('-')[0]&&femaleVoice.test(v.name));
-   if(preferred)speech.voice=preferred;
-   speech.rate=0.92;
-   speech.pitch=1.08;
-   speech.volume=1;
-   window.speechSynthesis.speak(speech);
-  }catch{/* Browser autoplay can be unavailable; sign-in remains accessible. */}
- }
  useEffect(()=>{
   if(!ready||!configured||welcomeAttempted.current)return;
   welcomeAttempted.current=true;
-  speakWelcome(); // One attempt on page entry; browsers can block unsolicited speech.
+  const controller=new AbortController();
+  const playback={controller,audio:null,url:null};
+  welcomePlayback.current=playback;
+  const locale=WELCOME_LANGUAGE[language]||'en-IN';
+  playWelcomeOnce({
+   url:'/api/welcome/audio?language='+encodeURIComponent(locale),
+   language:locale,text:greeting,controller,playback
+  });
+  return ()=>stopWelcome(playback);
  },[ready,configured]);
- useEffect(()=>()=>{try{window.speechSynthesis?.cancel()}catch{}},[]);
+ useEffect(()=>()=>stopWelcome(welcomePlayback.current),[]);
 
  const joining=screen==='join';
  const signingUp=screen==='signup';

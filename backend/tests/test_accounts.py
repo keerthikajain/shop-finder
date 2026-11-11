@@ -239,3 +239,53 @@ def test_guest_preview_not_available_when_non_synthetic_items_exist(setup,monkey
   db.execute("UPDATE wh_items SET payload=json_set(payload,'$.synthetic',false) WHERE sku='CLO-001' AND collection='clothing'")
  assert c.get('/api/auth/status').json()['demo_enabled'] is False
  assert c.post('/api/demo/enter',headers=H).status_code==404
+
+
+def test_gnani_public_welcome_fixed_text_cached_and_rate_limited(setup,monkeypatch):
+ c,path=setup
+ calls=[]
+ monkeypatch.setattr('app.main.voice.ready',lambda:True)
+ async def provider(text,language,*,voice_override=None):
+  calls.append((text,language,voice_override))
+  return b'RIFF-test-welcome-audio'
+ monkeypatch.setattr('app.main.voice.speak',provider)
+ # Login page can get only fixed language clips without a logged-in user.
+ r=c.get('/api/welcome/audio?language=hi-IN')
+ assert r.status_code==200,r.text
+ assert r.headers['content-type'].startswith('audio/wav')
+ assert r.content.startswith(b'RIFF')
+ assert 'नमस्ते' in calls[-1][0]
+ assert calls[-1][1:] == ('hi-IN','Riyaa')
+ assert c.get('/api/welcome/audio?language=hi-IN').status_code==200
+ assert len(calls)==1  # Fixed text is served from cache on later visits.
+ assert c.get('/api/welcome/audio?language=unlisted').status_code==422
+ assert c.get('/api/welcome/audio?language=kn-IN').status_code==200
+ assert calls[-1][1]=='kn-IN'
+ assert c.post('/api/voice/welcome',headers=H,json={'hour':9,'language':'en-IN'}).status_code==401
+ # IP bucket persists regardless of the number of cached/static language clips.
+ for i in range(7):
+  assert c.get('/api/welcome/audio?language=en-IN').status_code==200
+ assert c.get('/api/welcome/audio?language=en-IN').status_code==429
+
+
+def test_gnani_private_welcome_uses_authenticated_account_name_and_local_hour(setup,monkeypatch):
+ c,_=setup
+ calls=[]
+ monkeypatch.setattr('app.main.voice.ready',lambda:True)
+ async def provider(text,language,*,voice_override=None):
+  calls.append((text,language,voice_override))
+  return b'RIFF-mock-wav'
+ monkeypatch.setattr('app.main.voice.speak',provider)
+ login(c,'owner')
+ assert c.post('/api/voice/welcome',json={'hour':8,'language':'en-IN'}).status_code==403
+ morning=c.post('/api/voice/welcome',headers=H,json={'hour':8,'language':'en-IN'})
+ assert morning.status_code==200,morning.text
+ assert calls[-1][1:] == ('en-IN','Riyaa')
+ assert calls[-1][0].startswith('Good morning, owner!')
+ assert morning.headers['cache-control']=='no-store'
+ evening=c.post('/api/voice/welcome',headers=H,json={'hour':19,'language':'te-IN'})
+ assert evening.status_code==200,evening.text
+ assert 'శుభ సాయంత్రం' in calls[-1][0]
+ assert calls[-1][2]=='Riyaa'
+ assert c.post('/api/voice/welcome',headers=H,json={'hour':24,'language':'en-IN'}).status_code==422
+ assert c.post('/api/voice/welcome',headers=H,json={'hour':9,'language':'auto'}).status_code==422
