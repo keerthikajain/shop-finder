@@ -694,7 +694,7 @@ test('manager dictation writes actual recognized text into editable resolution n
  assert.match(source,/if\(!owner\|\|!open\|\|busy\|\|note\.trim\(\)\.length<3\)return/);
  assert.ok(source.includes("await api('/issues/'+issue.id+'/resolve',payload)"));
  assert.match(source,/resolutionAction==='confirmed_original'/);
- assert.match(source,/action:'confirmed_original',revision:current\\.revision/);
+ assert.ok(source.includes("action:'confirmed_original',revision:current.revision"));
  assert.match(source,/action:'unconfirmed'/);
  assert.match(source,/Still unconfirmed/);
 });
