@@ -10,15 +10,16 @@ import {dialogueControl} from './voice-review-commands.js';
  * A failed speaker, microphone or transcription always leaves manual inputs.
  */
 export default function GuidedVoiceTurn({
- language='en-IN',stage,promptEndpoint=null,onTranscript,onBack,onStop,
+ language='en-IN',stage,promptEndpoint=null,promptBody=null,onTranscript,onBack,onStop,
  onError=()=>{},onActiveChange=()=>{},disabled=false,context='location review'
 }){
  const [active,SetActive]=useState(false),[cycle,Cycle]=useState(0);
  const [status,Status]=useState('idle'),[error,ErrorMessage]=useState('');
  const [heard,Heard]=useState('');
- const handlers=useRef({onTranscript,onBack,onStop,onError,onActiveChange});
+ const handlers=useRef({onTranscript,onBack,onStop,onError,onActiveChange}),promptBodyRef=useRef(promptBody);
  const stageRef=useRef(stage),silence=useRef(0);
  handlers.current={onTranscript,onBack,onStop,onError,onActiveChange};
+ promptBodyRef.current=promptBody;
  stageRef.current=stage;
  useEffect(()=>{
   if(!active||disabled||!stage)return;
@@ -88,7 +89,7 @@ export default function GuidedVoiceTurn({
     const response=await fetch('/api/warehouse/'+endpoint,{
      method:'POST',credentials:'same-origin',
      headers:{'Content-Type':'application/json','X-Shop-Request':'1'},
-     body:JSON.stringify({language}),signal:controller.signal
+     body:JSON.stringify({language,...(promptBodyRef.current||{})}),signal:controller.signal
     });
     if(!response.ok){
      const reason=await response.json().catch(()=>({}));
