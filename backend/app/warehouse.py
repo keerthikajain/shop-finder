@@ -98,6 +98,9 @@ class PickUndo(Strict):
  reason:str=Field(default='Accidental confirmation',min_length=3,max_length=200)
 class ReviewAudio(Strict):
  language:Literal['en-IN','hi-IN','hi-en','te-IN']='en-IN'
+class ResolvePreviewAudio(ReviewAudio):
+ action:Literal['confirmed_original','unconfirmed']
+ note:str=Field(min_length=3,max_length=300)
 class ReportPreviewAudio(ReviewAudio):
  collection:str=Field(max_length=40)
  sku:str=Field(max_length=40)
@@ -931,7 +934,7 @@ def install_warehouse(app,path):
     'te-IN':'స్థాన మార్పును సమీక్షించండి.',
     'en-IN':'Review this location correction.'
    }[body.language]
-   message=f"{phrase} {p['name']}, {p['sku']}. Previous location: {loc_text(source)}. Proposed location: {loc_text(destination)}. Confirm only after physically verifying the proposed shelf."
+   message=f"{phrase} {p['name']}, {p['sku']}. Previous location: {loc_text(source)}. Proposed location: {loc_text(destination)}. Reason: {payload['reason']}. Confirm only after physically verifying the proposed shelf."
   return Response(await voice.speak(message,body.language),media_type='audio/wav',headers={'Cache-Control':'no-store'})
  @app.post('/api/warehouse/moves/{token}/confirm')
  def move_confirm(token:str,request:Request):
@@ -1020,6 +1023,23 @@ def install_warehouse(app,path):
  def issues(request:Request,collection:str='all'):
   u=identity(request)
   with connect(path) as c:return [dict(r) for r in c.execute('SELECT * FROM wh_issues WHERE (?=\'all\' OR collection=?) AND (?=\'owner\' OR actor=?) ORDER BY id DESC LIMIT 100',(collection,collection,u['role'],u['username']))]
+ @app.post('/api/warehouse/issues/{iid}/resolution-preview-audio')
+ async def spoken_resolution_preview(iid:int,body:ResolvePreviewAudio,request:Request):
+  identity(request,True)
+  with connect(path) as c:
+   issue=c.execute('SELECT * FROM wh_issues WHERE id=?',(iid,)).fetchone()
+   if not issue:raise HTTPException(404,'Report not found.')
+   if issue['status']!='open':raise HTTPException(409,'Report is already resolved.')
+   if issue['kind']!='wrong_location':raise HTTPException(422,'Only location reports have location outcomes.')
+   product=public(item_row(c,issue['collection'],issue['sku']))
+   recorded=next((loc for loc in product['placements'] if loc['code']==issue['location_code']),None)
+   if not recorded:raise HTTPException(409,'Recorded shelf changed. Refresh before approving.')
+   labels={
+    'confirmed_original':'You are confirming that the original shelf was physically verified.',
+    'unconfirmed':'You are keeping this report open because the shelf is not confirmed.'
+   }
+   message=f"{product['name']}, {product['sku']}. Last recorded location: {loc_text(recorded)}. {labels[body.action]} Your review note: {body.note}. Say save review to confirm, back to edit, or stop."
+  return Response(await voice.speak(message,body.language),media_type='audio/wav',headers={'Cache-Control':'no-store'})
  @app.post('/api/warehouse/issues/{iid}/review-audio')
  async def spoken_issue_review(iid:int,body:ReviewAudio,request:Request):
   identity(request,True)
