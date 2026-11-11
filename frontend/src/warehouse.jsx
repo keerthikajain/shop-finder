@@ -4,8 +4,10 @@ import {useT,APP_LANGUAGES} from './locale.js';
 import {PICKING_VOICE_LANGUAGES,PICKING_START_VOICE_LANGUAGES,pickVoicePhrase,isStartPickingCommand} from './picking-voice-phrases.js';
 import {startRecording,startLiveRecording} from './recording.js';
 import HandsFreePicking from './hands-free-picking.jsx';
+import GuidedVoiceTurn from './guided-voice-turn.jsx';
 import WorkspaceGreeting from './workspace-greeting.jsx';
 import {pickConfirmationIntent} from './picking-confirmations.js';
+import {voiceAction,actionPhrases,dialogueControl,plausibleShelfSuggestion} from './voice-review-commands.js';
 import {getThemePreference,resolveTheme} from './theme.js';
 import {Mark,Glyph,Modal,Place,Specs,ItemArt,ScanBox,Label,Feedback} from './warehouse-ui.jsx';
 import {ImportPanel,ItemEditor,MoveEditor,ReviewPanel} from './warehouse-manage.jsx';
@@ -22,7 +24,7 @@ const VOICE_LANGUAGE_DEFAULT={en:'en-IN',hi:'hi-IN','hi-en':'hi-en',te:'te-IN'};
 export const locationFields=['facility','floor','zone','aisle','rack','shelf','bin'];
 export const pathText=(l,isStarter=false)=>locationFields.filter(k=>!(isStarter&&k==='facility')).map(k=>l?.[k]).filter(Boolean).join(' / ');
 export function nextPendingPickIndex(lines=[]){
- const entries=lines.map((line,index)=>({line,index})).filter(x=>!x.line.complete&&!x.line.deferred_reason&&!x.line.location_report_open);
+ const entries=lines.map((line,index)=>({line,index})).filter(x=>!x.line.complete&&!x.line.deferred_reason&&!x.line.location_report_open&&!x.line.stale_catalogue);
  const key=line=>locationFields.map(field=>String(line.location?.[field]||'').toLocaleLowerCase()).join('\u0001');
  entries.sort((a,b)=>{
   const left=key(a.line),right=key(b.line);
@@ -45,7 +47,7 @@ export function VoiceButton({language,enabled,onText,onError,onPartial,live=fals
 export default function WarehouseApp({user,preferences,logout}){
  const t=useT(),owner=user.role==='owner';
  const [feedbackText,FB]=useState(''),[feedbackSent,FBS]=useState(false),[ownerFeedback,OF]=useState([]),[voiceGuideText,VGT]=useState(''),[voiceGuideCommand,VGC]=useState(''),[voiceGuidePaused,VGP]=useState(true),[meta,M]=useState(null),[items,I]=useState([]),[collection,C]=useState('all'),[page,P]=useState('find'),[brand,BR]=useState(''),[locationFilter,LF]=useState(''),[query,Q]=useState(''),[task,T]=useState(null),[recent,R]=useState([]),[busy,B]=useState(false),[error,E]=useState(''),[notice,N]=useState(''),[modal,D]=useState(null),[group,G]=useState('request'),[filter,F]=useState(''),[category,CAT]=useState(''),[language,L]=useState(()=>{const saved=localStorage.getItem('sf-voice-'+user.id);return ACTIVE_VOICE_CODES.has(saved)?saved:(VOICE_LANGUAGE_DEFAULT[user.language]||'en-IN')}),[liveMode,LM]=useState(false),[detectedSearchLanguage,DSL]=useState(null),[hintLanguages,HL]=useState([]),[auto,AUTO]=useState(true),[handsFree,HF]=useState(true),[pendingVoicePick,PV]=useState(null),[searchTranscript,ST]=useState(''),[voiceQuery,VQ]=useState(false),[tour,TOUR]=useState(user.tour_done?null:0),[theme,TH]=useState(()=>getThemePreference(localStorage)),[speaking,SP]=useState(false),[filtersOpen,FO]=useState(false),[sizeFilter,SZ]=useState(''),[activeLine,AL]=useState(0),[reviewNonce,RV]=useState(0);
- const audio=useRef(),audioURL=useRef(),audioRequest=useRef(null),playbackSerial=useRef(0),voiceFlowStopped=useRef(false),reportResumeRef=useRef(false),generation=useRef(0),main=useRef(),taskVoice=useRef(false),pendingResume=useRef(null);
+ const audio=useRef(),audioURL=useRef(),audioRequest=useRef(null),playbackSerial=useRef(0),voiceFlowStopped=useRef(false),reportResumeRef=useRef(false),generation=useRef(0),main=useRef(),taskVoice=useRef(false),pendingResume=useRef(null),audioEndResolve=useRef(null);
  const pack=collection==='all'?{id:'all',name:'Whole store',fields:[...new Set(meta?.collections.flatMap(c=>[...c.fields,...(meta.settings.custom_fields[c.id]||[])])||[])]}:meta?.collections.find(c=>c.id===collection),labels=meta?.field_labels||{},voice=!!meta?.voice,prismaV3=meta?.stt_model!=='prisma-v2.5';
  const invalidHints=false;
  const locationIsStarter=loc=>!!loc&&items.some(p=>p.synthetic&&p.placements.some(x=>x.code===loc.code));
@@ -58,6 +60,7 @@ export default function WarehouseApp({user,preferences,logout}){
  async function run(fn){B(true);E('');N('');try{return await fn()}catch(e){E(e.message)}finally{B(false)}}
  async function reload(){I(await request('/warehouse/items?collection='+collection));M(await request('/warehouse/meta'));R(await request('/warehouse/tasks'))}
  function stopSpeech(){
+  audioEndResolve.current?.();audioEndResolve.current=null;
   playbackSerial.current++;
   audioRequest.current?.abort();
   audioRequest.current=null;
@@ -84,6 +87,43 @@ export default function WarehouseApp({user,preferences,logout}){
    await audio.current.play();
   }catch(e){if(e.name!=='AbortError'&&serial===playbackSerial.current)E(e.name==='NotAllowedError'?'Tap Read answer to allow audio playback.':e.message);if(serial===playbackSerial.current)SP(false)}
   finally{if(audioRequest.current===controller)audioRequest.current=null}
+ }
+ async function playFixedVoice(step,spokenLanguage=language,waitForEnd=false,force=false){
+  if(!voice||(!force&&voiceFlowStopped.current))return;
+  stopSpeech();
+  const serial=playbackSerial.current,controller=new AbortController();
+  audioRequest.current=controller;SP(true);
+  try{
+   const response=await fetch('/api/warehouse/voice/step-audio?step='+encodeURIComponent(step),{
+    method:'POST',credentials:'same-origin',
+    headers:{'X-Shop-Request':'1','Content-Type':'application/json'},
+    body:JSON.stringify({language:spokenLanguage}),
+    signal:AbortSignal.any([controller.signal,AbortSignal.timeout(45000)])
+   });
+   if(!response.ok){
+    const body=await response.json().catch(()=>({}));
+    throw Error(body.detail||'Voice reply unavailable. The saved result is shown on screen.');
+   }
+   const blob=await response.blob();
+   if(serial!==playbackSerial.current)return;
+   if(audioURL.current)URL.revokeObjectURL(audioURL.current);
+   audioURL.current=URL.createObjectURL(blob);audio.current=new Audio(audioURL.current);
+   let done;
+   const ended=new Promise(resolve=>{done=resolve});
+   audioEndResolve.current=done;
+   audio.current.onended=()=>{if(serial===playbackSerial.current)SP(false);done()};
+   audio.current.onerror=()=>{if(serial===playbackSerial.current)SP(false);done()};
+   await audio.current.play();
+   if(waitForEnd)await ended;
+  }catch(e){
+   if(e.name!=='AbortError'&&serial===playbackSerial.current)E(e.message);
+   if(serial===playbackSerial.current)SP(false);
+  }finally{
+   if(serial===playbackSerial.current){
+    audioEndResolve.current=null;
+    if(audioRequest.current===controller)audioRequest.current=null;
+   }
+  }
  }
  async function search(text=query,fromVoice=voiceQuery,global=false,spokenLanguage=null){
   PV(null);VGC('');VGT('');stopVoiceFlow();
@@ -116,9 +156,9 @@ export default function WarehouseApp({user,preferences,logout}){
   if(index<0){
    VGP(true);PV(null);AL(0);
    if(!deferred&&next.lines.every(line=>line.complete)){
-    if(voice&&auto&&!voiceFlowStopped.current)await playPickGuidance('next',next,0);
     const finished=await api('/tasks/'+next.id+'/picking/finish',{});
     T(finished);N(t('All done! Your picking list is complete.'));
+    if(voice&&auto&&!voiceFlowStopped.current)await playFixedVoice('pick_done',finished.language);
    }else{
     if(voice&&auto&&!voiceFlowStopped.current)await playPickGuidance('next',next,0);
     N(t('No more items to guide right now. Unconfirmed and reported items are saved for review. Retry an item manually when ready.'));
@@ -148,6 +188,19 @@ export default function WarehouseApp({user,preferences,logout}){
    R(await request('/warehouse/tasks'));
   });
  }
+ async function undoPick(line){
+  if(!task||line<0||busy)return;
+  await run(async()=>{
+   const next=await api('/tasks/'+task.id+'/picking/undo',{line,reason:'Worker corrected an accidental confirmation'});
+   T(next);AL(line);PV(null);
+   N(t('Confirmation undone. This item is ready to verify again.'));
+   R(await request('/warehouse/tasks'));
+   if(voice&&!voiceFlowStopped.current){
+    await playFixedVoice('pick_undo',next.language,true);
+    if(auto&&!voiceFlowStopped.current)await playPickGuidance('repeat',next,line);
+   }
+  });
+ }
  async function scan(line,kind,value){await run(async()=>{const next=await api('/tasks/'+task.id+'/scan',{line,kind,value});D(null);PV(null);await progressAfterPick(next,kind!=='product');await reload()})}
  async function playPickGuidance(command,source=task,line=activeLine,manual=false){
   if(!voice||!source||(!manual&&voiceFlowStopped.current))return;
@@ -172,6 +225,31 @@ export default function WarehouseApp({user,preferences,logout}){
  async function voicePickCommand(transcript,source=task){
   if(!source||source.picking?.paused||!transcript?.trim())return;
   VGC(transcript);
+  const control=dialogueControl(source.language,transcript);
+  if(control==='stop'){PV(null);stopVoiceFlow();VGT(t('Voice guidance stopped. Your progress is saved.'));return false}
+  if(control==='help'){
+   VGT(t(pendingVoicePick?'Say Yes or No to confirm this item, Repeat, Wrong location or Stop.':'Say Found it, Wrong location, Repeat, Next item, Undo or Stop. Buttons are available too.'));
+   if(voice&&!voiceFlowStopped.current)await playPickGuidance('help',source,pendingVoicePick?.line??activeLine);
+   return;
+  }
+  if(control==='repeat'){
+   if(voice&&!voiceFlowStopped.current)await playPickGuidance(pendingVoicePick?'verify':'repeat',source,pendingVoicePick?.line??activeLine);
+   return;
+  }
+  if(control==='back'){
+   if(pendingVoicePick){const previous=pendingVoicePick.line;PV(null);VGT(t('Confirmation cancelled. Returning to this item.'));if(voice&&!voiceFlowStopped.current)await playPickGuidance('repeat',source,previous);return}
+   const previous=Math.max(0,activeLine-1);AL(previous);VGT(t('Showing the previous item without changing its saved status.'));
+   if(voice&&!voiceFlowStopped.current)await playPickGuidance('repeat',source,previous);
+   return;
+  }
+  if(voiceAction(source.language,'undo',transcript)){
+   if(lastConfirmedIndex<0){VGT(t('There is no confirmed item to undo.'));return}
+   PV(null);
+   await undoPick(lastConfirmedIndex);
+   // The reader pauses the microphone during Gnani TTS and resumes after playback.
+   // Returning false would strand HandsFreePicking in a stopped state.
+   return;
+  }
   if(pendingVoicePick){
    const response=pickConfirmationIntent(source.language,transcript);
    if(response==='no'){const index=pendingVoicePick.line;PV(null);VGT(t('Item not confirmed. Moving to another remaining item.'));await run(()=>deferPick(source,index,'declined'));return}
@@ -263,7 +341,7 @@ export default function WarehouseApp({user,preferences,logout}){
   VGP(!(guided&&handsFree));
   N(t('Search confirmed. Finder will read the first location, then listen for your command. Manual controls are always available.'));
   if(guided)await playPickGuidance('start',next,Math.max(0,nextPendingPickIndex(next.lines)));
- }else{VGP(true);VGT('');N(t('Picking completed. No stock quantities were changed.'))}R(await request('/warehouse/tasks'))})}
+ }else{VGP(true);VGT('');N(t('Picking completed. No stock quantities were changed.'));if(voice&&!voiceFlowStopped.current)await playFixedVoice('pick_done',next.language)}R(await request('/warehouse/tasks'))})}
  async function togglePickPause(){
   if(!task||task.picking?.status!=='active'||busy)return;
   stopVoiceFlow();PV(null);
@@ -283,6 +361,8 @@ export default function WarehouseApp({user,preferences,logout}){
  }
  async function resumePick(id){VGP(true);stopSpeech();await run(async()=>{const restored=await request('/warehouse/tasks/'+encodeURIComponent(id));if(restored.collection!==collection){pendingResume.current=restored;C(restored.collection)}else{T(restored);Q(restored.query);G('location');AL(Math.max(0,nextPendingPickIndex(restored.lines)))}P('find');N(t('Picking session restored.'))})}
  const picking=task?.picking||{status:'ready'},pickPaused=!!picking.paused,hasSearchCandidates=!!task?.lines.some(l=>l.selected||l.candidates.length),verifiedCount=task?.lines.filter(l=>l.complete).length||0,unresolvedLines=task?.lines.filter(l=>!l.selected||!l.location)||[],reportedLines=task?.lines.filter(l=>l.location_report_open)||[],eligibleLines=task?.lines.filter(l=>l.selected&&l.location&&!l.location_report_open)||[],canStartPick=!!task?.lines.length&&unresolvedLines.length===0&&eligibleLines.length>0,nextPickIndex=nextPendingPickIndex(task?.lines);
+ const lastConfirmedIndex=task?.lines.reduce((best,line,i)=>line.complete&&
+   (best<0||String(line.confirmed_at||'')>=String(task.lines[best].confirmed_at||''))?i:best,-1)??-1;
  const selected=task?.lines.filter(l=>l.selected)||[],locations=[...new Map(items.flatMap(p=>p.placements.map(l=>[l.code,l]))).values()],filtered=items.filter(p=>(!category||p.category===category)&&(!filter||[p.sku,p.name,p.brand,p.category,p.barcode,...p.aliases,...Object.values(p.specs),...p.placements.map(pathText)].join(' ').toLowerCase().includes(filter.toLowerCase())));
  const sizeOptions=[...new Set(items.flatMap(p=>['size','size_uk','size_eu'].map(k=>p.specs?.[k]).filter(Boolean).map(String)))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
  const guideLine=task?.lines[activeLine]?.selected?task.lines[activeLine]:selected[0];
@@ -308,6 +388,7 @@ export default function WarehouseApp({user,preferences,logout}){
  {hasSearchCandidates?<section className="wh-panel sf-guided-picking" aria-label={t('Guided picking')}>
   <div className="sf-picking-head"><div><span className="wh-eyebrow">{t('Guided picking')}</span><h3>{t(picking.status==='completed'?'Picking completed':pickPaused?'Picking paused':picking.status==='active'?'Picking in progress':'Ready to pick')}</h3><small>{t('Confirm the search once, then Finder guides you to each shelf. Say Repeat, Found it or Wrong location; buttons work too.')}</small></div><b>{verifiedCount}/{task.lines.length}</b></div>
   <progress aria-label={t('Picking progress')} max={task.lines.length} value={verifiedCount}/>
+  {lastConfirmedIndex>=0&&<div className="sf-picking-undo"><button type="button" disabled={busy||pickPaused} onClick={()=>undoPick(lastConfirmedIndex)}>{t('Undo last confirmation')}</button>{voice&&<VoiceButton small autoStop enabled={!busy&&!pickPaused&&!speaking} language={task.language} label={t('Say undo last confirmation')} onError={E} onText={text=>{if(voiceAction(task.language,'undo',text))undoPick(lastConfirmedIndex);else E(t('Say: ')+actionPhrases(task.language,'undo')[0])}}/>}</div>}
   {picking.status!=='completed'&&<div className="sf-voice-guide">
     {picking.status==='ready'&&<p className="sf-voice-guide-preview" role="status">{unresolvedLines.length>0?t('Choose or remove the unresolved variants below before starting. Finder will not guess a size or version.'):reportedLines.length>0?t('Reported shelf locations are skipped until verified. Confirm to guide the remaining items automatically.'):t('All items are ready. Confirm search once; Finder will speak the first location and then listen automatically.')}</p>}
    <div className="sf-voice-guide-heading"><strong>{t('Voice-guided picking')}</strong><small>{t(picking.status==='ready'?(unresolvedLines.length?'Finish reviewing your choices to begin.':reportedLines.length?'Reported locations are skipped. Finder can guide the remaining items.':'Confirm search once; Finder will guide you without more clicks.'):'Say Repeat location, Found it, Wrong location or Stop. You can also tap a button.')}</small></div>
@@ -333,7 +414,7 @@ export default function WarehouseApp({user,preferences,logout}){
  {page==='catalogue'&&<section className="wh-panel wh-catalogue">{items.some(item=>item.synthetic)&&<p className="sf-catalogue-provenance"><strong>{t('Starter catalogue')}</strong> · {t('Locations in starter records are not physically verified. Import or verify your store records before operational picking.')}</p>}<div className="wh-toolbar"><label className="wh-filter"><Glyph name="search"/><input aria-label={t('Filter catalogue')} placeholder={t('Search name, size, SKU or location')} value={filter} onChange={e=>F(e.target.value)}/></label><select aria-label={t('Category')} value={category} onChange={e=>CAT(e.target.value)}><option value="">{t('All categories')}</option>{[...new Set(items.map(p=>p.category))].map(c=><option key={c}>{c}</option>)}</select><a className="wh-button" href={'/api/warehouse/export?collection='+collection+'&format=xlsx'}>{t('Export Excel')}</a>{owner&&<button className="primary" onClick={()=>D({type:'edit',item:null})}><Glyph name="plus"/>{t('Add item')}</button>}</div><div className="wh-table-wrap"><table><thead><tr><th>{t('Item')}</th><th>{t('Specifications')}</th><th>{t('Storage')}</th><th>{t('Last updated')}</th><th><span className="sr-only">{t('Open')}</span></th></tr></thead><tbody>{filtered.map(p=><tr key={p.collection+':'+p.sku}><td><div className="wh-table-item"><ItemArt collection={p.collection} photo={p.photo_url} name={p.name}/><div><b>{p.name}</b><small>{p.sku} · {p.category}{p.brand?' · '+p.brand:''}</small></div></div></td><td><Specs item={p} labels={labels}/></td><td>{p.placements.length>1?<b>{p.placements.length} {t('locations')}</b>:<><b>{pathText(p.placements[0],!!p.synthetic)}</b><small>{p.placements[0].quantity==null?'Not counted':p.placements[0].quantity+' units'}</small></>}</td><td><small>{new Date(p.updated_at).toLocaleDateString()}<br/>{p.updated_by}</small></td><td><button aria-label={t('Open')+' '+p.sku} onClick={()=>D({type:'detail',item:p})}><Glyph name="arrow"/></button></td></tr>)}</tbody></table>{!filtered.length&&<p className="wh-empty">{t('No items match this filter.')}</p>}</div><div className="wh-table-footer">{filtered.length} {t('items')}<span>Recorded counts update only after a confirmed stock operation.</span></div></section>}
  {page==='locations'&&<><div className="wh-toolbar"><label className="wh-filter"><Glyph name="search"/><input placeholder={t('Filter locations')} aria-label={t('Filter locations')} value={filter} onChange={e=>F(e.target.value)}/></label></div><div className="wh-location-grid">{locations.filter(l=>pathText(l).toLowerCase().includes(filter.toLowerCase())).map(l=><article className="wh-panel" key={l.code}><Place location={l} example={items.some(p=>p.synthetic&&p.placements.some(x=>x.code===l.code))}/><div className="wh-location-items">{items.filter(p=>p.placements.some(x=>x.code===l.code)).map(p=><button key={p.collection+':'+p.sku} onClick={()=>D({type:'detail',item:p})}><b>{p.name}</b><small>{p.sku}</small><Glyph name="arrow"/></button>)}</div><button onClick={()=>D({type:'label',location:l})}><Glyph name="scan"/>{t('Shelf label')}</button></article>)}</div></>}
  {page==='import'&&owner&&<ImportPanel key={collection} {...{collection,pack,labels,run,busy,reload}} onSuccess={text=>N(t(text))}/>}
- {page==='review'&&<ReviewPanel key={collection+'-'+reviewNonce} {...{collection,owner,run,busy,language,voice}} onError={E} onCorrectLocation={issue=>{const item=items.find(p=>p.collection===issue.collection&&p.sku===issue.sku);const location=item?.placements.find(p=>p.code===issue.location_code);if(!item||!location){E(t('Recorded location changed. Refresh the catalogue before correcting.'));return}D({type:'move',item,location})}}/>}
+ {page==='review'&&<ReviewPanel key={collection+'-'+reviewNonce} {...{collection,owner,run,busy,language,voice}} onError={E} onSaved={result=>{if(voice)playFixedVoice(result.status==='resolved'?'review_verified_saved':'review_pending_saved',language,false,true)}} onCorrectLocation={issue=>{const item=items.find(p=>p.collection===issue.collection&&p.sku===issue.sku);const location=item?.placements.find(p=>p.code===issue.location_code);if(!item||!location){E(t('Recorded location changed. Refresh the catalogue before correcting.'));return}D({type:'move',item,location})}}/>}
  {page==='more'&&user.is_demo&&<section className="sf-preview-banner"><div><strong>Have feedback?</strong><p>You can help us improve it.</p></div><button type="button" onClick={()=>navigate('feedback')}>Share feedback</button></section>}
  {page==='more'&&<section className="sf-more-page" aria-label={t('More')}>
   <div className="sf-more-intro"><span className="wh-eyebrow">{t('WORKSPACE TOOLS')}</span><h2>{t('More')}</h2><p>{t('Manage tools, reports and workspace settings.')}</p></div>
@@ -364,12 +445,14 @@ export default function WarehouseApp({user,preferences,logout}){
  {modal?.type==='detail'&&<Modal title={t('Item details')} onClose={()=>D(null)} wide><div className="wh-detail-heading"><ItemArt collection={modal.item.collection} photo={modal.item.photo_url} name={modal.item.name}/><div><span className="wh-eyebrow">{modal.item.brand} · {modal.item.category}</span><h2>{modal.item.name}</h2><code>{modal.item.sku}</code></div></div><Specs item={modal.item} labels={labels}/><h3>{t('Recorded locations')}</h3>{modal.item.placements.map(l=><div className="wh-detail-place" key={l.code}><Place location={l} example={!!modal.item.synthetic}/><p className="sf-stock-badge">{l.quantity==null?'Stock not counted':l.quantity+' units recorded'}</p>{(owner||meta.settings.staff_stock)&&<button onClick={()=>D({type:'stock',item:modal.item,location:l})}><Glyph name="box"/>Update stock</button>}<button onClick={()=>D({type:'label',item:modal.item,location:l})}><Glyph name="scan"/>{t('Labels')}</button>{owner&&<button onClick={()=>D({type:'move',item:modal.item,location:l})}><Glyph name="edit"/>{t('Correct location')}</button>}</div>)}<p><b>{t('Also known as')}: </b>{modal.item.aliases.join(', ')||'—'}</p><p><b>{t('Barcode')}: </b><code>{modal.item.barcode||'—'}</code></p><small>{t('Last updated')} {new Date(modal.item.updated_at).toLocaleString()} · {modal.item.updated_by} · {t('Revision')} {modal.item.revision}</small><div className="wh-modal-actions"><button onClick={()=>D({type:'report',item:modal.item})}>{t('Report issue')}</button>{owner&&<button className="primary" onClick={()=>D({type:'edit',item:modal.item})}>{t('Edit item')}<Glyph name="edit"/></button>}</div></Modal>}
  {modal?.type==='stock'&&<Modal title="Update recorded stock" onClose={()=>D(null)} wide><StockEditor {...{owner,locations,run,busy,voice,language}} fields={meta.settings.location_fields} item={modal.item} source={modal.location} onError={E} onSave={async()=>{D(null);T(null);await reload();N('Stock updated. The change is recorded in history.')}}/></Modal>}
  {modal?.type==='edit'&&<Modal title={t(modal.item?'Edit item':'Add item')} onClose={()=>D(null)} wide><ItemEditor item={modal.item} collection={modal.item?.collection||(collection==='all'?meta.settings.collections[0]:collection)} pack={meta.collections.find(c=>c.id===(modal.item?.collection||(collection==='all'?meta.settings.collections[0]:collection)))} collections={meta.collections.filter(c=>meta.settings.collections.includes(c.id))} settings={meta.settings} {...{labels,run,busy}} onSave={async()=>{D(null);await reload();N(t('Item saved.'))}}/></Modal>}
- {modal?.type==='move'&&<Modal title={t('Correct location')} onClose={()=>D(null)} wide><MoveEditor collection={modal.item.collection} fields={meta.settings.location_fields} {...{run,busy,language,voice}} item={modal.item} source={modal.location} onError={E} onSave={async()=>{const previous=task?.query;D(null);await reload();RV(v=>v+1);if(previous&&page==='find'){await search(previous,false);N(t('Location saved. Search results now show the updated shelf. Review the new list before picking.'))}else{T(null);N(t('Verified location saved and shown in future searches.'))}}}/></Modal>}
+ {modal?.type==='move'&&<Modal title={t('Correct location')} onClose={()=>D(null)} wide><MoveEditor collection={modal.item.collection} fields={meta.settings.location_fields} {...{run,busy,language,voice}} item={modal.item} source={modal.location} onError={E} onSave={async()=>{const previous=task?.query;D(null);await reload();RV(v=>v+1);if(previous&&page==='find'){await search(previous,false);N(t('Location saved. Search results now show the updated shelf. Review the new list before picking.'))}else{T(null);N(t('Verified location saved and shown in future searches.'))}if(voice)await playFixedVoice('move_saved',language,false,true)}}/></Modal>}
  {modal?.type==='report'&&<Modal title={t('Report an issue')} onClose={()=>{reportResumeRef.current=false;D(null);VGP(true)}}><Report item={modal.item} location={modal.location} collection={modal.item.collection} {...{run,busy,voice,language,speaking}} onStopSpeaking={stopSpeech} onError={E} onSave={async report=>{
  const index=modal.index,active=task?.picking?.status==='active'&&!task.picking?.paused;
  const shouldResume=reportResumeRef.current;
  reportResumeRef.current=false;
- VGP(true);D(null);
+ VGP(true);
+ if(voice&&!voiceFlowStopped.current)await playFixedVoice('report_saved',language,true);
+ D(null);
  if(index!=null&&active){
   VGP(!(voice&&handsFree&&shouldResume));
   await deferPick(task,index,'reported');
@@ -385,13 +468,42 @@ export default function WarehouseApp({user,preferences,logout}){
  </div></Feedback.Provider>
 }
 function Report({item,location,collection,run,busy,speaking=false,voice,language,onError,onStopSpeaking,onSave}){
- const t=useT(),[reason,R]=useState(location?'Item not found at the recorded location.':''),[suggested,S]=useState(''),[heard,H]=useState(''),[heardField,HF]=useState(''),[pendingSubmit,PS]=useState(false);
+ const t=useT(),[reason,R]=useState(location?'Item not found at the recorded location.':''),[suggested,S]=useState(''),[heard,H]=useState(''),[heardField,HF]=useState(''),[pendingSubmit,PS]=useState(false),[guideStage,SetGuideStage]=useState('report_reason'),[guidedActive,SetGuidedActive]=useState(false);
  async function submitReport(){
-  if(busy||reason.trim().length<3)return;
-  await run(async()=>{
+  if(busy||reason.trim().length<3)return false;
+  const saved=await run(async()=>{
    const report=await api('/issues',{collection,sku:item.sku,reason:reason.trim(),kind:location?'wrong_location':'general',location_code:location?.code||'',suggested_location:suggested.trim()});
    await onSave(report);
+   return true;
   });
+  return !!saved;
+ }
+ async function guidedReportAnswer(text,step){
+  const recognized=String(text||'').trim();
+  if(step==='report_reason'){
+   if(recognized.length<3){onError(t('Explain what was wrong with this location.'));return true}
+   R(recognized.slice(0,400));H(recognized);HF('reason');
+   SetGuideStage(location?'report_suggestion':'report_confirm');return true;
+  }
+  if(step==='report_suggestion'){
+   const skipping=voiceAction(language,'report_skip',recognized);
+   if(!skipping&&!plausibleShelfSuggestion(recognized)){onError(t('Please name a rack, shelf, area or code. Say Skip if you do not know.'));return true}
+   S(skipping?'':recognized.slice(0,200));H(recognized);HF('shelf');
+   SetGuideStage('report_confirm');return true;
+  }
+  if(step==='report_confirm'){
+   if(!voiceAction(language,'report_send',recognized)){
+    onError(t('Nothing has been submitted. Say: ')+actionPhrases(language,'report_send')[0]);return true;
+   }
+   await submitReport();
+   return false;
+  }
+  return false;
+ }
+ function guidedReportBack(step){
+  if(step==='report_confirm')SetGuideStage(location?'report_suggestion':'report_reason');
+  else if(step==='report_suggestion')SetGuideStage('report_reason');
+  else onError(t('This is the first step. Say Stop to pause.'));
  }
  async function voiceCommand(text){
   const transcript=String(text||'').trim(),normalized=transcript.toLocaleLowerCase().replace(/[.,!?।॥]/g,'').trim();
@@ -413,20 +525,21 @@ function Report({item,location,collection,run,busy,speaking=false,voice,language
  return <div className="sf-report-flow">
  <p><b>{item.name}</b> · {item.sku}</p>
  {location&&<><p>{t('Recorded location:')} <strong>{pathText(location)}</strong></p><p>{t('Thanks for letting us know. Tell us what happened, and your manager can review the location.')}</p></>}
+ {voice&&<GuidedVoiceTurn language={language} stage={guideStage} context="Automatic wrong-location report" promptEndpoint={guideStage==='report_confirm'?'voice/report-preview-audio':null} promptBody={guideStage==='report_confirm'?{collection,sku:item.sku,reason,suggested_location:suggested,location_code:location?.code||''}:null} onTranscript={guidedReportAnswer} onBack={guidedReportBack} onActiveChange={SetGuidedActive} onError={onError}/>}
  <div className="sf-report-step-note" role="status"><strong>{t('Picking is paused — report the problem')}</strong>{t('Step 1: Say or type what is wrong. Step 2: Review the text. Step 3: Send to your manager. Return to picking when ready.')}</div>
  {voice&&<div className="sf-report-voice-panel" aria-label={t('Voice report')}>
    <strong>{t('Tell us what happened')}</strong>
    <small>{t('Speak once and pause. Recording stops after your sentence. You can also type below, and nothing is sent until you confirm.')}</small>
    {speaking&&<button type="button" className="sf-report-stop-audio" onClick={onStopSpeaking}>{t('Stop guidance audio')}</button>}
-   <VoiceButton small autoStop enabled={!busy&&!speaking} {...{language,onError}} label={t('Speak report')} onText={voiceCommand} onPartial={text=>{H(text);HF('listening')}}/>
+   <VoiceButton small autoStop enabled={!busy&&!speaking&&!guidedActive} {...{language,onError}} label={t('Speak report')} onText={voiceCommand} onPartial={text=>{H(text);HF('listening')}}/>
    <div className="sf-report-transcript" role="status" aria-live="polite"><span>{t('Recognized speech')}</span><p>{heard||t('Your spoken words will appear here after recognition.')}</p>{heardField==='reason'&&<small>{t('Added to the report description. Check it before sending.')}</small>}{heardField==='shelf'&&<small>{t('Added as a suggested location.')}</small>}</div>
-   {pendingSubmit&&<div className="sf-report-send-approval" role="status"><strong>{t('Send this report to your manager?')}</strong><p>{t('Say Yes to send, or No to keep editing.')}</p><button type="button" disabled={busy} onClick={submitReport}>{t('Yes, send report')}</button><button type="button" onClick={()=>PS(false)}>{t('Not yet')}</button></div>}
+   {pendingSubmit&&<div className="sf-report-send-approval" role="status"><strong>{t('Send this report to your manager?')}</strong><p>{t('Say Yes to send, or No to keep editing.')}</p><button type="button" disabled={busy||guidedActive} onClick={submitReport}>{t('Yes, send report')}</button><button type="button" onClick={()=>PS(false)}>{t('Not yet')}</button></div>}
   </div>}
  <form onSubmit={e=>{e.preventDefault();submitReport()}}>
  <label>{t('Write or edit what needs checking')}<textarea required minLength={3} maxLength={400} value={reason} onChange={e=>R(e.target.value)}/></label>
  {location&&<div className="sf-report-location"><label htmlFor="sf-report-location-input">{t('Where did you find it? (optional)')}</label><div className="sf-report-location-field"><input id="sf-report-location-input" value={suggested} maxLength={200} placeholder={t('Rack, shelf or bin, if known')} onChange={e=>S(e.target.value)}/></div></div>}
  <p>{t('Your report will appear in Activity. Your manager can review it and update the saved shelf if needed.')}</p>
- <button className="primary" disabled={busy||reason.trim().length<3}>{t('Send for review')}</button>
+ <button className="primary" disabled={busy||guidedActive||reason.trim().length<3}>{t('Send for review')}</button>
  </form></div>;
 }
 function ScanTask({line,onRead,onManual,busy,onError}){const t=useT();return <><p><b>{line.selected.name}</b> · {line.selected.sku}</p><Place location={line.location} example={!!line.selected?.synthetic}/><div className="wh-scan-steps"><span className={line.product_scanned?'done':''}>1. {t('Scan item')}{line.product_scanned&&' ✓'}</span><span className={line.complete?'done':''}>2. {t('Scan location')}{line.complete&&' ✓'}</span></div>{line.complete?<div className="wh-empty"><Glyph name="check"/><h3>{t('Item and location confirmed.')}</h3></div>:<><h3>{t(line.product_scanned?'Now scan the location label':'Scan the item label')}</h3><ScanBox key={line.product_scanned?'location':'product'} {...{onRead,onError}}/><button className="wh-text-button" disabled={busy} onClick={onManual}>{t('Picked and checked — confirm without scanner')}</button></>}</>}

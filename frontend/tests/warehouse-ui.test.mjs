@@ -642,7 +642,7 @@ test('wrong-location handoff pauses pick capture and opens an editable report st
 });
 test('spoken report submission resumes the next eligible item only after report is saved',async()=>{
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(source,/VGP\(true\);D\(null\)/);
+ assert.ok(source.includes("VGP(true);\n if(voice&&!voiceFlowStopped.current)await playFixedVoice('report_saved',language,true);\n D(null);"));
  assert.match(source,/await deferPick\(task,index,'reported'\)/);
  assert.match(source,/VGP\(!\(voice&&handsFree&&shouldResume\)\)/);
  assert.match(source,/reportResumeRef\.current=handsFree&&!voiceGuidePaused/);
@@ -664,14 +664,14 @@ test('pink disabled and recording buttons have readable, high-contrast foregroun
 test('report mic waits until spoken guidance stops to avoid transcribing itself',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/function Report\(\{item,location,collection,run,busy,speaking=false/);
- assert.match(src,/VoiceButton small autoStop enabled=\{!busy&&!speaking\}/);
+ assert.ok(src.includes("VoiceButton small autoStop enabled={!busy&&!speaking&&!guidedActive}"));
  assert.match(src,/collection=\{modal\.item\.collection\} \{\.\.\.\{run,busy,voice,language,speaking\}\}/);
 });
 
 test('activity report card groups issue, shelf locations and resolution instead of wide scattered flex rows',async()=>{
  const source=await readFile(new URL('../src/warehouse-manage.jsx',import.meta.url),'utf8');
  const css=await readFile(new URL('../src/activity-settings-polish.css',import.meta.url),'utf8');
- assert.match(source,/function TeamReportCard\(\{issue,owner,busy,voice,language,onError,onCorrectLocation,run,reload\}\)/);
+ assert.ok(source.includes("function TeamReportCard({issue,owner,busy,voice,language,onError,onCorrectLocation,onSaved,run,reload})"));
  assert.match(source,/className="sf-team-report-header"/);
  assert.match(source,/className="sf-team-report-body"/);
  assert.match(source,/className="sf-team-report-locations"/);
@@ -686,13 +686,17 @@ test('manager dictation writes actual recognized text into editable resolution n
  assert.match(source,/const recognized=String\(text\|\|''\)\.trim\(\)/);
  assert.match(source,/SetTranscript\(recognized\)/);
  assert.match(source,/SetNote\(recognized\.slice\(0,300\)\)/);
- assert.match(source,/autoStop enabled=\{!busy\}/);
+ assert.ok(source.includes("autoStop enabled={!busy&&!reviewSpeaking&&!guidedActive}"));
  assert.match(source,/onText=\{captureNote\}/);
  assert.match(source,/onError=\{message=>\{SetVoiceError/);
  assert.match(source,/role="alert"/);
  assert.match(source,/textarea rows=\{2\} value=\{note\}/);
- assert.match(source,/if\(!owner\|\|!open\|\|busy\|\|note\.trim\(\)\.length<3\)return/);
- assert.match(source,/await api\('\/issues\/'\+issue\.id\+'\/resolve',\{note:note\.trim\(\)\}\)/);
+ assert.ok(source.includes("if(!owner||!open||busy||reviewSpeaking||note.trim().length<3)return"));
+ assert.ok(source.includes("await api('/issues/'+issue.id+'/resolve',payload)"));
+ assert.match(source,/resolutionAction==='confirmed_original'/);
+ assert.ok(source.includes("action:'confirmed_original',revision:current.revision"));
+ assert.match(source,/action:'unconfirmed'/);
+ assert.match(source,/Still unconfirmed/);
 });
 
 test('login workspace creation CTA remains legible on hover and focus',async()=>{

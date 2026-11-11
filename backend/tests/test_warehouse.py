@@ -1420,3 +1420,281 @@ def test_all_reported_locations_block_start_without_false_verification(setup):
  reloaded=c.get('/api/warehouse/tasks/'+task['id']).json()
  assert reloaded['picking']['status']=='ready'
  assert not reloaded['lines'][0]['complete']
+
+
+def test_wrong_location_review_requires_physical_verification_and_updates_future_answers(setup):
+ c,path=setup
+ task=search(c,'CLO-001')
+ line=task['lines'][0]
+ original=line['location']
+ issue=post(c,'/issues',{'collection':'clothing','sku':'CLO-001','kind':'wrong_location',
+                         'location_code':original['code'],'reason':'Shelf reported empty'})
+ assert issue.status_code==200
+ report_id=issue.json()['id']
+ fresh=search(c,'CLO-001')
+ assert fresh['lines'][0]['location_report_open'] is True
+ assert 'under review' in fresh['spoken_text'].lower()
+ assert 'last recorded location' in fresh['spoken_text'].lower()
+ assert post(c,f'/issues/{report_id}/resolve',{'note':'Checked report'}).status_code==422
+ pending=post(c,f'/issues/{report_id}/resolve',{'note':'Still searching for the product','action':'unconfirmed'})
+ assert pending.status_code==200,pending.text
+ assert pending.json()['status']=='open'
+ assert search(c,'CLO-001')['lines'][0]['location_report_open'] is True
+ stale=post(c,f'/issues/{report_id}/resolve',{'note':'Found at recorded shelf','action':'confirmed_original','revision':999})
+ assert stale.status_code==409
+ revision=fresh['lines'][0]['selected']['revision']
+ confirmed=post(c,f'/issues/{report_id}/resolve',{'note':'Physically located correct product at this shelf',
+                                                'action':'confirmed_original','revision':revision})
+ assert confirmed.status_code==200,confirmed.text
+ assert confirmed.json()['status']=='resolved'
+ assert post(c,f'/issues/{report_id}/resolve',{'note':'Duplicate confirmation','action':'confirmed_original','revision':revision}).status_code==409
+ next_search=search(c,'CLO-001')
+ assert next_search['lines'][0]['location_report_open'] is False
+ assert next_search['lines'][0]['last_confirmed_at']
+ assert 'under review' not in next_search['spoken_text'].lower()
+ assert next_search['lines'][0]['location']['code']==original['code']
+ with connect(path) as db:
+  saved=db.execute('SELECT note,status,resolved_by FROM wh_issues WHERE id=?',(report_id,)).fetchone()
+  assert saved['status']=='resolved' and 'physically verified' in saved['note'].lower()
+  assert saved['resolved_by']
+
+
+def test_report_cannot_be_cleared_after_location_record_changes(setup):
+ c,_=setup
+ task=search(c,'CLO-001')
+ line=task['lines'][0]
+ issue=post(c,'/issues',{'collection':'clothing','sku':'CLO-001','kind':'wrong_location',
+                         'location_code':line['location']['code'],'reason':'Cannot locate product'})
+ issue_id=issue.json()['id']
+ updated=line['selected'].copy()
+ updated['name']='Updated after report'
+ assert save(c,updated,updated['revision']).status_code==200
+ response=post(c,f'/issues/{issue_id}/resolve',{'note':'Shelf confirmed','action':'confirmed_original',
+                                               'revision':line['selected']['revision']})
+ assert response.status_code==409
+ assert search(c,'CLO-001')['lines'][0]['location_report_open'] is True
+
+
+def test_existing_search_session_warns_when_location_reported_or_catalogue_changes(setup):
+ c,_=setup
+ task=search(c,'CLO-001')
+ tid=task['id']
+ line=task['lines'][0]
+ recorded=line['location']
+ response=post(c,'/issues',{'collection':'clothing','sku':'CLO-001','kind':'wrong_location',
+                            'location_code':recorded['code'],'reason':'Item not found there'})
+ assert response.status_code==200
+ retrieved=c.get('/api/warehouse/tasks/'+tid)
+ assert retrieved.status_code==200
+ assert retrieved.json()['lines'][0]['location_report_open'] is True
+ assert 'under review' in retrieved.json()['spoken_text'].lower()
+ p=line['selected']
+ p['name']='Renamed product after search'
+ assert save(c,p,p['revision']).status_code==200
+ stale=c.get('/api/warehouse/tasks/'+tid)
+ assert stale.status_code==200
+ assert stale.json()['lines'][0]['stale_catalogue'] is True
+ assert 'catalogue location changed' in stale.json()['spoken_text'].lower()
+ assert 'catalogue location changed' in stale.json()['display_text'].lower()
+ assert post(c,f'/tasks/{tid}/scan',{'line':0,'kind':'manual','value':'confirmed'}).status_code==409
+
+
+def test_accidental_pick_can_be_undone_with_audit_and_no_stock_change(setup):
+ c,path=setup
+ task=search(c,'CLO-001')
+ tid=task['id']
+ started=post(c,f'/tasks/{tid}/picking/start')
+ assert started.status_code==200,started.text
+ confirmed=post(c,f'/tasks/{tid}/scan',{'line':0,'kind':'manual','value':'confirmed'})
+ assert confirmed.status_code==200,confirmed.text
+ assert confirmed.json()['lines'][0]['complete'] is True
+ result=post(c,f'/tasks/{tid}/picking/undo',{'line':0,'reason':'Verified the wrong item'})
+ assert result.status_code==200,result.text
+ task=result.json()
+ assert task['lines'][0]['complete'] is False
+ assert task['lines'][0]['confirmation'] is None
+ assert task['lines'][0]['product_scanned'] is False
+ assert task['pick_adjustments'][-1]['action']=='undo'
+ assert task['pick_adjustments'][-1]['reason']=='Verified the wrong item'
+ assert post(c,f'/tasks/{tid}/picking/undo',{'line':0}).status_code==409
+ assert post(c,f'/tasks/{tid}/scan',{'line':0,'kind':'manual','value':'confirmed'}).status_code==200
+ assert post(c,f'/tasks/{tid}/picking/finish').status_code==200
+ reopened=post(c,f'/tasks/{tid}/picking/undo',{'line':0})
+ assert reopened.status_code==200,reopened.text
+ assert reopened.json()['picking']['status']=='active'
+ assert reopened.json()['lines'][0]['complete'] is False
+ with connect(path) as db:
+  stored=json.loads(db.execute('SELECT payload FROM wh_tasks WHERE id=?',(tid,)).fetchone()['payload'])
+  assert len(stored['pick_adjustments'])==2
+  assert stored['lines'][0]['complete'] is False
+
+
+def test_gnani_review_audio_requires_owner_and_reads_saved_locations(setup,monkeypatch):
+ c,path=setup
+ spoken=[]
+ async def fake_speak(text,language):
+  spoken.append((text,language))
+  return b'RIFF-test-wav'
+ monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
+ t=search(c,'CLO-001')
+ line=t['lines'][0]
+ source=line['location']
+ issue=post(c,'/issues',{'collection':'clothing','sku':'CLO-001','kind':'wrong_location',
+                         'location_code':source['code'],'reason':'Reported as empty'})
+ assert issue.status_code==200,issue.text
+ issue_id=issue.json()['id']
+ r=post(c,f'/issues/{issue_id}/review-audio',{'language':'hi-IN'})
+ assert r.status_code==200,r.text
+ assert r.content==b'RIFF-test-wav'
+ assert 'CLO-001' in spoken[-1][0] and source['rack'] in spoken[-1][0]
+ assert spoken[-1][1]=='hi-IN'
+ product=line['selected']
+ destination={k:v for k,v in source.items() if k!='code'}
+ destination['rack']='Z'
+ preview=post(c,'/moves/preview',{'collection':'clothing','sku':'CLO-001','revision':product['revision'],
+                                 'source':source['code'],'destination':destination,'reason':'Shelf physically verified'})
+ assert preview.status_code==200,preview.text
+ token=preview.json()['token']
+ audio=post(c,f'/moves/{token}/review-audio',{'language':'te-IN'})
+ assert audio.status_code==200,audio.text
+ assert audio.content==b'RIFF-test-wav'
+ assert 'CLO-001' in spoken[-1][0] and 'Z' in spoken[-1][0]
+ assert spoken[-1][1]=='te-IN'
+ # Reading a proposed move never mutates the catalogue or resolves a report.
+ assert search(c,'CLO-001')['lines'][0]['location']['rack']==source['rack']
+ assert c.get('/api/warehouse/issues').json()[0]['status']=='open'
+ login(c,'staff')
+ assert post(c,f'/issues/{issue_id}/review-audio',{'language':'en-IN'}).status_code==403
+ assert post(c,f'/moves/{token}/review-audio',{'language':'en-IN'}).status_code==403
+ login(c)
+ assert post(c,f'/moves/{token}/review-audio',{'language':'xx-XX'}).status_code==422
+
+
+@pytest.mark.parametrize('step,owner_only',[
+ ('review_outcome',True),('review_note',True),('review_confirm',True),
+ ('review_pending_saved',True),('review_verified_saved',True),
+ ('move_destination',True),('move_reason',True),('move_preview',True),
+ ('move_confirm',True),('move_saved',True),
+ ('report_reason',False),('report_suggestion',False),('report_confirm',False),
+ ('report_saved',False),('pick_done',False),('pick_undo',False),
+ ('help_pick',False),('help_verify',False),('unknown_pick',False)
+])
+def test_fixed_spoken_step_prompts_use_gnani_without_mutating_data(setup,monkeypatch,step,owner_only):
+ c,path=setup
+ messages=[]
+ async def fake_speak(text,language):
+  messages.append((text,language))
+  return b'RIFF-step-audio'
+ monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
+ data={'language':'en-IN'}
+ response=c.post('/api/warehouse/voice/step-audio',params={'step':step},headers=H,json=data)
+ assert response.status_code==200,response.text
+ assert response.content==b'RIFF-step-audio'
+ assert messages and messages[0][0].strip()
+ assert response.headers['cache-control']=='no-store'
+ with connect(path) as db:
+  assert db.execute('SELECT COUNT(*) FROM wh_issues').fetchone()[0]==0
+  assert db.execute('SELECT COUNT(*) FROM wh_events').fetchone()[0]==0
+ login(c,'staff')
+ staff=c.post('/api/warehouse/voice/step-audio',params={'step':step},headers=H,json=data)
+ assert staff.status_code==(403 if owner_only else 200),staff.text
+
+
+def test_new_search_and_spoken_answer_use_owner_verified_updated_shelf(setup):
+ c,path=setup
+ old=search(c,'CLO-001')
+ line=old['lines'][0]
+ sku=line['selected']['sku']
+ original=line['location']
+ assert sku=='CLO-001'
+ report=post(c,'/issues',{'collection':'clothing','sku':sku,'kind':'wrong_location',
+                          'location_code':original['code'],'reason':'Original shelf was incorrect'})
+ assert report.status_code==200
+ assert 'under review' in search(c,sku)['spoken_text'].lower()
+ destination={k:v for k,v in original.items() if k!='code'}
+ destination['rack']='NEW-VERIFIED-RACK'
+ preview=post(c,'/moves/preview',{'collection':'clothing','sku':sku,
+  'revision':line['selected']['revision'],'source':original['code'],
+  'destination':destination,'reason':'Manager physically verified new rack'})
+ assert preview.status_code==200,preview.text
+ assert 'under review' in search(c,sku)['spoken_text'].lower()
+ moved=post(c,'/moves/'+preview.json()['token']+'/confirm')
+ assert moved.status_code==200,moved.text
+ next_search=search(c,sku)
+ assert 'under review' not in next_search['spoken_text'].lower()
+ assert next_search['lines'][0]['location']['rack']=='NEW-VERIFIED-RACK'
+ assert 'NEW-VERIFIED-RACK' in next_search['spoken_text']
+ assert 'NEW-VERIFIED-RACK' in next_search['display_text']
+ assert c.get('/api/warehouse/issues').json()[0]['status']=='resolved'
+ # Old tasks never silently present a moved shelf as the current pick location.
+ stale=c.get('/api/warehouse/tasks/'+old['id']).json()
+ assert stale['lines'][0]['stale_catalogue']
+ assert 'catalogue location changed' in stale['spoken_text'].lower()
+ with connect(path) as db:
+  stored=db.execute('SELECT payload FROM wh_items WHERE collection=? AND sku=?',('clothing',sku)).fetchone()
+  assert json.loads(stored[0])['placements'][0]['rack']=='NEW-VERIFIED-RACK'
+
+
+def test_draft_voice_report_reads_actual_location_and_never_saves_implicitly(setup,monkeypatch):
+ c,path=setup
+ spoken=[]
+ async def fake_speak(text,language):
+  spoken.append((text,language));return b'RIFF-report-preview'
+ monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
+ task=search(c,'CLO-001')
+ location=task['lines'][0]['location']
+ draft={'language':'en-IN','collection':'clothing','sku':'CLO-001',
+  'location_code':location['code'],'reason':'There is no mixer motor at the recorded shelf',
+  'suggested_location':'Rack NEW, Shelf 7'}
+ response=c.post('/api/warehouse/voice/report-preview-audio',headers=H,json=draft)
+ assert response.status_code==200,response.text
+ assert response.content==b'RIFF-report-preview'
+ assert response.headers['cache-control']=='no-store'
+ assert 'CLO-001' in spoken[-1][0]
+ assert draft['reason'] in spoken[-1][0]
+ assert 'not verified' in spoken[-1][0].lower()
+ assert draft['suggested_location'] in spoken[-1][0]
+ assert 'send report' in spoken[-1][0].lower()
+ assert c.get('/api/warehouse/issues').json()==[]
+ with connect(path) as db:
+  assert db.execute('SELECT COUNT(*) FROM wh_events').fetchone()[0]==0
+ stale={**draft,'location_code':'LOC-UNKNOWN'}
+ assert c.post('/api/warehouse/voice/report-preview-audio',headers=H,json=stale).status_code==409
+ for locale in ['hi-IN','hi-en','te-IN']:
+  response=c.post('/api/warehouse/voice/report-preview-audio',headers=H,json={**draft,'language':locale})
+  assert response.status_code==200,response.text
+ login(c,'staff')
+ assert c.post('/api/warehouse/voice/report-preview-audio',headers=H,json=draft).status_code==200
+
+
+def test_owner_resolution_readback_is_explicit_and_does_not_close_report(setup,monkeypatch):
+ c,path=setup
+ spoken=[]
+ async def fake_speak(text,language):
+  spoken.append((text,language));return b'RIFF-owner-review'
+ monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
+ task=search(c,'CLO-001')
+ location=task['lines'][0]['location']
+ result=post(c,'/issues',{'collection':'clothing','sku':'CLO-001',
+  'kind':'wrong_location','location_code':location['code'],'reason':'The shelf needs to be verified'})
+ assert result.status_code==200,result.text
+ iid=result.json()['id']
+ body={'language':'en-IN','action':'confirmed_original','note':'I physically checked the original rack and found the correct item'}
+ response=c.post(f'/api/warehouse/issues/{iid}/resolution-preview-audio',headers=H,json=body)
+ assert response.status_code==200,response.text
+ assert b'RIFF' in response.content
+ assert 'physically verified' in spoken[-1][0]
+ assert body['note'] in spoken[-1][0]
+ assert 'save review' in spoken[-1][0].lower()
+ assert c.get('/api/warehouse/issues').json()[0]['status']=='open'
+ unconfirmed=c.post(f'/api/warehouse/issues/{iid}/resolution-preview-audio',headers=H,
+  json={**body,'action':'unconfirmed'})
+ assert unconfirmed.status_code==200,unconfirmed.text
+ assert 'keeping this report open' in spoken[-1][0]
+ with connect(path) as db:
+  assert db.execute('SELECT COUNT(*) FROM wh_location_checks').fetchone()[0]==0
+ login(c,'staff')
+ assert c.post(f'/api/warehouse/issues/{iid}/resolution-preview-audio',headers=H,json=body).status_code==403
+ login(c)
+ assert c.post(f'/api/warehouse/issues/{iid}/resolution-preview-audio',headers=H,
+  json={**body,'action':'unverified_guess'}).status_code==422

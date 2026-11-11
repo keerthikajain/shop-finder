@@ -93,6 +93,20 @@ class PickDefer(Strict):
  reason:Literal['declined','reported']
 class PickRetry(Strict):
  line:int=Field(ge=0,le=9)
+class PickUndo(Strict):
+ line:int=Field(ge=0,le=9)
+ reason:str=Field(default='Accidental confirmation',min_length=3,max_length=200)
+class ReviewAudio(Strict):
+ language:Literal['en-IN','hi-IN','hi-en','te-IN']='en-IN'
+class ResolvePreviewAudio(ReviewAudio):
+ action:Literal['confirmed_original','unconfirmed']
+ note:str=Field(min_length=3,max_length=300)
+class ReportPreviewAudio(ReviewAudio):
+ collection:str=Field(max_length=40)
+ sku:str=Field(max_length=40)
+ location_code:str=Field(default='',max_length=50)
+ reason:str=Field(min_length=3,max_length=400)
+ suggested_location:str=Field(default='',max_length=200)
 class PickGuideAudio(Strict):
  command:Literal['start','next','repeat','verify','report','stop','help','unknown']
  line:int=Field(default=0,ge=0,le=9)
@@ -125,7 +139,10 @@ class FailedSearchReview(Strict):
  note:str=Field(default='',max_length=250)
 class LocationCheck(Strict):
  line:int=Field(ge=0,le=9)
-class Resolve(Strict):note:str=Field(min_length=3,max_length=300)
+class Resolve(Strict):
+ note:str=Field(min_length=3,max_length=300)
+ action:Literal['confirmed_original','unconfirmed','general']|None=None
+ revision:int|None=Field(default=None,ge=1)
 
 def initialize_warehouse(path,demo=True):
  with connect(path) as c:
@@ -249,10 +266,16 @@ def speak_task(task):
  for line in task['lines']:
   p=line.get('selected')
   if p:
+   if line.get('stale_catalogue'):
+    parts.append(f"{p['name']}, {p['sku']}. Catalogue location changed. Search again before picking.")
+    continue
    l=line['location'];labels={'facility':'facility','floor':'floor','zone':'section','aisle':'aisle','rack':'rack','shelf':'shelf','bin':'bin'}
    if hi:labels.update(facility='गोदाम',floor='मंज़िल',zone='भाग',aisle='गलियारा',rack='रैक',shelf='शेल्फ',bin='बिन')
    place=', '.join(f"{labels[k]} {l[k]}" for k in LOCATION_FIELDS if l.get(k) and not (p.get('synthetic') and k=='facility'))
-   parts.append(f"{p.get('brand','')} {p['name']}, {p['sku']}. {place}.".strip())
+   if line.get('location_report_open'):
+    parts.append(f"{p['name']}, {p['sku']}. Location under review. Last recorded location: {place}. Verify before picking.")
+   else:
+    parts.append(f"{p.get('brand','')} {p['name']}, {p['sku']}. {place}.".strip())
   elif line['candidates']:parts.append((f"{line['query']}: कृपया सही आकार या प्रकार चुनें।" if hi else f"{line['query']}: choose the size or variant before going to a location."))
   else:parts.append((f"{line['query']}: सूची में नहीं मिला।" if hi else f"{line['query']}: we couldn't find this exact item. Try another name or browse your saved items."))
  return ' '.join(parts)[:2400]
@@ -278,10 +301,16 @@ def display_task(task):
  for line in task['lines']:
   product=line.get('selected')
   if product:
+   if line.get('stale_catalogue'):
+    parts.append(f"{product['name']}, {product['sku']}. Catalogue location changed. Search again before picking.")
+    continue
    loc=line['location']
    # Values are taken only from the verified selected catalogue record.
    where=', '.join(f"{labels[k]} {loc[k]}" for k in LOCATION_FIELDS if loc.get(k) and not (product.get('synthetic') and k=='facility'))
-   parts.append(f"{product.get('brand','')} {product['name']}, {product['sku']}. {where}.")
+   if line.get('location_report_open'):
+    parts.append(f"{product['name']}, {product['sku']}. Location under review. Last recorded location: {where}. Verify before picking.")
+   else:
+    parts.append(f"{product.get('brand','')} {product['name']}, {product['sku']}. {where}.")
   elif line['candidates']:
    parts.append(f"{line['query']}: {choose}")
   else:
@@ -292,7 +321,7 @@ def location_status(c,p,l):
  if not p or not l:return {'last_confirmed_at':None,'location_report_open':False}
  match=c.execute('SELECT at FROM wh_location_checks WHERE collection=? AND sku=? AND location_code=? AND revision=? ORDER BY id DESC LIMIT 1',(p['collection'],p['sku'],l['code'],p['revision'])).fetchone()
  open_report=c.execute("SELECT 1 FROM wh_issues WHERE collection=? AND sku=? AND kind='wrong_location' AND location_code=? AND status='open' LIMIT 1",(p['collection'],p['sku'],l['code'])).fetchone()
- return {'last_confirmed_at':match['at'] if match else None,'location_report_open':bool(open_report)}
+ return {'last_confirmed_at':match['at'] if match and not open_report else None,'location_report_open':bool(open_report)}
 def picking_state(task):
  # Older persisted searches were created before guided picking existed.
  return task.setdefault('picking',{'status':'ready','started_at':None,'completed_at':None})
@@ -313,7 +342,23 @@ def picking_check(c,task,allow_deferred=False):
 def task_get(c,tid,u):
  r=c.execute('SELECT * FROM wh_tasks WHERE id=? AND owner=?',(tid,u['id'])).fetchone()
  if not r or time.time()-r['created']>86400:raise HTTPException(404,'Search session expired. Search again.')
- task=json.loads(r['payload']);picking_state(task);return task
+ task=json.loads(r['payload']);picking_state(task)
+ # Saved tasks may outlive catalogue changes or new location reports.
+ for line in task['lines']:
+  selected=line.get('selected');location=line.get('location')
+  if not selected or not location:continue
+  current=c.execute('SELECT * FROM wh_items WHERE collection=? AND sku=?',
+                    (selected['collection'],selected['sku'])).fetchone()
+  stale=not current or current['revision']!=selected['revision']
+  line['stale_catalogue']=bool(stale)
+  if stale:
+   line['location_report_open']=False
+   line['last_confirmed_at']=None
+  else:
+   line.update(location_status(c,public(current),location))
+ task['spoken_text']=speak_task(task)
+ task['display_text']=display_task(task)
+ return task
 def task_put(c,t):
  picking_state(t)
  t['spoken_text']=speak_task(t);t['display_text']=display_task(t)
@@ -576,6 +621,26 @@ def install_warehouse(app,path):
    line.pop('deferred_reason',None)
    line['product_scanned']=False  # Require a fresh product scan after retry.
    return task_put(c,task)
+ @app.post('/api/warehouse/tasks/{tid}/picking/undo')
+ def undo_picking(tid:str,body:PickUndo,request:Request):
+  """Undo an accidental confirmation without changing inventory or losing history."""
+  u=identity(request)
+  with connect(path) as c:
+   c.execute('BEGIN IMMEDIATE');task=task_get(c,tid,u)
+   state=picking_state(task)
+   if state['status'] not in ('active','completed'):
+    raise HTTPException(409,'Only a started picking session can undo a confirmation.')
+   if state.get('paused'):raise HTTPException(409,'Resume picking before undoing a confirmation.')
+   if body.line>=len(task['lines']):raise HTTPException(422,'Invalid task line.')
+   line=task['lines'][body.line]
+   if not line.get('complete'):raise HTTPException(409,'This item has not been confirmed.')
+   task.setdefault('pick_adjustments',[]).append({'action':'undo','line':body.line,
+     'collection':line['selected']['collection'],'sku':line['selected']['sku'],
+     'previous_confirmation':line.get('confirmation'),'actor':u['username'],'at':now(),'reason':body.reason})
+   line.update(complete=False,confirmation=None,confirmed_at=None,product_scanned=False)
+   if state['status']=='completed':
+    state.update(status='active',completed_at=None,paused=False)
+   return task_put(c,task)
  @app.post('/api/warehouse/tasks/{tid}/picking/command')
  def picking_voice_command(tid:str,body:PickCommand,request:Request):
   u=identity(request)
@@ -696,10 +761,10 @@ def install_warehouse(app,path):
    elif body.kind=='location':
     if not line['product_scanned']:raise HTTPException(409,'Scan the item first.')
     if body.value!=line['location']['code']:raise HTTPException(409,'Different location scanned. Check the shelf label.')
-    line.update(complete=True,confirmation='barcode')
+    line.update(complete=True,confirmation='barcode',confirmed_at=now())
    else:
     if body.value not in ('confirmed','yes','checked'):raise HTTPException(422,'Manual verification requires explicit confirmation.')
-    line.update(complete=True,confirmation='manual')
+    line.update(complete=True,confirmation='manual',confirmed_at=now())
    return task_put(c,t)
  @app.post('/api/warehouse/tasks/{tid}/speak')
  async def speech(tid:str,request:Request):
@@ -734,6 +799,143 @@ def install_warehouse(app,path):
    if loc_code(destination) in [l['code'] for l in p['placements']]:raise HTTPException(422,'This location is already recorded.')
    payload={**body.model_dump(),'destination':destination};token=pending(c,'move',u,payload)
    return {'token':token,'before':source,'after':enrich(destination),'sku':p['sku'],'name':p['name']}
+ # Fixed voice prompts cannot synthesize arbitrary caller-provided text.
+ # A single authenticated audio turn is played before reopening the microphone.
+ @app.post('/api/warehouse/voice/report-preview-audio')
+ async def report_preview_audio(body:ReportPreviewAudio,request:Request):
+  identity(request)
+  with connect(path) as c:
+   product=public(item_row(c,body.collection,body.sku))
+   recorded=next((loc for loc in product['placements'] if loc['code']==body.location_code),None) if body.location_code else None
+   if body.location_code and not recorded:
+    raise HTTPException(409,'Recorded shelf changed. Refresh the item before reporting.')
+   prefix={
+    'en-IN':'Review your report before submitting.',
+    'hi-IN':'भेजने से पहले रिपोर्ट जाँचें।',
+    'hi-en':'Review your report before sending.',
+    'te-IN':'పంపించే ముందు మీ నివేదికను సమీక్షించండి.'
+   }[body.language]
+   message=f"{prefix} Item: {product['name']}, {product['sku']}. "
+   if recorded:message+=f"Last recorded location: {loc_text(recorded)}. "
+   message+=f"Problem: {body.reason}. "
+   if body.suggested_location:message+=f"Suggested location, not verified: {body.suggested_location}. "
+   message+="The saved shelf will not change. Say send report to submit, back to edit, or stop."
+  audio=await voice.speak(message,body.language)
+  return Response(audio,media_type='audio/wav',headers={'Cache-Control':'no-store'})
+ @app.post('/api/warehouse/voice/step-audio')
+ async def voice_step_audio(body:ReviewAudio,step:Literal[
+  'review_outcome','review_note','review_confirm','review_pending_saved','review_verified_saved',
+  'move_destination','move_reason','move_preview','move_confirm','move_saved',
+  'report_reason','report_suggestion','report_confirm','report_saved',
+  'pick_done','pick_undo','help_pick','help_verify','unknown_pick'
+ ],request:Request):
+  identity(request,step.startswith(('review_','move_')))
+  prompts={
+   'review_outcome':('Tell me what you verified. Say original location verified, or still unconfirmed. Say help, repeat, back or stop at any time.',
+     'कृपया बताएं कि आपने क्या जाँचा। कहें पुरानी जगह सही है, या जगह की पुष्टि नहीं हुई।',
+     'Tell me what you checked. Say original location verified or still unconfirmed.',
+     'మీరు ఏమి నిర్ధారించారో చెప్పండి. పాత స్థానంలో దొరికింది లేదా స్థానం ఇంకా నిర్ధారించలేదు అని చెప్పండి.'),
+   'review_note':('Describe what you checked. Your report will not be saved until you explicitly confirm.',
+     'आपने क्या जाँचा, यह बताएं। पुष्टि किए बिना रिपोर्ट सेव नहीं होगी।',
+     'Explain what you checked. The report will be saved only after confirmation.',
+     'మీరు ఏమి పరిశీలించారో చెప్పండి. నిర్ధారణ లేకుండా నివేదిక సేవ్ కాదు.'),
+   'review_confirm':('Review your selected outcome and note on screen. Say save review to confirm, back to edit, or stop.',
+     'चुने गए परिणाम और नोट को जाँचें। सेव करने के लिए समीक्षा सेव करो कहें, या वापस जाएं।',
+     'Check the outcome and note. Say confirm review, back, or stop.',
+     'ఫలితం మరియు గమనికను చూడండి. నిర్ధారించడానికి సమీక్షను నిర్ధారించు అని చెప్పండి.'),
+   'review_pending_saved':('Review saved. The location is still unconfirmed and the report remains open.',
+     'समीक्षा सेव हो गई। जगह अभी भी अपुष्ट है और रिपोर्ट खुली रहेगी।',
+     'Review saved. Location remains unconfirmed, report stays open.',
+     'సమీక్ష సేవ్ అయ్యింది. స్థానం ఇంకా నిర్ధారణ కాలేదు, నివేదిక తెరిచే ఉంటుంది.'),
+   'review_verified_saved':('Location verification saved. The report is resolved and future searches use the verified location.',
+     'जगह की पुष्टि सेव हो गई। रिपोर्ट बंद हो गई है और आगे की खोज में सही जगह दिखेगी।',
+     'Location confirmed, report resolved. Next searches use the confirmed shelf.',
+     'స్థాన నిర్ధారణ సేవ్ అయ్యింది. నివేదిక పరిష్కరించబడింది. తర్వాతి వెతుకులాటలో ధృవీకరించిన స్థానం కనిపిస్తుంది.'),
+   'move_destination':('Tell me the new rack, shelf or bin. I will fill the fields for your review.',
+     'नया रैक, शेल्फ या बिन बताएं। सेव करने से पहले जाँच सकेंगे।',
+     'Tell me the new rack, shelf or bin.',
+     'కొత్త ర్యాక్, షెల్ఫ్ లేదా బిన్ చెప్పండి. సేవ్ చేయడానికి ముందు పరిశీలించండి.'),
+   'move_reason':('Check the destination fields. Then tell me why the location must change.',
+     'नई जगह के विवरण जाँचें। फिर बदलाव का कारण बताएं।',
+     'Check the new location. Tell me the reason.',
+     'కొత్త స్థలాన్ని చూడండి. మార్పుకు కారణం చెప్పండి.'),
+   'move_preview':('Check the entered details. Say review location change to hear old and new locations before approval.',
+     'दर्ज जानकारी जाँचें। दोनों जगह सुनने के लिए जगह बदलाव की समीक्षा करो कहें।',
+     'Check the details. Say review location change.',
+     'వివరాలను చూడండి. స్థానం మార్పు సమీక్షించు అని చెప్పండి.'),
+   'move_confirm':('Only after checking the physical shelf, say confirm location change to save, back to edit, or stop.',
+     'वास्तविक शेल्फ जाँचने के बाद नई जगह की पुष्टि करो कहें, या वापस जाएं।',
+     'Only after verifying the shelf, say confirm location change, back, or stop.',
+     'షెల్ఫ్‌ను పరిశీలించిన తరువాత కొత్త స్థానం నిర్ధారించు అని చెప్పండి.'),
+   'move_saved':('Verified location saved. New searches and spoken answers use the corrected shelf.',
+     'सही जगह सेव हो गई। अगली खोज और आवाज में नई जगह बताई जाएगी।',
+     'New verified shelf saved. Future answers will use it.',
+     'ధృవీకరించిన స్థానం సేవ్ అయ్యింది. కొత్త వెతుకులాటలు సరిచేసిన స్థలాన్ని చూపిస్తాయి.'),
+   'report_reason':('Tell me what is wrong with the recorded location. I will save the words for your review, not submit the report yet.',
+     'बताएं कि दर्ज जगह में क्या गलत है। आपकी बात अभी रिपोर्ट में लिखी जाएगी, भेजी नहीं जाएगी।',
+     'Tell me what is wrong with the location. I will not submit yet.',
+     'నమోదైన స్థలంలో ఏమి తప్పుందో చెప్పండి. మీ మాటలను పరిశీలన కోసం ఉంచుతాను.'),
+   'report_suggestion':('If you found the item elsewhere, tell me the new rack or shelf. Otherwise say skip.',
+     'सामान किसी और जगह मिला हो तो रैक या शेल्फ बताएं। नहीं मिला तो स्किप कहें।',
+     'Tell me the suggested rack or shelf, or say skip.',
+     'వస్తువు మరో చోట దొరికితే ఆ ర్యాక్ లేదా షెల్ఫ్ చెప్పండి. లేకుంటే స్కిప్ అనండి.'),
+   'report_confirm':('Read the report text on screen. Say send report to submit, back to edit, or stop. This does not change the saved shelf.',
+     'रिपोर्ट का लिखा हुआ विवरण जाँचें। भेजने के लिए रिपोर्ट भेजो कहें, बदलने के लिए वापस जाएं।',
+     'Check the report details on screen. Say send report, back, or stop.',
+     'నివేదిక వివరాలను చూడండి. పంపడానికి నివేదిక పంపండి అని చెప్పండి, మార్చాలంటే వెనక్కి వెళ్ళండి.'),
+   'report_saved':('Your report was saved. The location remains under review until verified.',
+     'आपकी रिपोर्ट सेव हो गई। पुष्टि होने तक जगह की समीक्षा जारी रहेगी।',
+     'Report saved. Location is under review.',
+     'నివేదిక సేవ్ అయ్యింది. ధృవీకరణ వరకు స్థానం సమీక్షలో ఉంటుంది.'),
+   'pick_done':('Picking complete. Every item was confirmed and your progress was saved.',
+     'पिकिंग पूरी हुई। सभी सामान की पुष्टि हुई और प्रगति सेव हो गई।',
+     'Picking is complete. Confirmed items are saved.',
+     'పికింగ్ పూర్తయింది. నిర్ధారించిన అంశాలు సేవ్ అయ్యాయి.'),
+   'pick_undo':('Last confirmation undone. The item is ready to check again.',
+     'पिछली पुष्टि वापस हो गई। सामान को दोबारा जाँचें।',
+     'Last pick confirmation undone. Check the item again.',
+     'చివరి నిర్ధారణ రద్దయింది. అంశాన్ని మళ్ళీ పరిశీలించండి.'),
+   'help_pick':('Say found it, wrong location, repeat location, next item, undo last confirmation or stop. You can also use the buttons.',
+     'कहें मिल गया, गलत जगह, जगह दोहराओ, अगला सामान, या रुको। बटन भी उपलब्ध हैं।',
+     'Say found it, wrong location, repeat location, undo last confirmation or stop.',
+     'దొరికింది, తప్పు స్థానం, స్థానాన్ని మళ్లీ చెప్పండి, తదుపరి వస్తువు లేదా ఆపు అని చెప్పండి.'),
+   'help_verify':('Say yes to confirm this specific item, no to leave it unconfirmed, repeat, wrong location or stop.',
+     'इस सामान के लिए हाँ, नहीं, जगह दोहराओ, गलत जगह या रुको कहें।',
+     'Say yes, no, repeat, wrong location, or stop.',
+     'ఈ అంశాన్ని నిర్ధారించడానికి అవును, లేకుంటే కాదు అని చెప్పండి.'),
+   'unknown_pick':('I did not understand that command. Say help to hear the available choices, or use the buttons.',
+     'यह आदेश समझ नहीं आया। विकल्प सुनने के लिए मदद कहें या बटन दबाएं।',
+     'I did not understand. Say help, or use the buttons.',
+     'ఆదేశం అర్థం కాలేదు. సహాయం అనండి లేదా బటన్లను వాడండి.')
+  }
+  language_index={'en-IN':0,'hi-IN':1,'hi-en':2,'te-IN':3}[body.language]
+  phrase=prompts[step][language_index]
+  if step not in ('review_pending_saved','review_verified_saved','move_saved','report_saved','pick_done','pick_undo'):
+   phrase+=' '+(
+    'You can say help, repeat, back or stop.' if body.language in ('en-IN','hi-en') else
+    'आप मदद, दोहराओ, वापस या रुको कह सकते हैं।' if body.language=='hi-IN' else
+    'సహాయం, మళ్లీ చెప్పు, వెనక్కి, లేదా ఆపు అనవచ్చు.'
+   )
+  result=await voice.speak(phrase,body.language)
+  return Response(result,media_type='audio/wav',headers={'Cache-Control':'no-store'})
+ @app.post('/api/warehouse/moves/{token}/review-audio')
+ async def spoken_move_review(token:str,body:ReviewAudio,request:Request):
+  u=identity(request,True)
+  with connect(path) as c:
+   payload=get_pending(c,token,'move',u)
+   p=public(item_row(c,payload['collection'],payload['sku']))
+   if p['revision']!=payload['revision']:raise HTTPException(409,'Catalogue changed. Review the new location first.')
+   source=next((loc for loc in p['placements'] if loc['code']==payload['source']),None)
+   if not source:raise HTTPException(409,'Source location changed. Review again.')
+   destination=payload['destination']
+   phrase={
+    'hi-IN':'स्थान सुधार की समीक्षा करें।',
+    'hi-en':'Review this location correction.',
+    'te-IN':'స్థాన మార్పును సమీక్షించండి.',
+    'en-IN':'Review this location correction.'
+   }[body.language]
+   message=f"{phrase} {p['name']}, {p['sku']}. Previous location: {loc_text(source)}. Proposed location: {loc_text(destination)}. Reason: {payload['reason']}. Confirm only after physically verifying the proposed shelf."
+  return Response(await voice.speak(message,body.language),media_type='audio/wav',headers={'Cache-Control':'no-store'})
  @app.post('/api/warehouse/moves/{token}/confirm')
  def move_confirm(token:str,request:Request):
   u=identity(request,True)
@@ -821,11 +1023,62 @@ def install_warehouse(app,path):
  def issues(request:Request,collection:str='all'):
   u=identity(request)
   with connect(path) as c:return [dict(r) for r in c.execute('SELECT * FROM wh_issues WHERE (?=\'all\' OR collection=?) AND (?=\'owner\' OR actor=?) ORDER BY id DESC LIMIT 100',(collection,collection,u['role'],u['username']))]
+ @app.post('/api/warehouse/issues/{iid}/resolution-preview-audio')
+ async def spoken_resolution_preview(iid:int,body:ResolvePreviewAudio,request:Request):
+  identity(request,True)
+  with connect(path) as c:
+   issue=c.execute('SELECT * FROM wh_issues WHERE id=?',(iid,)).fetchone()
+   if not issue:raise HTTPException(404,'Report not found.')
+   if issue['status']!='open':raise HTTPException(409,'Report is already resolved.')
+   if issue['kind']!='wrong_location':raise HTTPException(422,'Only location reports have location outcomes.')
+   product=public(item_row(c,issue['collection'],issue['sku']))
+   recorded=next((loc for loc in product['placements'] if loc['code']==issue['location_code']),None)
+   if not recorded:raise HTTPException(409,'Recorded shelf changed. Refresh before approving.')
+   labels={
+    'confirmed_original':'You are confirming that the original shelf was physically verified.',
+    'unconfirmed':'You are keeping this report open because the shelf is not confirmed.'
+   }
+   message=f"{product['name']}, {product['sku']}. Last recorded location: {loc_text(recorded)}. {labels[body.action]} Your review note: {body.note}. Say save review to confirm, back to edit, or stop."
+  return Response(await voice.speak(message,body.language),media_type='audio/wav',headers={'Cache-Control':'no-store'})
+ @app.post('/api/warehouse/issues/{iid}/review-audio')
+ async def spoken_issue_review(iid:int,body:ReviewAudio,request:Request):
+  identity(request,True)
+  with connect(path) as c:
+   issue=c.execute('SELECT * FROM wh_issues WHERE id=?',(iid,)).fetchone()
+   if not issue:raise HTTPException(404,'Report not found.')
+   if issue['kind']!='wrong_location':raise HTTPException(422,'Voice location review is only for location reports.')
+   p=public(item_row(c,issue['collection'],issue['sku']))
+   old=next((loc for loc in p['placements'] if loc['code']==issue['location_code']),None)
+   if not old:raise HTTPException(409,'Recorded location has changed. Refresh to review.')
+   prefix={'hi-IN':'स्थान की रिपोर्ट की समीक्षा करें।','hi-en':'Review the reported shelf.',
+           'te-IN':'నివేదించిన స్థానాన్ని సమీక్షించండి.','en-IN':'Review the reported shelf.'}[body.language]
+   message=f"{prefix} {p['name']}, {p['sku']}. Last recorded location: {loc_text(old)}. If found here, confirm this location. If not confirmed, keep the report open. If moved, verify a new location before saving."
+  return Response(await voice.speak(message,body.language),media_type='audio/wav',headers={'Cache-Control':'no-store'})
  @app.post('/api/warehouse/issues/{iid}/resolve')
  def resolve(iid:int,body:Resolve,request:Request):
   u=identity(request,True)
   with connect(path) as c:
-   if not c.execute('SELECT 1 FROM wh_issues WHERE id=?',(iid,)).fetchone():raise HTTPException(404,'Report not found.')
-   result=c.execute("UPDATE wh_issues SET status='resolved',note=?,resolved_at=?,resolved_by=? WHERE id=? AND status='open'",(body.note,now(),u['username'],iid))
-   if result.rowcount!=1:raise HTTPException(409,'This report is already resolved. Refresh to see its resolution.')
-  return {'ok':True}
+   c.execute('BEGIN IMMEDIATE')
+   issue=c.execute('SELECT * FROM wh_issues WHERE id=?',(iid,)).fetchone()
+   if not issue:raise HTTPException(404,'Report not found.')
+   if issue['status']!='open':raise HTTPException(409,'This report is already resolved. Refresh to see its resolution.')
+   if issue['kind']=='wrong_location':
+    if body.action=='unconfirmed':
+     c.execute('UPDATE wh_issues SET note=? WHERE id=?',(body.note,iid))
+     return {'ok':True,'status':'open','message':'Review saved. Location remains unconfirmed.'}
+    if body.action!='confirmed_original' or body.revision is None:
+     raise HTTPException(422,'Verify the original shelf with the current catalogue revision, or use the verified location move workflow.')
+    item=public(item_row(c,issue['collection'],issue['sku']))
+    if item['revision']!=body.revision:raise HTTPException(409,'Catalogue changed. Refresh and verify the current location.')
+    if not any(loc['code']==issue['location_code'] for loc in item['placements']):
+     raise HTTPException(409,'The original location has changed. Verify the updated catalogue instead.')
+    verified_at=now()
+    c.execute('INSERT INTO wh_location_checks(task_id,line_index,collection,sku,location_code,revision,actor,at) VALUES(?,?,?,?,?,?,?,?)',
+              ('report-'+str(iid),0,item['collection'],item['sku'],issue['location_code'],item['revision'],u['username'],verified_at))
+    body_note='Original recorded location physically verified: '+body.note
+   else:
+    if body.action not in (None,'general'):raise HTTPException(422,'Invalid resolution for a general report.')
+    body_note=body.note
+   result=c.execute("UPDATE wh_issues SET status='resolved',note=?,resolved_at=?,resolved_by=? WHERE id=? AND status='open'",(body_note,now(),u['username'],iid))
+   if result.rowcount!=1:raise HTTPException(409,'Report changed. Refresh and try again.')
+  return {'ok':True,'status':'resolved'}

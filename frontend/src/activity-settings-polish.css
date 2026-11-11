@@ -216,3 +216,35 @@
  .sf-compact-app .sf-team-report-resolution textarea{font-size:16px}
  .sf-compact-app .sf-team-report-resolution .sf-review-voice .wh-voice{width:100%}
 }
+
+
+/* Voice-first workflow additions: keep corrective actions usable on narrow phones. */
+.sf-compact-app .sf-picking-undo{
+ display:flex;
+ flex-wrap:wrap;
+ align-items:center;
+ gap:8px;
+ margin:9px 0;
+}
+.sf-compact-app .sf-picking-undo button{
+ min-height:44px;
+ max-width:100%;
+ box-sizing:border-box;
+ padding:9px 14px;
+ border-radius:10px;
+ border:1px solid var(--wh-border,#dedbe5);
+ background:var(--wh-surface,#fff);
+ color:var(--wh-text,#302b36);
+ white-space:normal;
+ overflow-wrap:anywhere;
+}
+.sf-compact-app .sf-picking-undo button:focus-visible,
+.sf-compact-app .sf-team-report-verify button:focus-visible{
+ outline:2px solid var(--wh-accent,#8051b8);
+ outline-offset:2px;
+}
+@media(max-width:700px){
+ .sf-compact-app .sf-picking-undo button{flex:1 1 160px}
+ .sf-compact-app .sf-team-report-verify button{flex:1 1 155px}
+ .sf-compact-app .sf-team-report-resolution .wh-voice{max-width:100%}
+}

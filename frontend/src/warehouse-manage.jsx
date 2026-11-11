@@ -1,6 +1,9 @@
-import React,{useEffect,useState} from 'react';
+import React,{useEffect,useRef,useState} from 'react';
 import {request} from './accounts.jsx';
 import {useT} from './locale.js';
+import {voiceAction,reviewVoiceChoice,actionPhrases} from './voice-review-commands.js';
+import {playReviewAudio} from './voice-review-audio.js';
+import GuidedVoiceTurn from './guided-voice-turn.jsx';
 import {Glyph,Place,Specs} from './warehouse-ui.jsx';
 import {locationFields,pathText,cleanItem,VoiceButton} from './warehouse.jsx';
 import GuidedImportMapping from './guided-import-mapping.jsx';
@@ -25,19 +28,145 @@ export function ItemEditor({item,collection,pack,collections,settings,labels,run
 }
 function LocationForm({value,onChange,fields=locationFields}){const t=useT();return <div className="wh-form-grid locations">{fields.map(k=><label key={k}>{t(k[0].toUpperCase()+k.slice(1))}<input maxLength={k==='facility'||k==='zone'?60:30} value={value[k]||''} onChange={e=>onChange({...value,[k]:e.target.value})}/></label>)}</div>}
 export function MoveEditor({item,source,collection,fields,run,busy,language,voice,onError,onSave}){
- const t=useT(),[destination,D]=useState(Object.fromEntries(locationFields.map(k=>[k,source[k]]))),[reason,R]=useState(''),[transcript,T]=useState(''),[preview,P]=useState(null);
- return <><p><b>{item.name}</b> · {item.sku}</p>{preview?<><div className="wh-before-after"><div><h3>{t('Current location')}</h3><Place location={preview.before} example={!!item.synthetic}/></div><div><h3>{t('New location')}</h3><Place location={preview.after} example={!!item.synthetic}/></div></div><p>{t('Confirm only after checking the physical location. This changes the recorded placement, not stock quantity.')}</p><div className="wh-modal-actions"><button onClick={()=>P(null)} disabled={busy}>{t('Back')}</button><button className="primary" disabled={busy} onClick={()=>run(async()=>{await api('/moves/'+preview.token+'/confirm',{});await onSave()})}>{t('Confirm location change')}<Glyph name="check"/></button></div></>:<><Place location={source} example={!!item.synthetic}/><div className="wh-move-voice"><h3>{t('Say the correction')}</h3><p>{t('For example: “rack C shelf 2 bin 08”. Review the destination below before saving.')}</p><VoiceButton small autoStop enabled={voice&&!busy} label={t('Speak corrected location')} {...{language,onError}} onText={T}/><label>{t('Recognized location correction')}<input value={transcript} maxLength={500} onChange={e=>T(e.target.value)}/></label><button disabled={busy||!transcript.trim()} onClick={()=>run(async()=>{const r=await api('/moves/parse',{collection,sku:item.sku,source:source.code,transcript});D(r.destination)})}>{t('Fill destination from speech')}</button></div><form onSubmit={e=>{e.preventDefault();run(async()=>P(await api('/moves/preview',{collection,sku:item.sku,revision:item.revision,source:source.code,destination,reason})))}}><h3>{t('Destination')}</h3><LocationForm fields={[...new Set([...fields,...locationFields.filter(k=>destination[k])])]} value={destination} onChange={D}/><label>{t('Reason for this change')}<input required minLength={3} maxLength={300} value={reason} onChange={e=>R(e.target.value)}/></label><div className="wh-modal-actions"><button className="primary" disabled={busy}>{t('Review location change')}<Glyph name="arrow"/></button></div></form></>}</>
+ const t=useT(),[destination,D]=useState(Object.fromEntries(locationFields.map(k=>[k,source[k]]))),[reason,R]=useState(''),[transcript,T]=useState(''),[preview,P]=useState(null),[voiceError,SetVoiceError]=useState(''),[reviewSpeaking,SetReviewSpeaking]=useState(false),[guideStage,SetGuideStage]=useState('move_destination'),[guidedActive,SetGuidedActive]=useState(false),audioStop=useRef(null);
+ useEffect(()=>()=>audioStop.current?.(),[]);
+ async function readMoveReview(token=preview?.token){
+  if(!voice||!token)return;
+  audioStop.current?.();
+  SetReviewSpeaking(true);
+  try{audioStop.current=await playReviewAudio('moves/'+encodeURIComponent(token)+'/review-audio',language,()=>SetReviewSpeaking(false))}
+  catch(e){SetReviewSpeaking(false);onError(e.message||t('Read the review on screen.'))}
+ }
+ async function hearCorrection(text){
+  const recognized=String(text||'').trim();
+  T(recognized);
+  if(!recognized){SetVoiceError(t('No words recognized. Please try again.'));return}
+  const result=await run(async()=>await api('/moves/parse',{collection,sku:item.sku,source:source.code,transcript:recognized}));
+  if(result){D(result.destination);SetVoiceError('');SetGuideStage('move_reason')}
+  return result;
+ }
+ async function previewMove(autoVoice=false){
+  if(!reason.trim()||busy)return null;
+  const result=await run(async()=>await api('/moves/preview',{collection,sku:item.sku,revision:item.revision,source:source.code,destination,reason}));
+  if(result){
+   P(result);SetGuideStage('move_confirm');
+   if(voice&&!autoVoice)await readMoveReview(result.token);
+  }
+  return result;
+ }
+ function hearPreviewCommand(text){
+  if(voiceAction(language,'preview',text)){previewMove();return}
+  SetVoiceError(t('Say: ')+actionPhrases(language,'preview')[0]);
+ }
+ async function confirmMove(){
+  if(!preview||busy||reviewSpeaking)return false;
+  audioStop.current?.();
+  const saved=await run(async()=>{await api('/moves/'+preview.token+'/confirm',{});return true});
+  if(!saved)return false;
+  await onSave();
+  return true;
+ }
+ function spokenMoveConfirmation(text){
+  if(voiceAction(language,'cancel',text)){audioStop.current?.();P(null);SetVoiceError('');return}
+  if(reviewSpeaking||!voiceAction(language,'move',text)){SetVoiceError(t('Say: ')+actionPhrases(language,'move')[0]);return}
+  SetVoiceError('');
+  confirmMove();
+ }
+ async function guidedMoveAnswer(text,step){
+   if(step==='move_destination')return !!(await hearCorrection(text));
+   if(step==='move_reason'){
+    const value=String(text||'').trim().slice(0,300);
+    if(value.length<3){SetVoiceError(t('Please describe why the shelf should change.'));return true}
+    R(value);SetGuideStage('move_preview');return true;
+   }
+   if(step==='move_preview'){
+    if(!voiceAction(language,'preview',text)){
+     SetVoiceError(t('Say: ')+actionPhrases(language,'preview')[0]);return true;
+    }
+    return !!(await previewMove(true));
+   }
+   if(step==='move_confirm'){
+    if(!voiceAction(language,'move',text)){
+     SetVoiceError(t('Say: ')+actionPhrases(language,'move')[0]);return true;
+    }
+    await confirmMove();return false;
+   }
+   return false;
+  }
+  function guidedMoveBack(step){
+   if(step==='move_confirm'){audioStop.current?.();P(null);SetGuideStage('move_reason')}
+   else if(step==='move_preview')SetGuideStage('move_reason');
+   else if(step==='move_reason')SetGuideStage('move_destination');
+   else SetVoiceError(t('Already at the first step. Say Stop to pause.'));
+  }
+ return <><p><b>{item.name}</b> · {item.sku}</p>{voice&&<GuidedVoiceTurn language={language} stage={guideStage} context="Automatic owner location correction" onActiveChange={SetGuidedActive} promptEndpoint={guideStage==='move_confirm'&&preview?.token?'moves/'+encodeURIComponent(preview.token)+'/review-audio':null} onTranscript={guidedMoveAnswer} onBack={guidedMoveBack} onError={onError}/>}<small>{t('Say Help, Repeat, Back or Stop at any guided step. Manual fields remain available.')}</small>{preview?<><div className="wh-before-after"><div><h3>{t('Current location')}</h3><Place location={preview.before} example={!!item.synthetic}/></div><div><h3>{t('New location')}</h3><Place location={preview.after} example={!!item.synthetic}/></div></div><p>{t('Confirm only after checking the physical location. This changes the recorded placement, not stock quantity.')}</p><div className="wh-modal-actions"><button type="button" onClick={()=>{audioStop.current?.();P(null);SetGuideStage('move_reason')}} disabled={busy||guidedActive}>{t('Back')}</button><button className="primary" disabled={busy||reviewSpeaking||guidedActive} onClick={confirmMove}>{t('Confirm location change')}<Glyph name="check"/></button>{voice&&<button type="button" disabled={busy||guidedActive} onClick={()=>reviewSpeaking?audioStop.current?.():readMoveReview()}>{t(reviewSpeaking?'Stop reading review':'Read changes aloud')}</button>}{voice&&<VoiceButton small autoStop enabled={!busy&&!reviewSpeaking&&!guidedActive} language={language} onError={onError} label={t('Confirm new location by voice')} onText={spokenMoveConfirmation}/>} {voiceError&&<p role="alert">{voiceError}</p>}</div></>:<><Place location={source} example={!!item.synthetic}/><div className="wh-move-voice"><h3>{t('Say the correction')}</h3><p>{t('For example: “rack C shelf 2 bin 08”. Review the destination below before saving.')}</p><VoiceButton small autoStop enabled={voice&&!busy&&!guidedActive} label={t('Speak corrected location')} {...{language,onError}} onText={hearCorrection}/><label>{t('Recognized location correction')}<input value={transcript} maxLength={500} onChange={e=>T(e.target.value)}/></label><button disabled={busy||!transcript.trim()} onClick={()=>run(async()=>{const r=await api('/moves/parse',{collection,sku:item.sku,source:source.code,transcript});D(r.destination)})}>{t('Fill destination from speech')}</button></div><form onSubmit={e=>{e.preventDefault();previewMove()}}><h3>{t('Destination')}</h3><LocationForm fields={[...new Set([...fields,...locationFields.filter(k=>destination[k])])]} value={destination} onChange={D}/><label>{t('Reason for this change')}<input required minLength={3} maxLength={300} value={reason} onChange={e=>R(e.target.value)}/>{voice&&<VoiceButton small autoStop enabled={!busy&&!guidedActive} language={language} onError={onError} label={t('Dictate reason')} onText={text=>R(String(text||'').trim().slice(0,300))}/>}</label><div className="wh-modal-actions"><button className="primary" disabled={busy||guidedActive}>{t('Review location change')}<Glyph name="arrow"/></button>{voice&&<VoiceButton small autoStop enabled={!busy&&!guidedActive&&reason.trim().length>=3} language={language} onError={onError} label={t('Review location by voice')} onText={hearPreviewCommand}/>} {voiceError&&<p role="alert">{voiceError}</p>}</div></form></>}</>
 }
-function TeamReportCard({issue,owner,busy,voice,language,onError,onCorrectLocation,run,reload}){
- const t=useT(),[note,SetNote]=useState(''),[transcript,SetTranscript]=useState(''),[voiceError,SetVoiceError]=useState('');
+function TeamReportCard({issue,owner,busy,voice,language,onError,onCorrectLocation,onSaved,run,reload}){
+ const t=useT(),[note,SetNote]=useState(''),[transcript,SetTranscript]=useState(''),[voiceError,SetVoiceError]=useState(''),[resolutionAction,SetResolutionAction]=useState('unconfirmed'),[reviewSpeaking,SetReviewSpeaking]=useState(false),[guideStage,SetGuideStage]=useState('review_outcome'),[guidedActive,SetGuidedActive]=useState(false),audioStop=useRef(null);
+ useEffect(()=>()=>audioStop.current?.(),[]);
+ async function readReport(){
+  if(!voice||!isLocation)return;
+  audioStop.current?.();SetReviewSpeaking(true);
+  try{audioStop.current=await playReviewAudio('issues/'+issue.id+'/review-audio',language,()=>SetReviewSpeaking(false))}
+  catch(e){SetReviewSpeaking(false);onError(e.message||t('Read the reported shelf on screen.'))}
+ }
  const open=issue.status==='open',isLocation=issue.kind==='wrong_location';
  async function markResolved(event){
-  event.preventDefault();
-  if(!owner||!open||busy||note.trim().length<3)return;
-  await run(async()=>{
-   await api('/issues/'+issue.id+'/resolve',{note:note.trim()});
+  event?.preventDefault();
+  if(!owner||!open||busy||reviewSpeaking||note.trim().length<3)return false;
+  const saved=await run(async()=>{
+   let payload={note:note.trim()};
+   if(isLocation){
+    if(resolutionAction==='confirmed_original'){
+     const products=await request('/warehouse/items?collection='+encodeURIComponent(issue.collection));
+     const current=products.find(p=>p.sku===issue.sku);
+     if(!current||!current.placements.some(p=>p.code===issue.location_code))throw new Error(t('Recorded location changed. Refresh before verifying.'));
+     payload={...payload,action:'confirmed_original',revision:current.revision};
+    }else{
+     payload={...payload,action:'unconfirmed'};
+    }
+   }
+   const result=await api('/issues/'+issue.id+'/resolve',payload);
    await reload();
+   return result;
   });
+  if(saved&&voice)onSaved?.(saved);
+  return !!saved;
+ }
+ async function guidedReviewAnswer(text,step){
+  if(step==='review_outcome'){
+   const choice=reviewVoiceChoice(language,text);
+   if(!choice||choice==='cancel'){
+    SetVoiceError(t('Please choose verified at original location or still unconfirmed.'));return true;
+   }
+   SetVoiceError('');SetResolutionAction(choice);SetGuideStage('review_note');return true;
+  }
+  if(step==='review_note'){
+   const recognized=String(text||'').trim().slice(0,300);
+   if(recognized.length<3){SetVoiceError(t('Describe what you physically checked.'));return true}
+   SetNote(recognized);SetTranscript(recognized);SetGuideStage('review_confirm');return true;
+  }
+  if(step==='review_confirm'){
+   if(!voiceAction(language,'review',text)){
+    SetVoiceError(t('Say: ')+actionPhrases(language,'review')[0]);return true;
+   }
+   await markResolved();return false;
+  }
+  return false;
+ }
+ function guidedReviewBack(step){
+  if(step==='review_confirm')SetGuideStage('review_note');
+  else if(step==='review_note')SetGuideStage('review_outcome');
+  else SetVoiceError(t('Already at the first step. Say Stop to pause.'));
+ }
+ function spokenResolutionChoice(text){
+  const choice=reviewVoiceChoice(language,text);
+  if(reviewSpeaking||!choice||choice==='cancel'){SetVoiceError(t('Say: ')+actionPhrases(language,'original')[0]+' / '+actionPhrases(language,'unconfirmed')[0]);return}
+  SetVoiceError('');SetResolutionAction(choice);
+ }
+ function spokenReviewSubmit(text){
+  if(reviewSpeaking||!voiceAction(language,'review',text)){SetVoiceError(t('Say: ')+actionPhrases(language,'review')[0]);return}
+  SetVoiceError('');markResolved();
  }
  function captureNote(text){
   const recognized=String(text||'').trim();
@@ -57,23 +186,26 @@ function TeamReportCard({issue,owner,busy,voice,language,onError,onCorrectLocati
     {issue.suggested_location&&<div><small>{t('Staff suggested location')}</small><strong>{issue.suggested_location}</strong></div>}
    </div>}
   </div>
-  {open&&owner&&isLocation&&<div className="sf-team-report-verify"><button type="button" className="sf-review-correct" disabled={busy} onClick={()=>onCorrectLocation?.(issue)}><Glyph name="pin"/>{t('Verify and update location')}</button><small>{t('A report does not change the saved shelf until an authorized correction is confirmed.')}</small></div>}
+  {open&&owner&&isLocation&&voice&&<GuidedVoiceTurn language={language} stage={guideStage} context="Automatic report verification" promptEndpoint={guideStage==='review_outcome'?'issues/'+issue.id+'/review-audio':guideStage==='review_confirm'?'issues/'+issue.id+'/resolution-preview-audio':null} promptBody={guideStage==='review_confirm'?{action:resolutionAction,note}:null} onTranscript={guidedReviewAnswer} onBack={guidedReviewBack} onActiveChange={SetGuidedActive} onError={onError}/>}
+  {open&&owner&&isLocation&&<div className="sf-team-report-verify"><button type="button" className="sf-review-correct" disabled={busy||guidedActive} onClick={()=>{audioStop.current?.();onCorrectLocation?.(issue)}}><Glyph name="pin"/>{t('Verify and update location')}</button>{voice&&<button type="button" disabled={busy||guidedActive} onClick={()=>reviewSpeaking?audioStop.current?.():readReport()}>{t(reviewSpeaking?'Stop reading report':'Read report aloud')}</button>}<small>{t('A report does not change the saved shelf until an authorized correction is confirmed.')}</small></div>}
   {open&&owner?<form className="sf-team-report-resolution" onSubmit={markResolved}>
    <div className="sf-team-report-resolution-heading"><strong>{t('Resolve this report')}</strong><small>{t('Dictate or type what you verified. Check the note before marking resolved.')}</small></div>
    <label>{t('Resolution note')}<textarea rows={2} value={note} onChange={e=>SetNote(e.target.value)} minLength={3} maxLength={300} required placeholder={t('Describe what you checked or corrected')}/></label>
    {voice&&<div className="sf-review-voice">
-    <VoiceButton small autoStop enabled={!busy} label={t('Dictate resolution note')} language={language} onError={message=>{SetVoiceError(String(message));onError(message)}} onText={captureNote}/>
+    <VoiceButton small autoStop enabled={!busy&&!reviewSpeaking&&!guidedActive} label={t('Dictate resolution note')} language={language} onError={message=>{SetVoiceError(String(message));onError(message)}} onText={captureNote}/>
     <div className="sf-team-report-transcript" role="status" aria-live="polite"><strong>{t('Recognized speech')}</strong><p>{transcript||t('Your recognized words will appear here. You may also type the note.')}</p></div>
     {voiceError&&<p className="sf-report-voice-error" role="alert">{voiceError}</p>}
     <small>{t('Stop speaking briefly to finish recording. You can also press Stop recording.')}</small>
    </div>}
-   <div className="sf-team-report-submit"><button type="submit" className="primary" disabled={busy||note.trim().length<3}>{t('Mark resolved')}</button></div>
+   {isLocation&&voice&&<div className="sf-review-voice"><VoiceButton small autoStop enabled={!busy&&!reviewSpeaking&&!guidedActive} language={language} label={t('Say location verification outcome')} onError={onError} onText={spokenResolutionChoice}/><small>{t('Say: ')}{actionPhrases(language,'original')[0]} / {actionPhrases(language,'unconfirmed')[0]}</small></div>}
+   {isLocation&&<label>{t('Verification outcome')}<select value={resolutionAction} onChange={e=>SetResolutionAction(e.target.value)} disabled={busy}><option value="unconfirmed">{t('Still unconfirmed — keep report open')}</option><option value="confirmed_original">{t('Physically verified at recorded location')}</option></select></label>}
+    <div className="sf-team-report-submit"><button type="submit" className="primary" disabled={busy||reviewSpeaking||guidedActive||note.trim().length<3}>{t(isLocation?(resolutionAction==='unconfirmed'?'Save review — keep open':'Confirm recorded location'):'Mark resolved')}</button>{voice&&<VoiceButton small autoStop enabled={!busy&&!reviewSpeaking&&!guidedActive&&note.trim().length>=3} language={language} label={t('Save review by voice')} onError={onError} onText={spokenReviewSubmit}/>}</div>
   </form>:!open?<div className="sf-team-report-resolved"><strong>{t('Resolution')}</strong><p>{issue.note}</p><small>{issue.resolved_by} · {issue.resolved_at&&new Date(issue.resolved_at).toLocaleString()}</small></div>:null}
  </article>;
 }
-export function ReviewPanel({collection,owner,run,busy,language='en-IN',voice=false,onError=()=>{},onCorrectLocation}){
+export function ReviewPanel({collection,owner,run,busy,language='en-IN',voice=false,onError=()=>{},onCorrectLocation,onSaved}){
  const t=useT(),[issues,I]=useState([]),[history,H]=useState([]),[tab,T]=useState('reports'),[filter,F]=useState('open');
  async function reload(){I(await request('/warehouse/issues?collection='+collection));if(owner)H(await request('/warehouse/history?collection='+collection))}
  useEffect(()=>{run(reload)},[collection]);
- return <section className="wh-panel wh-review" aria-label={t('Activity')}><div className="sf-activity-intro"><div><h2>{t('Activity and reports')}</h2><p>{t('Follow up on reported issues, inspect actual catalogue changes, and review searches that need attention.')}</p></div></div><div className="sf-activity-overview"><div className="sf-activity-metric"><strong>{issues.filter(i=>i.status==='open').length}</strong><span>{t('Open reports')}</span></div><div className="sf-activity-metric"><strong>{issues.filter(i=>i.status==='resolved').length}</strong><span>{t('Resolved reports')}</span></div><div className="sf-activity-metric"><strong>{owner?history.length:'—'}</strong><span>{t(owner?'Recorded changes':'Change history is owner-only')}</span></div></div><div className="sf-activity-tabs" role="group" aria-label={t('Activity views')}><button type="button" aria-pressed={tab==='reports'} onClick={()=>T('reports')}>{t('Reports')} <span className="wh-count">{issues.filter(i=>i.status==='open').length}</span></button>{owner&&<button type="button" aria-pressed={tab==='history'} onClick={()=>T('history')}>{t('Change history')}</button>}{owner&&<button type="button" aria-pressed={tab==='unknowns'} onClick={()=>T('unknowns')}>{t('Unmatched searches')}</button>}<button type="button" className="wh-refresh" disabled={busy} onClick={()=>run(reload)}>{t('Refresh')}</button></div>{tab==='unknowns'&&owner?<FailedSearchPanel collection={collection} {...{run,busy}}/>:tab==='reports'?<><div className="sf-activity-filter"><h3>{t(owner?'Team reports':'My reports')}</h3><label>{t('Show')}<select aria-label={t('Report status')} value={filter} onChange={e=>F(e.target.value)}><option value="open">{t('Open')}</option><option value="resolved">{t('Resolved')}</option><option value="">{t('All reports')}</option></select></label></div>{issues.filter(i=>!filter||i.status===filter).length?issues.filter(i=>!filter||i.status===filter).map(i=><TeamReportCard key={i.id} issue={i} {...{owner,busy,voice,language,onError,onCorrectLocation,run,reload}}/>):<div className="wh-empty"><Glyph name="check"/><h3>{t('All clear here.')}</h3><p>{t('No reports match this status.')}</p></div>}</>:history.length?history.map(h=><details className="wh-history-row" key={h.id}><summary><span className="wh-history-icon"><Glyph name={h.action==='import'?'upload':'edit'}/></span><div><b>{h.after.name}</b><small>{h.actor} · {h.action} · {new Date(h.at).toLocaleString()}</small></div><code>{h.sku}</code></summary><p>{h.reason}</p><div className="wh-before-after">{[['Before',h.before],['After',h.after]].map(([label,p])=><div key={label}><h4>{t(label)}</h4>{p?<><b>{p.name}</b><Specs item={p}/>{p.placements.map((l,i)=><p key={i}>{pathText(l,!!p.synthetic)} · {l.quantity==null?'Not counted':l.quantity+' units'}</p>)}<small>{p.aliases.join(', ')}</small></>:<span>—</span>}</div>)}</div></details>):<div className="wh-empty"><Glyph name="history"/><h3>{t('Every change leaves a trail.')}</h3><p>{t('Saved imports, edits and location corrections will appear here.')}</p></div>}</section>
+ return <section className="wh-panel wh-review" aria-label={t('Activity')}><div className="sf-activity-intro"><div><h2>{t('Activity and reports')}</h2><p>{t('Follow up on reported issues, inspect actual catalogue changes, and review searches that need attention.')}</p></div></div><div className="sf-activity-overview"><div className="sf-activity-metric"><strong>{issues.filter(i=>i.status==='open').length}</strong><span>{t('Open reports')}</span></div><div className="sf-activity-metric"><strong>{issues.filter(i=>i.status==='resolved').length}</strong><span>{t('Resolved reports')}</span></div><div className="sf-activity-metric"><strong>{owner?history.length:'—'}</strong><span>{t(owner?'Recorded changes':'Change history is owner-only')}</span></div></div><div className="sf-activity-tabs" role="group" aria-label={t('Activity views')}><button type="button" aria-pressed={tab==='reports'} onClick={()=>T('reports')}>{t('Reports')} <span className="wh-count">{issues.filter(i=>i.status==='open').length}</span></button>{owner&&<button type="button" aria-pressed={tab==='history'} onClick={()=>T('history')}>{t('Change history')}</button>}{owner&&<button type="button" aria-pressed={tab==='unknowns'} onClick={()=>T('unknowns')}>{t('Unmatched searches')}</button>}<button type="button" className="wh-refresh" disabled={busy} onClick={()=>run(reload)}>{t('Refresh')}</button></div>{tab==='unknowns'&&owner?<FailedSearchPanel collection={collection} {...{run,busy}}/>:tab==='reports'?<><div className="sf-activity-filter"><h3>{t(owner?'Team reports':'My reports')}</h3><label>{t('Show')}<select aria-label={t('Report status')} value={filter} onChange={e=>F(e.target.value)}><option value="open">{t('Open')}</option><option value="resolved">{t('Resolved')}</option><option value="">{t('All reports')}</option></select></label></div>{issues.filter(i=>!filter||i.status===filter).length?issues.filter(i=>!filter||i.status===filter).map(i=><TeamReportCard key={i.id} issue={i} {...{owner,busy,voice,language,onError,onCorrectLocation,onSaved,run,reload}}/>):<div className="wh-empty"><Glyph name="check"/><h3>{t('All clear here.')}</h3><p>{t('No reports match this status.')}</p></div>}</>:history.length?history.map(h=><details className="wh-history-row" key={h.id}><summary><span className="wh-history-icon"><Glyph name={h.action==='import'?'upload':'edit'}/></span><div><b>{h.after.name}</b><small>{h.actor} · {h.action} · {new Date(h.at).toLocaleString()}</small></div><code>{h.sku}</code></summary><p>{h.reason}</p><div className="wh-before-after">{[['Before',h.before],['After',h.after]].map(([label,p])=><div key={label}><h4>{t(label)}</h4>{p?<><b>{p.name}</b><Specs item={p}/>{p.placements.map((l,i)=><p key={i}>{pathText(l,!!p.synthetic)} · {l.quantity==null?'Not counted':l.quantity+' units'}</p>)}<small>{p.aliases.join(', ')}</small></>:<span>—</span>}</div>)}</div></details>):<div className="wh-empty"><Glyph name="history"/><h3>{t('Every change leaves a trail.')}</h3><p>{t('Saved imports, edits and location corrections will appear here.')}</p></div>}</section>
 }
