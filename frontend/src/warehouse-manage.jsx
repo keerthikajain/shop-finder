@@ -29,13 +29,24 @@ export function MoveEditor({item,source,collection,fields,run,busy,language,voic
  return <><p><b>{item.name}</b> · {item.sku}</p>{preview?<><div className="wh-before-after"><div><h3>{t('Current location')}</h3><Place location={preview.before} example={!!item.synthetic}/></div><div><h3>{t('New location')}</h3><Place location={preview.after} example={!!item.synthetic}/></div></div><p>{t('Confirm only after checking the physical location. This changes the recorded placement, not stock quantity.')}</p><div className="wh-modal-actions"><button onClick={()=>P(null)} disabled={busy}>{t('Back')}</button><button className="primary" disabled={busy} onClick={()=>run(async()=>{await api('/moves/'+preview.token+'/confirm',{});await onSave()})}>{t('Confirm location change')}<Glyph name="check"/></button></div></>:<><Place location={source} example={!!item.synthetic}/><div className="wh-move-voice"><h3>{t('Say the correction')}</h3><p>{t('For example: “rack C shelf 2 bin 08”. Review the destination below before saving.')}</p><VoiceButton small autoStop enabled={voice&&!busy} label={t('Speak corrected location')} {...{language,onError}} onText={T}/><label>{t('Recognized location correction')}<input value={transcript} maxLength={500} onChange={e=>T(e.target.value)}/></label><button disabled={busy||!transcript.trim()} onClick={()=>run(async()=>{const r=await api('/moves/parse',{collection,sku:item.sku,source:source.code,transcript});D(r.destination)})}>{t('Fill destination from speech')}</button></div><form onSubmit={e=>{e.preventDefault();run(async()=>P(await api('/moves/preview',{collection,sku:item.sku,revision:item.revision,source:source.code,destination,reason})))}}><h3>{t('Destination')}</h3><LocationForm fields={[...new Set([...fields,...locationFields.filter(k=>destination[k])])]} value={destination} onChange={D}/><label>{t('Reason for this change')}<input required minLength={3} maxLength={300} value={reason} onChange={e=>R(e.target.value)}/></label><div className="wh-modal-actions"><button className="primary" disabled={busy}>{t('Review location change')}<Glyph name="arrow"/></button></div></form></>}</>
 }
 function TeamReportCard({issue,owner,busy,voice,language,onError,onCorrectLocation,run,reload}){
- const t=useT(),[note,SetNote]=useState(''),[transcript,SetTranscript]=useState(''),[voiceError,SetVoiceError]=useState('');
+ const t=useT(),[note,SetNote]=useState(''),[transcript,SetTranscript]=useState(''),[voiceError,SetVoiceError]=useState(''),[resolutionAction,SetResolutionAction]=useState('unconfirmed');
  const open=issue.status==='open',isLocation=issue.kind==='wrong_location';
  async function markResolved(event){
   event.preventDefault();
   if(!owner||!open||busy||note.trim().length<3)return;
   await run(async()=>{
-   await api('/issues/'+issue.id+'/resolve',{note:note.trim()});
+   let payload={note:note.trim()};
+   if(isLocation){
+    if(resolutionAction==='confirmed_original'){
+     const products=await request('/warehouse/items?collection='+encodeURIComponent(issue.collection));
+     const current=products.find(p=>p.sku===issue.sku);
+     if(!current||!current.placements.some(p=>p.code===issue.location_code))throw new Error(t('Recorded location changed. Refresh before verifying.'));
+     payload={...payload,action:'confirmed_original',revision:current.revision};
+    }else{
+     payload={...payload,action:'unconfirmed'};
+    }
+   }
+   await api('/issues/'+issue.id+'/resolve',payload);
    await reload();
   });
  }
@@ -67,7 +78,8 @@ function TeamReportCard({issue,owner,busy,voice,language,onError,onCorrectLocati
     {voiceError&&<p className="sf-report-voice-error" role="alert">{voiceError}</p>}
     <small>{t('Stop speaking briefly to finish recording. You can also press Stop recording.')}</small>
    </div>}
-   <div className="sf-team-report-submit"><button type="submit" className="primary" disabled={busy||note.trim().length<3}>{t('Mark resolved')}</button></div>
+   {isLocation&&<label>{t('Verification outcome')}<select value={resolutionAction} onChange={e=>SetResolutionAction(e.target.value)} disabled={busy}><option value="unconfirmed">{t('Still unconfirmed — keep report open')}</option><option value="confirmed_original">{t('Physically verified at recorded location')}</option></select></label>}
+    <div className="sf-team-report-submit"><button type="submit" className="primary" disabled={busy||note.trim().length<3}>{t(isLocation?(resolutionAction==='unconfirmed'?'Save review — keep open':'Confirm recorded location'):'Mark resolved')}</button></div>
   </form>:!open?<div className="sf-team-report-resolved"><strong>{t('Resolution')}</strong><p>{issue.note}</p><small>{issue.resolved_by} · {issue.resolved_at&&new Date(issue.resolved_at).toLocaleString()}</small></div>:null}
  </article>;
 }
