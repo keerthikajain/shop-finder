@@ -1575,6 +1575,7 @@ def test_gnani_review_audio_requires_owner_and_reads_saved_locations(setup,monke
  ('review_pending_saved',True),('review_verified_saved',True),
  ('move_destination',True),('move_reason',True),('move_preview',True),
  ('move_confirm',True),('move_saved',True),
+ ('report_reason',False),('report_suggestion',False),('report_confirm',False),
  ('report_saved',False),('pick_done',False),('pick_undo',False),
  ('help_pick',False),('help_verify',False),('unknown_pick',False)
 ])
