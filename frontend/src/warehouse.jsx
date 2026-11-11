@@ -184,8 +184,12 @@ export default function WarehouseApp({user,preferences,logout}){
   if(!source||source.picking?.paused||!transcript?.trim())return;
   VGC(transcript);
   if(voiceAction(source.language,'undo',transcript)){
-   if(lastConfirmedIndex<0){VGT(t('There is no confirmed item to undo.'));return false}
-   PV(null);await undoPick(lastConfirmedIndex);return false;
+   if(lastConfirmedIndex<0){VGT(t('There is no confirmed item to undo.'));return}
+   PV(null);
+   await undoPick(lastConfirmedIndex);
+   // The reader pauses the microphone during Gnani TTS and resumes after playback.
+   // Returning false would strand HandsFreePicking in a stopped state.
+   return;
   }
   if(pendingVoicePick){
    const response=pickConfirmationIntent(source.language,transcript);
