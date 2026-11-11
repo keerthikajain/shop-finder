@@ -125,7 +125,10 @@ class FailedSearchReview(Strict):
  note:str=Field(default='',max_length=250)
 class LocationCheck(Strict):
  line:int=Field(ge=0,le=9)
-class Resolve(Strict):note:str=Field(min_length=3,max_length=300)
+class Resolve(Strict):
+ note:str=Field(min_length=3,max_length=300)
+ action:Literal['confirmed_original','unconfirmed','general']|None=None
+ revision:int|None=Field(default=None,ge=1)
 
 def initialize_warehouse(path,demo=True):
  with connect(path) as c:
@@ -252,7 +255,10 @@ def speak_task(task):
    l=line['location'];labels={'facility':'facility','floor':'floor','zone':'section','aisle':'aisle','rack':'rack','shelf':'shelf','bin':'bin'}
    if hi:labels.update(facility='गोदाम',floor='मंज़िल',zone='भाग',aisle='गलियारा',rack='रैक',shelf='शेल्फ',bin='बिन')
    place=', '.join(f"{labels[k]} {l[k]}" for k in LOCATION_FIELDS if l.get(k) and not (p.get('synthetic') and k=='facility'))
-   parts.append(f"{p.get('brand','')} {p['name']}, {p['sku']}. {place}.".strip())
+    if line.get('location_report_open'):
+     parts.append(f"{p['name']}, {p['sku']}. Location under review. Last recorded location: {place}. Verify before picking.")
+    else:
+     parts.append(f"{p.get('brand','')} {p['name']}, {p['sku']}. {place}.".strip())
   elif line['candidates']:parts.append((f"{line['query']}: कृपया सही आकार या प्रकार चुनें।" if hi else f"{line['query']}: choose the size or variant before going to a location."))
   else:parts.append((f"{line['query']}: सूची में नहीं मिला।" if hi else f"{line['query']}: we couldn't find this exact item. Try another name or browse your saved items."))
  return ' '.join(parts)[:2400]
@@ -281,7 +287,10 @@ def display_task(task):
    loc=line['location']
    # Values are taken only from the verified selected catalogue record.
    where=', '.join(f"{labels[k]} {loc[k]}" for k in LOCATION_FIELDS if loc.get(k) and not (product.get('synthetic') and k=='facility'))
-   parts.append(f"{product.get('brand','')} {product['name']}, {product['sku']}. {where}.")
+    if line.get('location_report_open'):
+     parts.append(f"{product['name']}, {product['sku']}. Location under review. Last recorded location: {where}. Verify before picking.")
+    else:
+     parts.append(f"{product.get('brand','')} {product['name']}, {product['sku']}. {where}.")
   elif line['candidates']:
    parts.append(f"{line['query']}: {choose}")
   else:
@@ -292,7 +301,7 @@ def location_status(c,p,l):
  if not p or not l:return {'last_confirmed_at':None,'location_report_open':False}
  match=c.execute('SELECT at FROM wh_location_checks WHERE collection=? AND sku=? AND location_code=? AND revision=? ORDER BY id DESC LIMIT 1',(p['collection'],p['sku'],l['code'],p['revision'])).fetchone()
  open_report=c.execute("SELECT 1 FROM wh_issues WHERE collection=? AND sku=? AND kind='wrong_location' AND location_code=? AND status='open' LIMIT 1",(p['collection'],p['sku'],l['code'])).fetchone()
- return {'last_confirmed_at':match['at'] if match else None,'location_report_open':bool(open_report)}
+ return {'last_confirmed_at':match['at'] if match and not open_report else None,'location_report_open':bool(open_report)}
 def picking_state(task):
  # Older persisted searches were created before guided picking existed.
  return task.setdefault('picking',{'status':'ready','started_at':None,'completed_at':None})
@@ -825,7 +834,27 @@ def install_warehouse(app,path):
  def resolve(iid:int,body:Resolve,request:Request):
   u=identity(request,True)
   with connect(path) as c:
-   if not c.execute('SELECT 1 FROM wh_issues WHERE id=?',(iid,)).fetchone():raise HTTPException(404,'Report not found.')
-   result=c.execute("UPDATE wh_issues SET status='resolved',note=?,resolved_at=?,resolved_by=? WHERE id=? AND status='open'",(body.note,now(),u['username'],iid))
-   if result.rowcount!=1:raise HTTPException(409,'This report is already resolved. Refresh to see its resolution.')
-  return {'ok':True}
+   c.execute('BEGIN IMMEDIATE')
+   issue=c.execute('SELECT * FROM wh_issues WHERE id=?',(iid,)).fetchone()
+   if not issue:raise HTTPException(404,'Report not found.')
+   if issue['status']!='open':raise HTTPException(409,'This report is already resolved. Refresh to see its resolution.')
+   if issue['kind']=='wrong_location':
+    if body.action=='unconfirmed':
+     c.execute('UPDATE wh_issues SET note=? WHERE id=?',(body.note,iid))
+     return {'ok':True,'status':'open','message':'Review saved. Location remains unconfirmed.'}
+    if body.action!='confirmed_original' or body.revision is None:
+     raise HTTPException(422,'Verify the original shelf with the current catalogue revision, or use the verified location move workflow.')
+    item=public(item_row(c,issue['collection'],issue['sku']))
+    if item['revision']!=body.revision:raise HTTPException(409,'Catalogue changed. Refresh and verify the current location.')
+    if not any(loc['code']==issue['location_code'] for loc in item['placements']):
+     raise HTTPException(409,'The original location has changed. Verify the updated catalogue instead.')
+    verified_at=now()
+    c.execute('INSERT INTO wh_location_checks(task_id,line_index,collection,sku,location_code,revision,actor,at) VALUES(?,?,?,?,?,?,?,?)',
+              ('report-'+str(iid),0,item['collection'],item['sku'],issue['location_code'],item['revision'],u['username'],verified_at))
+    body_note='Original recorded location physically verified: '+body.note
+   else:
+    if body.action not in (None,'general'):raise HTTPException(422,'Invalid resolution for a general report.')
+    body_note=body.note
+   result=c.execute("UPDATE wh_issues SET status='resolved',note=?,resolved_at=?,resolved_by=? WHERE id=? AND status='open'",(body_note,now(),u['username'],iid))
+   if result.rowcount!=1:raise HTTPException(409,'Report changed. Refresh and try again.')
+  return {'ok':True,'status':'resolved'}
