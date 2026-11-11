@@ -7,7 +7,7 @@ import HandsFreePicking from './hands-free-picking.jsx';
 import GuidedVoiceTurn from './guided-voice-turn.jsx';
 import WorkspaceGreeting from './workspace-greeting.jsx';
 import {pickConfirmationIntent} from './picking-confirmations.js';
-import {voiceAction,actionPhrases,dialogueControl} from './voice-review-commands.js';
+import {voiceAction,actionPhrases,dialogueControl,plausibleShelfSuggestion} from './voice-review-commands.js';
 import {getThemePreference,resolveTheme} from './theme.js';
 import {Mark,Glyph,Modal,Place,Specs,ItemArt,ScanBox,Label,Feedback} from './warehouse-ui.jsx';
 import {ImportPanel,ItemEditor,MoveEditor,ReviewPanel} from './warehouse-manage.jsx';
@@ -487,7 +487,7 @@ function Report({item,location,collection,run,busy,speaking=false,voice,language
   }
   if(step==='report_suggestion'){
    const skipping=voiceAction(language,'report_skip',recognized);
-   if(!skipping&&recognized.length<3){onError(t('Say a shelf, or say Skip if you do not know.'));return true}
+   if(!skipping&&!plausibleShelfSuggestion(recognized)){onError(t('Please name a rack, shelf, area or code. Say Skip if you do not know.'));return true}
    S(skipping?'':recognized.slice(0,200));H(recognized);HF('shelf');
    SetGuideStage('report_confirm');return true;
   }
