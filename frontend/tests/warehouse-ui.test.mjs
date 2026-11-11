@@ -880,3 +880,24 @@ test('blocked search confirmation leads directly to unresolved variant choices',
  assert.match(ui,/tabIndex=\{-1\} key=\{line.index\}/);
  assert.match(ui,/Finder will not guess a size or version/);
 });
+
+
+test('picking cards use the same responsive layout for paired and odd last results',async()=>{
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ const start=css.lastIndexOf('/* Consistent picking cards:');
+ assert.ok(start>=0,'layout override must be present after earlier rules');
+ const rules=css.slice(start);
+ assert.match(rules,/\.sf-find-page \.wh-task-list>\.wh-task\{/);
+ assert.match(rules,/grid-template-columns:104px minmax\(0,1fr\) auto/);
+ assert.match(rules,/\.wh-task:last-child:nth-child\(odd\):not\(:first-child\) \.wh-item-meta/);
+ assert.match(rules,/margin-left:0/);
+ assert.match(rules,/\.wh-task \.wh-task-footer>div\{/);
+ assert.match(rules,/width:auto/);
+ assert.match(rules,/@media\(max-width:1180px\)/);
+ assert.match(rules,/@media\(max-width:700px\)/);
+ assert.match(rules,/grid-template-columns:84px minmax\(0,1fr\)/);
+ assert.match(rules,/grid-column:1\/-1;grid-row:2/);
+ const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(ui,/className=\{'wh-panel wh-task '/);
+ assert.match(ui,/className="wh-task-footer"/);
+});
