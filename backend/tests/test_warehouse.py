@@ -1420,3 +1420,56 @@ def test_all_reported_locations_block_start_without_false_verification(setup):
  reloaded=c.get('/api/warehouse/tasks/'+task['id']).json()
  assert reloaded['picking']['status']=='ready'
  assert not reloaded['lines'][0]['complete']
+
+
+def test_wrong_location_review_requires_physical_verification_and_updates_future_answers(setup):
+ c,path=setup
+ task=search(c,'CLO-001')
+ line=task['lines'][0]
+ original=line['location']
+ issue=post(c,'/issues',{'collection':'clothing','sku':'CLO-001','kind':'wrong_location',
+                         'location_code':original['code'],'reason':'Shelf reported empty'})
+ assert issue.status_code==200
+ report_id=issue.json()['id']
+ fresh=search(c,'CLO-001')
+ assert fresh['lines'][0]['location_report_open'] is True
+ assert 'under review' in fresh['spoken_text'].lower()
+ assert 'last recorded location' in fresh['spoken_text'].lower()
+ assert post(c,f'/issues/{report_id}/resolve',{'note':'Checked report'}).status_code==422
+ pending=post(c,f'/issues/{report_id}/resolve',{'note':'Still searching for the product','action':'unconfirmed'})
+ assert pending.status_code==200,pending.text
+ assert pending.json()['status']=='open'
+ assert search(c,'CLO-001')['lines'][0]['location_report_open'] is True
+ stale=post(c,f'/issues/{report_id}/resolve',{'note':'Found at recorded shelf','action':'confirmed_original','revision':999})
+ assert stale.status_code==409
+ revision=fresh['lines'][0]['selected']['revision']
+ confirmed=post(c,f'/issues/{report_id}/resolve',{'note':'Physically located correct product at this shelf',
+                                                'action':'confirmed_original','revision':revision})
+ assert confirmed.status_code==200,confirmed.text
+ assert confirmed.json()['status']=='resolved'
+ assert post(c,f'/issues/{report_id}/resolve',{'note':'Duplicate confirmation','action':'confirmed_original','revision':revision}).status_code==409
+ next_search=search(c,'CLO-001')
+ assert next_search['lines'][0]['location_report_open'] is False
+ assert next_search['lines'][0]['last_confirmed_at']
+ assert 'under review' not in next_search['spoken_text'].lower()
+ assert next_search['lines'][0]['location']['code']==original['code']
+ with connect(path) as db:
+  saved=db.execute('SELECT note,status,resolved_by FROM wh_issues WHERE id=?',(report_id,)).fetchone()
+  assert saved['status']=='resolved' and 'physically verified' in saved['note'].lower()
+  assert saved['resolved_by']
+
+
+def test_report_cannot_be_cleared_after_location_record_changes(setup):
+ c,_=setup
+ task=search(c,'CLO-001')
+ line=task['lines'][0]
+ issue=post(c,'/issues',{'collection':'clothing','sku':'CLO-001','kind':'wrong_location',
+                         'location_code':line['location']['code'],'reason':'Cannot locate product'})
+ issue_id=issue.json()['id']
+ updated=line['selected'].copy()
+ updated['name']='Updated after report'
+ assert save(c,updated,updated['revision']).status_code==200
+ response=post(c,f'/issues/{issue_id}/resolve',{'note':'Shelf confirmed','action':'confirmed_original',
+                                               'revision':line['selected']['revision']})
+ assert response.status_code==409
+ assert search(c,'CLO-001')['lines'][0]['location_report_open'] is True
