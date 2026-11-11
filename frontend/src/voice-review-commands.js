@@ -8,6 +8,7 @@ const PHRASES={
   unconfirmed:['location not confirmed','still unconfirmed','keep under review'],
   move:['confirm location change','save verified location'],
   review:['confirm review','save review'],
+  preview:['review location change','review new shelf'],
   cancel:['cancel','stop','no']
  },
  'hi-IN':{
@@ -16,6 +17,7 @@ const PHRASES={
   unconfirmed:['जगह की पुष्टि नहीं हुई','अभी पुष्टि नहीं हुई'],
   move:['नई जगह की पुष्टि करो','जगह बदलना मंजूर'],
   review:['समीक्षा सेव करो','समीक्षा की पुष्टि करो'],
+  preview:['जगह बदलाव की समीक्षा करो'],
   cancel:['रद्द करो','रुको','नहीं']
  },
  'hi-en':{
@@ -24,6 +26,7 @@ const PHRASES={
   unconfirmed:['still unconfirmed','jagah confirm nahi hai','जगह की पुष्टि नहीं हुई'],
   move:['confirm location change','nayi jagah confirm karo','नई जगह की पुष्टि करो'],
   review:['confirm review','review save karo','समीक्षा सेव करो'],
+  preview:['review location change','nayi jagah review karo'],
   cancel:['cancel','stop','रुको']
  },
  'te-IN':{
@@ -32,6 +35,7 @@ const PHRASES={
   unconfirmed:['స్థానం ఇంకా నిర్ధారించలేదు'],
   move:['కొత్త స్థానం నిర్ధారించు'],
   review:['సమీక్షను నిర్ధారించు','సమీక్షను సేవ్ చేయి'],
+  preview:['స్థానం మార్పు సమీక్షించు'],
   cancel:['రద్దు','ఆపు','వద్దు']
  }
 };
