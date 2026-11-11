@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {dialogueControl,voiceAction,actionPhrases} from '../src/voice-review-commands.js';
+import {dialogueControl,voiceAction,actionPhrases,plausibleShelfSuggestion} from '../src/voice-review-commands.js';
 
 test('localized hands-free Help Back Repeat Stop recognize exact commands only',()=>{
  for(const language of ['en-IN','hi-IN','hi-en','te-IN']){
@@ -79,4 +79,11 @@ test('worker report is one guided voice workflow with optional manual verificati
    assert.equal(voiceAction(lang,action,'please '+actionPhrases(lang,action)[0]),false);
   }
  }
+});
+
+test('vague shelf suggestions never become assumed locations',()=>{
+ for(const utterance of ['maybe','not sure','okay','i do not know','yes','पता नहीं','తెలియదు'])
+  assert.equal(plausibleShelfSuggestion(utterance),false,utterance);
+ for(const utterance of ['Rack C shelf 2','bin 07','near entrance','रैक बी शेल्फ तीन','ర్యాక్ సీ షెల్ఫ్ రెండు'])
+  assert.equal(plausibleShelfSuggestion(utterance),true,utterance);
 });
