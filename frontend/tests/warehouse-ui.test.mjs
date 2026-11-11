@@ -664,7 +664,7 @@ test('pink disabled and recording buttons have readable, high-contrast foregroun
 test('report mic waits until spoken guidance stops to avoid transcribing itself',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/function Report\(\{item,location,collection,run,busy,speaking=false/);
- assert.match(src,/VoiceButton small autoStop enabled=\{!busy&&!speaking\}/);
+ assert.ok(src.includes("VoiceButton small autoStop enabled={!busy&&!speaking&&!guidedActive}"));
  assert.match(src,/collection=\{modal\.item\.collection\} \{\.\.\.\{run,busy,voice,language,speaking\}\}/);
 });
 
