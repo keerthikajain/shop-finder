@@ -83,3 +83,11 @@ export function dialogueControl(language,transcript){
  }
  return null;
 }
+
+/* A suggested shelf is unverified text, not a catalogue correction.
+   Ask again instead of silently treating "maybe" as a new shelf. */
+export function plausibleShelfSuggestion(text){
+ const value=normalize(text);
+ if(!value||value.length<3||['maybe','not sure','i do not know',"i don't know",'yes','no','okay','ok','unknown','शायद','पता नहीं','हो सकता है','తెలియదు'].includes(value))return false;
+ return /(?:rack|shelf|bin|aisle|row|zone|section|floor|box|counter|entrance|corner|door|near|area|रैक|शेल्फ|बिन|शेल्फ़|डिब्बा|जगह|के पास|ర్యాక్|షెల్ఫ్|బిన్|అల్మారా|దగ్గర|విభాగం|\d)/i.test(value);
+}
