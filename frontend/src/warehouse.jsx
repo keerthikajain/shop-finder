@@ -195,7 +195,10 @@ export default function WarehouseApp({user,preferences,logout}){
    T(next);AL(line);PV(null);
    N(t('Confirmation undone. This item is ready to verify again.'));
    R(await request('/warehouse/tasks'));
-   if(voice&&auto&&!voiceFlowStopped.current)await playPickGuidance('repeat',next,line);
+   if(voice&&!voiceFlowStopped.current){
+    await playFixedVoice('pick_undo',next.language,true);
+    if(auto&&!voiceFlowStopped.current)await playPickGuidance('repeat',next,line);
+   }
   });
  }
  async function scan(line,kind,value){await run(async()=>{const next=await api('/tasks/'+task.id+'/scan',{line,kind,value});D(null);PV(null);await progressAfterPick(next,kind!=='product');await reload()})}
