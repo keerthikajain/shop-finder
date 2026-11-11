@@ -796,7 +796,8 @@ def install_warehouse(app,path):
  async def voice_step_audio(body:ReviewAudio,step:Literal[
   'review_outcome','review_note','review_confirm','review_pending_saved','review_verified_saved',
   'move_destination','move_reason','move_preview','move_confirm','move_saved',
-  'report_saved','pick_done','pick_undo','help_pick','help_verify','unknown_pick'
+  'report_reason','report_suggestion','report_confirm','report_saved',
+  'pick_done','pick_undo','help_pick','help_verify','unknown_pick'
  ],request:Request):
   identity(request,step.startswith(('review_','move_')))
   prompts={
@@ -840,6 +841,18 @@ def install_warehouse(app,path):
      'सही जगह सेव हो गई। अगली खोज और आवाज में नई जगह बताई जाएगी।',
      'New verified shelf saved. Future answers will use it.',
      'ధృవీకరించిన స్థానం సేవ్ అయ్యింది. కొత్త వెతుకులాటలు సరిచేసిన స్థలాన్ని చూపిస్తాయి.'),
+   'report_reason':('Tell me what is wrong with the recorded location. I will save the words for your review, not submit the report yet.',
+     'बताएं कि दर्ज जगह में क्या गलत है। आपकी बात अभी रिपोर्ट में लिखी जाएगी, भेजी नहीं जाएगी।',
+     'Tell me what is wrong with the location. I will not submit yet.',
+     'నమోదైన స్థలంలో ఏమి తప్పుందో చెప్పండి. మీ మాటలను పరిశీలన కోసం ఉంచుతాను.'),
+   'report_suggestion':('If you found the item elsewhere, tell me the new rack or shelf. Otherwise say skip.',
+     'सामान किसी और जगह मिला हो तो रैक या शेल्फ बताएं। नहीं मिला तो स्किप कहें।',
+     'Tell me the suggested rack or shelf, or say skip.',
+     'వస్తువు మరో చోట దొరికితే ఆ ర్యాక్ లేదా షెల్ఫ్ చెప్పండి. లేకుంటే స్కిప్ అనండి.'),
+   'report_confirm':('Read the report text on screen. Say send report to submit, back to edit, or stop. This does not change the saved shelf.',
+     'रिपोर्ट का लिखा हुआ विवरण जाँचें। भेजने के लिए रिपोर्ट भेजो कहें, बदलने के लिए वापस जाएं।',
+     'Check the report details on screen. Say send report, back, or stop.',
+     'నివేదిక వివరాలను చూడండి. పంపడానికి నివేదిక పంపండి అని చెప్పండి, మార్చాలంటే వెనక్కి వెళ్ళండి.'),
    'report_saved':('Your report was saved. The location remains under review until verified.',
      'आपकी रिपोर्ट सेव हो गई। पुष्टि होने तक जगह की समीक्षा जारी रहेगी।',
      'Report saved. Location is under review.',
