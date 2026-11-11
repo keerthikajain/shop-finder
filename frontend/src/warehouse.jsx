@@ -6,6 +6,7 @@ import {startRecording,startLiveRecording} from './recording.js';
 import HandsFreePicking from './hands-free-picking.jsx';
 import WorkspaceGreeting from './workspace-greeting.jsx';
 import {pickConfirmationIntent} from './picking-confirmations.js';
+import {voiceAction,actionPhrases} from './voice-review-commands.js';
 import {getThemePreference,resolveTheme} from './theme.js';
 import {Mark,Glyph,Modal,Place,Specs,ItemArt,ScanBox,Label,Feedback} from './warehouse-ui.jsx';
 import {ImportPanel,ItemEditor,MoveEditor,ReviewPanel} from './warehouse-manage.jsx';
@@ -182,6 +183,10 @@ export default function WarehouseApp({user,preferences,logout}){
  async function voicePickCommand(transcript,source=task){
   if(!source||source.picking?.paused||!transcript?.trim())return;
   VGC(transcript);
+  if(voiceAction(source.language,'undo',transcript)){
+   if(lastConfirmedIndex<0){VGT(t('There is no confirmed item to undo.'));return false}
+   PV(null);await undoPick(lastConfirmedIndex);return false;
+  }
   if(pendingVoicePick){
    const response=pickConfirmationIntent(source.language,transcript);
    if(response==='no'){const index=pendingVoicePick.line;PV(null);VGT(t('Item not confirmed. Moving to another remaining item.'));await run(()=>deferPick(source,index,'declined'));return}
@@ -320,7 +325,7 @@ export default function WarehouseApp({user,preferences,logout}){
  {hasSearchCandidates?<section className="wh-panel sf-guided-picking" aria-label={t('Guided picking')}>
   <div className="sf-picking-head"><div><span className="wh-eyebrow">{t('Guided picking')}</span><h3>{t(picking.status==='completed'?'Picking completed':pickPaused?'Picking paused':picking.status==='active'?'Picking in progress':'Ready to pick')}</h3><small>{t('Confirm the search once, then Finder guides you to each shelf. Say Repeat, Found it or Wrong location; buttons work too.')}</small></div><b>{verifiedCount}/{task.lines.length}</b></div>
   <progress aria-label={t('Picking progress')} max={task.lines.length} value={verifiedCount}/>
-  {lastConfirmedIndex>=0&&<div className="sf-picking-undo"><button type="button" disabled={busy||pickPaused} onClick={()=>undoPick(lastConfirmedIndex)}>{t('Undo last confirmation')}</button></div>}
+  {lastConfirmedIndex>=0&&<div className="sf-picking-undo"><button type="button" disabled={busy||pickPaused} onClick={()=>undoPick(lastConfirmedIndex)}>{t('Undo last confirmation')}</button>{voice&&<VoiceButton small autoStop enabled={!busy&&!pickPaused&&!speaking} language={task.language} label={t('Say undo last confirmation')} onError={E} onText={text=>{if(voiceAction(task.language,'undo',text))undoPick(lastConfirmedIndex);else E(t('Say: ')+actionPhrases(task.language,'undo')[0])}}/>}</div>}
   {picking.status!=='completed'&&<div className="sf-voice-guide">
     {picking.status==='ready'&&<p className="sf-voice-guide-preview" role="status">{unresolvedLines.length>0?t('Choose or remove the unresolved variants below before starting. Finder will not guess a size or version.'):reportedLines.length>0?t('Reported shelf locations are skipped until verified. Confirm to guide the remaining items automatically.'):t('All items are ready. Confirm search once; Finder will speak the first location and then listen automatically.')}</p>}
    <div className="sf-voice-guide-heading"><strong>{t('Voice-guided picking')}</strong><small>{t(picking.status==='ready'?(unresolvedLines.length?'Finish reviewing your choices to begin.':reportedLines.length?'Reported locations are skipped. Finder can guide the remaining items.':'Confirm search once; Finder will guide you without more clicks.'):'Say Repeat location, Found it, Wrong location or Stop. You can also tap a button.')}</small></div>
