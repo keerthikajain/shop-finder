@@ -6,7 +6,7 @@ import {startRecording,startLiveRecording} from './recording.js';
 import HandsFreePicking from './hands-free-picking.jsx';
 import WorkspaceGreeting from './workspace-greeting.jsx';
 import {pickConfirmationIntent} from './picking-confirmations.js';
-import {voiceAction,actionPhrases} from './voice-review-commands.js';
+import {voiceAction,actionPhrases,dialogueControl} from './voice-review-commands.js';
 import {getThemePreference,resolveTheme} from './theme.js';
 import {Mark,Glyph,Modal,Place,Specs,ItemArt,ScanBox,Label,Feedback} from './warehouse-ui.jsx';
 import {ImportPanel,ItemEditor,MoveEditor,ReviewPanel} from './warehouse-manage.jsx';
@@ -23,7 +23,7 @@ const VOICE_LANGUAGE_DEFAULT={en:'en-IN',hi:'hi-IN','hi-en':'hi-en',te:'te-IN'};
 export const locationFields=['facility','floor','zone','aisle','rack','shelf','bin'];
 export const pathText=(l,isStarter=false)=>locationFields.filter(k=>!(isStarter&&k==='facility')).map(k=>l?.[k]).filter(Boolean).join(' / ');
 export function nextPendingPickIndex(lines=[]){
- const entries=lines.map((line,index)=>({line,index})).filter(x=>!x.line.complete&&!x.line.deferred_reason&&!x.line.location_report_open);
+ const entries=lines.map((line,index)=>({line,index})).filter(x=>!x.line.complete&&!x.line.deferred_reason&&!x.line.location_report_open&&!x.line.stale_catalogue);
  const key=line=>locationFields.map(field=>String(line.location?.[field]||'').toLocaleLowerCase()).join('\u0001');
  entries.sort((a,b)=>{
   const left=key(a.line),right=key(b.line);
@@ -46,7 +46,7 @@ export function VoiceButton({language,enabled,onText,onError,onPartial,live=fals
 export default function WarehouseApp({user,preferences,logout}){
  const t=useT(),owner=user.role==='owner';
  const [feedbackText,FB]=useState(''),[feedbackSent,FBS]=useState(false),[ownerFeedback,OF]=useState([]),[voiceGuideText,VGT]=useState(''),[voiceGuideCommand,VGC]=useState(''),[voiceGuidePaused,VGP]=useState(true),[meta,M]=useState(null),[items,I]=useState([]),[collection,C]=useState('all'),[page,P]=useState('find'),[brand,BR]=useState(''),[locationFilter,LF]=useState(''),[query,Q]=useState(''),[task,T]=useState(null),[recent,R]=useState([]),[busy,B]=useState(false),[error,E]=useState(''),[notice,N]=useState(''),[modal,D]=useState(null),[group,G]=useState('request'),[filter,F]=useState(''),[category,CAT]=useState(''),[language,L]=useState(()=>{const saved=localStorage.getItem('sf-voice-'+user.id);return ACTIVE_VOICE_CODES.has(saved)?saved:(VOICE_LANGUAGE_DEFAULT[user.language]||'en-IN')}),[liveMode,LM]=useState(false),[detectedSearchLanguage,DSL]=useState(null),[hintLanguages,HL]=useState([]),[auto,AUTO]=useState(true),[handsFree,HF]=useState(true),[pendingVoicePick,PV]=useState(null),[searchTranscript,ST]=useState(''),[voiceQuery,VQ]=useState(false),[tour,TOUR]=useState(user.tour_done?null:0),[theme,TH]=useState(()=>getThemePreference(localStorage)),[speaking,SP]=useState(false),[filtersOpen,FO]=useState(false),[sizeFilter,SZ]=useState(''),[activeLine,AL]=useState(0),[reviewNonce,RV]=useState(0);
- const audio=useRef(),audioURL=useRef(),audioRequest=useRef(null),playbackSerial=useRef(0),voiceFlowStopped=useRef(false),reportResumeRef=useRef(false),generation=useRef(0),main=useRef(),taskVoice=useRef(false),pendingResume=useRef(null);
+ const audio=useRef(),audioURL=useRef(),audioRequest=useRef(null),playbackSerial=useRef(0),voiceFlowStopped=useRef(false),reportResumeRef=useRef(false),generation=useRef(0),main=useRef(),taskVoice=useRef(false),pendingResume=useRef(null),audioEndResolve=useRef(null);
  const pack=collection==='all'?{id:'all',name:'Whole store',fields:[...new Set(meta?.collections.flatMap(c=>[...c.fields,...(meta.settings.custom_fields[c.id]||[])])||[])]}:meta?.collections.find(c=>c.id===collection),labels=meta?.field_labels||{},voice=!!meta?.voice,prismaV3=meta?.stt_model!=='prisma-v2.5';
  const invalidHints=false;
  const locationIsStarter=loc=>!!loc&&items.some(p=>p.synthetic&&p.placements.some(x=>x.code===loc.code));
@@ -59,6 +59,7 @@ export default function WarehouseApp({user,preferences,logout}){
  async function run(fn){B(true);E('');N('');try{return await fn()}catch(e){E(e.message)}finally{B(false)}}
  async function reload(){I(await request('/warehouse/items?collection='+collection));M(await request('/warehouse/meta'));R(await request('/warehouse/tasks'))}
  function stopSpeech(){
+  audioEndResolve.current?.();audioEndResolve.current=null;
   playbackSerial.current++;
   audioRequest.current?.abort();
   audioRequest.current=null;
@@ -85,6 +86,43 @@ export default function WarehouseApp({user,preferences,logout}){
    await audio.current.play();
   }catch(e){if(e.name!=='AbortError'&&serial===playbackSerial.current)E(e.name==='NotAllowedError'?'Tap Read answer to allow audio playback.':e.message);if(serial===playbackSerial.current)SP(false)}
   finally{if(audioRequest.current===controller)audioRequest.current=null}
+ }
+ async function playFixedVoice(step,spokenLanguage=language,waitForEnd=false){
+  if(!voice||voiceFlowStopped.current)return;
+  stopSpeech();
+  const serial=playbackSerial.current,controller=new AbortController();
+  audioRequest.current=controller;SP(true);
+  try{
+   const response=await fetch('/api/warehouse/voice/step-audio?step='+encodeURIComponent(step),{
+    method:'POST',credentials:'same-origin',
+    headers:{'X-Shop-Request':'1','Content-Type':'application/json'},
+    body:JSON.stringify({language:spokenLanguage}),
+    signal:AbortSignal.any([controller.signal,AbortSignal.timeout(45000)])
+   });
+   if(!response.ok){
+    const body=await response.json().catch(()=>({}));
+    throw Error(body.detail||'Voice reply unavailable. The saved result is shown on screen.');
+   }
+   const blob=await response.blob();
+   if(serial!==playbackSerial.current)return;
+   if(audioURL.current)URL.revokeObjectURL(audioURL.current);
+   audioURL.current=URL.createObjectURL(blob);audio.current=new Audio(audioURL.current);
+   let done;
+   const ended=new Promise(resolve=>{done=resolve});
+   audioEndResolve.current=done;
+   audio.current.onended=()=>{if(serial===playbackSerial.current)SP(false);done()};
+   audio.current.onerror=()=>{if(serial===playbackSerial.current)SP(false);done()};
+   await audio.current.play();
+   if(waitForEnd)await ended;
+  }catch(e){
+   if(e.name!=='AbortError'&&serial===playbackSerial.current)E(e.message);
+   if(serial===playbackSerial.current)SP(false);
+  }finally{
+   if(serial===playbackSerial.current){
+    audioEndResolve.current=null;
+    if(audioRequest.current===controller)audioRequest.current=null;
+   }
+  }
  }
  async function search(text=query,fromVoice=voiceQuery,global=false,spokenLanguage=null){
   PV(null);VGC('');VGT('');stopVoiceFlow();
@@ -117,9 +155,9 @@ export default function WarehouseApp({user,preferences,logout}){
   if(index<0){
    VGP(true);PV(null);AL(0);
    if(!deferred&&next.lines.every(line=>line.complete)){
-    if(voice&&auto&&!voiceFlowStopped.current)await playPickGuidance('next',next,0);
     const finished=await api('/tasks/'+next.id+'/picking/finish',{});
     T(finished);N(t('All done! Your picking list is complete.'));
+    if(voice&&auto&&!voiceFlowStopped.current)await playFixedVoice('pick_done',finished.language);
    }else{
     if(voice&&auto&&!voiceFlowStopped.current)await playPickGuidance('next',next,0);
     N(t('No more items to guide right now. Unconfirmed and reported items are saved for review. Retry an item manually when ready.'));
@@ -183,6 +221,23 @@ export default function WarehouseApp({user,preferences,logout}){
  async function voicePickCommand(transcript,source=task){
   if(!source||source.picking?.paused||!transcript?.trim())return;
   VGC(transcript);
+  const control=dialogueControl(source.language,transcript);
+  if(control==='stop'){PV(null);stopVoiceFlow();VGT(t('Voice guidance stopped. Your progress is saved.'));return false}
+  if(control==='help'){
+   VGT(t(pendingVoicePick?'Say Yes or No to confirm this item, Repeat, Wrong location or Stop.':'Say Found it, Wrong location, Repeat, Next item, Undo or Stop. Buttons are available too.'));
+   if(voice&&!voiceFlowStopped.current)await playPickGuidance('help',source,pendingVoicePick?.line??activeLine);
+   return;
+  }
+  if(control==='repeat'){
+   if(voice&&!voiceFlowStopped.current)await playPickGuidance(pendingVoicePick?'verify':'repeat',source,pendingVoicePick?.line??activeLine);
+   return;
+  }
+  if(control==='back'){
+   if(pendingVoicePick){const previous=pendingVoicePick.line;PV(null);VGT(t('Confirmation cancelled. Returning to this item.'));if(voice&&!voiceFlowStopped.current)await playPickGuidance('repeat',source,previous);return}
+   const previous=Math.max(0,activeLine-1);AL(previous);VGT(t('Showing the previous item without changing its saved status.'));
+   if(voice&&!voiceFlowStopped.current)await playPickGuidance('repeat',source,previous);
+   return;
+  }
   if(voiceAction(source.language,'undo',transcript)){
    if(lastConfirmedIndex<0){VGT(t('There is no confirmed item to undo.'));return}
    PV(null);
@@ -282,7 +337,7 @@ export default function WarehouseApp({user,preferences,logout}){
   VGP(!(guided&&handsFree));
   N(t('Search confirmed. Finder will read the first location, then listen for your command. Manual controls are always available.'));
   if(guided)await playPickGuidance('start',next,Math.max(0,nextPendingPickIndex(next.lines)));
- }else{VGP(true);VGT('');N(t('Picking completed. No stock quantities were changed.'))}R(await request('/warehouse/tasks'))})}
+ }else{VGP(true);VGT('');N(t('Picking completed. No stock quantities were changed.'));if(voice&&!voiceFlowStopped.current)await playFixedVoice('pick_done',next.language)}R(await request('/warehouse/tasks'))})}
  async function togglePickPause(){
   if(!task||task.picking?.status!=='active'||busy)return;
   stopVoiceFlow();PV(null);
@@ -391,7 +446,9 @@ export default function WarehouseApp({user,preferences,logout}){
  const index=modal.index,active=task?.picking?.status==='active'&&!task.picking?.paused;
  const shouldResume=reportResumeRef.current;
  reportResumeRef.current=false;
- VGP(true);D(null);
+ VGP(true);
+ if(voice&&!voiceFlowStopped.current)await playFixedVoice('report_saved',language,true);
+ D(null);
  if(index!=null&&active){
   VGP(!(voice&&handsFree&&shouldResume));
   await deferPick(task,index,'reported');
