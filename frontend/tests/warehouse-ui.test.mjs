@@ -686,7 +686,7 @@ test('manager dictation writes actual recognized text into editable resolution n
  assert.match(source,/const recognized=String\(text\|\|''\)\.trim\(\)/);
  assert.match(source,/SetTranscript\(recognized\)/);
  assert.match(source,/SetNote\(recognized\.slice\(0,300\)\)/);
- assert.match(source,/autoStop enabled=\{!busy\}/);
+ assert.ok(source.includes("autoStop enabled={!busy&&!reviewSpeaking}"));
  assert.match(source,/onText=\{captureNote\}/);
  assert.match(source,/onError=\{message=>\{SetVoiceError/);
  assert.match(source,/role="alert"/);
