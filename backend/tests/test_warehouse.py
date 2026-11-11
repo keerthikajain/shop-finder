@@ -1632,3 +1632,35 @@ def test_new_search_and_spoken_answer_use_owner_verified_updated_shelf(setup):
  with connect(path) as db:
   stored=db.execute('SELECT payload FROM wh_items WHERE collection=? AND sku=?',('clothing',sku)).fetchone()
   assert json.loads(stored[0])['placements'][0]['rack']=='NEW-VERIFIED-RACK'
+
+
+def test_draft_voice_report_reads_actual_location_and_never_saves_implicitly(setup,monkeypatch):
+ c,path=setup
+ spoken=[]
+ async def fake_speak(text,language):
+  spoken.append((text,language));return b'RIFF-report-preview'
+ monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
+ task=search(c,'CLO-001')
+ location=task['lines'][0]['location']
+ draft={'language':'en-IN','collection':'clothing','sku':'CLO-001',
+  'location_code':location['code'],'reason':'There is no mixer motor at the recorded shelf',
+  'suggested_location':'Rack NEW, Shelf 7'}
+ response=c.post('/api/warehouse/voice/report-preview-audio',headers=H,json=draft)
+ assert response.status_code==200,response.text
+ assert response.content==b'RIFF-report-preview'
+ assert response.headers['cache-control']=='no-store'
+ assert 'CLO-001' in spoken[-1][0]
+ assert draft['reason'] in spoken[-1][0]
+ assert 'not verified' in spoken[-1][0].lower()
+ assert draft['suggested_location'] in spoken[-1][0]
+ assert 'send report' in spoken[-1][0].lower()
+ assert c.get('/api/warehouse/issues').json()==[]
+ with connect(path) as db:
+  assert db.execute('SELECT COUNT(*) FROM wh_events').fetchone()[0]==0
+ stale={**draft,'location_code':'LOC-UNKNOWN'}
+ assert c.post('/api/warehouse/voice/report-preview-audio',headers=H,json=stale).status_code==409
+ for locale in ['hi-IN','hi-en','te-IN']:
+  response=c.post('/api/warehouse/voice/report-preview-audio',headers=H,json={**draft,'language':locale})
+  assert response.status_code==200,response.text
+ login(c,'staff')
+ assert c.post('/api/warehouse/voice/report-preview-audio',headers=H,json=draft).status_code==200
