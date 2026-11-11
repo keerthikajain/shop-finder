@@ -906,7 +906,14 @@ def install_warehouse(app,path):
      'ఆదేశం అర్థం కాలేదు. సహాయం అనండి లేదా బటన్లను వాడండి.')
   }
   language_index={'en-IN':0,'hi-IN':1,'hi-en':2,'te-IN':3}[body.language]
-  result=await voice.speak(prompts[step][language_index],body.language)
+  phrase=prompts[step][language_index]
+  if step not in ('review_pending_saved','review_verified_saved','move_saved','report_saved','pick_done','pick_undo'):
+   phrase+=' '+(
+    'You can say help, repeat, back or stop.' if body.language in ('en-IN','hi-en') else
+    'आप मदद, दोहराओ, वापस या रुको कह सकते हैं।' if body.language=='hi-IN' else
+    'సహాయం, మళ్లీ చెప్పు, వెనక్కి, లేదా ఆపు అనవచ్చు.'
+   )
+  result=await voice.speak(phrase,body.language)
   return Response(result,media_type='audio/wav',headers={'Cache-Control':'no-store'})
  @app.post('/api/warehouse/moves/{token}/review-audio')
  async def spoken_move_review(token:str,body:ReviewAudio,request:Request):
