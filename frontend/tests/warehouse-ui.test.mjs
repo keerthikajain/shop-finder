@@ -671,7 +671,7 @@ test('report mic waits until spoken guidance stops to avoid transcribing itself'
 test('activity report card groups issue, shelf locations and resolution instead of wide scattered flex rows',async()=>{
  const source=await readFile(new URL('../src/warehouse-manage.jsx',import.meta.url),'utf8');
  const css=await readFile(new URL('../src/activity-settings-polish.css',import.meta.url),'utf8');
- assert.match(source,/function TeamReportCard\(\{issue,owner,busy,voice,language,onError,onCorrectLocation,run,reload\}\)/);
+ assert.ok(source.includes("function TeamReportCard({issue,owner,busy,voice,language,onError,onCorrectLocation,onSaved,run,reload})"));
  assert.match(source,/className="sf-team-report-header"/);
  assert.match(source,/className="sf-team-report-body"/);
  assert.match(source,/className="sf-team-report-locations"/);
