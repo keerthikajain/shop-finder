@@ -1473,3 +1473,27 @@ def test_report_cannot_be_cleared_after_location_record_changes(setup):
                                                'revision':line['selected']['revision']})
  assert response.status_code==409
  assert search(c,'CLO-001')['lines'][0]['location_report_open'] is True
+
+
+def test_existing_search_session_warns_when_location_reported_or_catalogue_changes(setup):
+ c,_=setup
+ task=search(c,'CLO-001')
+ tid=task['id']
+ line=task['lines'][0]
+ recorded=line['location']
+ response=post(c,'/issues',{'collection':'clothing','sku':'CLO-001','kind':'wrong_location',
+                            'location_code':recorded['code'],'reason':'Item not found there'})
+ assert response.status_code==200
+ retrieved=c.get('/api/warehouse/tasks/'+tid)
+ assert retrieved.status_code==200
+ assert retrieved.json()['lines'][0]['location_report_open'] is True
+ assert 'under review' in retrieved.json()['spoken_text'].lower()
+ p=line['selected']
+ p['name']='Renamed product after search'
+ assert save(c,p,p['revision']).status_code==200
+ stale=c.get('/api/warehouse/tasks/'+tid)
+ assert stale.status_code==200
+ assert stale.json()['lines'][0]['stale_catalogue'] is True
+ assert 'catalogue location changed' in stale.json()['spoken_text'].lower()
+ assert 'catalogue location changed' in stale.json()['display_text'].lower()
+ assert post(c,f'/tasks/{tid}/scan',{'line':0,'kind':'manual','value':'confirmed'}).status_code==409
