@@ -691,7 +691,7 @@ test('manager dictation writes actual recognized text into editable resolution n
  assert.match(source,/onError=\{message=>\{SetVoiceError/);
  assert.match(source,/role="alert"/);
  assert.match(source,/textarea rows=\{2\} value=\{note\}/);
- assert.match(source,/if\(!owner\|\|!open\|\|busy\|\|note\.trim\(\)\.length<3\)return/);
+ assert.ok(source.includes("if(!owner||!open||busy||reviewSpeaking||note.trim().length<3)return"));
  assert.ok(source.includes("await api('/issues/'+issue.id+'/resolve',payload)"));
  assert.match(source,/resolutionAction==='confirmed_original'/);
  assert.ok(source.includes("action:'confirmed_original',revision:current.revision"));
