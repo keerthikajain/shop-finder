@@ -4,6 +4,7 @@ import {useT,APP_LANGUAGES} from './locale.js';
 import {PICKING_VOICE_LANGUAGES,PICKING_START_VOICE_LANGUAGES,pickVoicePhrase,isStartPickingCommand} from './picking-voice-phrases.js';
 import {startRecording,startLiveRecording} from './recording.js';
 import HandsFreePicking from './hands-free-picking.jsx';
+import GuidedVoiceTurn from './guided-voice-turn.jsx';
 import WorkspaceGreeting from './workspace-greeting.jsx';
 import {pickConfirmationIntent} from './picking-confirmations.js';
 import {voiceAction,actionPhrases,dialogueControl} from './voice-review-commands.js';
@@ -464,13 +465,42 @@ export default function WarehouseApp({user,preferences,logout}){
  </div></Feedback.Provider>
 }
 function Report({item,location,collection,run,busy,speaking=false,voice,language,onError,onStopSpeaking,onSave}){
- const t=useT(),[reason,R]=useState(location?'Item not found at the recorded location.':''),[suggested,S]=useState(''),[heard,H]=useState(''),[heardField,HF]=useState(''),[pendingSubmit,PS]=useState(false);
+ const t=useT(),[reason,R]=useState(location?'Item not found at the recorded location.':''),[suggested,S]=useState(''),[heard,H]=useState(''),[heardField,HF]=useState(''),[pendingSubmit,PS]=useState(false),[guideStage,SetGuideStage]=useState('report_reason'),[guidedActive,SetGuidedActive]=useState(false);
  async function submitReport(){
-  if(busy||reason.trim().length<3)return;
-  await run(async()=>{
+  if(busy||reason.trim().length<3)return false;
+  const saved=await run(async()=>{
    const report=await api('/issues',{collection,sku:item.sku,reason:reason.trim(),kind:location?'wrong_location':'general',location_code:location?.code||'',suggested_location:suggested.trim()});
    await onSave(report);
+   return true;
   });
+  return !!saved;
+ }
+ async function guidedReportAnswer(text,step){
+  const recognized=String(text||'').trim();
+  if(step==='report_reason'){
+   if(recognized.length<3){onError(t('Explain what was wrong with this location.'));return true}
+   R(recognized.slice(0,400));H(recognized);HF('reason');
+   SetGuideStage(location?'report_suggestion':'report_confirm');return true;
+  }
+  if(step==='report_suggestion'){
+   const skipping=voiceAction(language,'report_skip',recognized);
+   if(!skipping&&recognized.length<3){onError(t('Say a shelf, or say Skip if you do not know.'));return true}
+   S(skipping?'':recognized.slice(0,200));H(recognized);HF('shelf');
+   SetGuideStage('report_confirm');return true;
+  }
+  if(step==='report_confirm'){
+   if(!voiceAction(language,'report_send',recognized)){
+    onError(t('Nothing has been submitted. Say: ')+actionPhrases(language,'report_send')[0]);return true;
+   }
+   await submitReport();
+   return false;
+  }
+  return false;
+ }
+ function guidedReportBack(step){
+  if(step==='report_confirm')SetGuideStage(location?'report_suggestion':'report_reason');
+  else if(step==='report_suggestion')SetGuideStage('report_reason');
+  else onError(t('This is the first step. Say Stop to pause.'));
  }
  async function voiceCommand(text){
   const transcript=String(text||'').trim(),normalized=transcript.toLocaleLowerCase().replace(/[.,!?।॥]/g,'').trim();
@@ -492,20 +522,21 @@ function Report({item,location,collection,run,busy,speaking=false,voice,language
  return <div className="sf-report-flow">
  <p><b>{item.name}</b> · {item.sku}</p>
  {location&&<><p>{t('Recorded location:')} <strong>{pathText(location)}</strong></p><p>{t('Thanks for letting us know. Tell us what happened, and your manager can review the location.')}</p></>}
+ {voice&&<GuidedVoiceTurn language={language} stage={guideStage} context="Automatic wrong-location report" onTranscript={guidedReportAnswer} onBack={guidedReportBack} onActiveChange={SetGuidedActive} onError={onError}/>}
  <div className="sf-report-step-note" role="status"><strong>{t('Picking is paused — report the problem')}</strong>{t('Step 1: Say or type what is wrong. Step 2: Review the text. Step 3: Send to your manager. Return to picking when ready.')}</div>
  {voice&&<div className="sf-report-voice-panel" aria-label={t('Voice report')}>
    <strong>{t('Tell us what happened')}</strong>
    <small>{t('Speak once and pause. Recording stops after your sentence. You can also type below, and nothing is sent until you confirm.')}</small>
    {speaking&&<button type="button" className="sf-report-stop-audio" onClick={onStopSpeaking}>{t('Stop guidance audio')}</button>}
-   <VoiceButton small autoStop enabled={!busy&&!speaking} {...{language,onError}} label={t('Speak report')} onText={voiceCommand} onPartial={text=>{H(text);HF('listening')}}/>
+   <VoiceButton small autoStop enabled={!busy&&!speaking&&!guidedActive} {...{language,onError}} label={t('Speak report')} onText={voiceCommand} onPartial={text=>{H(text);HF('listening')}}/>
    <div className="sf-report-transcript" role="status" aria-live="polite"><span>{t('Recognized speech')}</span><p>{heard||t('Your spoken words will appear here after recognition.')}</p>{heardField==='reason'&&<small>{t('Added to the report description. Check it before sending.')}</small>}{heardField==='shelf'&&<small>{t('Added as a suggested location.')}</small>}</div>
-   {pendingSubmit&&<div className="sf-report-send-approval" role="status"><strong>{t('Send this report to your manager?')}</strong><p>{t('Say Yes to send, or No to keep editing.')}</p><button type="button" disabled={busy} onClick={submitReport}>{t('Yes, send report')}</button><button type="button" onClick={()=>PS(false)}>{t('Not yet')}</button></div>}
+   {pendingSubmit&&<div className="sf-report-send-approval" role="status"><strong>{t('Send this report to your manager?')}</strong><p>{t('Say Yes to send, or No to keep editing.')}</p><button type="button" disabled={busy||guidedActive} onClick={submitReport}>{t('Yes, send report')}</button><button type="button" onClick={()=>PS(false)}>{t('Not yet')}</button></div>}
   </div>}
  <form onSubmit={e=>{e.preventDefault();submitReport()}}>
  <label>{t('Write or edit what needs checking')}<textarea required minLength={3} maxLength={400} value={reason} onChange={e=>R(e.target.value)}/></label>
  {location&&<div className="sf-report-location"><label htmlFor="sf-report-location-input">{t('Where did you find it? (optional)')}</label><div className="sf-report-location-field"><input id="sf-report-location-input" value={suggested} maxLength={200} placeholder={t('Rack, shelf or bin, if known')} onChange={e=>S(e.target.value)}/></div></div>}
  <p>{t('Your report will appear in Activity. Your manager can review it and update the saved shelf if needed.')}</p>
- <button className="primary" disabled={busy||reason.trim().length<3}>{t('Send for review')}</button>
+ <button className="primary" disabled={busy||guidedActive||reason.trim().length<3}>{t('Send for review')}</button>
  </form></div>;
 }
 function ScanTask({line,onRead,onManual,busy,onError}){const t=useT();return <><p><b>{line.selected.name}</b> · {line.selected.sku}</p><Place location={line.location} example={!!line.selected?.synthetic}/><div className="wh-scan-steps"><span className={line.product_scanned?'done':''}>1. {t('Scan item')}{line.product_scanned&&' ✓'}</span><span className={line.complete?'done':''}>2. {t('Scan location')}{line.complete&&' ✓'}</span></div>{line.complete?<div className="wh-empty"><Glyph name="check"/><h3>{t('Item and location confirmed.')}</h3></div>:<><h3>{t(line.product_scanned?'Now scan the location label':'Scan the item label')}</h3><ScanBox key={line.product_scanned?'location':'product'} {...{onRead,onError}}/><button className="wh-text-button" disabled={busy} onClick={onManual}>{t('Picked and checked — confirm without scanner')}</button></>}</>}
