@@ -642,7 +642,7 @@ test('wrong-location handoff pauses pick capture and opens an editable report st
 });
 test('spoken report submission resumes the next eligible item only after report is saved',async()=>{
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(source,/VGP\(true\);D\(null\)/);
+ assert.ok(source.includes("VGP(true);\n if(voice&&!voiceFlowStopped.current)await playFixedVoice('report_saved',language,true);\n D(null);"));
  assert.match(source,/await deferPick\(task,index,'reported'\)/);
  assert.match(source,/VGP\(!\(voice&&handsFree&&shouldResume\)\)/);
  assert.match(source,/reportResumeRef\.current=handsFree&&!voiceGuidePaused/);
