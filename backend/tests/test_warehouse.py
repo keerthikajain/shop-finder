@@ -1497,3 +1497,33 @@ def test_existing_search_session_warns_when_location_reported_or_catalogue_chang
  assert 'catalogue location changed' in stale.json()['spoken_text'].lower()
  assert 'catalogue location changed' in stale.json()['display_text'].lower()
  assert post(c,f'/tasks/{tid}/scan',{'line':0,'kind':'manual','value':'confirmed'}).status_code==409
+
+
+def test_accidental_pick_can_be_undone_with_audit_and_no_stock_change(setup):
+ c,path=setup
+ task=search(c,'CLO-001')
+ tid=task['id']
+ started=post(c,f'/tasks/{tid}/picking/start')
+ assert started.status_code==200,started.text
+ confirmed=post(c,f'/tasks/{tid}/scan',{'line':0,'kind':'manual','value':'confirmed'})
+ assert confirmed.status_code==200,confirmed.text
+ assert confirmed.json()['lines'][0]['complete'] is True
+ result=post(c,f'/tasks/{tid}/picking/undo',{'line':0,'reason':'Verified the wrong item'})
+ assert result.status_code==200,result.text
+ task=result.json()
+ assert task['lines'][0]['complete'] is False
+ assert task['lines'][0]['confirmation'] is None
+ assert task['lines'][0]['product_scanned'] is False
+ assert task['pick_adjustments'][-1]['action']=='undo'
+ assert task['pick_adjustments'][-1]['reason']=='Verified the wrong item'
+ assert post(c,f'/tasks/{tid}/picking/undo',{'line':0}).status_code==409
+ assert post(c,f'/tasks/{tid}/scan',{'line':0,'kind':'manual','value':'confirmed'}).status_code==200
+ assert post(c,f'/tasks/{tid}/picking/finish').status_code==200
+ reopened=post(c,f'/tasks/{tid}/picking/undo',{'line':0})
+ assert reopened.status_code==200,reopened.text
+ assert reopened.json()['picking']['status']=='active'
+ assert reopened.json()['lines'][0]['complete'] is False
+ with connect(path) as db:
+  stored=json.loads(db.execute('SELECT payload FROM wh_tasks WHERE id=?',(tid,)).fetchone()['payload'])
+  assert len(stored['pick_adjustments'])==2
+  assert stored['lines'][0]['complete'] is False
