@@ -93,6 +93,9 @@ class PickDefer(Strict):
  reason:Literal['declined','reported']
 class PickRetry(Strict):
  line:int=Field(ge=0,le=9)
+class PickUndo(Strict):
+ line:int=Field(ge=0,le=9)
+ reason:str=Field(default='Accidental confirmation',min_length=3,max_length=200)
 class PickGuideAudio(Strict):
  command:Literal['start','next','repeat','verify','report','stop','help','unknown']
  line:int=Field(default=0,ge=0,le=9)
@@ -607,6 +610,26 @@ def install_warehouse(app,path):
    line.pop('deferred_reason',None)
    line['product_scanned']=False  # Require a fresh product scan after retry.
    return task_put(c,task)
+ @app.post('/api/warehouse/tasks/{tid}/picking/undo')
+ def undo_picking(tid:str,body:PickUndo,request:Request):
+  """Undo an accidental confirmation without changing inventory or losing history."""
+  u=identity(request)
+  with connect(path) as c:
+   c.execute('BEGIN IMMEDIATE');task=task_get(c,tid,u)
+   state=picking_state(task)
+   if state['status'] not in ('active','completed'):
+    raise HTTPException(409,'Only a started picking session can undo a confirmation.')
+   if state.get('paused'):raise HTTPException(409,'Resume picking before undoing a confirmation.')
+   if body.line>=len(task['lines']):raise HTTPException(422,'Invalid task line.')
+   line=task['lines'][body.line]
+   if not line.get('complete'):raise HTTPException(409,'This item has not been confirmed.')
+   task.setdefault('pick_adjustments',[]).append({'action':'undo','line':body.line,
+     'collection':line['selected']['collection'],'sku':line['selected']['sku'],
+     'previous_confirmation':line.get('confirmation'),'actor':u['username'],'at':now(),'reason':body.reason})
+   line.update(complete=False,confirmation=None,confirmed_at=None,product_scanned=False)
+   if state['status']=='completed':
+    state.update(status='active',completed_at=None,paused=False)
+   return task_put(c,task)
  @app.post('/api/warehouse/tasks/{tid}/picking/command')
  def picking_voice_command(tid:str,body:PickCommand,request:Request):
   u=identity(request)
@@ -727,10 +750,10 @@ def install_warehouse(app,path):
    elif body.kind=='location':
     if not line['product_scanned']:raise HTTPException(409,'Scan the item first.')
     if body.value!=line['location']['code']:raise HTTPException(409,'Different location scanned. Check the shelf label.')
-    line.update(complete=True,confirmation='barcode')
+    line.update(complete=True,confirmation='barcode',confirmed_at=now())
    else:
     if body.value not in ('confirmed','yes','checked'):raise HTTPException(422,'Manual verification requires explicit confirmation.')
-    line.update(complete=True,confirmation='manual')
+    line.update(complete=True,confirmation='manual',confirmed_at=now())
    return task_put(c,t)
  @app.post('/api/warehouse/tasks/{tid}/speak')
  async def speech(tid:str,request:Request):
