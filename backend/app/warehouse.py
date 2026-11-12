@@ -149,6 +149,7 @@ def initialize_warehouse(path,demo=True):
   c.executescript('''CREATE TABLE IF NOT EXISTS wh_items(collection TEXT NOT NULL,sku TEXT NOT NULL,barcode TEXT NOT NULL,payload TEXT NOT NULL,revision INTEGER NOT NULL,updated_at TEXT NOT NULL,updated_by TEXT NOT NULL,PRIMARY KEY(collection,sku));
   CREATE TABLE IF NOT EXISTS wh_events(id INTEGER PRIMARY KEY,collection TEXT,sku TEXT,action TEXT,actor TEXT,at TEXT,before_json TEXT,after_json TEXT,reason TEXT);
   CREATE TABLE IF NOT EXISTS wh_pending(id TEXT PRIMARY KEY,kind TEXT,owner TEXT,expires REAL,payload TEXT);
+  CREATE TABLE IF NOT EXISTS wh_move_receipts(token TEXT PRIMARY KEY,owner TEXT NOT NULL,saved_at REAL NOT NULL,result TEXT NOT NULL);
   CREATE TABLE IF NOT EXISTS wh_tasks(id TEXT PRIMARY KEY,owner TEXT,created REAL,payload TEXT);
   CREATE TABLE IF NOT EXISTS wh_issues(id INTEGER PRIMARY KEY,collection TEXT,sku TEXT,reason TEXT,actor TEXT,at TEXT,status TEXT DEFAULT 'open',note TEXT DEFAULT '');
   CREATE TABLE IF NOT EXISTS wh_location_checks(id INTEGER PRIMARY KEY,task_id TEXT NOT NULL,line_index INTEGER NOT NULL,collection TEXT NOT NULL,sku TEXT NOT NULL,location_code TEXT NOT NULL,revision INTEGER NOT NULL,actor TEXT NOT NULL,at TEXT NOT NULL,UNIQUE(task_id,line_index));''')
@@ -994,12 +995,19 @@ def install_warehouse(app,path):
  def move_confirm(token:str,request:Request):
   u=identity(request,True)
   with connect(path) as c:
-   c.execute('BEGIN IMMEDIATE');b=get_pending(c,token,'move',u);p=json.loads(item_row(c,b['collection'],b['sku'])['payload'])
+   c.execute('BEGIN IMMEDIATE')
+   # The browser may lose the HTTP response after the transaction commits.
+   # Replay the original result without applying the move twice.
+   c.execute('DELETE FROM wh_move_receipts WHERE saved_at<?',(time.time()-86400,))
+   receipt=c.execute('SELECT result FROM wh_move_receipts WHERE token=? AND owner=?',(token,u['id'])).fetchone()
+   if receipt:return json.loads(receipt['result'])
+   b=get_pending(c,token,'move',u);p=json.loads(item_row(c,b['collection'],b['sku'])['payload'])
    p['placements']=[{**b['destination'],'quantity':l.get('quantity')} if loc_code(l)==b['source'] else l for l in p['placements']]
    Item(**p);result=write(c,p,b['revision'],u['username'],b['reason'],'move')
    # A verified move resolves open reports about the exact prior placement; other reports remain open.
    new_place=next(l for l in result['placements'] if l['code']==loc_code(b['destination']))
    c.execute("UPDATE wh_issues SET status='resolved',note=?,resolved_at=?,resolved_by=? WHERE status='open' AND kind='wrong_location' AND collection=? AND sku=? AND location_code=?",('Verified new location: '+loc_text(new_place),now(),u['username'],b['collection'],b['sku'],b['source']))
+   c.execute('INSERT INTO wh_move_receipts(token,owner,saved_at,result) VALUES(?,?,?,?)',(token,u['id'],time.time(),encode(result)))
    c.execute('DELETE FROM wh_pending WHERE id=?',(token,));return result
  @app.post('/api/warehouse/imports')
  async def upload(request:Request,collection:str,filename:str):
