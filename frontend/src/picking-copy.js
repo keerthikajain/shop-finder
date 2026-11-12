@@ -31,6 +31,8 @@ const EN={
  noConfirm:'Nothing was confirmed. Continuing with the remaining items.',
  verify:'Did you pick the correct item? Say Yes to confirm or No to skip.',
  noMic:'Voice recognition failed. Retry, or use the buttons to continue.',
+ yesPicked:'Yes, picked',
+ noNext:'No, next item',
  retry:'Retry voice',
  transcribing:'Recognizing your command…',
  noConfirmedUndo:'There is no confirmed item to undo.',
@@ -72,6 +74,8 @@ const HI={
  noConfirm:'सामान की पुष्टि नहीं हुई। दूसरे सामान पर जा रहे हैं।',
  verify:'सही सामान उठाया है? हाँ कहकर पुष्टि करें, या नहीं कहें।',
  noMic:'आवाज़ पहचानने में समस्या हुई। फिर कोशिश करें या बटन इस्तेमाल करें।',
+ yesPicked:'हाँ, सामान उठाया',
+ noNext:'नहीं, अगला सामान',
  retry:'फिर कोशिश करें',
  transcribing:'आपकी बात समझ रहे हैं…',
  noConfirmedUndo:'पिछली पुष्टि वापस लेने के लिए कोई सामान नहीं है।',
@@ -114,6 +118,8 @@ const HINGLISH={
  noConfirm:'Item confirm nahi hua. Ab next item check karo.',
  verify:'Sahi item uthaya? Confirm karne ke liye Haan bolo, nahi toh Nahi.',
  noMic:'Voice samajh nahi aayi. Retry karo ya buttons use karo.',
+ yesPicked:'Haan, pick kiya',
+ noNext:'Nahi, next item',
  retry:'Voice retry karo',
  transcribing:'Aapki command samajh rahe hain…',
  noConfirmedUndo:'Abhi koi confirmed item undo karne ke liye nahi hai.',
@@ -163,6 +169,8 @@ const TE={
  stopped:'వాయిస్ ఆగింది. కొనసాగించండి లేదా బటన్లను వాడండి.',
  verify:'సరైన వస్తువునే తీసుకున్నారా? అవును లేదా కాదు అనండి.',
  noMic:'మైక్ సమస్య. మళ్లీ ప్రయత్నించండి లేదా బటన్లను వాడండి.',
+ yesPicked:'అవును, తీసుకున్నాను',
+ noNext:'కాదు, తదుపరి వస్తువు',
 };
 export function pickingCopy(language,key){
  const dict=language==='hi-IN'?HI:language==='hi-en'?HINGLISH:language==='te-IN'?TE:EN;
