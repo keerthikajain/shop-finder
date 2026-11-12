@@ -762,7 +762,7 @@ test('picking pause and resume persist progress while automatic listening starts
  assert.match(src,/async function togglePickPause\(\)/);
  assert.match(src,/task\.picking\?\.paused\?'resume':'pause'/);
  assert.match(src,/className="sf-pick-pause-toggle"/);
- assert.match(src,/pickPaused\?'Resume picking':'Pause picking'/);
+ assert.ok(src.includes("pickingCopy(task.language,pickPaused?'resumePicking':'pause')"));
  assert.match(src,/\[handsFree,HF\]=useState\(true\)/);
  assert.match(src,/\[voiceGuidePaused,VGP\]=useState\(true\)/);
  assert.match(src,/onClick=\{\(\)=>\{if\(!voiceGuidePaused\)\{PV\(null\);stopVoiceFlow\(\);return\}/);
