@@ -947,13 +947,18 @@ def install_warehouse(app,path):
    source=next((loc for loc in p['placements'] if loc['code']==payload['source']),None)
    if not source:raise HTTPException(409,'Source location changed. Review again.')
    destination=payload['destination']
-   phrase={
-    'hi-IN':'स्थान सुधार की समीक्षा करें।',
-    'hi-en':'Review this location correction.',
-    'te-IN':'స్థాన మార్పును సమీక్షించండి.',
-    'en-IN':'Review this location correction.'
-   }[body.language]
-   message=f"{phrase} {p['name']}, {p['sku']}. Previous location: {loc_text(source)}. Proposed location: {loc_text(destination)}. Reason: {payload['reason']}. Confirm only after physically verifying the proposed shelf."
+   templates={
+    'en-IN':('Review this location correction.','Previous location','Proposed location','Reason',
+      'Confirm only after physically verifying the proposed shelf. Say confirm location change, back to edit, or stop.'),
+    'hi-IN':('स्थान सुधार की जाँच करें।','पुरानी जगह','सुझाई गई नई जगह','कारण',
+      'असली शेल्फ की जाँच के बाद ही नई जगह की पुष्टि करो कहें। सुधारने के लिए वापस, रोकने के लिए रुको कहें।'),
+    'hi-en':('Location correction check karo.','Purani location','Nayi location','Reason',
+      'Actual shelf verify karne ke baad nayi jagah confirm karo. Edit ke liye back, pause ke liye stop.'),
+    'te-IN':('స్థాన మార్పును పరిశీలించండి.','పాత స్థానం','సూచించిన కొత్త స్థానం','కారణం',
+      'కొత్త షెల్ఫ్‌ను నిజంగా చూసిన తర్వాత మాత్రమే కొత్త స్థానం నిర్ధారించు అనండి. సవరించడానికి వెనక్కి, ఆపడానికి ఆపు అనండి.')
+   }
+   intro,old_label,new_label,reason_label,commands=templates[body.language]
+   message=f"{intro} {p['name']}, {p['sku']}. {old_label}: {loc_text(source)}. {new_label}: {loc_text(destination)}. {reason_label}: {payload['reason']}. {commands}"
   return Response(await voice.speak(message,body.language),media_type='audio/wav',headers={'Cache-Control':'no-store'})
  @app.post('/api/warehouse/moves/{token}/confirm')
  def move_confirm(token:str,request:Request):
@@ -1053,11 +1058,23 @@ def install_warehouse(app,path):
    product=public(item_row(c,issue['collection'],issue['sku']))
    recorded=next((loc for loc in product['placements'] if loc['code']==issue['location_code']),None)
    if not recorded:raise HTTPException(409,'Recorded shelf changed. Refresh before approving.')
-   labels={
-    'confirmed_original':'You are confirming that the original shelf was physically verified.',
-    'unconfirmed':'You are keeping this report open because the shelf is not confirmed.'
+   templates={
+    'en-IN':('Last recorded location','You are confirming that the original shelf was physically verified.',
+      'You are keeping this report open because the shelf is not confirmed.','Your review note',
+      'Say save review to confirm, back to edit, or stop.'),
+    'hi-IN':('दर्ज जगह','आप पुष्टि कर रहे हैं कि पुरानी जगह की भौतिक जाँच हो चुकी है।',
+      'जगह की पुष्टि नहीं हुई, इसलिए रिपोर्ट खुली रहेगी।','आपकी जाँच की टिप्पणी',
+      'सेव करने के लिए समीक्षा सेव करो, सुधारने के लिए वापस, रोकने के लिए रुको कहें।'),
+    'hi-en':('Recorded location','Aapne original shelf check karke verify ki hai.',
+      'Shelf confirm nahi hui. Report open rahegi.','Review note',
+      'Save karne ke liye review save karo, edit ke liye back, pause ke liye stop.'),
+    'te-IN':('నమోదైన స్థానం','పాత షెల్ఫ్‌ను నిజంగా పరిశీలించి నిర్ధారిస్తున్నట్లు మీరు చెబుతున్నారు.',
+      'స్థానం నిర్ధారణ కాలేదు. నివేదిక తెరిచే ఉంటుంది.','మీ పరిశీలన గమనిక',
+      'సేవ్ చేయడానికి సమీక్షను సేవ్ చేయి, సవరించడానికి వెనక్కి, ఆపడానికి ఆపు అనండి.')
    }
-   message=f"{product['name']}, {product['sku']}. Last recorded location: {loc_text(recorded)}. {labels[body.action]} Your review note: {body.note}. Say save review to confirm, back to edit, or stop."
+   place_label,verified,unconfirmed,note_label,commands=templates[body.language]
+   decision=verified if body.action=='confirmed_original' else unconfirmed
+   message=f"{product['name']}, {product['sku']}. {place_label}: {loc_text(recorded)}. {decision} {note_label}: {body.note}. {commands}"
   return Response(await voice.speak(message,body.language),media_type='audio/wav',headers={'Cache-Control':'no-store'})
  @app.post('/api/warehouse/issues/{iid}/review-audio')
  async def spoken_issue_review(iid:int,body:ReviewAudio,request:Request):
@@ -1069,9 +1086,18 @@ def install_warehouse(app,path):
    p=public(item_row(c,issue['collection'],issue['sku']))
    old=next((loc for loc in p['placements'] if loc['code']==issue['location_code']),None)
    if not old:raise HTTPException(409,'Recorded location has changed. Refresh to review.')
-   prefix={'hi-IN':'स्थान की रिपोर्ट की समीक्षा करें।','hi-en':'Review the reported shelf.',
-           'te-IN':'నివేదించిన స్థానాన్ని సమీక్షించండి.','en-IN':'Review the reported shelf.'}[body.language]
-   message=f"{prefix} {p['name']}, {p['sku']}. Last recorded location: {loc_text(old)}. If found here, confirm this location. If not confirmed, keep the report open. If moved, verify a new location before saving."
+   templates={
+    'en-IN':('Review the reported shelf.','Last recorded location',
+      'If found here, confirm the original location. If unconfirmed, leave the report open. For another shelf, verify a correction.'),
+    'hi-IN':('रिपोर्ट की जगह जाँचें।','दर्ज जगह',
+      'सामान यहीं मिला हो तो पुरानी जगह सही है कहें। जगह पता नहीं हो तो रिपोर्ट खुली रखें। दूसरी जगह मिले तो जाँचकर सुधारें।'),
+    'hi-en':('Reported shelf check karo.','Recorded location',
+      'Yahin mila toh original location verify karo. Confirm nahi toh report open rakho. Dusri shelf mile toh verify karke correct karo.'),
+    'te-IN':('నివేదించిన షెల్ఫ్‌ను పరిశీలించండి.','నమోదైన స్థానం',
+      'ఇక్కడ దొరికితే పాత స్థానాన్ని నిర్ధారించండి. తెలియకపోతే నివేదిక తెరిచి ఉంచండి. మరో షెల్ఫ్‌లో దొరికితే పరిశీలించి సవరించండి.')
+   }
+   intro,place_label,guide=templates[body.language]
+   message=f"{intro} {p['name']}, {p['sku']}. {place_label}: {loc_text(old)}. {guide}"
   return Response(await voice.speak(message,body.language),media_type='audio/wav',headers={'Cache-Control':'no-store'})
  @app.post('/api/warehouse/issues/{iid}/resolve')
  def resolve(iid:int,body:Resolve,request:Request):
