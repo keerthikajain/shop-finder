@@ -358,3 +358,88 @@ const additionalInfo={
   }
 };
 for(const [language,phrases] of Object.entries(additionalInfo))Object.assign(uiLanguageCoverage[language],phrases);
+
+const onboardingCopy={
+  "hi": {
+    "Or explore instantly, without signing up": "या बिना खाता बनाए तुरंत आज़माएँ",
+    "Explore Shop Finder without an account.": "बिना खाते के Shop Finder आज़माएँ।",
+    "Try multilingual search, example shelves and guided voice picking. This temporary challenge preview uses fictional products and cannot change business records.": "अलग भाषाओं में खोज, उदाहरण वाले शेल्फ और आवाज़ से सामान चुनना आज़माएँ। इस अस्थायी पूर्वावलोकन में काल्पनिक उत्पाद हैं और असली रिकॉर्ड नहीं बदलते।",
+    "Opening preview…": "पूर्वावलोकन खुल रहा है…",
+    "Try Shop Finder": "Shop Finder आज़माएँ",
+    "Workers can request access using one shared workplace code. Every account must still be approved. Keep the code private and rotate it if exposed.": "कर्मचारी साझा कार्यस्थल कोड से प्रवेश माँग सकते हैं। हर खाते को मंज़ूरी चाहिए। कोड निजी रखें और लीक होने पर बदलें।",
+    "Registration:": "पंजीकरण:"
+  },
+  "bn": {
+    "Or explore instantly, without signing up": "অথবা অ্যাকাউন্ট ছাড়াই এখনই ব্যবহার করুন",
+    "Explore Shop Finder without an account.": "অ্যাকাউন্ট ছাড়া Shop Finder ব্যবহার করুন।",
+    "Try multilingual search, example shelves and guided voice picking. This temporary challenge preview uses fictional products and cannot change business records.": "বিভিন্ন ভাষায় অনুসন্ধান, নমুনা তাক ও কণ্ঠ নির্দেশে পণ্য সংগ্রহ চেষ্টা করুন। এই অস্থায়ী প্রিভিউতে কাল্পনিক পণ্য আছে; ব্যবসার রেকর্ড বদলায় না।",
+    "Opening preview…": "প্রিভিউ খোলা হচ্ছে…",
+    "Try Shop Finder": "Shop Finder ব্যবহার করুন",
+    "Workers can request access using one shared workplace code. Every account must still be approved. Keep the code private and rotate it if exposed.": "কর্মীরা একটি ভাগ করা কর্মক্ষেত্র কোড দিয়ে প্রবেশের অনুরোধ করতে পারেন। প্রতিটি অ্যাকাউন্ট অনুমোদিত হতে হবে। কোড গোপন রাখুন, ফাঁস হলে বদলান।",
+    "Registration:": "নিবন্ধন:"
+  },
+  "mr": {
+    "Or explore instantly, without signing up": "किंवा खाते न बनवता लगेच वापरून पाहा",
+    "Explore Shop Finder without an account.": "खात्याशिवाय Shop Finder वापरून पाहा.",
+    "Try multilingual search, example shelves and guided voice picking. This temporary challenge preview uses fictional products and cannot change business records.": "अनेक भाषांतील शोध, नमुना शेल्फ आणि आवाजाने निवड करून पाहा. या तात्पुरत्या पूर्वावलोकनात काल्पनिक उत्पादने आहेत; व्यवसायाचे रेकॉर्ड बदलत नाहीत.",
+    "Opening preview…": "पूर्वावलोकन उघडत आहे…",
+    "Try Shop Finder": "Shop Finder वापरून पाहा",
+    "Workers can request access using one shared workplace code. Every account must still be approved. Keep the code private and rotate it if exposed.": "कर्मचारी सामायिक कार्यक्षेत्र कोडने प्रवेश मागू शकतात. प्रत्येक खात्याला मंजुरी आवश्यक आहे. कोड गुप्त ठेवा व उघड झाल्यास बदला.",
+    "Registration:": "नोंदणी:"
+  },
+  "gu": {
+    "Or explore instantly, without signing up": "અથવા ખાતું બનાવ્યા વિના તરત અજમાવો",
+    "Explore Shop Finder without an account.": "ખાતા વિના Shop Finder અજમાવો.",
+    "Try multilingual search, example shelves and guided voice picking. This temporary challenge preview uses fictional products and cannot change business records.": "બહુભાષી શોધ, નમૂનાના શેલ્ફ અને અવાજથી વસ્તુ પસંદ કરવાનું અજમાવો. આ કામચલાઉ પૂર્વદર્શનમાં કાલ્પનિક ઉત્પાદનો છે; વ્યવસાયના રેકોર્ડ બદલાતા નથી.",
+    "Opening preview…": "પૂર્વદર્શન ખુલી રહ્યું છે…",
+    "Try Shop Finder": "Shop Finder અજમાવો",
+    "Workers can request access using one shared workplace code. Every account must still be approved. Keep the code private and rotate it if exposed.": "કર્મચારીઓ એક શેર કરેલા કાર્યસ્થળ કોડથી પ્રવેશ માગી શકે છે. દરેક ખાતાને મંજૂરી જરૂરી છે. કોડ ખાનગી રાખો અને બહાર આવે તો બદલો.",
+    "Registration:": "નોંધણી:"
+  },
+  "pa": {
+    "Or explore instantly, without signing up": "ਜਾਂ ਬਿਨਾਂ ਖਾਤਾ ਬਣਾਏ ਹੁਣੇ ਅਜ਼ਮਾਓ",
+    "Explore Shop Finder without an account.": "ਬਿਨਾਂ ਖਾਤੇ ਦੇ Shop Finder ਅਜ਼ਮਾਓ।",
+    "Try multilingual search, example shelves and guided voice picking. This temporary challenge preview uses fictional products and cannot change business records.": "ਕਈ ਭਾਸ਼ਾਵਾਂ ਵਿੱਚ ਖੋਜ, ਨਮੂਨਾ ਸ਼ੈਲਫ਼ ਅਤੇ ਆਵਾਜ਼ ਨਾਲ ਪਿਕਿੰਗ ਅਜ਼ਮਾਓ। ਇਸ ਅਸਥਾਈ ਪ੍ਰੀਵਿਊ ਵਿੱਚ ਕਾਲਪਨਿਕ ਸਾਮਾਨ ਹੈ; ਕਾਰੋਬਾਰੀ ਰਿਕਾਰਡ ਨਹੀਂ ਬਦਲਦੇ।",
+    "Opening preview…": "ਪ੍ਰੀਵਿਊ ਖੁੱਲ੍ਹ ਰਿਹਾ ਹੈ…",
+    "Try Shop Finder": "Shop Finder ਅਜ਼ਮਾਓ",
+    "Workers can request access using one shared workplace code. Every account must still be approved. Keep the code private and rotate it if exposed.": "ਕਰਮਚਾਰੀ ਸਾਂਝੇ ਵਰਕਸਪੇਸ ਕੋਡ ਨਾਲ ਪਹੁੰਚ ਮੰਗ ਸਕਦੇ ਹਨ। ਹਰ ਖਾਤੇ ਨੂੰ ਮਨਜ਼ੂਰੀ ਲਾਜ਼ਮੀ ਹੈ। ਕੋਡ ਗੁਪਤ ਰੱਖੋ ਅਤੇ ਲੀਕ ਹੋਣ 'ਤੇ ਬਦਲੋ।",
+    "Registration:": "ਰਜਿਸਟ੍ਰੇਸ਼ਨ:"
+  },
+  "kn": {
+    "Or explore instantly, without signing up": "ಅಥವಾ ಖಾತೆ ಇಲ್ಲದೆ ಈಗಲೇ ಪ್ರಯತ್ನಿಸಿ",
+    "Explore Shop Finder without an account.": "ಖಾತೆ ಇಲ್ಲದೆ Shop Finder ಪ್ರಯತ್ನಿಸಿ.",
+    "Try multilingual search, example shelves and guided voice picking. This temporary challenge preview uses fictional products and cannot change business records.": "ಬಹುಭಾಷಾ ಹುಡುಕಾಟ, ಮಾದರಿ ಶೆಲ್ಫ್‌ಗಳು ಮತ್ತು ಧ್ವನಿ ಮಾರ್ಗದರ್ಶನದ ಆಯ್ಕೆಯನ್ನು ಪ್ರಯತ್ನಿಸಿ. ಈ ತಾತ್ಕಾಲಿಕ ಪೂರ್ವವೀಕ್ಷಣೆ ಕಾಲ್ಪನಿಕ ಉತ್ಪನ್ನಗಳನ್ನು ಬಳಸುತ್ತದೆ; ವ್ಯವಹಾರ ದಾಖಲೆ ಬದಲಾಗುವುದಿಲ್ಲ.",
+    "Opening preview…": "ಪೂರ್ವವೀಕ್ಷಣೆ ತೆರೆಯಲಾಗುತ್ತಿದೆ…",
+    "Try Shop Finder": "Shop Finder ಪ್ರಯತ್ನಿಸಿ",
+    "Workers can request access using one shared workplace code. Every account must still be approved. Keep the code private and rotate it if exposed.": "ಸಿಬ್ಬಂದಿ ಹಂಚಿದ ಕಾರ್ಯಸ್ಥಳ ಕೋಡ್ ಬಳಸಿ ಪ್ರವೇಶ ಕೇಳಬಹುದು. ಪ್ರತಿ ಖಾತೆಗೂ ಅನುಮೋದನೆ ಬೇಕು. ಕೋಡ್ ಗೌಪ್ಯವಾಗಿಡಿ, ಬಹಿರಂಗವಾದರೆ ಬದಲಾಯಿಸಿ.",
+    "Registration:": "ನೋಂದಣಿ:"
+  },
+  "te": {
+    "Or explore instantly, without signing up": "లేదా ఖాతా లేకుండానే వెంటనే ప్రయత్నించండి",
+    "Explore Shop Finder without an account.": "ఖాతా లేకుండా Shop Finder ప్రయత్నించండి.",
+    "Try multilingual search, example shelves and guided voice picking. This temporary challenge preview uses fictional products and cannot change business records.": "బహుభాషా శోధన, నమూనా షెల్ఫ్‌లు, వాయిస్ పికింగ్ ప్రయత్నించండి. ఈ తాత్కాలిక ప్రివ్యూలో కల్పిత ఉత్పత్తులే ఉంటాయి; వ్యాపార రికార్డులు మారవు.",
+    "Opening preview…": "ప్రివ్యూ తెరుస్తోంది…",
+    "Try Shop Finder": "Shop Finder ప్రయత్నించండి",
+    "Workers can request access using one shared workplace code. Every account must still be approved. Keep the code private and rotate it if exposed.": "సిబ్బంది పంచుకున్న కార్యస్థల కోడ్‌తో ప్రవేశం కోరవచ్చు. ప్రతి ఖాతాకు ఆమోదం అవసరం. కోడ్ రహస్యంగా ఉంచండి; బయటపడితే మార్చండి.",
+    "Registration:": "నమోదు:"
+  },
+  "ta": {
+    "Or explore instantly, without signing up": "அல்லது கணக்கு இல்லாமல் இப்போதே முயற்சிக்கவும்",
+    "Explore Shop Finder without an account.": "கணக்கு இல்லாமல் Shop Finder-ஐ முயற்சிக்கவும்.",
+    "Try multilingual search, example shelves and guided voice picking. This temporary challenge preview uses fictional products and cannot change business records.": "பல மொழித் தேடல், மாதிரி அலமாரிகள் மற்றும் குரல் வழிப் பொருள் தேர்வை முயற்சிக்கவும். இந்தத் தற்காலிக முன்னோட்டத்தில் கற்பனைப் பொருட்கள் மட்டுமே உள்ளன; வணிகப் பதிவுகள் மாறாது.",
+    "Opening preview…": "முன்னோட்டம் திறக்கப்படுகிறது…",
+    "Try Shop Finder": "Shop Finder முயற்சிக்கவும்",
+    "Workers can request access using one shared workplace code. Every account must still be approved. Keep the code private and rotate it if exposed.": "பகிரப்பட்ட பணியிடக் குறியீட்டைக் கொண்டு பணியாளர்கள் அணுகலைக் கோரலாம். ஒவ்வொரு கணக்கும் ஒப்புதல் பெற வேண்டும். குறியீட்டை ரகசியமாக வைத்து வெளியானால் மாற்றவும்.",
+    "Registration:": "பதிவு:"
+  },
+  "ml": {
+    "Or explore instantly, without signing up": "അല്ലെങ്കിൽ അക്കൗണ്ടില്ലാതെ ഇപ്പോൾ തന്നെ പരീക്ഷിക്കൂ",
+    "Explore Shop Finder without an account.": "അക്കൗണ്ടില്ലാതെ Shop Finder പരീക്ഷിക്കൂ.",
+    "Try multilingual search, example shelves and guided voice picking. This temporary challenge preview uses fictional products and cannot change business records.": "പല ഭാഷകളിലുള്ള തിരയൽ, മാതൃകാ ഷെൽഫുകൾ, ശബ്ദ നിർദ്ദേശത്തോടെയുള്ള സാധന തിരഞ്ഞെടുപ്പ് എന്നിവ പരീക്ഷിക്കുക. ഈ താൽക്കാലിക പ്രിവ്യൂയിൽ സാങ്കൽപ്പിക ഉൽപ്പന്നങ്ങളാണ്; ബിസിനസ് രേഖകൾ മാറ്റില്ല.",
+    "Opening preview…": "പ്രിവ്യൂ തുറക്കുന്നു…",
+    "Try Shop Finder": "Shop Finder പരീക്ഷിക്കൂ",
+    "Workers can request access using one shared workplace code. Every account must still be approved. Keep the code private and rotate it if exposed.": "പങ്കിട്ട വർക്ക്‌സ്‌പേസ് കോഡ് ഉപയോഗിച്ച് ജീവനക്കാർ പ്രവേശനം അഭ്യർത്ഥിക്കാം. എല്ലാ അക്കൗണ്ടുകളും അംഗീകരിക്കണം. കോഡ് രഹസ്യമായി സൂക്ഷിക്കുകയും പുറത്തായാൽ മാറ്റുകയും ചെയ്യുക.",
+    "Registration:": "രജിസ്ട്രേഷൻ:"
+  }
+};
+for(const [language,phrases] of Object.entries(onboardingCopy))Object.assign(uiLanguageCoverage[language],phrases);
