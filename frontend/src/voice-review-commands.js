@@ -98,3 +98,17 @@ export function plausibleShelfSuggestion(text){
 export function reportSubmitCommand(language,transcript){
  return voiceAction(language,'report_send',transcript)||voiceAction('en-IN','report_send',transcript);
 }
+
+/** STT sometimes appends a stray word (e.g. "send report I").
+ *  Do not execute and do not save it as a problem description. Clarify instead. */
+export function unclearReportSubmit(language,transcript){
+ if(reportSubmitCommand(language,transcript))return false;
+ const value=normalize(transcript);
+ if(!value)return false;
+ const commands=[...actionPhrases(language,'report_send'),...actionPhrases('en-IN','report_send')];
+ return commands.some(command=>{
+  const phrase=normalize(command);
+  const extra=value.startsWith(phrase+' ')?value.slice(phrase.length+1):'';
+  return !!extra && extra.split(' ').length<=2;
+ });
+}
