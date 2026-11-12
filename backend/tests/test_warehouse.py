@@ -1918,14 +1918,14 @@ def test_active_picking_refuses_an_item_modified_after_worker_search(setup):
 
 def test_import_preview_rejects_duplicate_sku_conflicting_identifiers_and_blank_location(setup):
  c,_=setup
- source=('sku,name,category,barcode,rack\\n'
-         'NEW-A,Example A,Example,SHARED,B1\\n'
-         'NEW-B,Example B,Example,SHARED,B2\\n')
+ source=('sku,name,category,barcode,rack\n'
+         'NEW-A,Example A,Example,SHARED,B1\n'
+         'NEW-B,Example B,Example,SHARED,B2\n')
  preview=sheet(c,source.encode('utf-8'))
  assert preview['errors']
  assert post(c,'/imports/'+preview['token']+'/confirm').status_code==422
- missing=('sku,name,category,barcode,rack\\n'
-          'NEW-C,Example C,Example,CHECK-BLANK,\\n')
+ missing=('sku,name,category,barcode,rack\n'
+          'NEW-C,Example C,Example,CHECK-BLANK,\n')
  blank_preview=sheet(c,missing.encode('utf-8'))
  assert blank_preview['errors']
  assert post(c,'/imports/'+blank_preview['token']+'/confirm').status_code==422
