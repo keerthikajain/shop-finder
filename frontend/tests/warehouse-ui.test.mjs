@@ -267,7 +267,7 @@ test('setup guidance is limited to Find when workspace setup is unfinished',asyn
 test('catalogue label is not repeated as inert decoration on workspace pages',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/meta&&!\['find','account','business','more','settings'\]\.includes\(page\)/);
- assert.match(src,/aria-label="Product type"/);
+ assert.match(src,/aria-label=\{t\('Product type'\)\}/);
  assert.doesNotMatch(src,/className="sf-scope-note"/);
  assert.doesNotMatch(src,/t\('Your catalogue'\)/);
  assert.match(src,/\['catalogue','grid','Catalogue'\]/);
@@ -737,7 +737,7 @@ test('login illustration and form share one background across desktop and phone'
 test('sample shelf labels do not repeat on every item and recent requests are stored tasks',async()=>{
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const backend=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
- assert.match(ui,/Saved recent requests/);
+ assert.match(ui,/<summary>\{t\('Recent requests'\)\}<\/summary>/);
  assert.match(ui,/request\('\/warehouse\/tasks'\)/);
  assert.match(ui,/recent\.filter\(r=>collection/);
  assert.doesNotMatch(backend,/Sample catalogue locations, not verified for your store/);
