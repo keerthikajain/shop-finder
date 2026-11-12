@@ -3,12 +3,12 @@
 // Confirmations never bypass the existing authenticated backend validation.
 const PHRASES={
  'en-IN':{
-  report_send:["send report","submit report"],
+  report_send:["send report","submit report","submit it","send it"],
   report_skip:["skip","not found elsewhere","unknown location"],
   help:["help","what can i say","what should i say"],
-  back:["back","go back","previous step"],
+  back:["back","go back","previous step","back to edit","edit report","go back to edit"],
   repeat:["repeat","say it again","repeat instructions"],
-  stop:["stop","stop listening","pause voice"],
+  stop:["stop","stop listening","pause voice","stop voice guide"],
   undo:['undo last confirmation','undo last pick','undo confirmation'],
   original:['original location verified','found at recorded location','confirm original location'],
   unconfirmed:['location not confirmed','still unconfirmed','keep under review'],
@@ -18,12 +18,12 @@ const PHRASES={
   cancel:['cancel','stop','no']
  },
  'hi-IN':{
-  report_send:["रिपोर्ट भेजो","रिपोर्ट जमा करो"],
+  report_send:["रिपोर्ट भेजो","रिपोर्ट जमा करो","रिपोर्ट भेज दीजिए","रिपोर्ट सबमिट करो"],
   report_skip:["स्किप","नहीं मिला","पता नहीं"],
   help:["मदद","क्या बोलना है","मुझे क्या कहना चाहिए"],
-  back:["वापस","पीछे जाओ","पिछला चरण"],
+  back:["वापस","पीछे जाओ","पिछला चरण","सुधारना है","रिपोर्ट सुधारो","वापस सुधारो"],
   repeat:["दोहराओ","फिर से बताओ"],
-  stop:["रुको","बंद करो","सुनना बंद करो"],
+  stop:["रुको","बंद करो","सुनना बंद करो","आवाज़ बंद करो","स्टॉप"],
   undo:['आखिरी पुष्टि वापस लो','पिछला पिक वापस लो'],
   original:['पुरानी जगह सही है','दर्ज जगह पर मिला','मूल जगह की पुष्टि'],
   unconfirmed:['जगह की पुष्टि नहीं हुई','अभी पुष्टि नहीं हुई'],
@@ -33,12 +33,12 @@ const PHRASES={
   cancel:['रद्द करो','रुको','नहीं']
  },
  'hi-en':{
-  report_send:["send report","report bhejo","रिपोर्ट भेजो"],
+  report_send:["send report","submit report","submit it","send it","report bhejo","report send karo","रिपोर्ट भेजो","रिपोर्ट जमा करो"],
   report_skip:["skip","nahi pata","पता नहीं"],
   help:["help","what should i say","मदद","kya bolna hai"],
-  back:["back","go back","वापस","wapas jao"],
+  back:["back","go back","back to edit","edit report","वापस","wapas jao","wapas edit karo","report edit karo"],
   repeat:["repeat","dobara bolo","फिर से बताओ"],
-  stop:["stop","ruk jao","ruko","रुको"],
+  stop:["stop","stop listening","ruk jao","ruko","voice band karo","रुको"],
   undo:['undo last confirmation','last pick undo karo','पिछला पिक वापस लो'],
   original:['original location verified','purani jagah sahi hai','दर्ज जगह पर मिला'],
   unconfirmed:['still unconfirmed','jagah confirm nahi hai','जगह की पुष्टि नहीं हुई'],
@@ -48,12 +48,12 @@ const PHRASES={
   cancel:['cancel','stop','रुको']
  },
  'te-IN':{
-  report_send:["నివేదిక పంపండి","రిపోర్ట్ పంపండి"],
+  report_send:["నివేదిక పంపండి","రిపోర్ట్ పంపండి","నివేదిక సమర్పించండి","రిపోర్టు పంపు"],
   report_skip:["స్కిప్","తెలియదు","మరెక్కడా దొరకలేదు"],
   help:["సహాయం","ఏమి చెప్పాలి","ఏం మాట్లాడాలి"],
-  back:["వెనక్కి","వెనక్కి వెళ్ళు"],
+  back:["వెనక్కి","వెనక్కి వెళ్ళు","సవరించు","నివేదిక సవరించు","వెనక్కి వెళ్లి సవరించు"],
   repeat:["మళ్లీ చెప్పు","మళ్ళీ చెప్పండి"],
-  stop:["ఆపు","వినడం ఆపు"],
+  stop:["ఆపు","వినడం ఆపు","వాయిస్ ఆపు","ఆపండి"],
   undo:['చివరి నిర్ధారణ రద్దు చేయి'],
   original:['పాత స్థానంలో దొరికింది','నమోదైన స్థానం సరైనదే'],
   unconfirmed:['స్థానం ఇంకా నిర్ధారించలేదు'],
@@ -79,7 +79,9 @@ export function reviewVoiceChoice(language,transcript){
 
 export function dialogueControl(language,transcript){
  for(const action of ['stop','help','repeat','back']){
-  if(voiceAction(language,action,transcript))return action;
+  // English fallback is intentional: a worker can say "stop" or "back to edit"
+  // even if the speech recognizer code-switches to English mid-conversation.
+  if(voiceAction(language,action,transcript)||voiceAction('en-IN',action,transcript))return action;
  }
  return null;
 }
@@ -90,4 +92,9 @@ export function plausibleShelfSuggestion(text){
  const value=normalize(text);
  if(!value||value.length<3||['maybe','not sure','i do not know',"i don't know",'yes','no','okay','ok','unknown','शायद','पता नहीं','हो सकता है','తెలియదు'].includes(value))return false;
  return /(?:rack|shelf|bin|aisle|row|zone|section|floor|box|counter|entrance|corner|door|near|area|रैक|शेल्फ|बिन|शेल्फ़|डिब्बा|जगह|के पास|ర్యాక్|షెల్ఫ్|బిన్|అల్మారా|దగ్గర|విభాగం|\d)/i.test(value);
+}
+
+/** Submission only at the report confirmation stage, with strict whole-phrase matching. */
+export function reportSubmitCommand(language,transcript){
+ return voiceAction(language,'report_send',transcript)||voiceAction('en-IN','report_send',transcript);
 }
