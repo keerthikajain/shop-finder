@@ -1263,7 +1263,7 @@ def test_manual_pause_and_resume_picking_persist_progress_without_stock_changes(
 @pytest.mark.parametrize('language,first_word,next_word',[
  ('en-IN','First item:','Next up:'),
  ('hi-IN','पहला सामान','अगला सामान'),
- ('hi-en','पहला सामान','अगला सामान'),
+ ('hi-en','Pehla item:','Next item:'),
  ('te-IN','మొదటి వస్తువు:','తదుపరి వస్తువు:')
 ])
 def test_first_picking_announcement_does_not_call_it_next(setup,monkeypatch,language,first_word,next_word):
