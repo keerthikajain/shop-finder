@@ -26,8 +26,9 @@ export function StockEditor({item,source,owner,locations,fields,run,busy,voice,l
 }
 
 export function ShelfGuide({location,items}) {
+ const t=useT();
  const sameRack=l=>['facility','floor','zone','aisle','rack'].every(k=>(l[k]||'')===(location[k]||''));
  const shelves=[...new Set([location.shelf,...items.flatMap(p=>p.placements).filter(sameRack).map(l=>l.shelf)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
  if(!location.rack&&!location.shelf)return null;
- return <section className="sf-shelf-guide"><div className="wh-panel-title"><span><Glyph name="pin"/>At a glance</span><small>Recorded shelves</small></div><b>{location.zone} {location.rack&&' · Rack '+location.rack}</b><div className="sf-shelf-drawing" role="img" aria-label={'Recorded shelves; selected shelf '+(location.shelf||'not specified')}>{shelves.map(s=><div key={s} className={s===location.shelf?'selected':''}><span>Shelf {s}</span><i/><i/><i/>{s===location.shelf&&<Glyph name="pin"/>}</div>)}</div><p>{location.bin?'Look for bin '+location.bin+'. ':''}Schematic based on saved locations.</p></section>
+ return <section className="sf-shelf-guide"><div className="wh-panel-title"><span><Glyph name="pin"/>{t('At a glance')}</span><small>{t('Recorded shelves')}</small></div><b>{location.zone} {location.rack&&' · '+t('Rack ')+location.rack}</b><div className="sf-shelf-drawing" role="img" aria-label={t('Recorded shelves; selected shelf ')+(location.shelf||t('not specified'))}>{shelves.map(s=><div key={s} className={s===location.shelf?'selected':''}><span>{t('Shelf ')}{s}</span><i/><i/><i/>{s===location.shelf&&<Glyph name="pin"/>}</div>)}</div><p>{location.bin?t('Look for bin ')+location.bin+'. ':''}{t('Schematic based on saved locations.')}</p></section>
 }
