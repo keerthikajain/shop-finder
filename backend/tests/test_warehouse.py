@@ -72,10 +72,12 @@ def test_move_revision_confirmation_history_and_replay(setup):
  assert next(x for x in items(c) if x['sku']==p['sku'])['placements'][0]['rack']==source['rack']
  result=post(c,'/moves/'+token+'/confirm');assert result.status_code==200,result.text
  assert result.json()['placements'][0]['rack']=='Z'
- assert post(c,'/moves/'+token+'/confirm').status_code==410
+ replay=post(c,'/moves/'+token+'/confirm');assert replay.status_code==200,replay.text
+ assert replay.json()==result.json()  # Response lost; no duplicate write.
  h=c.get('/api/warehouse/history?collection=clothing').json()[0]
  assert h['actor']=='owner' and h['before']['placements'][0]['rack']==source['rack'] and h['after']['placements'][0]['rack']=='Z'
  with connect(path) as db:assert json.loads(db.execute('SELECT payload FROM wh_items WHERE collection=? AND sku=?',('clothing',p['sku'])).fetchone()[0])['placements'][0]['rack']=='Z'
+ with connect(path) as db:assert db.execute("SELECT count(*) FROM wh_events WHERE action='move' AND collection=? AND sku=?",('clothing',p['sku'])).fetchone()[0]==1
 
 def test_owner_only_mutations_and_private_sessions(setup):
  c,_=setup;t=search(c,'CLO-001');p=items(c)[0]
