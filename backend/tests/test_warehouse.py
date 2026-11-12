@@ -1572,8 +1572,11 @@ def test_gnani_review_audio_requires_owner_and_reads_saved_locations(setup,monke
 
 @pytest.mark.parametrize('step,owner_only',[
  ('review_outcome',True),('review_note',True),('review_confirm',True),
+ ('review_outcome_retry',True),('review_note_retry',True),('review_confirm_retry',True),
  ('review_pending_saved',True),('review_verified_saved',True),
  ('move_destination',True),('move_reason',True),('move_preview',True),
+ ('move_destination_retry',True),('move_reason_retry',True),
+ ('move_preview_retry',True),('move_confirm_retry',True),
  ('move_confirm',True),('move_saved',True),
  ('report_reason',False),('report_suggestion',False),('report_confirm',False),
  ('report_reason_retry',False),('report_suggestion_retry',False),('report_confirm_retry',False),
