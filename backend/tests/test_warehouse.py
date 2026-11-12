@@ -1737,7 +1737,10 @@ def test_hinglish_telugu_spoken_picking_requires_separate_confirmation(setup,lan
  found=post(c,f'/tasks/{tid}/picking/command',{'transcript':transcript,'line':0})
  assert found.status_code==200,found.text
  assert found.json()['action']=='verify'
- assert label in found.json()['text']
+ assert 'CLO-001' in found.json()['text']
+ location=post(c,f'/tasks/{tid}/picking/command',{'transcript':'next item' if language=='hi-en' else 'తదుపరి వస్తువు','line':0})
+ assert location.status_code==200,location.text
+ assert label in location.json()['text']
  assert c.get('/api/warehouse/tasks/'+tid).json()==before
  # Speech alone must never confirm a pick, or change its location.
  assert post(c,f'/tasks/{tid}/picking/finish').status_code==409
