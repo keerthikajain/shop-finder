@@ -47,8 +47,8 @@ test('owner review and correction integrate a single guided conversational state
  assert.ok(source.includes('onBack={guidedMoveBack}'));
  assert.ok(source.includes('onActiveChange={SetGuidedActive}'));
  assert.ok(source.includes("return (await previewMove(true))?true:'retry'"));
- assert.ok(source.includes("await confirmMove();return false"));
- assert.ok(source.includes("await markResolved();return false"));
+ assert.ok(source.includes("const saved=await confirmMove();return saved?false:'retry';"));
+ assert.ok(source.includes("const saved=await markResolved();return saved?false:'retry';"));
 });
 
 test('worker voice flow provides contextual help back and real saved announcements',async()=>{
