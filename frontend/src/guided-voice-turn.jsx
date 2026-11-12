@@ -1,9 +1,8 @@
-import React,{useContext,useEffect,useRef,useState} from 'react';
+import React,{useEffect,useRef,useState} from 'react';
 import {startRecording} from './recording.js';
 import {request} from './accounts.jsx';
 import {dialogueControl} from './voice-review-commands.js';
 import {reportVoiceCopy} from './report-voice-copy.js';
-import {Locale} from './locale.js';
 
 /*
  * One owner voice turn at a time. Listen ONLY after Gnani finishes speaking.
@@ -15,14 +14,14 @@ export default function GuidedVoiceTurn({
  language='en-IN',stage,promptEndpoint=null,promptBody=null,retryStep=null,onTranscript,onBack,onStop,
  onError=()=>{},onActiveChange=()=>{},disabled=false,context='location review'
 }){
- const appLanguage=useContext(Locale);
  const [active,SetActive]=useState(false),[cycle,Cycle]=useState(0);
  const [status,Status]=useState('idle'),[error,ErrorMessage]=useState('');
  const [heard,Heard]=useState('');
  const handlers=useRef({onTranscript,onBack,onStop,onError,onActiveChange}),promptBodyRef=useRef(promptBody);
  const stageRef=useRef(stage),silence=useRef(0),retryNarration=useRef(false);
- const uiLanguage=appLanguage==='hi'?'hi-IN':appLanguage==='te'?'te-IN':appLanguage==='en'?'en-IN':language;
- const copy=key=>reportVoiceCopy(uiLanguage,key);
+ // The spoken guide must show exactly the commands it is listening for,
+ // even when the surrounding app menus use a different language.
+ const copy=key=>reportVoiceCopy(language,key);
  handlers.current={onTranscript,onBack,onStop,onError,onActiveChange};
  promptBodyRef.current=promptBody;
  stageRef.current=stage;
