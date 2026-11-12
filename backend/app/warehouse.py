@@ -879,15 +879,15 @@ def install_warehouse(app,path):
      'ధృవీకరించిన స్థానం సేవ్ అయ్యింది. కొత్త వెతుకులాటలు సరిచేసిన స్థలాన్ని చూపిస్తాయి.'),
    'report_reason':('Tell me what is wrong with the recorded location. I will save the words for your review, not submit the report yet.',
      'बताएं कि दर्ज जगह में क्या गलत है। आपकी बात अभी रिपोर्ट में लिखी जाएगी, भेजी नहीं जाएगी।',
-     'Tell me what is wrong with the location. I will not submit yet.',
+     'Batao location mein kya galat hai. Abhi report send nahi hogi.',
      'నమోదైన స్థలంలో ఏమి తప్పుందో చెప్పండి. మీ మాటలను పరిశీలన కోసం ఉంచుతాను.'),
    'report_suggestion':('If you found the item elsewhere, tell me the new rack or shelf. Otherwise say skip.',
      'सामान किसी और जगह मिला हो तो रैक या शेल्फ बताएं। नहीं मिला तो स्किप कहें।',
-     'Tell me the suggested rack or shelf, or say skip.',
+     'Dusri rack ya shelf pata hai toh batao, warna skip bolo.',
      'వస్తువు మరో చోట దొరికితే ఆ ర్యాక్ లేదా షెల్ఫ్ చెప్పండి. లేకుంటే స్కిప్ అనండి.'),
    'report_confirm':('Read the report text on screen. Say send report to submit, back to edit, or stop. This does not change the saved shelf.',
      'रिपोर्ट का लिखा हुआ विवरण जाँचें। भेजने के लिए रिपोर्ट भेजो कहें, बदलने के लिए वापस जाएं।',
-     'Check the report details on screen. Say send report, back, or stop.',
+     'Report check karo. Send karne ke liye report bhejo bolo, edit ke liye back, aur rokne ke liye stop.',
      'నివేదిక వివరాలను చూడండి. పంపడానికి నివేదిక పంపండి అని చెప్పండి, మార్చాలంటే వెనక్కి వెళ్ళండి.'),
    'report_reason_retry':('Please describe what was wrong with the location.',
      'बताएँ कि जगह में क्या गलत है।',
@@ -903,7 +903,7 @@ def install_warehouse(app,path):
      'పంపడానికి నివేదిక పంపండి, సవరించడానికి వెనక్కి, ఆపడానికి ఆపు అనండి.'),
    'report_saved':('Your report was saved. The location remains under review until verified.',
      'आपकी रिपोर्ट सेव हो गई। पुष्टि होने तक जगह की समीक्षा जारी रहेगी।',
-     'Report saved. Location is under review.',
+     'Report save ho gayi. Location review mein hai.',
      'నివేదిక సేవ్ అయ్యింది. ధృవీకరణ వరకు స్థానం సమీక్షలో ఉంటుంది.'),
    'pick_done':('Picking complete. Every item was confirmed and your progress was saved.',
      'पिकिंग पूरी हुई। सभी सामान की पुष्टि हुई और प्रगति सेव हो गई।',
@@ -928,9 +928,10 @@ def install_warehouse(app,path):
   }
   language_index={'en-IN':0,'hi-IN':1,'hi-en':2,'te-IN':3}[body.language]
   phrase=prompts[step][language_index]
-  if step not in ('review_pending_saved','review_verified_saved','move_saved','report_saved','pick_done','pick_undo') and not step.endswith('_retry'):
+  if step not in ('review_pending_saved','review_verified_saved','move_saved','report_saved','pick_done','pick_undo') and not step.endswith('_retry') and not step.startswith('report_'):
    phrase+=' '+(
-    'You can say help, repeat, back or stop.' if body.language in ('en-IN','hi-en') else
+    'You can say help, repeat, back or stop.' if body.language=='en-IN' else
+    'Help, repeat, back ya stop bol sakte ho.' if body.language=='hi-en' else
     'आप मदद, दोहराओ, वापस या रुको कह सकते हैं।' if body.language=='hi-IN' else
     'సహాయం, మళ్లీ చెప్పు, వెనక్కి, లేదా ఆపు అనవచ్చు.'
    )
