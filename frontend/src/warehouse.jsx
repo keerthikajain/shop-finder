@@ -7,7 +7,7 @@ import HandsFreePicking from './hands-free-picking.jsx';
 import GuidedVoiceTurn from './guided-voice-turn.jsx';
 import WorkspaceGreeting from './workspace-greeting.jsx';
 import {pickConfirmationIntent} from './picking-confirmations.js';
-import {voiceAction,actionPhrases,dialogueControl,plausibleShelfSuggestion,reportSubmitCommand} from './voice-review-commands.js';
+import {voiceAction,actionPhrases,dialogueControl,plausibleShelfSuggestion,reportSubmitCommand,unclearReportSubmit} from './voice-review-commands.js';
 import {reportVoiceCopy} from './report-voice-copy.js';
 import {pickingCopy} from './picking-copy.js';
 import {getThemePreference,resolveTheme} from './theme.js';
@@ -497,7 +497,7 @@ function Report({item,location,collection,run,busy,speaking=false,voice,language
  async function guidedReportAnswer(text,step){
   const recognized=String(text||'').trim();
   if(step==='report_reason'){
-   if(reportSubmitCommand(language,recognized)||recognized.length<3){
+   if(reportSubmitCommand(language,recognized)||unclearReportSubmit(language,recognized)||recognized.length<3){
     onError(copy('retryReason'));return 'retry';
    }
    R(recognized.slice(0,400));H(recognized);HF('reason');onError('');
@@ -505,7 +505,7 @@ function Report({item,location,collection,run,busy,speaking=false,voice,language
   }
   if(step==='report_suggestion'){
    const skipping=voiceAction(language,'report_skip',recognized)||voiceAction('en-IN','report_skip',recognized);
-   if(!skipping&&!plausibleShelfSuggestion(recognized)){
+   if(!skipping&&(unclearReportSubmit(language,recognized)||!plausibleShelfSuggestion(recognized))){
     onError(copy('invalidShelf'));return 'retry';
    }
    S(skipping?'':recognized.slice(0,200));H(recognized);HF('shelf');onError('');
@@ -539,6 +539,7 @@ function Report({item,location,collection,run,busy,speaking=false,voice,language
    if(response==='no'){PS(false);return}
    onError(copy('retryConfirm'));return;
   }
+  if(unclearReportSubmit(language,transcript)){onError(copy('retryConfirm'));return}
   if(reportSubmitCommand(language,transcript)){
    if(reason.trim().length<3){onError(copy('missingReason'));return}
    PS(true);return;
@@ -555,7 +556,7 @@ function Report({item,location,collection,run,busy,speaking=false,voice,language
   <strong>{copy('paused')}</strong>
   <span>{copy('steps')}</span>
  </div>
- {voice&&<GuidedVoiceTurn language={language} stage={guideStage} context="Automatic wrong-location report"
+ {voice&&<GuidedVoiceTurn language={language} stage={guideStage} context="Automatic wrong-location report" disabled={busy}
   retryStep={guideStage+'_retry'}
   promptEndpoint={guideStage==='report_confirm'?'voice/report-preview-audio':null}
   promptBody={guideStage==='report_confirm'?{collection,sku:item.sku,reason,suggested_location:suggested,location_code:location?.code||''}:null}
