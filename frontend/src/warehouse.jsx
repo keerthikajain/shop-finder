@@ -9,6 +9,7 @@ import WorkspaceGreeting from './workspace-greeting.jsx';
 import {pickConfirmationIntent} from './picking-confirmations.js';
 import {voiceAction,actionPhrases,dialogueControl,plausibleShelfSuggestion,reportSubmitCommand,unclearReportSubmit} from './voice-review-commands.js';
 import {reportVoiceCopy} from './report-voice-copy.js';
+import {fixedVoicePrompt} from './fixed-voice-prompt.js';
 import {pickingCopy} from './picking-copy.js';
 import {getThemePreference,resolveTheme} from './theme.js';
 import {Mark,Glyph,Modal,Place,Specs,ItemArt,ScanBox,Label,Feedback} from './warehouse-ui.jsx';
@@ -124,17 +125,10 @@ export default function WarehouseApp({user,preferences,logout}){
   const serial=playbackSerial.current,controller=new AbortController();
   audioRequest.current=controller;SP(true);
   try{
-   const response=await fetch('/api/warehouse/voice/step-audio?step='+encodeURIComponent(step),{
-    method:'POST',credentials:'same-origin',
-    headers:{'X-Shop-Request':'1','Content-Type':'application/json'},
-    body:JSON.stringify({language:spokenLanguage}),
+   // Reuse only fixed wording: item-specific messages still request fresh audio.
+   const blob=await fixedVoicePrompt(step,spokenLanguage,{
     signal:AbortSignal.any([controller.signal,AbortSignal.timeout(45000)])
    });
-   if(!response.ok){
-    const body=await response.json().catch(()=>({}));
-    throw Error(body.detail||'Voice reply unavailable. The saved result is shown on screen.');
-   }
-   const blob=await response.blob();
    if(serial!==playbackSerial.current)return;
    if(audioURL.current)URL.revokeObjectURL(audioURL.current);
    audioURL.current=URL.createObjectURL(blob);audio.current=new Audio(audioURL.current);
