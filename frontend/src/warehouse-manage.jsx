@@ -126,11 +126,13 @@ function TeamReportCard({issue,owner,busy,voice,language,onError,onCorrectLocati
      payload={...payload,action:'unconfirmed'};
     }
    }
-   const result=await api('/issues/'+issue.id+'/resolve',payload);
-   await reload();
-   return result;
+   return await api('/issues/'+issue.id+'/resolve',payload);
   });
-  if(saved&&voice)onSaved?.(saved);
+  if(saved){
+   // A successful server commit must not be treated as failed if the UI refresh fails.
+   try{await reload()}catch(e){onError(e.message||t('Refresh the workspace to see the saved review.'))}
+   if(voice)onSaved?.(saved);
+  }
   return !!saved;
  }
  async function guidedReviewAnswer(text,step){
