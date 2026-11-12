@@ -35,3 +35,14 @@ test('reports and picking use explicit server persistence rather than local opti
  assert.match(backend,/stale_catalogue/);
  assert.match(backend,/BEGIN IMMEDIATE/);
 });
+
+
+test('unfinished report drafts can be restored after refresh without auto-submission',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/sessionStorage\.getItem\(draftKey\)/);
+ assert.match(src,/sessionStorage\.setItem\(draftKey/);
+ assert.match(src,/sessionStorage\.removeItem\(draftKey\)/);
+ assert.match(src,/userId=\{user\.id\}/);
+ assert.match(src,/submittedRef\.current=true/);
+ assert.match(src,/if\(submittedRef\.current\)return true/);
+});
