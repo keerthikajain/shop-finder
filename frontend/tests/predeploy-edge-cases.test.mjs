@@ -46,3 +46,12 @@ test('unfinished report drafts can be restored after refresh without auto-submis
  assert.match(src,/submittedRef\.current=true/);
  assert.match(src,/if\(submittedRef\.current\)return true/);
 });
+
+
+test('hands-free picking aborts previous speech request on Stop or language change',async()=>{
+ const src=await readFile(new URL('../src/hands-free-picking.jsx',import.meta.url),'utf8');
+ assert.match(src,/const transcription=new AbortController\(\)/);
+ assert.match(src,/signal:transcription\.signal/);
+ assert.match(src,/cancelled=true;transcription\.abort\(\)/);
+ assert.match(src,/\[enabled,language,collection,cycle,halted\]/);
+});
