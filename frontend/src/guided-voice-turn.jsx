@@ -3,6 +3,7 @@ import {startRecording} from './recording.js';
 import {request} from './accounts.jsx';
 import {dialogueControl} from './voice-review-commands.js';
 import {reportVoiceCopy} from './report-voice-copy.js';
+import {fixedVoicePrompt} from './fixed-voice-prompt.js';
 
 /*
  * One owner voice turn at a time. Listen ONLY after Gnani finishes speaking.
@@ -98,17 +99,25 @@ export default function GuidedVoiceTurn({
     retryNarration.current=false;
     const endpoint=short?'voice/step-audio?step='+encodeURIComponent(retryStep):
       promptEndpoint||'voice/step-audio?step='+encodeURIComponent(stage);
-    const response=await fetch('/api/warehouse/'+endpoint,{
-     method:'POST',credentials:'same-origin',
-     headers:{'Content-Type':'application/json','X-Shop-Request':'1'},
-     body:JSON.stringify({language,...(promptBodyRef.current||{})}),signal:controller.signal
-    });
-    if(!response.ok){
-     const reason=await response.json().catch(()=>({}));
-     throw Error(reason.detail||copy('voiceFail'));
+    let blob;
+    if(!promptEndpoint||short){
+     // A repeat of a generic step must not wait for another identical synthesis.
+     blob=await fixedVoicePrompt(short?retryStep:stage,language,{signal:controller.signal});
+    }else{
+     // Report readbacks include user-entered notes and must never be cached.
+     const response=await fetch('/api/warehouse/'+endpoint,{
+      method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json','X-Shop-Request':'1'},
+      body:JSON.stringify({language,...(promptBodyRef.current||{})}),signal:controller.signal
+     });
+     if(!response.ok){
+      const reason=await response.json().catch(()=>({}));
+      throw Error(reason.detail||copy('voiceFail'));
+     }
+     blob=await response.blob();
     }
     if(cancelled)return;
-    url=URL.createObjectURL(await response.blob());
+    url=URL.createObjectURL(blob);
     if(cancelled)return;
     audio=new Audio(url);
     audio.onended=()=>{cleanupAudio();listen()};
