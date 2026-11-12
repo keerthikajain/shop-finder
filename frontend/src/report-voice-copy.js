@@ -1,7 +1,7 @@
 // Report narration and action labels follow the selected spoken language.
 // Catalogue values, product names and recorded locations remain unchanged.
 const EN={
- reportTitle:'Wrong-location report', thanks:'Thanks for checking. Tell us what was wrong with this location.',
+ defaultReason:'Item not found at the recorded location.',reportTitle:'Wrong-location report', thanks:'Thanks for checking. Tell us what was wrong with this location.',
  paused:'Picking paused — report this location',steps:'Tell us what went wrong, add another shelf if known, review, then send.',
  tell:'What happened?',hint:'Speak once, then pause. You can also type or edit. Nothing is sent without confirmation.',
  record:'Dictate report',recognized:'Recognized speech',empty:'Your words will appear here.',
@@ -28,7 +28,7 @@ const EN={
  help:'Say Send report, Back to edit, Repeat, or Stop.',
 };
 const HI={
- reportTitle:'गलत जगह की रिपोर्ट',thanks:'जगह जाँचने के लिए धन्यवाद। बताइए कि क्या गलत था।',
+ defaultReason:'सामान दर्ज जगह पर नहीं मिला।',reportTitle:'गलत जगह की रिपोर्ट',thanks:'जगह जाँचने के लिए धन्यवाद। बताइए कि क्या गलत था।',
  paused:'सामान चुनना रुका है — जगह की रिपोर्ट करें',steps:'समस्या बताएँ, पता हो तो दूसरी जगह बताएँ, जाँचें और रिपोर्ट भेजें।',
  tell:'क्या समस्या हुई?',hint:'एक बार बोलकर रुकें। लिखना या सुधारना भी संभव है। पुष्टि से पहले रिपोर्ट नहीं भेजी जाएगी।',
  record:'रिपोर्ट बोलें',recognized:'पहचानी गई आवाज़',empty:'आपके बोले गए शब्द यहाँ दिखेंगे।',
@@ -56,7 +56,7 @@ const HI={
 };
 const HINGLISH={
  ...EN,
- reportTitle:'Galat location ki report',thanks:'Location check karne ke liye thanks. Batao kya galat tha.',
+ defaultReason:'Item saved location par nahi mila.',reportTitle:'Galat location ki report',thanks:'Location check karne ke liye thanks. Batao kya galat tha.',
  paused:'Picking paused hai — location report karo',
  steps:'Problem batao, pata ho toh nayi shelf batao, review karo aur report bhejo.',
  tell:'Kya problem hui?',hint:'Ek baar bolo aur pause karo. Type ya edit bhi kar sakte ho. Confirm kiye bina report send nahi hogi.',
@@ -84,7 +84,7 @@ const HINGLISH={
  help:'Bolo Send report, Back, Repeat ya Stop.',
 };
 const TE={
- reportTitle:'తప్పు స్థాన నివేదిక',thanks:'స్థానం పరిశీలించినందుకు ధన్యవాదాలు. ఏమి తప్పుందో చెప్పండి.',
+ defaultReason:'నమోదైన స్థానంలో వస్తువు దొరకలేదు.',reportTitle:'తప్పు స్థాన నివేదిక',thanks:'స్థానం పరిశీలించినందుకు ధన్యవాదాలు. ఏమి తప్పుందో చెప్పండి.',
  paused:'పికింగ్ ఆగింది — తప్పు స్థానాన్ని నివేదించండి',
  steps:'సమస్య చెప్పండి, తెలిస్తే మరో షెల్ఫ్ చెప్పండి, వివరాలను చూసి నివేదిక పంపండి.',
  tell:'ఏం సమస్య జరిగింది?',hint:'ఒక్కసారి చెప్పి ఆగండి. టైప్ చేయవచ్చు, సవరించవచ్చు. నిర్ధారించేవరకు పంపబడదు.',
