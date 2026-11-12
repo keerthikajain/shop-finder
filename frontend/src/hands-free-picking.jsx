@@ -56,11 +56,11 @@ export default function HandsFreePicking({enabled,language,collection='all',onCo
  },[enabled,language,collection,cycle,halted]);
  const hint=halted?pickingCopy(language,'noMic'):
   !enabled?pickingCopy(language,'paused'):
-  status==='transcribing'?(language==='hi-IN'?'आपकी बात समझ रहे हैं…':language==='te-IN'?'మీ మాటను గుర్తిస్తోంది…':'Recognizing your command…'):
+  status==='transcribing'?pickingCopy(language,'transcribing'):
   status==='listening'?pickingCopy(language,'listening'):pickingCopy(language,'speaking');
  return <div className="sf-hands-free-status" role="status" aria-live="polite">
   <span className={'sf-listen-dot '+(enabled&&!halted&&status==='listening'?'active':'')} aria-hidden="true"/>
   <span>{hint}</span>
-  {halted&&<button type="button" onClick={()=>{silenceRef.current=0;Halt(false);Next(n=>n+1)}}>{language==='hi-IN'?'फिर कोशिश करें':language==='te-IN'?'మళ్లీ ప్రయత్నించండి':'Retry voice'}</button>}
+  {halted&&<button type="button" onClick={()=>{silenceRef.current=0;Halt(false);Next(n=>n+1)}}>{pickingCopy(language,'retry')}</button>}
  </div>;
 }
