@@ -37,14 +37,42 @@ export function nextPendingPickIndex(lines=[]){
 const friendlyPath=(l,isStarter=false)=>pathText(l,isStarter);
 export const cleanItem=p=>({sku:p.sku,collection:p.collection,name:p.name,category:p.category,brand:p.brand||'',aliases:p.aliases,barcode:p.barcode,photo_url:p.photo_url||'',specs:p.specs,synthetic:p.synthetic,placements:p.placements.map(l=>({...Object.fromEntries(locationFields.map(k=>[k,l[k]||''])),quantity:l.quantity??null}))});
 export function VoiceButton({language,enabled,onText,onError,onPartial,live=false,autoStop=false,small=false,nav=false,iconOnly=false,label='',style='transcribe',enhanced=true,collection='all',candidates=[]}){
- const t=useT(),ref=useRef(),[state,S]=useState('idle');
- useEffect(()=>()=>ref.current?.stop(true),[]);
+ const t=useT(),ref=useRef(),transcription=useRef(null),generation=useRef(0),[state,S]=useState('idle');
+ useEffect(()=>()=>{generation.current++;transcription.current?.abort();transcription.current=null;ref.current?.stop(true);ref.current=null},[language,collection]);
  async function record(){
-  if(state==='recording'){S('processing');ref.current?.stop();return}S('starting');
-  try{if(live){ref.current=await startLiveRecording({language,style,enhanced,collection,candidates,onSegment:(text,detected)=>onPartial?.(text,detected),onComplete:(text,detected,details)=>{S('idle');onText(text,detected,details)},onError:e=>{S('idle');onError(e.message)}});S('recording');return}
-  ref.current=await startRecording(async blob=>{S('processing');try{const params=new URLSearchParams({language,style,enhanced:String(enhanced),collection});if(candidates.length)params.set('candidates',candidates.join(','));const r=await request('/voice/transcribe?'+params.toString(),{method:'POST',headers:{'Content-Type':'audio/wav'},body:blob});onText(r.transcript,r.search_language,r)}catch(e){onError(e.message)}finally{S('idle')}},e=>{S('idle');onError(e.message)},{stopOnSilence:autoStop});S('recording')}catch(e){S('idle');onError(e.message)}
+  // Stopping a transcription must discard its eventual response, not submit an old command.
+  if(state==='processing'){
+   generation.current++;transcription.current?.abort();transcription.current=null;S('idle');return;
+  }
+  if(state==='recording'){S('processing');ref.current?.stop();return}
+  const turn=++generation.current;
+  S('starting');
+  try{
+   if(live){
+    const handle=await startLiveRecording({language,style,enhanced,collection,candidates,
+     onSegment:(text,detected)=>{if(turn===generation.current)onPartial?.(text,detected)},
+     onComplete:(text,detected,details)=>{if(turn!==generation.current)return;S('idle');onText(text,detected,details)},
+     onError:e=>{if(turn!==generation.current)return;S('idle');onError(e.message)}});
+    if(turn!==generation.current){handle.stop(true);return}
+    ref.current=handle;S('recording');return;
+   }
+   const handle=await startRecording(async blob=>{
+    if(turn!==generation.current)return;
+    const controller=new AbortController();transcription.current=controller;S('processing');
+    try{
+     const params=new URLSearchParams({language,style,enhanced:String(enhanced),collection});
+     if(candidates.length)params.set('candidates',candidates.join(','));
+     const result=await request('/voice/transcribe?'+params.toString(),{method:'POST',headers:{'Content-Type':'audio/wav'},body:blob,signal:controller.signal});
+     if(turn===generation.current&&!controller.signal.aborted)onText(result.transcript,result.search_language,result);
+    }catch(e){if(turn===generation.current&&!controller.signal.aborted)onError(e.message)}
+    finally{if(transcription.current===controller)transcription.current=null;if(turn===generation.current)S('idle')}
+   },e=>{if(turn===generation.current){S('idle');onError(e.message)}},{stopOnSilence:autoStop});
+   if(turn!==generation.current){handle.stop(true);return}
+   ref.current=handle;S('recording');
+  }catch(e){if(turn===generation.current){S('idle');onError(e.message)}}
  }
- return <button type="button" className={'wh-voice '+(small?'small ':'')+(nav?'sf-mobile-speak ':'')+(iconOnly?'icon-only ':'')+(state==='recording'?'recording':'')} aria-label={iconOnly?(state==='recording'?t('Stop recording')+' — ':state==='processing'?t('Transcribing…')+' — ':'')+t(label||'Speak'):t(state==='recording'?'Stop recording':state==='processing'?'Transcribing…':live?'Speak live':'Speak')} title={iconOnly?t(label||'Speak'):undefined} aria-pressed={state==='recording'} disabled={(state!=='recording'&&!enabled)||state==='starting'||state==='processing'} onClick={record}><Glyph name="mic"/>{iconOnly?null:nav?<span>{t('Speak')}</span>:t(state==='recording'?'Stop recording':state==='processing'?'Transcribing…':live?'Speak live':label||'Speak')}{!nav&&!iconOnly&&<span className="wh-wave" aria-hidden="true">{Array.from({length:9},(_,i)=><i key={i} style={{height:6+(i*7)%17}}/>)}</span>}</button>
+ const stopping=state==='recording'||state==='processing';
+ return <button type="button" className={'wh-voice '+(small?'small ':'')+(nav?'sf-mobile-speak ':'')+(iconOnly?'icon-only ':'')+(state==='recording'?'recording':'')} aria-label={iconOnly?(stopping?t('Stop recording')+' — ':'')+t(label||'Speak'):t(stopping?'Stop recording':live?'Speak live':'Speak')} title={iconOnly?t(label||'Speak'):undefined} aria-pressed={stopping} disabled={(!stopping&&!enabled)||state==='starting'} onClick={record}><Glyph name="mic"/>{iconOnly?null:nav?<span>{t('Speak')}</span>:t(stopping?'Stop recording':live?'Speak live':label||'Speak')}{!nav&&!iconOnly&&<span className="wh-wave" aria-hidden="true">{Array.from({length:9},(_,i)=><i key={i} style={{height:6+(i*7)%17}}/>)}</span>}</button>;
 }
 export default function WarehouseApp({user,preferences,logout}){
  const t=useT(),owner=user.role==='owner';
