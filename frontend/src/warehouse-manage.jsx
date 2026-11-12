@@ -73,21 +73,21 @@ export function MoveEditor({item,source,collection,fields,run,busy,language,voic
   confirmMove();
  }
  async function guidedMoveAnswer(text,step){
-   if(step==='move_destination')return !!(await hearCorrection(text));
+   if(step==='move_destination')return (await hearCorrection(text))?true:'retry';
    if(step==='move_reason'){
     const value=String(text||'').trim().slice(0,300);
-    if(value.length<3){SetVoiceError(t('Please describe why the shelf should change.'));return true}
+    if(value.length<3){SetVoiceError(t('Please describe why the shelf should change.'));return 'retry'}
     R(value);SetGuideStage('move_preview');return true;
    }
    if(step==='move_preview'){
     if(!voiceAction(language,'preview',text)){
-     SetVoiceError(t('Say: ')+actionPhrases(language,'preview')[0]);return true;
+     SetVoiceError(t('Say: ')+actionPhrases(language,'preview')[0]);return 'retry';
     }
-    return !!(await previewMove(true));
+    return (await previewMove(true))?true:'retry';
    }
    if(step==='move_confirm'){
     if(!voiceAction(language,'move',text)){
-     SetVoiceError(t('Say: ')+actionPhrases(language,'move')[0]);return true;
+     SetVoiceError(t('Say: ')+actionPhrases(language,'move')[0]);return 'retry';
     }
     await confirmMove();return false;
    }
@@ -99,7 +99,7 @@ export function MoveEditor({item,source,collection,fields,run,busy,language,voic
    else if(step==='move_reason')SetGuideStage('move_destination');
    else SetVoiceError(t('Already at the first step. Say Stop to pause.'));
   }
- return <><p><b>{item.name}</b> · {item.sku}</p>{voice&&<GuidedVoiceTurn language={language} stage={guideStage} context="Automatic owner location correction" onActiveChange={SetGuidedActive} promptEndpoint={guideStage==='move_confirm'&&preview?.token?'moves/'+encodeURIComponent(preview.token)+'/review-audio':null} onTranscript={guidedMoveAnswer} onBack={guidedMoveBack} onError={onError}/>}<small>{t('Say Help, Repeat, Back or Stop at any guided step. Manual fields remain available.')}</small>{preview?<><div className="wh-before-after"><div><h3>{t('Current location')}</h3><Place location={preview.before} example={!!item.synthetic}/></div><div><h3>{t('New location')}</h3><Place location={preview.after} example={!!item.synthetic}/></div></div><p>{t('Confirm only after checking the physical location. This changes the recorded placement, not stock quantity.')}</p><div className="wh-modal-actions"><button type="button" onClick={()=>{audioStop.current?.();P(null);SetGuideStage('move_reason')}} disabled={busy||guidedActive}>{t('Back')}</button><button className="primary" disabled={busy||reviewSpeaking||guidedActive} onClick={confirmMove}>{t('Confirm location change')}<Glyph name="check"/></button>{voice&&<button type="button" disabled={busy||guidedActive} onClick={()=>reviewSpeaking?audioStop.current?.():readMoveReview()}>{t(reviewSpeaking?'Stop reading review':'Read changes aloud')}</button>}{voice&&<VoiceButton small autoStop enabled={!busy&&!reviewSpeaking&&!guidedActive} language={language} onError={onError} label={t('Confirm new location by voice')} onText={spokenMoveConfirmation}/>} {voiceError&&<p role="alert">{voiceError}</p>}</div></>:<><Place location={source} example={!!item.synthetic}/><div className="wh-move-voice"><h3>{t('Say the correction')}</h3><p>{t('For example: “rack C shelf 2 bin 08”. Review the destination below before saving.')}</p><VoiceButton small autoStop enabled={voice&&!busy&&!guidedActive} label={t('Speak corrected location')} {...{language,onError}} onText={hearCorrection}/><label>{t('Recognized location correction')}<input value={transcript} maxLength={500} onChange={e=>T(e.target.value)}/></label><button disabled={busy||!transcript.trim()} onClick={()=>run(async()=>{const r=await api('/moves/parse',{collection,sku:item.sku,source:source.code,transcript});D(r.destination)})}>{t('Fill destination from speech')}</button></div><form onSubmit={e=>{e.preventDefault();previewMove()}}><h3>{t('Destination')}</h3><LocationForm fields={[...new Set([...fields,...locationFields.filter(k=>destination[k])])]} value={destination} onChange={D}/><label>{t('Reason for this change')}<input required minLength={3} maxLength={300} value={reason} onChange={e=>R(e.target.value)}/>{voice&&<VoiceButton small autoStop enabled={!busy&&!guidedActive} language={language} onError={onError} label={t('Dictate reason')} onText={text=>R(String(text||'').trim().slice(0,300))}/>}</label><div className="wh-modal-actions"><button className="primary" disabled={busy||guidedActive}>{t('Review location change')}<Glyph name="arrow"/></button>{voice&&<VoiceButton small autoStop enabled={!busy&&!guidedActive&&reason.trim().length>=3} language={language} onError={onError} label={t('Review location by voice')} onText={hearPreviewCommand}/>} {voiceError&&<p role="alert">{voiceError}</p>}</div></form></>}</>
+ return <><p><b>{item.name}</b> · {item.sku}</p>{voice&&<GuidedVoiceTurn language={language} stage={guideStage} context="Automatic owner location correction" retryStep={guideStage+'_retry'} onActiveChange={SetGuidedActive} promptEndpoint={guideStage==='move_confirm'&&preview?.token?'moves/'+encodeURIComponent(preview.token)+'/review-audio':null} onTranscript={guidedMoveAnswer} onBack={guidedMoveBack} onError={onError}/>}<small>{t('Say Help, Repeat, Back or Stop at any guided step. Manual fields remain available.')}</small>{preview?<><div className="wh-before-after"><div><h3>{t('Current location')}</h3><Place location={preview.before} example={!!item.synthetic}/></div><div><h3>{t('New location')}</h3><Place location={preview.after} example={!!item.synthetic}/></div></div><p>{t('Confirm only after checking the physical location. This changes the recorded placement, not stock quantity.')}</p><div className="wh-modal-actions"><button type="button" onClick={()=>{audioStop.current?.();P(null);SetGuideStage('move_reason')}} disabled={busy||guidedActive}>{t('Back')}</button><button className="primary" disabled={busy||reviewSpeaking||guidedActive} onClick={confirmMove}>{t('Confirm location change')}<Glyph name="check"/></button>{voice&&<button type="button" disabled={busy||guidedActive} onClick={()=>reviewSpeaking?audioStop.current?.():readMoveReview()}>{t(reviewSpeaking?'Stop reading review':'Read changes aloud')}</button>}{voice&&<VoiceButton small autoStop enabled={!busy&&!reviewSpeaking&&!guidedActive} language={language} onError={onError} label={t('Confirm new location by voice')} onText={spokenMoveConfirmation}/>} {voiceError&&<p role="alert">{voiceError}</p>}</div></>:<><Place location={source} example={!!item.synthetic}/><div className="wh-move-voice"><h3>{t('Say the correction')}</h3><p>{t('For example: “rack C shelf 2 bin 08”. Review the destination below before saving.')}</p><VoiceButton small autoStop enabled={voice&&!busy&&!guidedActive} label={t('Speak corrected location')} {...{language,onError}} onText={hearCorrection}/><label>{t('Recognized location correction')}<input value={transcript} maxLength={500} onChange={e=>T(e.target.value)}/></label><button disabled={busy||!transcript.trim()} onClick={()=>run(async()=>{const r=await api('/moves/parse',{collection,sku:item.sku,source:source.code,transcript});D(r.destination)})}>{t('Fill destination from speech')}</button></div><form onSubmit={e=>{e.preventDefault();previewMove()}}><h3>{t('Destination')}</h3><LocationForm fields={[...new Set([...fields,...locationFields.filter(k=>destination[k])])]} value={destination} onChange={D}/><label>{t('Reason for this change')}<input required minLength={3} maxLength={300} value={reason} onChange={e=>R(e.target.value)}/>{voice&&<VoiceButton small autoStop enabled={!busy&&!guidedActive} language={language} onError={onError} label={t('Dictate reason')} onText={text=>R(String(text||'').trim().slice(0,300))}/>}</label><div className="wh-modal-actions"><button className="primary" disabled={busy||guidedActive}>{t('Review location change')}<Glyph name="arrow"/></button>{voice&&<VoiceButton small autoStop enabled={!busy&&!guidedActive&&reason.trim().length>=3} language={language} onError={onError} label={t('Review location by voice')} onText={hearPreviewCommand}/>} {voiceError&&<p role="alert">{voiceError}</p>}</div></form></>}</>
 }
 function TeamReportCard({issue,owner,busy,voice,language,onError,onCorrectLocation,onSaved,run,reload}){
  const t=useT(),[note,SetNote]=useState(''),[transcript,SetTranscript]=useState(''),[voiceError,SetVoiceError]=useState(''),[resolutionAction,SetResolutionAction]=useState('unconfirmed'),[reviewSpeaking,SetReviewSpeaking]=useState(false),[guideStage,SetGuideStage]=useState('review_outcome'),[guidedActive,SetGuidedActive]=useState(false),audioStop=useRef(null);
@@ -137,18 +137,18 @@ function TeamReportCard({issue,owner,busy,voice,language,onError,onCorrectLocati
   if(step==='review_outcome'){
    const choice=reviewVoiceChoice(language,text);
    if(!choice||choice==='cancel'){
-    SetVoiceError(t('Please choose verified at original location or still unconfirmed.'));return true;
+    SetVoiceError(t('Please choose verified at original location or still unconfirmed.'));return 'retry';
    }
    SetVoiceError('');SetResolutionAction(choice);SetGuideStage('review_note');return true;
   }
   if(step==='review_note'){
    const recognized=String(text||'').trim().slice(0,300);
-   if(recognized.length<3){SetVoiceError(t('Describe what you physically checked.'));return true}
+   if(recognized.length<3){SetVoiceError(t('Describe what you physically checked.'));return 'retry'}
    SetNote(recognized);SetTranscript(recognized);SetGuideStage('review_confirm');return true;
   }
   if(step==='review_confirm'){
    if(!voiceAction(language,'review',text)){
-    SetVoiceError(t('Say: ')+actionPhrases(language,'review')[0]);return true;
+    SetVoiceError(t('Say: ')+actionPhrases(language,'review')[0]);return 'retry';
    }
    await markResolved();return false;
   }
@@ -186,7 +186,7 @@ function TeamReportCard({issue,owner,busy,voice,language,onError,onCorrectLocati
     {issue.suggested_location&&<div><small>{t('Staff suggested location')}</small><strong>{issue.suggested_location}</strong></div>}
    </div>}
   </div>
-  {open&&owner&&isLocation&&voice&&<GuidedVoiceTurn language={language} stage={guideStage} context="Automatic report verification" promptEndpoint={guideStage==='review_outcome'?'issues/'+issue.id+'/review-audio':guideStage==='review_confirm'?'issues/'+issue.id+'/resolution-preview-audio':null} promptBody={guideStage==='review_confirm'?{action:resolutionAction,note}:null} onTranscript={guidedReviewAnswer} onBack={guidedReviewBack} onActiveChange={SetGuidedActive} onError={onError}/>}
+  {open&&owner&&isLocation&&voice&&<GuidedVoiceTurn language={language} stage={guideStage} context="Automatic report verification" retryStep={guideStage+'_retry'} promptEndpoint={guideStage==='review_outcome'?'issues/'+issue.id+'/review-audio':guideStage==='review_confirm'?'issues/'+issue.id+'/resolution-preview-audio':null} promptBody={guideStage==='review_confirm'?{action:resolutionAction,note}:null} onTranscript={guidedReviewAnswer} onBack={guidedReviewBack} onActiveChange={SetGuidedActive} onError={onError}/>}
   {open&&owner&&isLocation&&<div className="sf-team-report-verify"><button type="button" className="sf-review-correct" disabled={busy||guidedActive} onClick={()=>{audioStop.current?.();onCorrectLocation?.(issue)}}><Glyph name="pin"/>{t('Verify and update location')}</button>{voice&&<button type="button" disabled={busy||guidedActive} onClick={()=>reviewSpeaking?audioStop.current?.():readReport()}>{t(reviewSpeaking?'Stop reading report':'Read report aloud')}</button>}<small>{t('A report does not change the saved shelf until an authorized correction is confirmed.')}</small></div>}
   {open&&owner?<form className="sf-team-report-resolution" onSubmit={markResolved}>
    <div className="sf-team-report-resolution-heading"><strong>{t('Resolve this report')}</strong><small>{t('Dictate or type what you verified. Check the note before marking resolved.')}</small></div>
