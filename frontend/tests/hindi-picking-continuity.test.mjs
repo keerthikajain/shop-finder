@@ -56,6 +56,7 @@ test('Help button speaks when auto voice guide is paused without resuming microp
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(ui,/if\(control==='help'\)\{[\s\S]*?playPickGuidance\('help',source,pendingVoicePick\?\.line\?\?activeLine,true\)/);
  assert.match(ui,/if\(!voice\|\|!source\|\|\(!manual&&voiceFlowStopped\.current\)\)return;/);
+ assert.match(ui,/if\(source\.picking\?\.paused&&control!=='help'\)return;/);
  assert.match(ui,/if\(control==='stop'\)\{PV\(null\);stopVoiceFlow\(\)/);
  assert.doesNotMatch(ui,/if\(voice&&!voiceFlowStopped\.current\)await playPickGuidance\('help'/);
 });
