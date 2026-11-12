@@ -518,8 +518,8 @@ test('hands-free picking is bounded and pauses while sound, modals or work is ac
  assert.match(source,/HandsFreePicking enabled=\{!busy&&!speaking&&!modal&&page==='find'\}/);
  assert.match(source,/\[handsFree,HF\]=useState\(true\)/);
  assert.match(source,/\[voiceGuidePaused,VGP\]=useState\(true\)/);
- assert.match(source,/Stop voice guidance/);
- assert.match(source,/Resume voice guidance/);
+ assert.ok(source.includes("pickingCopy(task.language,voiceGuidePaused?'resume':'stop')"));
+ assert.ok(source.includes("pickingCopy(task.language,voiceGuidePaused?'resume':'stop')"));
  assert.match(listener,/stopOnSilence:true/);
  assert.match(listener,/\.stop\(true\)/);
  assert.match(listener,/request\('\/voice\/transcribe\?'/);
@@ -648,8 +648,8 @@ test('spoken report submission resumes the next eligible item only after report 
  assert.match(source,/reportResumeRef\.current=handsFree&&!voiceGuidePaused/);
  assert.match(source,/The item remains unconfirmed; Finder moved to the next available item/);
  assert.match(source,/onClose=\{\(\)=>\{reportResumeRef\.current=false;D\(null\);VGP\(true\)\}\}/);
- assert.match(source,/Resume voice guidance/);
- assert.match(source,/Stop voice guidance/);
+ assert.ok(source.includes("pickingCopy(task.language,voiceGuidePaused?'resume':'stop')"));
+ assert.ok(source.includes("pickingCopy(task.language,voiceGuidePaused?'resume':'stop')"));
 });
 test('pink disabled and recording buttons have readable, high-contrast foreground',async()=>{
  const css=await readFile(new URL('../src/product-polish.css',import.meta.url),'utf8');
@@ -779,7 +779,7 @@ test('spoken answers guidance welcome and reports expose explicit stop buttons',
  assert.match(src,/playbackSerial\.current\+\+/);
  assert.match(src,/audioRequest\.current\?\.abort\(\)/);
  assert.match(src,/onClick=\{\(\)=>speaking\?stopSpeech\(\):speak\(task\)\}/);
- assert.match(src,/speaking\?'Stop guidance audio':'Read guidance'/);
+ assert.ok(src.includes("pickingCopy(task.language,speaking?'stopAudio':'read')"));
  assert.match(src,/className="sf-report-stop-audio" onClick=\{onStopSpeaking\}/);
  assert.doesNotMatch(account,/welcomeStatus==='speaking'\|\|welcomeStatus==='starting'/);
  assert.doesNotMatch(account,/\?'Stop welcome':'Hear welcome'/);
