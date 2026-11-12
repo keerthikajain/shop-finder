@@ -27,7 +27,8 @@ test('automatic owner guide narrates before opening mic and respects pause',asyn
  assert.ok(source.includes('recorder?.stop(true)'));
  assert.ok(source.includes("if(control==='stop')"));
  assert.ok(source.includes("if(control==='back')"));
- assert.ok(source.includes("if(control==='repeat'||control==='help')"));
+ assert.ok(source.includes("if(control==='repeat')"));
+ assert.ok(source.includes("if(control==='help')"));
  assert.ok(source.includes("copy(status==='paused'?'guideRetry':'guideStart')"));
  assert.ok(source.includes("copy('guideStop')"));
  assert.ok(source.includes("copy('pausedVoice')"));
