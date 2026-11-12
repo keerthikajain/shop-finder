@@ -7,7 +7,7 @@ test('voice and manual actions coexist for picking undo',async()=>{
  assert.ok(source.includes("'/picking/undo'")||source.includes("'/picking/undo'")); // endpoint path
  assert.ok(source.includes("voiceAction(source.language,'undo',transcript)"));
  assert.ok(source.includes("onClick={()=>undoPick(lastConfirmedIndex)}"));
- assert.ok(source.includes("label={t('Say undo last confirmation')}"));
+ assert.ok(source.includes("label={pickingCopy(task.language,'sayUndo')}"));
  assert.ok(source.includes("if(voice&&auto&&!voiceFlowStopped.current)await playPickGuidance('repeat',next,line)"));
 });
 
