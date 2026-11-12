@@ -499,9 +499,9 @@ export default function WarehouseApp({user,preferences,logout}){
  </div></Feedback.Provider>
 }
 function Report({item,location,collection,run,busy,speaking=false,voice,language,onError,onStopSpeaking,onSave}){
- const t=useT(),appLanguage=useContext(Locale);
- const displayLanguage=appLanguage==='hi'?'hi-IN':appLanguage==='te'?'te-IN':appLanguage==='en'?'en-IN':language;
- const copy=key=>reportVoiceCopy(displayLanguage,key);
+ const t=useT();
+ // The guide labels must match the recognized speech commands, even if app menus differ.
+ const copy=key=>reportVoiceCopy(language,key);
  const [reason,R]=useState(()=>location?reportVoiceCopy(language,'defaultReason'):'');
  const [suggested,S]=useState(''),[heard,H]=useState(''),[heardField,HF]=useState('');
  const [pendingSubmit,PS]=useState(false),[guideStage,SetGuideStage]=useState('report_reason');
