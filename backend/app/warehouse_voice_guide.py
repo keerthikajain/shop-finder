@@ -54,7 +54,7 @@ def guide(task,action,requested_line,check_line):
   raise HTTPException(422,'Unsupported voice command.')
  language=task.get('language','en-IN')
  regional=language in REGIONAL
- hi=language in ('hi-IN','hi-en')
+ hi=language=='hi-IN'
  messages, labels=regional_messages(language) if regional else ({}, {})
  if action in ('help','unknown','stop'):
   legacy={
@@ -78,14 +78,14 @@ def guide(task,action,requested_line,check_line):
     'te-IN':'మిగిలిన వస్తువులు నిర్ధారించబడలేదు. వాటిని తర్వాత మళ్లీ ప్రయత్నించండి లేదా మేనేజర్ సమీక్ష కోసం ఉంచండి.',
     'kn-IN':'ಕೆಲವು ವಸ್ತುಗಳು ಇನ್ನೂ ದೃಢಪಟ್ಟಿಲ್ಲ. ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ ಅಥವಾ ಪರಿಶೀಲನೆಗಾಗಿ ಉಳಿಸಿ.'
    }
-   text=unresolved.get(language,'कुछ सामान अभी पुष्टि नहीं हुआ है। उसे बाद में दोबारा जाँचें।' if hi else 'Some items remain unconfirmed. Retry them manually or leave them for review.')
+   text=unresolved.get(language,'Baaki items confirm nahi hue. Baad mein retry karo ya manager ko review ke liye bhejo.' if language=='hi-en' else 'कुछ सामान अभी पुष्टि नहीं हुआ है। उसे बाद में दोबारा जाँचें।' if hi else 'Some items remain unconfirmed. Retry them manually or leave them for review.')
    return {'action':'unresolved','line':None,'text':text,'language':language}
   completion={
    'kn-IN':'ಎಲ್ಲಾ ವಸ್ತುಗಳ ಪರಿಶೀಲನೆ ಮುಗಿದಿದೆ. ಪಟ್ಟಿಯನ್ನು ಪೂರ್ಣಗೊಳಿಸುತ್ತಿದ್ದೇವೆ.',
    'te-IN':'అన్ని వస్తువులను తనిఖీ చేశాం. జాబితాను పూర్తి చేస్తున్నాం.'
   }
   spoken=completion.get(language,messages['done'] if regional else
-    ('सारा सामान जाँच लिया गया है। सूची पूरी हो रही है।' if hi else
+    ('Saare items check ho gaye. Picking list finish ho rahi hai.' if language=='hi-en' else 'सारा सामान जाँच लिया गया है। सूची पूरी हो रही है।' if hi else
      'Everything is checked. Finishing your picking list now.'))
   return {'action':'done','line':None,'text':spoken,'language':language}
  if action in ('start','repeat','verify','report') and 0<=requested_line<len(task['lines']) and not task['lines'][requested_line].get('complete') and not task['lines'][requested_line].get('deferred_reason'):
