@@ -638,7 +638,7 @@ test('wrong-location handoff pauses pick capture and opens an editable report st
  assert.match(listener,/if\(!cancelled&&shouldContinue\)Next\(/);
  assert.ok(source.includes("{copy('paused')}"));
  assert.ok(source.includes("{copy('edit')}"));
- assert.match(source,/Speak once and pause/);
+ assert.ok(source.includes("{copy('hint')}"));
 });
 test('spoken report submission resumes the next eligible item only after report is saved',async()=>{
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
