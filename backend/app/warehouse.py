@@ -809,17 +809,22 @@ def install_warehouse(app,path):
    recorded=next((loc for loc in product['placements'] if loc['code']==body.location_code),None) if body.location_code else None
    if body.location_code and not recorded:
     raise HTTPException(409,'Recorded shelf changed. Refresh the item before reporting.')
-   prefix={
-    'en-IN':'Review your report before submitting.',
-    'hi-IN':'भेजने से पहले रिपोर्ट जाँचें।',
-    'hi-en':'Review your report before sending.',
-    'te-IN':'పంపించే ముందు మీ నివేదికను సమీక్షించండి.'
+   headings={
+    'en-IN':('Review your report.','Item','Recorded location','Problem','Suggested location, not verified',
+      'The recorded shelf will not change. Say send report to submit, back to edit, or stop.'),
+    'hi-IN':('रिपोर्ट की जानकारी सुनें।','सामान','दर्ज जगह','समस्या','सुझाई गई जगह, अभी पुष्टि नहीं हुई',
+      'दर्ज जगह नहीं बदलेगी। भेजने के लिए रिपोर्ट भेजो, सुधारने के लिए वापस, रोकने के लिए रुको कहें।'),
+    'hi-en':('Report check karo.','Item','Recorded location','Problem','Suggested shelf, not verified',
+      'Saved shelf nahi badlegi. Bhejne ke liye report bhejo ya send report bolo, edit ke liye back, pause ke liye stop.'),
+    'te-IN':('నివేదికను పరిశీలించండి.','వస్తువు','నమోదైన స్థానం','సమస్య','సూచించిన స్థానం, ఇంకా నిర్ధారించలేదు',
+      'నమోదైన స్థానం మారదు. పంపడానికి నివేదిక పంపండి, సవరించడానికి వెనక్కి, ఆపడానికి ఆపు అనండి.')
    }[body.language]
-   message=f"{prefix} Item: {product['name']}, {product['sku']}. "
-   if recorded:message+=f"Last recorded location: {loc_text(recorded)}. "
-   message+=f"Problem: {body.reason}. "
-   if body.suggested_location:message+=f"Suggested location, not verified: {body.suggested_location}. "
-   message+="The saved shelf will not change. Say send report to submit, back to edit, or stop."
+   prefix,item_label,place_label,reason_label,suggested_label,instruction=headings
+   message=f"{prefix} {item_label}: {product['name']}, {product['sku']}. "
+   if recorded:message+=f"{place_label}: {loc_text(recorded)}. "
+   message+=f"{reason_label}: {body.reason}. "
+   if body.suggested_location:message+=f"{suggested_label}: {body.suggested_location}. "
+   message+=instruction
   audio=await voice.speak(message,body.language)
   return Response(audio,media_type='audio/wav',headers={'Cache-Control':'no-store'})
  @app.post('/api/warehouse/voice/step-audio')
@@ -827,6 +832,7 @@ def install_warehouse(app,path):
   'review_outcome','review_note','review_confirm','review_pending_saved','review_verified_saved',
   'move_destination','move_reason','move_preview','move_confirm','move_saved',
   'report_reason','report_suggestion','report_confirm','report_saved',
+  'report_reason_retry','report_suggestion_retry','report_confirm_retry',
   'pick_done','pick_undo','help_pick','help_verify','unknown_pick'
  ],request:Request):
   identity(request,step.startswith(('review_','move_')))
@@ -883,6 +889,18 @@ def install_warehouse(app,path):
      'रिपोर्ट का लिखा हुआ विवरण जाँचें। भेजने के लिए रिपोर्ट भेजो कहें, बदलने के लिए वापस जाएं।',
      'Check the report details on screen. Say send report, back, or stop.',
      'నివేదిక వివరాలను చూడండి. పంపడానికి నివేదిక పంపండి అని చెప్పండి, మార్చాలంటే వెనక్కి వెళ్ళండి.'),
+   'report_reason_retry':('Please describe what was wrong with the location.',
+     'बताएँ कि जगह में क्या गलत है।',
+     'Batao location mein kya galat tha.',
+     'స్థానంలో ఏమి తప్పుందో చెప్పండి.'),
+   'report_suggestion_retry':('Say the rack or shelf where it was found, or say skip.',
+     'रैक या शेल्फ बताएँ, नहीं पता तो स्किप कहें।',
+     'Rack ya shelf batao, nahi pata toh skip bolo.',
+     'ర్యాక్ లేదా షెల్ఫ్ చెప్పండి, తెలియకపోతే స్కిప్ అనండి.'),
+   'report_confirm_retry':('To submit, say send report. To edit, say back. To pause, say stop.',
+     'भेजने के लिए रिपोर्ट भेजो, सुधारने के लिए वापस, रोकने के लिए रुको कहें।',
+     'Bhejne ke liye report bhejo, edit ke liye back, pause ke liye stop.',
+     'పంపడానికి నివేదిక పంపండి, సవరించడానికి వెనక్కి, ఆపడానికి ఆపు అనండి.'),
    'report_saved':('Your report was saved. The location remains under review until verified.',
      'आपकी रिपोर्ट सेव हो गई। पुष्टि होने तक जगह की समीक्षा जारी रहेगी।',
      'Report saved. Location is under review.',
@@ -910,7 +928,7 @@ def install_warehouse(app,path):
   }
   language_index={'en-IN':0,'hi-IN':1,'hi-en':2,'te-IN':3}[body.language]
   phrase=prompts[step][language_index]
-  if step not in ('review_pending_saved','review_verified_saved','move_saved','report_saved','pick_done','pick_undo'):
+  if step not in ('review_pending_saved','review_verified_saved','move_saved','report_saved','pick_done','pick_undo') and not step.endswith('_retry'):
    phrase+=' '+(
     'You can say help, repeat, back or stop.' if body.language in ('en-IN','hi-en') else
     'आप मदद, दोहराओ, वापस या रुको कह सकते हैं।' if body.language=='hi-IN' else
