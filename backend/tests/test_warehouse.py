@@ -1930,3 +1930,25 @@ def test_import_preview_rejects_duplicate_sku_conflicting_identifiers_and_blank_
  assert blank_preview['errors']
  assert post(c,'/imports/'+blank_preview['token']+'/confirm').status_code==422
  assert all(p['sku'] not in {'NEW-A','NEW-B','NEW-C'} for p in items(c))
+
+
+def test_report_response_loss_retries_do_not_duplicate_general_reports(setup):
+ c,path=setup
+ body={'collection':'clothing','sku':'CLO-001','kind':'general',
+       'reason':'Please inspect label printing','request_id':'test-unique-issue-001'}
+ saved=post(c,'/issues',body)
+ assert saved.status_code==200,saved.text
+ retried=post(c,'/issues',{**body,'reason':'A second browser attempt'})
+ assert retried.status_code==200,retried.text
+ assert retried.json()['id']==saved.json()['id']
+ assert retried.json()['already_reported'] is True
+ with connect(path) as db:
+  report=db.execute('SELECT reason FROM wh_issues WHERE id=?',(saved.json()['id'],)).fetchone()
+  assert report['reason']=='Please inspect label printing'
+  assert db.execute('SELECT count(*) FROM wh_issues WHERE actor=? AND request_id=?',
+                    ('owner',body['request_id'])).fetchone()[0]==1
+ # A different account must not be shown the other user's replay receipt.
+ login(c,'staff')
+ staff_report=post(c,'/issues',{**body,'reason':'Staff independently found an issue'})
+ assert staff_report.status_code==200,staff_report.text
+ assert staff_report.json()['id']!=saved.json()['id']
