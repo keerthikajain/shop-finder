@@ -63,7 +63,8 @@ export function MoveEditor({item,source,collection,fields,run,busy,language,voic
   audioStop.current?.();
   const saved=await run(async()=>{await api('/moves/'+preview.token+'/confirm',{});return true});
   if(!saved)return false;
-  await onSave();
+  // Do not retry a committed catalogue move because the follow-up UI refresh failed.
+  try{await onSave()}catch(e){onError(e.message||t('Refresh the workspace to see the saved location.'))}
   return true;
  }
  function spokenMoveConfirmation(text){
