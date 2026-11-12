@@ -46,7 +46,7 @@ test('owner review and correction integrate a single guided conversational state
  assert.ok(source.includes('onBack={guidedReviewBack}'));
  assert.ok(source.includes('onBack={guidedMoveBack}'));
  assert.ok(source.includes('onActiveChange={SetGuidedActive}'));
- assert.ok(source.includes("return !!(await previewMove(true))"));
+ assert.ok(source.includes("return (await previewMove(true))?true:'retry'"));
  assert.ok(source.includes("await confirmMove();return false"));
  assert.ok(source.includes("await markResolved();return false"));
 });
@@ -151,4 +151,15 @@ test('manual form and spoken guide cannot record a second report while submittin
  assert.ok(source.includes("context=\"Automatic wrong-location report\" disabled={busy}"));
  assert.ok(source.includes("unclearReportSubmit(language,recognized)"));
  assert.ok(source.includes("unclearReportSubmit(language,transcript)"));
+});
+
+test('owner review and shelf corrections also use short per-step clarification in all languages',async()=>{
+ const owner=await readFile(new URL('../src/warehouse-manage.jsx',import.meta.url),'utf8');
+ const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
+ assert.ok(owner.includes("context=\"Automatic owner location correction\" retryStep={guideStage+'_retry'}"));
+ assert.ok(owner.includes("context=\"Automatic report verification\" retryStep={guideStage+'_retry'}"));
+ assert.ok(owner.includes("if(step==='move_destination')return (await hearCorrection(text))?true:'retry'"));
+ for(const step of ['review_outcome_retry','review_note_retry','review_confirm_retry',
+  'move_destination_retry','move_reason_retry','move_preview_retry','move_confirm_retry'])
+   assert.ok(server.includes("'"+step+"':("),step);
 });
