@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {dialogueControl,voiceAction,actionPhrases,plausibleShelfSuggestion,reportSubmitCommand} from '../src/voice-review-commands.js';
+import {dialogueControl,voiceAction,actionPhrases,plausibleShelfSuggestion,reportSubmitCommand,unclearReportSubmit} from '../src/voice-review-commands.js';
 import {reportVoiceCopy} from '../src/report-voice-copy.js';
 
 test('localized hands-free Help Back Repeat Stop recognize exact commands only',()=>{
@@ -104,6 +104,8 @@ test('report commands are strict yet accept Stop Back-to-edit and Submit in all 
   assert.equal(dialogueControl(language,'stop'),'stop',language+' English fallback');
   assert.equal(reportSubmitCommand(language,'send report'),true,language+' safe code-switch');
   assert.equal(reportSubmitCommand(language,'send report I'),false,language+' unclear transcript');
+  assert.equal(unclearReportSubmit(language,'send report I'),true,language+' ask rather than overwrite');
+  assert.equal(unclearReportSubmit(language,send),false,language+' proper command');
   assert.equal(reportSubmitCommand(language,'please '+send),false,language+' unsafe fuzzy submit');
  }
 });
@@ -138,4 +140,14 @@ test('unrecognized report commands use short localized retries, never full readb
  for(const step of ['report_reason_retry','report_suggestion_retry','report_confirm_retry'])
   assert.ok(backend.includes("'"+step+"':("),step);
  assert.ok(backend.includes("not step.startswith('report_')"));
+});
+
+test('manual form and spoken guide cannot record a second report while submitting',async()=>{
+ const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.ok(source.includes("if(submittedRef.current)return true"));
+ assert.ok(source.includes("if(submittingRef.current||busy||reason.trim().length<3)return false"));
+ assert.ok(source.includes("submittedRef.current=true"));
+ assert.ok(source.includes("context=\"Automatic wrong-location report\" disabled={busy}"));
+ assert.ok(source.includes("unclearReportSubmit(language,recognized)"));
+ assert.ok(source.includes("unclearReportSubmit(language,transcript)"));
 });
