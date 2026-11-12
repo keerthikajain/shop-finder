@@ -236,3 +236,125 @@ export const uiLanguageCoverage={
     "New one-time code (copy and share privately)": "പുതിയ ഒറ്റത്തവണ കോഡ് (പകർത്തി സ്വകാര്യമായി പങ്കിടുക)"
   }
 };
+
+// Longer informational copy used by account, settings and visitor screens.
+const additionalInfo={
+  "hi": {
+    "Create your own workspace to try the complete app, including importing products and setting up shelves.": "सामान आयात करने और शेल्फ तय करने सहित पूरा ऐप आज़माने के लिए अपना कार्यस्थल बनाएँ।",
+    "Feedback is welcome. Voice features need microphone permission and may be limited.": "आपकी प्रतिक्रिया का स्वागत है। आवाज़ की सुविधा के लिए माइक्रोफ़ोन की अनुमति चाहिए और कुछ सीमाएँ हो सकती हैं।",
+    "Verify each worker's identity before approval. A workspace code alone never gives access.": "मंज़ूरी देने से पहले हर कर्मचारी की पहचान जाँचें। केवल कार्यस्थल कोड से प्रवेश नहीं मिलता।",
+    "Generate a one-time code for a worker. It expires after 24 hours and cannot grant Owner access.": "कर्मचारी के लिए एक-बार का कोड बनाएँ। यह 24 घंटे बाद समाप्त होगा और मालिक की अनुमति नहीं देगा।",
+    "Review feedback from guest workspace visitors. Suggestions are not automatically applied.": "अतिथि कार्यस्थल के उपयोगकर्ताओं की प्रतिक्रिया देखें। सुझाव अपने आप लागू नहीं होते।",
+    "You're using a temporary guest workspace. Changes here are not stored in a personal workspace.": "आप अस्थायी अतिथि कार्यस्थल में हैं। यहाँ के बदलाव आपके निजी कार्यस्थल में सेव नहीं होंगे।",
+    "Voice search is enabled. Check your microphone from Find items before using it.": "आवाज़ से खोज चालू है। उपयोग से पहले सामान खोजें पेज पर माइक्रोफ़ोन जाँच लें।",
+    "Voice search is unavailable. You can still find items by typing.": "आवाज़ से खोज उपलब्ध नहीं है। आप सामान का नाम लिखकर खोज सकते हैं।",
+    "Help us improve Shop Finder": "Shop Finder बेहतर बनाने में मदद करें",
+    "Send feedback": "प्रतिक्रिया भेजें",
+    "You can help us improve it.": "इसे बेहतर बनाने में आपकी मदद उपयोगी है।"
+  },
+  "bn": {
+    "Create your own workspace to try the complete app, including importing products and setting up shelves.": "পণ্য আমদানি ও তাকের অবস্থান ঠিক করাসহ পুরো অ্যাপ ব্যবহার করতে নিজের কর্মক্ষেত্র তৈরি করুন।",
+    "Feedback is welcome. Voice features need microphone permission and may be limited.": "আপনার মতামত স্বাগত। ভয়েস সুবিধার জন্য মাইক্রোফোনের অনুমতি প্রয়োজন এবং কিছু সীমা থাকতে পারে।",
+    "Verify each worker's identity before approval. A workspace code alone never gives access.": "অনুমোদনের আগে প্রতিটি কর্মীর পরিচয় যাচাই করুন। শুধু কর্মক্ষেত্র কোড দিয়ে প্রবেশ করা যায় না।",
+    "Generate a one-time code for a worker. It expires after 24 hours and cannot grant Owner access.": "কর্মীর জন্য একবার ব্যবহারযোগ্য কোড তৈরি করুন। এটি ২৪ ঘণ্টা পরে শেষ হবে এবং মালিকের প্রবেশাধিকার দেবে না।",
+    "Review feedback from guest workspace visitors. Suggestions are not automatically applied.": "অতিথি কর্মক্ষেত্রের ব্যবহারকারীদের মতামত দেখুন। পরামর্শ স্বয়ংক্রিয়ভাবে প্রয়োগ হয় না।",
+    "You're using a temporary guest workspace. Changes here are not stored in a personal workspace.": "আপনি অস্থায়ী অতিথি কর্মক্ষেত্র ব্যবহার করছেন। এখানকার পরিবর্তন ব্যক্তিগত কর্মক্ষেত্রে সংরক্ষিত হবে না।",
+    "Voice search is enabled. Check your microphone from Find items before using it.": "ভয়েস অনুসন্ধান চালু আছে। ব্যবহারের আগে পণ্য খোঁজার পৃষ্ঠায় মাইক্রোফোন পরীক্ষা করুন।",
+    "Voice search is unavailable. You can still find items by typing.": "ভয়েস অনুসন্ধান উপলব্ধ নয়। আপনি লিখে পণ্য খুঁজতে পারবেন।",
+    "Help us improve Shop Finder": "Shop Finder উন্নত করতে সাহায্য করুন",
+    "Send feedback": "মতামত পাঠান",
+    "You can help us improve it.": "এটি উন্নত করতে আপনার সাহায্য কাজে আসবে।"
+  },
+  "mr": {
+    "Create your own workspace to try the complete app, including importing products and setting up shelves.": "उत्पाद आयात आणि शेल्फ मांडणीसह पूर्ण ॲप वापरण्यासाठी स्वतःचे कार्यक्षेत्र तयार करा.",
+    "Feedback is welcome. Voice features need microphone permission and may be limited.": "अभिप्राय स्वागतार्ह आहे. आवाजाच्या सुविधांसाठी मायक्रोफोन परवानगी लागते आणि काही मर्यादा असू शकतात.",
+    "Verify each worker's identity before approval. A workspace code alone never gives access.": "मंजुरीपूर्वी प्रत्येक कर्मचाऱ्याची ओळख तपासा. केवळ कार्यक्षेत्र कोडने प्रवेश मिळत नाही.",
+    "Generate a one-time code for a worker. It expires after 24 hours and cannot grant Owner access.": "कर्मचाऱ्यासाठी एकवेळचा कोड तयार करा. तो २४ तासांनंतर संपेल आणि मालकाचा प्रवेश देणार नाही.",
+    "Review feedback from guest workspace visitors. Suggestions are not automatically applied.": "पाहुणे कार्यक्षेत्र वापरणाऱ्यांचा अभिप्राय पाहा. सूचना आपोआप लागू होत नाहीत.",
+    "You're using a temporary guest workspace. Changes here are not stored in a personal workspace.": "तुम्ही तात्पुरते पाहुणे कार्यक्षेत्र वापरत आहात. येथील बदल वैयक्तिक कार्यक्षेत्रात जतन होणार नाहीत.",
+    "Voice search is enabled. Check your microphone from Find items before using it.": "आवाजाने शोध सुरू आहे. वापरण्यापूर्वी वस्तू शोधा पानावर मायक्रोफोन तपासा.",
+    "Voice search is unavailable. You can still find items by typing.": "आवाजाने शोध उपलब्ध नाही. तुम्ही टाइप करून वस्तू शोधू शकता.",
+    "Help us improve Shop Finder": "Shop Finder सुधारण्यात मदत करा",
+    "Send feedback": "अभिप्राय पाठवा",
+    "You can help us improve it.": "हे सुधारण्यासाठी तुमची मदत होईल."
+  },
+  "gu": {
+    "Create your own workspace to try the complete app, including importing products and setting up shelves.": "ઉત્પાદનો આયાત કરવા અને શેલ્ફ ગોઠવવા સહિત સંપૂર્ણ એપ અજમાવવા તમારું કાર્યસ્થળ બનાવો.",
+    "Feedback is welcome. Voice features need microphone permission and may be limited.": "તમારો પ્રતિસાદ આવકાર્ય છે. અવાજની સુવિધાઓ માટે માઇક્રોફોન પરવાનગી જરૂરી છે અને મર્યાદાઓ હોઈ શકે છે.",
+    "Verify each worker's identity before approval. A workspace code alone never gives access.": "મંજૂરી પહેલાં દરેક કર્મચારીની ઓળખ ચકાસો. માત્ર કાર્યસ્થળ કોડથી પ્રવેશ મળતો નથી.",
+    "Generate a one-time code for a worker. It expires after 24 hours and cannot grant Owner access.": "કર્મચારી માટે એક વખતનો કોડ બનાવો. તે 24 કલાક પછી સમાપ્ત થશે અને માલિકની પરવાનગી આપશે નહીં.",
+    "Review feedback from guest workspace visitors. Suggestions are not automatically applied.": "મહેમાન કાર્યસ્થળના મુલાકાતીઓનો પ્રતિસાદ જુઓ. સૂચનો આપમેળે લાગુ થતા નથી.",
+    "You're using a temporary guest workspace. Changes here are not stored in a personal workspace.": "તમે અસ્થાયી મહેમાન કાર્યસ્થળ વાપરી રહ્યા છો. અહીંના ફેરફારો વ્યક્તિગત કાર્યસ્થળમાં સેવ થતા નથી.",
+    "Voice search is enabled. Check your microphone from Find items before using it.": "અવાજથી શોધ ચાલુ છે. વાપરતાં પહેલાં વસ્તુ શોધો પેજ પર માઇક્રોફોન ચકાસો.",
+    "Voice search is unavailable. You can still find items by typing.": "અવાજથી શોધ ઉપલબ્ધ નથી. તમે લખીને વસ્તુ શોધી શકો છો.",
+    "Help us improve Shop Finder": "Shop Finder સુધારવામાં મદદ કરો",
+    "Send feedback": "પ્રતિસાદ મોકલો",
+    "You can help us improve it.": "તેને સુધારવામાં તમે મદદ કરી શકો છો."
+  },
+  "pa": {
+    "Create your own workspace to try the complete app, including importing products and setting up shelves.": "ਸਾਮਾਨ ਆਯਾਤ ਕਰਨ ਅਤੇ ਸ਼ੈਲਫ਼ ਤੈਅ ਕਰਨ ਸਮੇਤ ਪੂਰੀ ਐਪ ਅਜ਼ਮਾਉਣ ਲਈ ਆਪਣਾ ਵਰਕਸਪੇਸ ਬਣਾਓ।",
+    "Feedback is welcome. Voice features need microphone permission and may be limited.": "ਤੁਹਾਡੇ ਸੁਝਾਵਾਂ ਦਾ ਸਵਾਗਤ ਹੈ। ਆਵਾਜ਼ ਲਈ ਮਾਈਕ ਦੀ ਇਜਾਜ਼ਤ ਲੋੜੀਂਦੀ ਹੈ ਅਤੇ ਕੁਝ ਸੀਮਾਵਾਂ ਹੋ ਸਕਦੀਆਂ ਹਨ।",
+    "Verify each worker's identity before approval. A workspace code alone never gives access.": "ਮਨਜ਼ੂਰੀ ਤੋਂ ਪਹਿਲਾਂ ਹਰ ਕਰਮਚਾਰੀ ਦੀ ਪਛਾਣ ਜਾਂਚੋ। ਸਿਰਫ਼ ਵਰਕਸਪੇਸ ਕੋਡ ਨਾਲ ਪਹੁੰਚ ਨਹੀਂ ਮਿਲਦੀ।",
+    "Generate a one-time code for a worker. It expires after 24 hours and cannot grant Owner access.": "ਕਰਮਚਾਰੀ ਲਈ ਇੱਕ-ਵਾਰ ਕੋਡ ਬਣਾਓ। ਇਹ 24 ਘੰਟਿਆਂ ਬਾਅਦ ਖਤਮ ਹੋਵੇਗਾ ਅਤੇ ਮਾਲਕ ਵਾਲੀ ਪਹੁੰਚ ਨਹੀਂ ਦੇਵੇਗਾ।",
+    "Review feedback from guest workspace visitors. Suggestions are not automatically applied.": "ਮਹਿਮਾਨ ਵਰਕਸਪੇਸ ਦੇ ਵਰਤੋਂਕਾਰਾਂ ਦੇ ਸੁਝਾਅ ਵੇਖੋ। ਸੁਝਾਅ ਆਪਣੇ ਆਪ ਲਾਗੂ ਨਹੀਂ ਹੁੰਦੇ।",
+    "You're using a temporary guest workspace. Changes here are not stored in a personal workspace.": "ਤੁਸੀਂ ਅਸਥਾਈ ਮਹਿਮਾਨ ਵਰਕਸਪੇਸ ਵਰਤ ਰਹੇ ਹੋ। ਇੱਥੇ ਕੀਤੇ ਬਦਲਾਅ ਨਿੱਜੀ ਵਰਕਸਪੇਸ ਵਿੱਚ ਸੇਵ ਨਹੀਂ ਹੁੰਦੇ।",
+    "Voice search is enabled. Check your microphone from Find items before using it.": "ਆਵਾਜ਼ ਰਾਹੀਂ ਖੋਜ ਚਾਲੂ ਹੈ। ਵਰਤੋਂ ਤੋਂ ਪਹਿਲਾਂ ਸਾਮਾਨ ਲੱਭੋ ਪੰਨੇ 'ਤੇ ਮਾਈਕ ਜਾਂਚੋ।",
+    "Voice search is unavailable. You can still find items by typing.": "ਆਵਾਜ਼ ਰਾਹੀਂ ਖੋਜ ਉਪਲਬਧ ਨਹੀਂ ਹੈ। ਤੁਸੀਂ ਲਿਖ ਕੇ ਸਾਮਾਨ ਲੱਭ ਸਕਦੇ ਹੋ।",
+    "Help us improve Shop Finder": "Shop Finder ਨੂੰ ਬਿਹਤਰ ਬਣਾਉਣ ਵਿੱਚ ਮਦਦ ਕਰੋ",
+    "Send feedback": "ਆਪਣੀ ਰਾਏ ਭੇਜੋ",
+    "You can help us improve it.": "ਇਸਨੂੰ ਬਿਹਤਰ ਬਣਾਉਣ ਵਿੱਚ ਤੁਸੀਂ ਮਦਦ ਕਰ ਸਕਦੇ ਹੋ।"
+  },
+  "kn": {
+    "Create your own workspace to try the complete app, including importing products and setting up shelves.": "ಉತ್ಪನ್ನಗಳನ್ನು ಆಮದು ಮಾಡಿ ಶೆಲ್ಫ್‌ಗಳನ್ನು ಹೊಂದಿಸುವುದೂ ಸೇರಿ ಸಂಪೂರ್ಣ ಆ್ಯಪ್ ಪರೀಕ್ಷಿಸಲು ನಿಮ್ಮ ಕಾರ್ಯಸ್ಥಳ ರಚಿಸಿ.",
+    "Feedback is welcome. Voice features need microphone permission and may be limited.": "ನಿಮ್ಮ ಪ್ರತಿಕ್ರಿಯೆಗೆ ಸ್ವಾಗತ. ಧ್ವನಿ ಸೌಲಭ್ಯಕ್ಕೆ ಮೈಕ್ರೊಫೋನ್ ಅನುಮತಿ ಅಗತ್ಯ, ಕೆಲವು ಮಿತಿಗಳಿರಬಹುದು.",
+    "Verify each worker's identity before approval. A workspace code alone never gives access.": "ಅನುಮೋದನೆಗೂ ಮೊದಲು ಪ್ರತಿ ಸಿಬ್ಬಂದಿಯ ಗುರುತು ಪರಿಶೀಲಿಸಿ. ಕಾರ್ಯಸ್ಥಳ ಕೋಡ್ ಮಾತ್ರದಿಂದ ಪ್ರವೇಶ ಸಿಗುವುದಿಲ್ಲ.",
+    "Generate a one-time code for a worker. It expires after 24 hours and cannot grant Owner access.": "ಸಿಬ್ಬಂದಿಗಾಗಿ ಒಮ್ಮೆ ಬಳಸುವ ಕೋಡ್ ರಚಿಸಿ. ಇದು 24 ಗಂಟೆಗಳಲ್ಲಿ ಮುಗಿಯುತ್ತದೆ ಮತ್ತು ಮಾಲೀಕ ಪ್ರವೇಶ ನೀಡುವುದಿಲ್ಲ.",
+    "Review feedback from guest workspace visitors. Suggestions are not automatically applied.": "ಅತಿಥಿ ಕಾರ್ಯಸ್ಥಳ ಬಳಕೆದಾರರ ಪ್ರತಿಕ್ರಿಯೆ ಪರಿಶೀಲಿಸಿ. ಸಲಹೆಗಳು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಅನ್ವಯಿಸುವುದಿಲ್ಲ.",
+    "You're using a temporary guest workspace. Changes here are not stored in a personal workspace.": "ನೀವು ತಾತ್ಕಾಲಿಕ ಅತಿಥಿ ಕಾರ್ಯಸ್ಥಳ ಬಳಸುತ್ತಿದ್ದೀರಿ. ಇಲ್ಲಿನ ಬದಲಾವಣೆಗಳು ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ಕಾರ್ಯಸ್ಥಳದಲ್ಲಿ ಉಳಿಯುವುದಿಲ್ಲ.",
+    "Voice search is enabled. Check your microphone from Find items before using it.": "ಧ್ವನಿ ಹುಡುಕಾಟ ಸಕ್ರಿಯವಾಗಿದೆ. ಬಳಸುವ ಮೊದಲು ವಸ್ತು ಹುಡುಕಿ ಪುಟದಲ್ಲಿ ಮೈಕ್ರೊಫೋನ್ ಪರೀಕ್ಷಿಸಿ.",
+    "Voice search is unavailable. You can still find items by typing.": "ಧ್ವನಿ ಹುಡುಕಾಟ ಲಭ್ಯವಿಲ್ಲ. ಟೈಪ್ ಮಾಡಿ ವಸ್ತುಗಳನ್ನು ಹುಡುಕಬಹುದು.",
+    "Help us improve Shop Finder": "Shop Finder ಸುಧಾರಿಸಲು ಸಹಾಯ ಮಾಡಿ",
+    "Send feedback": "ಪ್ರತಿಕ್ರಿಯೆ ಕಳುಹಿಸಿ",
+    "You can help us improve it.": "ಇದನ್ನು ಸುಧಾರಿಸಲು ನೀವು ಸಹಾಯ ಮಾಡಬಹುದು."
+  },
+  "te": {
+    "Create your own workspace to try the complete app, including importing products and setting up shelves.": "ఉత్పత్తులను దిగుమతి చేసుకుని షెల్ఫ్‌లను అమర్చడం సహా పూర్తి యాప్‌ను ప్రయత్నించడానికి మీ కార్యస్థలాన్ని సృష్టించండి.",
+    "Feedback is welcome. Voice features need microphone permission and may be limited.": "మీ అభిప్రాయానికి స్వాగతం. వాయిస్ కోసం మైక్రోఫోన్ అనుమతి అవసరం; కొన్ని పరిమితులు ఉండవచ్చు.",
+    "Verify each worker's identity before approval. A workspace code alone never gives access.": "ఆమోదానికి ముందు ప్రతి సిబ్బంది గుర్తింపును నిర్ధారించండి. కార్యస్థల కోడ్ ఒక్కటితో ప్రవేశం రాదు.",
+    "Generate a one-time code for a worker. It expires after 24 hours and cannot grant Owner access.": "సిబ్బందికి ఒక్కసారి వాడే కోడ్ సృష్టించండి. ఇది 24 గంటల్లో గడువు తీరుతుంది; యజమాని అనుమతి ఇవ్వదు.",
+    "Review feedback from guest workspace visitors. Suggestions are not automatically applied.": "అతిథి కార్యస్థల వినియోగదారుల అభిప్రాయాలను సమీక్షించండి. సూచనలు స్వయంగా అమలు కావు.",
+    "You're using a temporary guest workspace. Changes here are not stored in a personal workspace.": "మీరు తాత్కాలిక అతిథి కార్యస్థలాన్ని వాడుతున్నారు. ఇక్కడి మార్పులు వ్యక్తిగత కార్యస్థలంలో సేవ్ కావు.",
+    "Voice search is enabled. Check your microphone from Find items before using it.": "వాయిస్ శోధన అందుబాటులో ఉంది. వాడే ముందు వస్తువులు వెతుకు పేజీలో మైక్రోఫోన్ పరీక్షించండి.",
+    "Voice search is unavailable. You can still find items by typing.": "వాయిస్ శోధన అందుబాటులో లేదు. టైప్ చేసి వస్తువులను వెతకవచ్చు.",
+    "Help us improve Shop Finder": "Shop Finder మెరుగుపరచడానికి సహాయపడండి",
+    "Send feedback": "అభిప్రాయం పంపండి",
+    "You can help us improve it.": "దీన్ని మెరుగుపరచడంలో మీరు సహాయపడవచ్చు."
+  },
+  "ta": {
+    "Create your own workspace to try the complete app, including importing products and setting up shelves.": "பொருட்களை இறக்குமதி செய்து அலமாரிகளை அமைப்பது உட்பட முழுச் செயலியை முயற்சிக்க உங்களுக்கான பணியிடத்தை உருவாக்கவும்.",
+    "Feedback is welcome. Voice features need microphone permission and may be limited.": "உங்கள் கருத்துகள் வரவேற்கப்படுகின்றன. குரல் வசதிக்கு மைக்ரோஃபோன் அனுமதி தேவை; சில வரம்புகள் இருக்கலாம்.",
+    "Verify each worker's identity before approval. A workspace code alone never gives access.": "ஒப்புதல் அளிக்கும் முன் ஒவ்வொரு பணியாளரின் அடையாளத்தையும் சரிபார்க்கவும். பணியிடக் குறியீடு மட்டும் அணுகலை வழங்காது.",
+    "Generate a one-time code for a worker. It expires after 24 hours and cannot grant Owner access.": "பணியாளருக்கு ஒருமுறை பயன்படுத்தும் குறியீட்டை உருவாக்கவும். அது 24 மணி நேரத்தில் காலாவதியாகும்; உரிமையாளர் அணுகலை வழங்காது.",
+    "Review feedback from guest workspace visitors. Suggestions are not automatically applied.": "விருந்தினர் பணியிடப் பயனர்களின் கருத்துகளைப் பாருங்கள். பரிந்துரைகள் தானாகப் பயன்படுத்தப்படாது.",
+    "You're using a temporary guest workspace. Changes here are not stored in a personal workspace.": "நீங்கள் தற்காலிக விருந்தினர் பணியிடத்தைப் பயன்படுத்துகிறீர்கள். இங்குள்ள மாற்றங்கள் தனிப்பட்ட பணியிடத்தில் சேமிக்கப்படாது.",
+    "Voice search is enabled. Check your microphone from Find items before using it.": "குரல் தேடல் இயக்கத்தில் உள்ளது. பயன்படுத்துமுன் பொருள் தேடும் பக்கத்தில் மைக்ரோஃபோனைச் சரிபார்க்கவும்.",
+    "Voice search is unavailable. You can still find items by typing.": "குரல் தேடல் கிடைக்கவில்லை. தட்டச்சு செய்து பொருட்களைத் தேடலாம்.",
+    "Help us improve Shop Finder": "Shop Finder-ஐ மேம்படுத்த உதவுங்கள்",
+    "Send feedback": "கருத்தை அனுப்பு",
+    "You can help us improve it.": "இதை மேம்படுத்த நீங்கள் உதவலாம்."
+  },
+  "ml": {
+    "Create your own workspace to try the complete app, including importing products and setting up shelves.": "ഉൽപ്പന്നങ്ങൾ ഇറക്കുമതി ചെയ്യുന്നതും ഷെൽഫുകൾ സജ്ജമാക്കുന്നതും ഉൾപ്പെടെ ആപ്പ് പരീക്ഷിക്കാൻ സ്വന്തം വർക്ക്‌സ്‌പേസ് സൃഷ്ടിക്കുക.",
+    "Feedback is welcome. Voice features need microphone permission and may be limited.": "നിങ്ങളുടെ അഭിപ്രായങ്ങൾ സ്വാഗതം. ശബ്ദ സൗകര്യങ്ങൾക്ക് മൈക്രോഫോൺ അനുമതി ആവശ്യമാണ്; ചില പരിമിതികൾ ഉണ്ടാകാം.",
+    "Verify each worker's identity before approval. A workspace code alone never gives access.": "അംഗീകാരത്തിന് മുമ്പ് ഓരോ ജീവനക്കാരുടെയും തിരിച്ചറിയൽ പരിശോധിക്കുക. വർക്ക്‌സ്‌പേസ് കോഡ് മാത്രം പ്രവേശനം നൽകില്ല.",
+    "Generate a one-time code for a worker. It expires after 24 hours and cannot grant Owner access.": "ജീവനക്കാരന് ഒറ്റത്തവണ കോഡ് സൃഷ്ടിക്കുക. ഇത് 24 മണിക്കൂറിന് ശേഷം കാലഹരണപ്പെടും; ഉടമയുടെ പ്രവേശനം നൽകില്ല.",
+    "Review feedback from guest workspace visitors. Suggestions are not automatically applied.": "അതിഥി വർക്ക്‌സ്‌പേസ് ഉപയോക്താക്കളുടെ അഭിപ്രായങ്ങൾ കാണുക. നിർദ്ദേശങ്ങൾ സ്വയം പ്രയോഗിക്കില്ല.",
+    "You're using a temporary guest workspace. Changes here are not stored in a personal workspace.": "നിങ്ങൾ താൽക്കാലിക അതിഥി വർക്ക്‌സ്‌പേസ് ഉപയോഗിക്കുകയാണ്. ഇവിടെയുള്ള മാറ്റങ്ങൾ സ്വകാര്യ വർക്ക്‌സ്‌പേസിൽ സേവ് ചെയ്യില്ല.",
+    "Voice search is enabled. Check your microphone from Find items before using it.": "ശബ്ദ തിരയൽ പ്രവർത്തനക്ഷമമാണ്. ഉപയോഗിക്കുന്നതിന് മുമ്പ് സാധനങ്ങൾ കണ്ടെത്തുക പേജിൽ മൈക്രോഫോൺ പരിശോധിക്കുക.",
+    "Voice search is unavailable. You can still find items by typing.": "ശബ്ദ തിരയൽ ലഭ്യമല്ല. ടൈപ്പ് ചെയ്ത് സാധനങ്ങൾ കണ്ടെത്താം.",
+    "Help us improve Shop Finder": "Shop Finder മെച്ചപ്പെടുത്താൻ സഹായിക്കുക",
+    "Send feedback": "അഭിപ്രായം അയയ്ക്കുക",
+    "You can help us improve it.": "ഇത് മെച്ചപ്പെടുത്താൻ നിങ്ങൾക്ക് സഹായിക്കാം."
+  }
+};
+for(const [language,phrases] of Object.entries(additionalInfo))Object.assign(uiLanguageCoverage[language],phrases);
