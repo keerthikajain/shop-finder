@@ -194,7 +194,7 @@ test('Prisma V3 keeps focus-language recognition settings behind a simple staff 
  assert.doesNotMatch(src,/t\('Gnani Prisma V3/);
  assert.doesNotMatch(src,/transcriptStyle,TS/);
  assert.match(src,/URLSearchParams\(\{language,style,enhanced:String\(enhanced\),collection\}\)/);
- assert.match(src,/onText\(r\.transcript,r\.search_language,r\)/);
+ assert.match(src,/onText\(result\.transcript,result\.search_language,result\)/);
  assert.match(src,/language,\s*brand:/);
 });
 
@@ -663,7 +663,7 @@ test('pink disabled and recording buttons have readable, high-contrast foregroun
 
 test('report mic waits until spoken guidance stops to avoid transcribing itself',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(src,/function Report\(\{item,location,collection,run,busy,speaking=false/);
+ assert.match(src,/function Report\(\{item,location,collection,userId,run,busy,speaking=false/);
  assert.ok(src.includes("VoiceButton small autoStop enabled={!busy&&!speaking&&!guidedActive}"));
  assert.match(src,/collection=\{modal\.item\.collection\} \{\.\.\.\{run,busy,voice,language,speaking\}\}/);
 });
