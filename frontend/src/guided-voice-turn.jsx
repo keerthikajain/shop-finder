@@ -62,7 +62,8 @@ export default function GuidedVoiceTurn({
       silence.current=0;Heard(transcript);
       const control=dialogueControl(language,transcript);
       if(control==='stop'){SetActive(false);handlers.current.onActiveChange(false);Status('stopped');handlers.current.onStop?.();return}
-      if(control==='repeat'||control==='help'){retryNarration.current=false;nextTurn(stage);return}
+      if(control==='repeat'){retryNarration.current=false;nextTurn(stage);return}
+      if(control==='help'){retryNarration.current=!!retryStep;nextTurn(stage);return}
       if(control==='back'){
        Status('processing');
        await handlers.current.onBack?.(stage);
