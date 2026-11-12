@@ -592,3 +592,18 @@ const accountDetails={
   }
 };
 for(const [language,phrases] of Object.entries(accountDetails))Object.assign(uiLanguageCoverage[language],phrases);
+
+// Shared product-filter and recent-request copy for every selectable app language.
+// Keep item names, SKUs and stored shelf identifiers untouched.
+const finderFilterTranslations={
+ hi:{'Product type':'उत्पाद का प्रकार','Brand':'ब्रांड','Recent requests':'हाल के अनुरोध','Size filter':'आकार फ़िल्टर','Location filter':'स्थान फ़िल्टर','Label lookup searched across all product types, brands and locations.':'लेबल की खोज सभी उत्पाद प्रकारों, ब्रांडों और स्थानों में की गई।'},
+ bn:{'Product type':'পণ্যের ধরন','Brand':'ব্র্যান্ড','Recent requests':'সাম্প্রতিক অনুরোধ','Size filter':'মাপের ফিল্টার','Location filter':'অবস্থানের ফিল্টার'},
+ mr:{'Product type':'उत्पादन प्रकार','Brand':'ब्रँड','Recent requests':'अलीकडील विनंत्या','Size filter':'आकार फिल्टर','Location filter':'स्थान फिल्टर'},
+ gu:{'Product type':'ઉત્પાદન પ્રકાર','Brand':'બ્રાન્ડ','Recent requests':'તાજેતરની વિનંતીઓ','Size filter':'કદ ફિલ્ટર','Location filter':'સ્થાન ફિલ્ટર'},
+ pa:{'Product type':'ਉਤਪਾਦ ਕਿਸਮ','Brand':'ਬ੍ਰਾਂਡ','Recent requests':'ਹਾਲੀਆ ਬੇਨਤੀਆਂ','Size filter':'ਆਕਾਰ ਫਿਲਟਰ','Location filter':'ਥਾਂ ਫਿਲਟਰ'},
+ kn:{'Product type':'ಉತ್ಪನ್ನದ ಪ್ರಕಾರ','Brand':'ಬ್ರ್ಯಾಂಡ್','Recent requests':'ಇತ್ತೀಚಿನ ವಿನಂತಿಗಳು','Size filter':'ಗಾತ್ರದ ಫಿಲ್ಟರ್','Location filter':'ಸ್ಥಳದ ಫಿಲ್ಟರ್'},
+ te:{'Product type':'ఉత్పత్తి రకం','Brand':'బ్రాండ్','Recent requests':'ఇటీవలి అభ్యర్థనలు','Size filter':'పరిమాణ ఫిల్టర్','Location filter':'స్థాన ఫిల్టర్'},
+ ta:{'Product type':'பொருள் வகை','Brand':'பிராண்ட்','Recent requests':'சமீபத்திய கோரிக்கைகள்','Size filter':'அளவு வடிகட்டி','Location filter':'இட வடிகட்டி'},
+ ml:{'Product type':'ഉൽപ്പന്ന തരം','Brand':'ബ്രാൻഡ്','Recent requests':'സമീപകാല അഭ്യർത്ഥനകൾ','Size filter':'വലുപ്പ ഫിൽട്ടർ','Location filter':'സ്ഥല ഫിൽട്ടർ'}
+};
+for(const [language,entries] of Object.entries(finderFilterTranslations))Object.assign(uiLanguageCoverage[language],entries);
