@@ -508,9 +508,10 @@ function Report({item,location,collection,userId,run,busy,speaking=false,voice,l
   return stored&&typeof stored.reason==='string'&&typeof stored.suggested==='string'&&Date.now()-stored.at<86400000?stored:null;
  }catch{return null}};
  const [draft]=useState(readDraft);
+ const [requestId]=useState(()=>draft?.request_id||('report-'+(typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2))));
  const [reason,R]=useState(()=>draft?.reason??(location?reportVoiceCopy(language,'defaultReason'):''));
  const [suggested,S]=useState(draft?.suggested||''),[heard,H]=useState(''),[heardField,HF]=useState('');
- useEffect(()=>{try{sessionStorage.setItem(draftKey,JSON.stringify({reason,suggested,at:Date.now()}))}catch{}},[draftKey,reason,suggested]);
+ useEffect(()=>{try{sessionStorage.setItem(draftKey,JSON.stringify({reason,suggested,request_id:requestId,at:Date.now()}))}catch{}},[draftKey,reason,suggested,requestId]);
  const [pendingSubmit,PS]=useState(false),[guideStage,SetGuideStage]=useState('report_reason');
  const [guidedActive,SetGuidedActive]=useState(false);
  const submittingRef=useRef(false),submittedRef=useRef(false);
@@ -520,7 +521,7 @@ function Report({item,location,collection,userId,run,busy,speaking=false,voice,l
   submittingRef.current=true;
   try{
    const saved=await run(async()=>{
-    const report=await api('/issues',{collection,sku:item.sku,reason:reason.trim(),kind:location?'wrong_location':'general',location_code:location?.code||'',suggested_location:suggested.trim()});
+    const report=await api('/issues',{collection,sku:item.sku,reason:reason.trim(),kind:location?'wrong_location':'general',location_code:location?.code||'',suggested_location:suggested.trim(),request_id:requestId});
     submittedRef.current=true; // Server has committed the report, even if the next UI step fails.
     try{sessionStorage.removeItem(draftKey)}catch{}
     await onSave(report);
