@@ -13,6 +13,7 @@ export default function HandsFreePicking({enabled,language,collection='all',onCo
   if(!enabled){Status('paused');return;}
   if(halted)return;
   let cancelled=false,recorder=null;
+  const transcription=new AbortController();
   const stopWithError=(message)=>{
    if(cancelled)return;
    Halt(true);Status('error');errorRef.current(message);
@@ -25,7 +26,7 @@ export default function HandsFreePicking({enabled,language,collection='all',onCo
    try{
     const params=new URLSearchParams({language,style:'transcribe',enhanced:'true',collection});
     const result=await request('/voice/transcribe?'+params.toString(),{
-     method:'POST',headers:{'Content-Type':'audio/wav'},body:blob
+     method:'POST',headers:{'Content-Type':'audio/wav'},body:blob,signal:transcription.signal
     });
     if(cancelled)return;
     if(result.transcript?.trim()){
@@ -52,7 +53,7 @@ export default function HandsFreePicking({enabled,language,collection='all',onCo
    if(cancelled)r.stop(true);
    else{recorder=r;Status('listening');}
   }).catch(e=>stopWithError(e.message||pickingCopy(language,'noMic')));
-  return ()=>{cancelled=true;recorder?.stop(true);};
+  return ()=>{cancelled=true;transcription.abort();recorder?.stop(true);};
  },[enabled,language,collection,cycle,halted]);
  const hint=halted?pickingCopy(language,'noMic'):
   !enabled?pickingCopy(language,'paused'):
