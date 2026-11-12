@@ -8,6 +8,7 @@ import GuidedVoiceTurn from './guided-voice-turn.jsx';
 import WorkspaceGreeting from './workspace-greeting.jsx';
 import {pickConfirmationIntent} from './picking-confirmations.js';
 import {voiceAction,actionPhrases,dialogueControl,plausibleShelfSuggestion} from './voice-review-commands.js';
+import {pickingCopy} from './picking-copy.js';
 import {getThemePreference,resolveTheme} from './theme.js';
 import {Mark,Glyph,Modal,Place,Specs,ItemArt,ScanBox,Label,Feedback} from './warehouse-ui.jsx';
 import {ImportPanel,ItemEditor,MoveEditor,ReviewPanel} from './warehouse-manage.jsx';
@@ -167,7 +168,8 @@ export default function WarehouseApp({user,preferences,logout}){
    return;
   }
   AL(index);
-  N(t(completed?'Picked! Moving to the next item.':'Moving to the next item. The previous item is saved as unresolved.'));
+  if(voice&&handsFree&&auto&&!voiceFlowStopped.current&&!next.picking?.paused)VGP(false);
+  N(completed?pickingCopy(next.language,'confirmed'):t('Moving to the next item. The previous item is saved as unresolved.'));
   if(window.matchMedia('(max-width:700px)').matches)
    requestAnimationFrame(()=>document.getElementById('sf-picking-line-'+index)?.scrollIntoView({behavior:'smooth',block:'center'}));
   if(voice&&auto&&!voiceFlowStopped.current)await playPickGuidance('next',next,index);
@@ -228,7 +230,7 @@ export default function WarehouseApp({user,preferences,logout}){
   const control=dialogueControl(source.language,transcript);
   if(control==='stop'){PV(null);stopVoiceFlow();VGT(t('Voice guidance stopped. Your progress is saved.'));return false}
   if(control==='help'){
-   VGT(t(pendingVoicePick?'Say Yes or No to confirm this item, Repeat, Wrong location or Stop.':'Say Found it, Wrong location, Repeat, Next item, Undo or Stop. Buttons are available too.'));
+   VGT(pickingCopy(source.language,pendingVoicePick?'verify':'help'));
    if(voice&&!voiceFlowStopped.current)await playPickGuidance('help',source,pendingVoicePick?.line??activeLine);
    return;
   }
@@ -261,7 +263,7 @@ export default function WarehouseApp({user,preferences,logout}){
     PV(null);
     await run(async()=>{
      const next=await api('/tasks/'+source.id+'/scan',{line:pendingVoicePick.line,kind:'manual',value:'confirmed'});
-     VGT(t('Great, item confirmed.'));
+     VGT(pickingCopy(source.language,'confirmed'));
      await progressAfterPick(next,true);
      R(await request('/warehouse/tasks'));
     });
@@ -294,7 +296,7 @@ export default function WarehouseApp({user,preferences,logout}){
     }
     return false;
    }
-   VGT(t('Please say Yes to confirm you picked this item, or No to cancel.'));
+   VGT(pickingCopy(source.language,'verify'));
    if(voice)await playPickGuidance('verify',source,pendingVoicePick.line);
    return;
   }
@@ -302,7 +304,7 @@ export default function WarehouseApp({user,preferences,logout}){
    const answer=await api('/tasks/'+source.id+'/picking/command',{transcript,line:activeLine});
    VGT(answer.text);
    if(answer.line!=null)AL(answer.line);
-   if(answer.action==='verify'&&answer.line!=null){PV({taskId:source.id,line:answer.line,sku:source.lines[answer.line]?.selected?.sku});VGT(t('Did you pick the correct item? Say Yes to confirm, or No to cancel.'));}
+   if(answer.action==='verify'&&answer.line!=null){PV({taskId:source.id,line:answer.line,sku:source.lines[answer.line]?.selected?.sku});VGT(pickingCopy(source.language,'verify'));}
    if(answer.action==='report'&&answer.line!=null){
     reportResumeRef.current=handsFree&&!voiceGuidePaused;
     PV(null);VGP(true); // Stop the pick microphone before changing to the report step.
@@ -359,7 +361,7 @@ export default function WarehouseApp({user,preferences,logout}){
    R(await request('/warehouse/tasks'));
   });
  }
- async function resumePick(id){VGP(true);stopSpeech();await run(async()=>{const restored=await request('/warehouse/tasks/'+encodeURIComponent(id));if(restored.collection!==collection){pendingResume.current=restored;C(restored.collection)}else{T(restored);Q(restored.query);G('location');AL(Math.max(0,nextPendingPickIndex(restored.lines)))}P('find');N(t('Picking session restored.'))})}
+ async function resumePick(id){stopVoiceFlow();await run(async()=>{const restored=await request('/warehouse/tasks/'+encodeURIComponent(id));if(restored.collection!==collection){pendingResume.current=restored;C(restored.collection)}else{T(restored);Q(restored.query);G('location');AL(Math.max(0,nextPendingPickIndex(restored.lines)))}P('find');N(t('Picking session restored.'))})}
  const picking=task?.picking||{status:'ready'},pickPaused=!!picking.paused,hasSearchCandidates=!!task?.lines.some(l=>l.selected||l.candidates.length),verifiedCount=task?.lines.filter(l=>l.complete).length||0,unresolvedLines=task?.lines.filter(l=>!l.selected||!l.location)||[],reportedLines=task?.lines.filter(l=>l.location_report_open)||[],eligibleLines=task?.lines.filter(l=>l.selected&&l.location&&!l.location_report_open)||[],canStartPick=!!task?.lines.length&&unresolvedLines.length===0&&eligibleLines.length>0,nextPickIndex=nextPendingPickIndex(task?.lines);
  const lastConfirmedIndex=task?.lines.reduce((best,line,i)=>line.complete&&
    (best<0||String(line.confirmed_at||'')>=String(task.lines[best].confirmed_at||''))?i:best,-1)??-1;
