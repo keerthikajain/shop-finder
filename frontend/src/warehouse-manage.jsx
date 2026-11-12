@@ -89,7 +89,7 @@ export function MoveEditor({item,source,collection,fields,run,busy,language,voic
     if(!voiceAction(language,'move',text)){
      SetVoiceError(t('Say: ')+actionPhrases(language,'move')[0]);return 'retry';
     }
-    await confirmMove();return false;
+    const saved=await confirmMove();return saved?false:'retry';
    }
    return false;
   }
@@ -150,7 +150,7 @@ function TeamReportCard({issue,owner,busy,voice,language,onError,onCorrectLocati
    if(!voiceAction(language,'review',text)){
     SetVoiceError(t('Say: ')+actionPhrases(language,'review')[0]);return 'retry';
    }
-   await markResolved();return false;
+   const saved=await markResolved();return saved?false:'retry';
   }
   return false;
  }
