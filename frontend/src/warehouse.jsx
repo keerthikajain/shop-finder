@@ -477,7 +477,7 @@ export default function WarehouseApp({user,preferences,logout}){
  {modal?.type==='stock'&&<Modal title="Update recorded stock" onClose={()=>D(null)} wide><StockEditor {...{owner,locations,run,busy,voice,language}} fields={meta.settings.location_fields} item={modal.item} source={modal.location} onError={E} onSave={async()=>{D(null);T(null);await reload();N('Stock updated. The change is recorded in history.')}}/></Modal>}
  {modal?.type==='edit'&&<Modal title={t(modal.item?'Edit item':'Add item')} onClose={()=>D(null)} wide><ItemEditor item={modal.item} collection={modal.item?.collection||(collection==='all'?meta.settings.collections[0]:collection)} pack={meta.collections.find(c=>c.id===(modal.item?.collection||(collection==='all'?meta.settings.collections[0]:collection)))} collections={meta.collections.filter(c=>meta.settings.collections.includes(c.id))} settings={meta.settings} {...{labels,run,busy}} onSave={async()=>{D(null);await reload();N(t('Item saved.'))}}/></Modal>}
  {modal?.type==='move'&&<Modal title={t('Correct location')} onClose={()=>D(null)} wide><MoveEditor collection={modal.item.collection} fields={meta.settings.location_fields} {...{run,busy,language,voice}} item={modal.item} source={modal.location} onError={E} onSave={async()=>{const previous=task?.query;D(null);await reload();RV(v=>v+1);if(previous&&page==='find'){await search(previous,false);N(t('Location saved. Search results now show the updated shelf. Review the new list before picking.'))}else{T(null);N(t('Verified location saved and shown in future searches.'))}if(voice)await playFixedVoice('move_saved',language,false,true)}}/></Modal>}
- {modal?.type==='report'&&<Modal title={t('Report an issue')} onClose={()=>{reportResumeRef.current=false;D(null);VGP(true)}}><Report item={modal.item} location={modal.location} collection={modal.item.collection} {...{run,busy,voice,language,speaking}} onStopSpeaking={stopSpeech} onError={E} onSave={async report=>{
+ {modal?.type==='report'&&<Modal title={t('Report an issue')} onClose={()=>{reportResumeRef.current=false;D(null);VGP(true)}}><Report item={modal.item} location={modal.location} collection={modal.item.collection} userId={user.id} {...{run,busy,voice,language,speaking}} onStopSpeaking={stopSpeech} onError={E} onSave={async report=>{
  const index=modal.index,active=task?.picking?.status==='active'&&!task.picking?.paused;
  const shouldResume=reportResumeRef.current;
  reportResumeRef.current=false;
@@ -498,12 +498,19 @@ export default function WarehouseApp({user,preferences,logout}){
  {modal?.type==='label'&&<Modal title={t('Print labels')} onClose={()=>D(null)} wide><div className="wh-print-area">{modal.item&&<Label value={'ITEM:'+modal.item.collection+':'+modal.item.sku} name={modal.item.name} subtitle={modal.item.sku+' · '+Object.values(modal.item.specs).join(' / ')}/>}<Label value={modal.location.code} name={t('Storage location')} subtitle={pathText(modal.location)}/></div><button className="primary" onClick={()=>window.print()}>{t('Print labels')}</button></Modal>}
  </div></Feedback.Provider>
 }
-function Report({item,location,collection,run,busy,speaking=false,voice,language,onError,onStopSpeaking,onSave}){
+function Report({item,location,collection,userId,run,busy,speaking=false,voice,language,onError,onStopSpeaking,onSave}){
  const t=useT();
  // The guide labels must match the recognized speech commands, even if app menus differ.
  const copy=key=>reportVoiceCopy(language,key);
- const [reason,R]=useState(()=>location?reportVoiceCopy(language,'defaultReason'):'');
- const [suggested,S]=useState(''),[heard,H]=useState(''),[heardField,HF]=useState('');
+ const draftKey='sf-report-draft-'+userId+'-'+collection+'-'+item.sku+'-'+(location?.code||'general');
+ const readDraft=()=>{try{
+  const stored=JSON.parse(sessionStorage.getItem(draftKey)||'null');
+  return stored&&typeof stored.reason==='string'&&typeof stored.suggested==='string'&&Date.now()-stored.at<86400000?stored:null;
+ }catch{return null}};
+ const [draft]=useState(readDraft);
+ const [reason,R]=useState(()=>draft?.reason??(location?reportVoiceCopy(language,'defaultReason'):''));
+ const [suggested,S]=useState(draft?.suggested||''),[heard,H]=useState(''),[heardField,HF]=useState('');
+ useEffect(()=>{try{sessionStorage.setItem(draftKey,JSON.stringify({reason,suggested,at:Date.now()}))}catch{}},[draftKey,reason,suggested]);
  const [pendingSubmit,PS]=useState(false),[guideStage,SetGuideStage]=useState('report_reason');
  const [guidedActive,SetGuidedActive]=useState(false);
  const submittingRef=useRef(false),submittedRef=useRef(false);
@@ -515,6 +522,7 @@ function Report({item,location,collection,run,busy,speaking=false,voice,language
    const saved=await run(async()=>{
     const report=await api('/issues',{collection,sku:item.sku,reason:reason.trim(),kind:location?'wrong_location':'general',location_code:location?.code||'',suggested_location:suggested.trim()});
     submittedRef.current=true; // Server has committed the report, even if the next UI step fails.
+    try{sessionStorage.removeItem(draftKey)}catch{}
     await onSave(report);
     return true;
    });
