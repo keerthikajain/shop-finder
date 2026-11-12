@@ -254,7 +254,9 @@ export default function WarehouseApp({user,preferences,logout}){
   if(control==='stop'){PV(null);stopVoiceFlow();VGT(pickingCopy(source.language,'stopSaved'));return false}
   if(control==='help'){
    VGT(pickingCopy(source.language,pendingVoicePick?'verify':'help'));
-   if(voice&&!voiceFlowStopped.current)await playPickGuidance('help',source,pendingVoicePick?.line??activeLine);
+   // Help is explicitly requested. It must speak even when automatic
+   // hands-free guidance is paused; do not resume listening or change picks.
+   if(voice)await playPickGuidance('help',source,pendingVoicePick?.line??activeLine,true);
    return;
   }
   if(control==='repeat'){
