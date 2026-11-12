@@ -60,3 +60,29 @@ test('shared nav and visitor settings do not bypass app-language selection',asyn
  assert.ok(uiLanguageCoverage.hi['Business setup'].includes('व्यवसाय'));
  assert.ok(uiLanguageCoverage.te['Activity'].length>0);
 });
+
+test('signup, staff approvals, and manager access are translated in every app language',()=>{
+ const keys=[
+  'Create your workspace',
+  'Organize your products, manage locations, and help your team find items faster.',
+  'Find your team and start working in your shared workspace.',
+  'Sign in to pick up where you left off.',
+  'Choose approval managers',
+  'Loading staff accounts…',
+  'No staff members are ready to become managers yet.',
+  'Approve pending staff requests above first.',
+  'Enable a staff account below first.',
+  'Create a staff account below or invite someone to join your store.',
+  'Go to create staff account',
+  'eligible staff member(s)',
+  'Signed in as',
+  'Or explore instantly, without signing up',
+  'Explore Shop Finder without an account.',
+  'Try Shop Finder',
+  'Registration:',
+ ];
+ for(const [language] of APP_LANGUAGES){
+  if(language==='en')continue;
+  for(const key of keys)assert.notEqual(translate(language,key),key,language+': '+key);
+ }
+});
