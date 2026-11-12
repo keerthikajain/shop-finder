@@ -12,6 +12,8 @@ test('guided owner changes remain at confirmation when saving fails',async()=>{
  assert.match(src,/const saved=await markResolved\(\);return saved\?false:'retry';/);
  assert.doesNotMatch(src,/await confirmMove\(\);return false;/);
  assert.doesNotMatch(src,/await markResolved\(\);return false;/);
+ assert.match(src,/try\{await onSave\(\)\}catch\(e\)/);
+ assert.match(src,/try\{await reload\(\)\}catch\(e\)/);
 });
 
 test('product filter and recent-request labels use app localization',async()=>{
