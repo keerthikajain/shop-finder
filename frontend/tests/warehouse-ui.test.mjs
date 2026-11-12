@@ -466,7 +466,7 @@ test('judge access uses a single account flow and a separate full-feature worksp
  assert.match(account,/Or explore instantly, without signing up/);
  assert.match(account,/challenge\/signup/);
  assert.match(account,/challenge\/try/);
- assert.match(account,/Your products and changes stay separate/);
+ assert.match(account,/Your workspace data is kept separate from other workspaces/);
 });
 
 test('voice-first search requires transcript review before matching products',async()=>{
