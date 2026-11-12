@@ -228,7 +228,7 @@ export default function WarehouseApp({user,preferences,logout}){
   if(!source||source.picking?.paused||!transcript?.trim())return;
   VGC(transcript);
   const control=dialogueControl(source.language,transcript);
-  if(control==='stop'){PV(null);stopVoiceFlow();VGT(t('Voice guidance stopped. Your progress is saved.'));return false}
+  if(control==='stop'){PV(null);stopVoiceFlow();VGT(pickingCopy(source.language,'stopSaved'));return false}
   if(control==='help'){
    VGT(pickingCopy(source.language,pendingVoicePick?'verify':'help'));
    if(voice&&!voiceFlowStopped.current)await playPickGuidance('help',source,pendingVoicePick?.line??activeLine);
@@ -239,13 +239,13 @@ export default function WarehouseApp({user,preferences,logout}){
    return;
   }
   if(control==='back'){
-   if(pendingVoicePick){const previous=pendingVoicePick.line;PV(null);VGT(t('Confirmation cancelled. Returning to this item.'));if(voice&&!voiceFlowStopped.current)await playPickGuidance('repeat',source,previous);return}
-   const previous=Math.max(0,activeLine-1);AL(previous);VGT(t('Showing the previous item without changing its saved status.'));
+   if(pendingVoicePick){const previous=pendingVoicePick.line;PV(null);VGT(pickingCopy(source.language,'backConfirm'));if(voice&&!voiceFlowStopped.current)await playPickGuidance('repeat',source,previous);return}
+   const previous=Math.max(0,activeLine-1);AL(previous);VGT(pickingCopy(source.language,'backItem'));
    if(voice&&!voiceFlowStopped.current)await playPickGuidance('repeat',source,previous);
    return;
   }
   if(voiceAction(source.language,'undo',transcript)){
-   if(lastConfirmedIndex<0){VGT(t('There is no confirmed item to undo.'));return}
+   if(lastConfirmedIndex<0){VGT(pickingCopy(source.language,'noConfirmedUndo'));return}
    PV(null);
    await undoPick(lastConfirmedIndex);
    // The reader pauses the microphone during Gnani TTS and resumes after playback.
@@ -254,7 +254,7 @@ export default function WarehouseApp({user,preferences,logout}){
   }
   if(pendingVoicePick){
    const response=pickConfirmationIntent(source.language,transcript);
-   if(response==='no'){const index=pendingVoicePick.line;PV(null);VGT(t('Item not confirmed. Moving to another remaining item.'));await run(()=>deferPick(source,index,'declined'));return}
+   if(response==='no'){const index=pendingVoicePick.line;PV(null);VGT(pickingCopy(source.language,'declined'));await run(()=>deferPick(source,index,'declined'));return}
    if(response==='yes'){
     const current=source.lines[pendingVoicePick.line];
     if(source.id!==pendingVoicePick.taskId||!current||current.complete||current.selected?.sku!==pendingVoicePick.sku){
@@ -272,17 +272,17 @@ export default function WarehouseApp({user,preferences,logout}){
    // During confirmation, Repeat replays the question rather than losing the pending item.
    const responseCommand=await api('/tasks/'+source.id+'/picking/command',{transcript,line:pendingVoicePick.line});
    if(responseCommand.action==='repeat'){
-    VGT(t('Repeating the saved location. You can still say Yes or No to confirm.'));
+    VGT(pickingCopy(source.language,'verify'));
     if(voice)await playPickGuidance('repeat',source,pendingVoicePick.line);
     return;
    }
    if(responseCommand.action==='verify'){
-    VGT(t('Did you pick the correct item? Say Yes or No.'));
+    VGT(pickingCopy(source.language,'verify'));
     if(voice)await playPickGuidance('verify',source,pendingVoicePick.line);
     return;
    }
    if(responseCommand.action==='stop'){
-    PV(null);stopVoiceFlow();VGT(t('Voice guidance stopped. Your picking progress is saved. Resume listening when ready.'));
+    PV(null);stopVoiceFlow();VGT(pickingCopy(source.language,'stopSaved'));
     return false;
    }
    if(responseCommand.action==='report'){
@@ -291,7 +291,7 @@ export default function WarehouseApp({user,preferences,logout}){
     PV(null);VGP(true);
     if(selected?.selected){
      D({type:'report',item:selected.selected,location:selected.location,index});
-     VGT(t('Picking listening paused. Explain the wrong location by voice or typing.'));
+     VGT(pickingCopy(source.language,'reportHandoff'));
      if(voice)await playPickGuidance('report',source,index);
     }
     return false;
@@ -311,12 +311,12 @@ export default function WarehouseApp({user,preferences,logout}){
     const selected=source.lines[answer.line];
     if(selected?.selected){
      D({type:'report',item:selected.selected,location:selected.location,index:answer.line});
-     VGT(t('Picking paused. Describe the issue in the report using speech or typing.'));
+     VGT(pickingCopy(source.language,'reportHandoff'));
      if(voice)await playPickGuidance('report',source,answer.line);
     }
     return false; // The voice loop must not restart for this command.
    }
-   if(answer.action==='stop'){PV(null);stopVoiceFlow();VGT(t('Voice guidance stopped. Picking progress is saved.'));return false}
+   if(answer.action==='stop'){PV(null);stopVoiceFlow();VGT(pickingCopy(source.language,'stopSaved'));return false}
    if(voice&&!voiceFlowStopped.current)await playPickGuidance(answer.action,source,answer.line??activeLine);
   })
  }
@@ -404,7 +404,7 @@ export default function WarehouseApp({user,preferences,logout}){
     </div>
     <div className="sf-voice-guide-choices" aria-label={pickingCopy(task.language,'secondary')}><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'verify'))}>{pickVoicePhrase(task.language,'verify')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'report'))}>{pickVoicePhrase(task.language,'report')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voiceFlowStopped.current?playPickGuidance('repeat',task,activeLine,true):voicePickCommand(pickVoicePhrase(task.language,'repeat'))}>{pickVoicePhrase(task.language,'repeat')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'next'))}>{pickVoicePhrase(task.language,'next')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'stop'))}>{pickVoicePhrase(task.language,'stop')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'help'))}>{pickVoicePhrase(task.language,'help')}</button></div>
    </>:<small>{t('This language is not supported for spoken picking commands. Use scanning or manual verification.')}</small>}
-   {voiceGuideCommand&&<div className="sf-guide-transcript" role="status"><strong>{pickingCopy(task.language,'recognized')}:</strong> {voiceGuideCommand}</div>}{pendingVoicePick&&<div className="sf-voice-pick-confirm" role="status"><strong>{pickingCopy(task.language,'askYesNo')}</strong><span>{task.lines[pendingVoicePick.line]?.selected?.name} · {task.lines[pendingVoicePick.line]?.selected?.sku}</span><p>{pickingCopy(task.language,'verify')}</p><div><button type="button" disabled={busy} onClick={()=>voicePickCommand(task.language==='hi-IN'?'हाँ':task.language==='kn-IN'?'ಹೌದು':task.language==='te-IN'?'అవును':'yes')}>{t('Yes, picked')}</button><button type="button" disabled={busy} onClick={()=>{const index=pendingVoicePick.line;PV(null);VGT(t('Not confirmed. Moving to another remaining item.'));run(()=>deferPick(task,index,'declined'))}}>{t('No, move to next item')}</button></div></div>}
+   {voiceGuideCommand&&<div className="sf-guide-transcript" role="status"><strong>{pickingCopy(task.language,'recognized')}:</strong> {voiceGuideCommand}</div>}{pendingVoicePick&&<div className="sf-voice-pick-confirm" role="status"><strong>{pickingCopy(task.language,'askYesNo')}</strong><span>{task.lines[pendingVoicePick.line]?.selected?.name} · {task.lines[pendingVoicePick.line]?.selected?.sku}</span><p>{pickingCopy(task.language,'verify')}</p><div><button type="button" disabled={busy} onClick={()=>voicePickCommand(task.language==='hi-IN'?'हाँ':task.language==='kn-IN'?'ಹೌದು':task.language==='te-IN'?'అవును':'yes')}>{pickingCopy(task.language,'yesPicked')}</button><button type="button" disabled={busy} onClick={()=>{const index=pendingVoicePick.line;PV(null);VGT(pickingCopy(task.language,'declined'));run(()=>deferPick(task,index,'declined'))}}>{pickingCopy(task.language,'noNext')}</button></div></div>}
    {voiceGuideText&&<p className="sf-guide-reply" role="status">{voiceGuideText}</p>}{picking.status==='active'&&voice&&handsFree&&<small role="status">{pickingCopy(task.language,voiceGuidePaused?'paused':speaking?'speaking':'listening')}</small>}
   </div>}
   {picking.status==='ready'?<div className="sf-picking-actions"><button className="primary" type="button" disabled={busy||!canStartPick} onClick={()=>pickAction('start')}><Glyph name="check"/>{t('Confirm search and begin picking')}</button>{voice&&PICKING_START_VOICE_LANGUAGES.includes(task.language)&&<VoiceButton small autoStop enabled={!busy&&canStartPick} language={task.language} label={t('Confirm search by voice')} onError={E} onText={voiceStartPicking}/>} {!canStartPick&&unresolvedLines.length>0&&<div className="sf-pick-review-needed" role="status"><strong>{unresolvedLines.length} {t('item(s) still need your choice before picking can start.')}</strong><button type="button" disabled={busy} onClick={()=>{const index=task.lines.findIndex(line=>!line.selected||!line.location);if(index>=0){AL(index);document.getElementById('sf-picking-line-'+index)?.scrollIntoView({behavior:'smooth',block:'center'});document.getElementById('sf-picking-line-'+index)?.focus({preventScroll:true})}}}>{t('Review unresolved items')} <Glyph name="arrow"/></button></div>} {reportedLines.length>0&&<small className="sf-pick-reported-note" role="status">{reportedLines.length} {t('reported shelf location(s) are excluded from picking until owner review. They remain unconfirmed.')}</small>}{!canStartPick&&!unresolvedLines.length&&<small role="status">{t('No eligible items remain. Ask the owner to verify the reported locations.')}</small>}</div>:

@@ -38,7 +38,7 @@ const PHRASES={
   help:["help","what should i say","मदद","kya bolna hai"],
   back:["back","go back","वापस","wapas jao"],
   repeat:["repeat","dobara bolo","फिर से बताओ"],
-  stop:["stop","ruk jao","रुको"],
+  stop:["stop","ruk jao","ruko","रुको"],
   undo:['undo last confirmation','last pick undo karo','पिछला पिक वापस लो'],
   original:['original location verified','purani jagah sahi hai','दर्ज जगह पर मिला'],
   unconfirmed:['still unconfirmed','jagah confirm nahi hai','जगह की पुष्टि नहीं हुई'],

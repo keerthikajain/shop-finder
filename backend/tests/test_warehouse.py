@@ -1263,7 +1263,7 @@ def test_manual_pause_and_resume_picking_persist_progress_without_stock_changes(
 @pytest.mark.parametrize('language,first_word,next_word',[
  ('en-IN','First item:','Next up:'),
  ('hi-IN','पहला सामान','अगला सामान'),
- ('hi-en','पहला सामान','अगला सामान'),
+ ('hi-en','Pehla item:','Next item:'),
  ('te-IN','మొదటి వస్తువు:','తదుపరి వస్తువు:')
 ])
 def test_first_picking_announcement_does_not_call_it_next(setup,monkeypatch,language,first_word,next_word):
@@ -1698,3 +1698,62 @@ def test_owner_resolution_readback_is_explicit_and_does_not_close_report(setup,m
  login(c)
  assert c.post(f'/api/warehouse/issues/{iid}/resolution-preview-audio',headers=H,
   json={**body,'action':'unverified_guess'}).status_code==422
+
+
+@pytest.mark.parametrize('language,transcript,expected',[
+ ('hi-en','agla item','next'),
+ ('hi-en','location dobara batao','repeat'),
+ ('hi-en','mil gaya','verify'),
+ ('hi-en','galat jagah','report'),
+ ('hi-en','ruko','stop'),
+ ('hi-en','kya bol sakte hain','help'),
+ ('te-IN','దొరికింది','verify'),
+ ('te-IN','dorikindi','verify'),
+ ('te-IN','తప్పు స్థానం','report'),
+ ('te-IN','tappu sthanam','report'),
+ ('te-IN','location malli cheppu','repeat'),
+ ('te-IN','taruvata item','next'),
+ ('te-IN','ఆపు','stop'),
+ ('te-IN','sahayam','help'),
+ ('te-IN','delete all items','unknown'),
+ ('hi-en','yes and delete the shelf','unknown')
+])
+def test_hinglish_telugu_picking_grammar_parity(language,transcript,expected):
+ from app.warehouse_voice_guide import intent
+ assert intent(transcript,language)==expected
+
+
+@pytest.mark.parametrize('language,transcript,label',[
+ ('hi-en','mil gaya','rack'),
+ ('te-IN','దొరికింది','ర్యాక్')
+])
+def test_hinglish_telugu_spoken_picking_requires_separate_confirmation(setup,language,transcript,label):
+ c,_=setup
+ task=post(c,'/search',{'collection':'clothing','query':'CLO-001','language':language})
+ assert task.status_code==200,task.text
+ tid=task.json()['id']
+ assert post(c,f'/tasks/{tid}/picking/start').status_code==200
+ before=c.get('/api/warehouse/tasks/'+tid).json()
+ found=post(c,f'/tasks/{tid}/picking/command',{'transcript':transcript,'line':0})
+ assert found.status_code==200,found.text
+ assert found.json()['action']=='verify'
+ assert 'CLO-001' in found.json()['text']
+ location=post(c,f'/tasks/{tid}/picking/command',{'transcript':'next item' if language=='hi-en' else 'తదుపరి వస్తువు','line':0})
+ assert location.status_code==200,location.text
+ assert label in location.json()['text']
+ assert c.get('/api/warehouse/tasks/'+tid).json()==before
+ # Speech alone must never confirm a pick, or change its location.
+ assert post(c,f'/tasks/{tid}/picking/finish').status_code==409
+
+
+def test_hinglish_guidance_reads_hinglish_and_english_location_labels(setup):
+ c,_=setup
+ task=post(c,'/search',{'collection':'clothing','query':'CLO-001','language':'hi-en'})
+ assert task.status_code==200
+ tid=task.json()['id']
+ assert post(c,f'/tasks/{tid}/picking/start').status_code==200
+ for command,expected in [('next item','Next item'),('repeat location','Location dobara'),
+                          ('found it','haan'),('wrong location','Batao')]:
+  result=post(c,f'/tasks/{tid}/picking/command',{'transcript':command,'line':0})
+  assert result.status_code==200,result.text
+  assert expected.lower() in result.json()['text'].lower()

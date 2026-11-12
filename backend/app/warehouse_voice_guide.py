@@ -9,19 +9,19 @@ from .warehouse_voice_languages import REGIONAL, regional_messages
 
 # Short, explicit commands avoid substring accidents ("not found" != "found").
 COMMANDS = {
- 'next': ('next','next item','go to next item','next one','aage','aage chalo','agla','agla item','agli item',
+ 'next': ('agla item','agli cheez','next samaan','next item dikhao','next','next item','go to next item','next one','aage','aage chalo','agla','agla item','agli item',
           'अगला','अगला आइटम','अगला सामान','अगली चीज','आगे','आगे चलो','नेक्स्ट','नेक्स्ट आइटम'),
- 'repeat': ('repeat','repeat location','repeat the location','say location again',
+ 'repeat': ('location dobara batao','dobara batao','jagah dobara batao','repeat','repeat location','repeat the location','say location again',
             'where is it','where is this','again','dobara','phir se batao','location dobara',
             'दोबारा','फिर से','फिर से बताओ','जगह दोहराओ','लोकेशन दोहराओ','रैक फिर बताओ','कहाँ है'),
- 'verify': ('found it','i found it','got it','item found','found the item','mil gaya','mil gayi',
+ 'verify': ('mil gaya hai','mujhe mil gaya','item mil gaya','found it','i found it','got it','item found','found the item','mil gaya','mil gayi',
             'मिल गया','मिल गई','सामान मिल गया','मुझे मिल गया'),
- 'report': ('wrong location','wrong shelf','not here','not on this shelf','item missing',
+ 'report': ('item galat jagah hai','wrong location hai','yeh jagah galat hai','wrong location','wrong shelf','not here','not on this shelf','item missing',
             'wrong rack','galat jagah','yahan nahi hai','nahi mila',
             'गलत जगह','गलत शेल्फ','यहाँ नहीं है','नहीं मिला','गलत रैक'),
- 'stop': ('stop','stop guide','pause','pause guide','stop speaking','ruko','band karo',
+ 'stop': ('ruk jao','voice band karo','stop','stop guide','pause','pause guide','stop speaking','ruko','band karo',
           'रुको','रुकिए','बंद करो','आवाज बंद करो'),
- 'help': ('help','commands','voice commands','what can i say','madad','मदद','क्या बोलूं','कमांड बताओ')
+ 'help': ('kya bol sakte hain','kya bolu','help karo','help','commands','voice commands','what can i say','madad','मदद','क्या बोलूं','कमांड बताओ')
 }
 
 def intent(transcript,language='en-IN'):
@@ -54,7 +54,7 @@ def guide(task,action,requested_line,check_line):
   raise HTTPException(422,'Unsupported voice command.')
  language=task.get('language','en-IN')
  regional=language in REGIONAL
- hi=language in ('hi-IN','hi-en')
+ hi=language=='hi-IN'
  messages, labels=regional_messages(language) if regional else ({}, {})
  if action in ('help','unknown','stop'):
   legacy={
@@ -65,8 +65,11 @@ def guide(task,action,requested_line,check_line):
    'stop':('Voice guidance paused. Picking progress is saved. Resume when ready.',
            'आवाज़ के निर्देश रुके हैं। सामान चुनने की प्रगति सेव है। तैयार होने पर फिर शुरू करें।')
   }
+  hinglish={'help':'Bolo: agla item, location dobara batao, mil gaya, galat jagah, help ya ruko.',
+            'unknown':'Command samajh nahi aaya. Bolo help, mil gaya, location dobara batao ya galat jagah.',
+            'stop':'Voice guide pause ho gaya. Aapki progress saved hai. Ready hone par resume karo.'}
   return {'action':action,'line':None,
-          'text':messages[action] if regional else legacy[action][1 if hi else 0],
+          'text':messages[action] if regional else hinglish[action] if language=='hi-en' else legacy[action][1 if hi else 0],
           'language':language}
  index=pending_line(task)
  if index is None:
@@ -75,14 +78,14 @@ def guide(task,action,requested_line,check_line):
     'te-IN':'మిగిలిన వస్తువులు నిర్ధారించబడలేదు. వాటిని తర్వాత మళ్లీ ప్రయత్నించండి లేదా మేనేజర్ సమీక్ష కోసం ఉంచండి.',
     'kn-IN':'ಕೆಲವು ವಸ್ತುಗಳು ಇನ್ನೂ ದೃಢಪಟ್ಟಿಲ್ಲ. ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ ಅಥವಾ ಪರಿಶೀಲನೆಗಾಗಿ ಉಳಿಸಿ.'
    }
-   text=unresolved.get(language,'कुछ सामान अभी पुष्टि नहीं हुआ है। उसे बाद में दोबारा जाँचें।' if hi else 'Some items remain unconfirmed. Retry them manually or leave them for review.')
+   text=unresolved.get(language,'Baaki items confirm nahi hue. Baad mein retry karo ya manager ko review ke liye bhejo.' if language=='hi-en' else 'कुछ सामान अभी पुष्टि नहीं हुआ है। उसे बाद में दोबारा जाँचें।' if hi else 'Some items remain unconfirmed. Retry them manually or leave them for review.')
    return {'action':'unresolved','line':None,'text':text,'language':language}
   completion={
    'kn-IN':'ಎಲ್ಲಾ ವಸ್ತುಗಳ ಪರಿಶೀಲನೆ ಮುಗಿದಿದೆ. ಪಟ್ಟಿಯನ್ನು ಪೂರ್ಣಗೊಳಿಸುತ್ತಿದ್ದೇವೆ.',
    'te-IN':'అన్ని వస్తువులను తనిఖీ చేశాం. జాబితాను పూర్తి చేస్తున్నాం.'
   }
   spoken=completion.get(language,messages['done'] if regional else
-    ('सारा सामान जाँच लिया गया है। सूची पूरी हो रही है।' if hi else
+    ('Saare items check ho gaye. Picking list finish ho rahi hai.' if language=='hi-en' else 'सारा सामान जाँच लिया गया है। सूची पूरी हो रही है।' if hi else
      'Everything is checked. Finishing your picking list now.'))
   return {'action':'done','line':None,'text':spoken,'language':language}
  if action in ('start','repeat','verify','report') and 0<=requested_line<len(task['lines']) and not task['lines'][requested_line].get('complete') and not task['lines'][requested_line].get('deferred_reason'):
@@ -113,15 +116,19 @@ def guide(task,action,requested_line,check_line):
   }
   text=friendly.get(language,{}).get(action) or messages['next' if action in ('start','next') else action].format(name=name,place=place)
  elif action=='start':
-  text=(f"पहला सामान {name}। {place}। मिलने पर बताइए।" if hi else
+  text=(f"Pehla item: {name}. {place}. Milne par bolo mil gaya." if language=='hi-en' else
+        f"पहला सामान {name}। {place}। मिलने पर बताइए।" if hi else
         f"First item: {name}. {place}. Tell me when you have it.")
  elif action in ('next','repeat'):
-  text=(f"अगला सामान {name}। {place}। मिलने पर बताइए।" if hi else
+  text=(f"{'Location dobara:' if action=='repeat' else 'Next item:'} {name}. {place}. Milne par bolo mil gaya." if language=='hi-en' else
+        f"अगला सामान {name}। {place}। मिलने पर बताइए।" if hi else
         f"Next up: {name}. {place}. Tell me when you have it.")
  elif action=='verify':
-  text=(f'क्या आपने {name} उठा लिया? पुष्टि के लिए हाँ कहें, या नहीं कहें।' if hi else
+  text=(f'Kya aapne {name} pick kiya? Confirm karne ke liye haan bolo, warna nahi.' if language=='hi-en' else
+        f'क्या आपने {name} उठा लिया? पुष्टि के लिए हाँ कहें, या नहीं कहें।' if hi else
         f'Did you pick {name}? Say yes to confirm, or no to cancel.')
  else:
-  text=('बताने के लिए धन्यवाद। सही जगह की जानकारी दीजिए, हम मैनेजर को भेज देंगे।' if hi else
+  text=('Wrong location report khol rahe hain. Batao kya galat hai, phir confirm karke report bhejo.' if language=='hi-en' else
+        'बताने के लिए धन्यवाद। सही जगह की जानकारी दीजिए, हम मैनेजर को भेज देंगे।' if hi else
         'Thanks for checking. Tell us where you found it so we can inform your manager.')
  return {'action':action,'line':index,'text':text,'language':language}
