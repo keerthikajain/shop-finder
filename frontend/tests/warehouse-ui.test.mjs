@@ -750,10 +750,11 @@ test('sample shelf labels do not repeat on every item and recent requests are st
 
 test('manual microphone can always stop recording even when a parent becomes unavailable',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(src,/disabled=\{\(state!=='recording'&&!enabled\)\|\|state==='starting'\|\|state==='processing'\}/);
+ assert.match(src,/disabled=\{\(!stopping&&!enabled\)\|\|state==='starting'\}/);
  assert.match(src,/if\(state==='recording'\)\{S\('processing'\);ref\.current\?\.stop\(\);return\}/);
  assert.match(src,/\{stopOnSilence:autoStop\}/);
- assert.match(src,/aria-pressed=\{state==='recording'\}/);
+ assert.match(src,/aria-pressed=\{stopping\}/);
+ assert.match(src,/transcription\.current\?\.abort\(\)/);
 });
 
 test('picking pause and resume persist progress while automatic listening starts only after confirmation',async()=>{
