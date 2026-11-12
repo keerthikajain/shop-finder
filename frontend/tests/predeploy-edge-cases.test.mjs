@@ -55,3 +55,14 @@ test('hands-free picking aborts previous speech request on Stop or language chan
  assert.match(src,/cancelled=true;transcription\.abort\(\)/);
  assert.match(src,/\[enabled,language,collection,cycle,halted\]/);
 });
+
+
+test('report retry keeps one request identity until a confirmed save',async()=>{
+ const client=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
+ assert.match(client,/draft\?\.request_id/);
+ assert.match(client,/request_id:requestId/);
+ assert.match(server,/body\.request_id/);
+ assert.match(server,/wh_issue_request_unique/);
+ assert.match(server,/already_reported/);
+});
