@@ -248,9 +248,11 @@ export default function WarehouseApp({user,preferences,logout}){
   finally{if(audioRequest.current===controller)audioRequest.current=null}
  }
  async function voicePickCommand(transcript,source=task){
-  if(!source||source.picking?.paused||!transcript?.trim())return;
-  VGC(transcript);
+  if(!source||!transcript?.trim())return;
   const control=dialogueControl(source.language,transcript);
+  // Informational Help remains available while picking is paused.
+  if(source.picking?.paused&&control!=='help')return;
+  VGC(transcript);
   if(control==='stop'){PV(null);stopVoiceFlow();VGT(pickingCopy(source.language,'stopSaved'));return false}
   if(control==='help'){
    VGT(pickingCopy(source.language,pendingVoicePick?'verify':'help'));
