@@ -809,17 +809,22 @@ def install_warehouse(app,path):
    recorded=next((loc for loc in product['placements'] if loc['code']==body.location_code),None) if body.location_code else None
    if body.location_code and not recorded:
     raise HTTPException(409,'Recorded shelf changed. Refresh the item before reporting.')
-   prefix={
-    'en-IN':'Review your report before submitting.',
-    'hi-IN':'भेजने से पहले रिपोर्ट जाँचें।',
-    'hi-en':'Review your report before sending.',
-    'te-IN':'పంపించే ముందు మీ నివేదికను సమీక్షించండి.'
+   headings={
+    'en-IN':('Review your report.','Item','Recorded location','Problem','Suggested location, not verified',
+      'The recorded shelf will not change. Say send report to submit, back to edit, or stop.'),
+    'hi-IN':('रिपोर्ट की जानकारी सुनें।','सामान','दर्ज जगह','समस्या','सुझाई गई जगह, अभी पुष्टि नहीं हुई',
+      'दर्ज जगह नहीं बदलेगी। भेजने के लिए रिपोर्ट भेजो, सुधारने के लिए वापस, रोकने के लिए रुको कहें।'),
+    'hi-en':('Report check karo.','Item','Recorded location','Problem','Suggested shelf, not verified',
+      'Saved shelf nahi badlegi. Bhejne ke liye report bhejo ya send report bolo, edit ke liye back, pause ke liye stop.'),
+    'te-IN':('నివేదికను పరిశీలించండి.','వస్తువు','నమోదైన స్థానం','సమస్య','సూచించిన స్థానం, ఇంకా నిర్ధారించలేదు',
+      'నమోదైన స్థానం మారదు. పంపడానికి నివేదిక పంపండి, సవరించడానికి వెనక్కి, ఆపడానికి ఆపు అనండి.')
    }[body.language]
-   message=f"{prefix} Item: {product['name']}, {product['sku']}. "
-   if recorded:message+=f"Last recorded location: {loc_text(recorded)}. "
-   message+=f"Problem: {body.reason}. "
-   if body.suggested_location:message+=f"Suggested location, not verified: {body.suggested_location}. "
-   message+="The saved shelf will not change. Say send report to submit, back to edit, or stop."
+   prefix,item_label,place_label,reason_label,suggested_label,instruction=headings
+   message=f"{prefix} {item_label}: {product['name']}, {product['sku']}. "
+   if recorded:message+=f"{place_label}: {loc_text(recorded)}. "
+   message+=f"{reason_label}: {body.reason}. "
+   if body.suggested_location:message+=f"{suggested_label}: {body.suggested_location}. "
+   message+=instruction
   audio=await voice.speak(message,body.language)
   return Response(audio,media_type='audio/wav',headers={'Cache-Control':'no-store'})
  @app.post('/api/warehouse/voice/step-audio')
@@ -827,65 +832,108 @@ def install_warehouse(app,path):
   'review_outcome','review_note','review_confirm','review_pending_saved','review_verified_saved',
   'move_destination','move_reason','move_preview','move_confirm','move_saved',
   'report_reason','report_suggestion','report_confirm','report_saved',
+  'report_reason_retry','report_suggestion_retry','report_confirm_retry',
+  'review_outcome_retry','review_note_retry','review_confirm_retry',
+  'move_destination_retry','move_reason_retry','move_preview_retry','move_confirm_retry',
   'pick_done','pick_undo','help_pick','help_verify','unknown_pick'
  ],request:Request):
   identity(request,step.startswith(('review_','move_')))
   prompts={
    'review_outcome':('Tell me what you verified. Say original location verified, or still unconfirmed. Say help, repeat, back or stop at any time.',
      'कृपया बताएं कि आपने क्या जाँचा। कहें पुरानी जगह सही है, या जगह की पुष्टि नहीं हुई।',
-     'Tell me what you checked. Say original location verified or still unconfirmed.',
+     'Batao aapne kya check kiya. Bolo purani jagah sahi hai ya jagah confirm nahi hai.',
      'మీరు ఏమి నిర్ధారించారో చెప్పండి. పాత స్థానంలో దొరికింది లేదా స్థానం ఇంకా నిర్ధారించలేదు అని చెప్పండి.'),
    'review_note':('Describe what you checked. Your report will not be saved until you explicitly confirm.',
      'आपने क्या जाँचा, यह बताएं। पुष्टि किए बिना रिपोर्ट सेव नहीं होगी।',
-     'Explain what you checked. The report will be saved only after confirmation.',
+     'Batao aapne kya check kiya. Confirm karne ke baad hi review save hoga.',
      'మీరు ఏమి పరిశీలించారో చెప్పండి. నిర్ధారణ లేకుండా నివేదిక సేవ్ కాదు.'),
    'review_confirm':('Review your selected outcome and note on screen. Say save review to confirm, back to edit, or stop.',
      'चुने गए परिणाम और नोट को जाँचें। सेव करने के लिए समीक्षा सेव करो कहें, या वापस जाएं।',
-     'Check the outcome and note. Say confirm review, back, or stop.',
+     'Outcome aur note check karo. Save karne ke liye review save karo, edit ke liye back, pause ke liye stop.',
      'ఫలితం మరియు గమనికను చూడండి. నిర్ధారించడానికి సమీక్షను నిర్ధారించు అని చెప్పండి.'),
    'review_pending_saved':('Review saved. The location is still unconfirmed and the report remains open.',
      'समीक्षा सेव हो गई। जगह अभी भी अपुष्ट है और रिपोर्ट खुली रहेगी।',
-     'Review saved. Location remains unconfirmed, report stays open.',
+     'Review save ho gaya. Location unconfirmed hai, report open rahegi.',
      'సమీక్ష సేవ్ అయ్యింది. స్థానం ఇంకా నిర్ధారణ కాలేదు, నివేదిక తెరిచే ఉంటుంది.'),
    'review_verified_saved':('Location verification saved. The report is resolved and future searches use the verified location.',
      'जगह की पुष्टि सेव हो गई। रिपोर्ट बंद हो गई है और आगे की खोज में सही जगह दिखेगी।',
-     'Location confirmed, report resolved. Next searches use the confirmed shelf.',
+     'Location confirm ho gayi. Report resolve hui; next search mein confirmed shelf milegi.',
      'స్థాన నిర్ధారణ సేవ్ అయ్యింది. నివేదిక పరిష్కరించబడింది. తర్వాతి వెతుకులాటలో ధృవీకరించిన స్థానం కనిపిస్తుంది.'),
    'move_destination':('Tell me the new rack, shelf or bin. I will fill the fields for your review.',
      'नया रैक, शेल्फ या बिन बताएं। सेव करने से पहले जाँच सकेंगे।',
-     'Tell me the new rack, shelf or bin.',
+     'Naya rack, shelf ya bin batao.',
      'కొత్త ర్యాక్, షెల్ఫ్ లేదా బిన్ చెప్పండి. సేవ్ చేయడానికి ముందు పరిశీలించండి.'),
    'move_reason':('Check the destination fields. Then tell me why the location must change.',
      'नई जगह के विवरण जाँचें। फिर बदलाव का कारण बताएं।',
-     'Check the new location. Tell me the reason.',
+     'Nayi location check karo. Phir reason batao.',
      'కొత్త స్థలాన్ని చూడండి. మార్పుకు కారణం చెప్పండి.'),
    'move_preview':('Check the entered details. Say review location change to hear old and new locations before approval.',
      'दर्ज जानकारी जाँचें। दोनों जगह सुनने के लिए जगह बदलाव की समीक्षा करो कहें।',
-     'Check the details. Say review location change.',
+     'Details check karo. Nayi jagah review karo bolo.',
      'వివరాలను చూడండి. స్థానం మార్పు సమీక్షించు అని చెప్పండి.'),
    'move_confirm':('Only after checking the physical shelf, say confirm location change to save, back to edit, or stop.',
      'वास्तविक शेल्फ जाँचने के बाद नई जगह की पुष्टि करो कहें, या वापस जाएं।',
-     'Only after verifying the shelf, say confirm location change, back, or stop.',
+     'Shelf check karne ke baad nayi jagah confirm karo bolo. Edit ke liye back, pause ke liye stop.',
      'షెల్ఫ్‌ను పరిశీలించిన తరువాత కొత్త స్థానం నిర్ధారించు అని చెప్పండి.'),
    'move_saved':('Verified location saved. New searches and spoken answers use the corrected shelf.',
      'सही जगह सेव हो गई। अगली खोज और आवाज में नई जगह बताई जाएगी।',
-     'New verified shelf saved. Future answers will use it.',
+     'Nayi verified shelf save ho gayi. Agle answers mein yahi jagah milegi.',
      'ధృవీకరించిన స్థానం సేవ్ అయ్యింది. కొత్త వెతుకులాటలు సరిచేసిన స్థలాన్ని చూపిస్తాయి.'),
    'report_reason':('Tell me what is wrong with the recorded location. I will save the words for your review, not submit the report yet.',
      'बताएं कि दर्ज जगह में क्या गलत है। आपकी बात अभी रिपोर्ट में लिखी जाएगी, भेजी नहीं जाएगी।',
-     'Tell me what is wrong with the location. I will not submit yet.',
+     'Batao location mein kya galat hai. Abhi report send nahi hogi.',
      'నమోదైన స్థలంలో ఏమి తప్పుందో చెప్పండి. మీ మాటలను పరిశీలన కోసం ఉంచుతాను.'),
    'report_suggestion':('If you found the item elsewhere, tell me the new rack or shelf. Otherwise say skip.',
      'सामान किसी और जगह मिला हो तो रैक या शेल्फ बताएं। नहीं मिला तो स्किप कहें।',
-     'Tell me the suggested rack or shelf, or say skip.',
+     'Dusri rack ya shelf pata hai toh batao, warna skip bolo.',
      'వస్తువు మరో చోట దొరికితే ఆ ర్యాక్ లేదా షెల్ఫ్ చెప్పండి. లేకుంటే స్కిప్ అనండి.'),
    'report_confirm':('Read the report text on screen. Say send report to submit, back to edit, or stop. This does not change the saved shelf.',
      'रिपोर्ट का लिखा हुआ विवरण जाँचें। भेजने के लिए रिपोर्ट भेजो कहें, बदलने के लिए वापस जाएं।',
-     'Check the report details on screen. Say send report, back, or stop.',
+     'Report check karo. Send karne ke liye report bhejo bolo, edit ke liye back, aur rokne ke liye stop.',
      'నివేదిక వివరాలను చూడండి. పంపడానికి నివేదిక పంపండి అని చెప్పండి, మార్చాలంటే వెనక్కి వెళ్ళండి.'),
+   'review_outcome_retry':('Say original location verified, or still unconfirmed.',
+     'कहें पुरानी जगह सही है, या जगह की पुष्टि नहीं हुई।',
+     'Bolo purani jagah sahi hai, ya jagah confirm nahi hai.',
+     'పాత స్థానంలో దొరికింది లేదా స్థానం ఇంకా నిర్ధారించలేదు అని చెప్పండి.'),
+   'review_note_retry':('Describe what you physically checked.',
+     'आपने क्या जाँचा, यह बताएँ।',
+     'Batao aapne physically kya check kiya.',
+     'మీరు ఏమి పరిశీలించారో చెప్పండి.'),
+   'review_confirm_retry':('Say save review to confirm, back to edit, or stop.',
+     'सेव करने के लिए समीक्षा सेव करो, सुधारने के लिए वापस, रोकने के लिए रुको कहें।',
+     'Save karne ke liye review save karo, edit ke liye back, stop ke liye stop.',
+     'సేవ్ చేయడానికి సమీక్షను సేవ్ చేయి, సవరించడానికి వెనక్కి, ఆపడానికి ఆపు అనండి.'),
+   'move_destination_retry':('Tell me the new rack, shelf or bin.',
+     'नया रैक, शेल्फ या बिन बताएँ।',
+     'Naya rack, shelf ya bin batao.',
+     'కొత్త ర్యాక్, షెల్ఫ్ లేదా బిన్ చెప్పండి.'),
+   'move_reason_retry':('Tell me why the location must change.',
+     'जगह क्यों बदलनी है, यह बताएँ।',
+     'Batao location kyun change karni hai.',
+     'స్థానాన్ని ఎందుకు మార్చాలో చెప్పండి.'),
+   'move_preview_retry':('Say review location change to hear the proposed location.',
+     'जगह बदलाव की समीक्षा करो कहें।',
+     'Nayi jagah review karo bolo.',
+     'స్థానం మార్పు సమీక్షించు అని చెప్పండి.'),
+   'move_confirm_retry':('To approve, say confirm location change; to edit say back, or stop to pause.',
+     'मंज़ूरी के लिए नई जगह की पुष्टि करो, सुधारने के लिए वापस, रोकने के लिए रुको कहें।',
+     'Approve karne ke liye nayi jagah confirm karo, edit ke liye back, pause ke liye stop.',
+     'నిర్ధారించడానికి కొత్త స్థానం నిర్ధారించు, సవరించడానికి వెనక్కి, ఆపడానికి ఆపు అనండి.'),
+   'report_reason_retry':('Please describe what was wrong with the location.',
+     'बताएँ कि जगह में क्या गलत है।',
+     'Batao location mein kya galat tha.',
+     'స్థానంలో ఏమి తప్పుందో చెప్పండి.'),
+   'report_suggestion_retry':('Say the rack or shelf where it was found, or say skip.',
+     'रैक या शेल्फ बताएँ, नहीं पता तो स्किप कहें।',
+     'Rack ya shelf batao, nahi pata toh skip bolo.',
+     'ర్యాక్ లేదా షెల్ఫ్ చెప్పండి, తెలియకపోతే స్కిప్ అనండి.'),
+   'report_confirm_retry':('To submit, say send report. To edit, say back. To pause, say stop.',
+     'भेजने के लिए रिपोर्ट भेजो, सुधारने के लिए वापस, रोकने के लिए रुको कहें।',
+     'Bhejne ke liye report bhejo, edit ke liye back, pause ke liye stop.',
+     'పంపడానికి నివేదిక పంపండి, సవరించడానికి వెనక్కి, ఆపడానికి ఆపు అనండి.'),
    'report_saved':('Your report was saved. The location remains under review until verified.',
      'आपकी रिपोर्ट सेव हो गई। पुष्टि होने तक जगह की समीक्षा जारी रहेगी।',
-     'Report saved. Location is under review.',
+     'Report save ho gayi. Location review mein hai.',
      'నివేదిక సేవ్ అయ్యింది. ధృవీకరణ వరకు స్థానం సమీక్షలో ఉంటుంది.'),
    'pick_done':('Picking complete. Every item was confirmed and your progress was saved.',
      'पिकिंग पूरी हुई। सभी सामान की पुष्टि हुई और प्रगति सेव हो गई।',
@@ -910,9 +958,10 @@ def install_warehouse(app,path):
   }
   language_index={'en-IN':0,'hi-IN':1,'hi-en':2,'te-IN':3}[body.language]
   phrase=prompts[step][language_index]
-  if step not in ('review_pending_saved','review_verified_saved','move_saved','report_saved','pick_done','pick_undo'):
+  if step not in ('review_pending_saved','review_verified_saved','move_saved','report_saved','pick_done','pick_undo') and not step.endswith('_retry') and not step.startswith('report_'):
    phrase+=' '+(
-    'You can say help, repeat, back or stop.' if body.language in ('en-IN','hi-en') else
+    'You can say help, repeat, back or stop.' if body.language=='en-IN' else
+    'Help, repeat, back ya stop bol sakte ho.' if body.language=='hi-en' else
     'आप मदद, दोहराओ, वापस या रुको कह सकते हैं।' if body.language=='hi-IN' else
     'సహాయం, మళ్లీ చెప్పు, వెనక్కి, లేదా ఆపు అనవచ్చు.'
    )
@@ -928,13 +977,18 @@ def install_warehouse(app,path):
    source=next((loc for loc in p['placements'] if loc['code']==payload['source']),None)
    if not source:raise HTTPException(409,'Source location changed. Review again.')
    destination=payload['destination']
-   phrase={
-    'hi-IN':'स्थान सुधार की समीक्षा करें।',
-    'hi-en':'Review this location correction.',
-    'te-IN':'స్థాన మార్పును సమీక్షించండి.',
-    'en-IN':'Review this location correction.'
-   }[body.language]
-   message=f"{phrase} {p['name']}, {p['sku']}. Previous location: {loc_text(source)}. Proposed location: {loc_text(destination)}. Reason: {payload['reason']}. Confirm only after physically verifying the proposed shelf."
+   templates={
+    'en-IN':('Review this location correction.','Previous location','Proposed location','Reason',
+      'Confirm only after physically verifying the proposed shelf. Say confirm location change, back to edit, or stop.'),
+    'hi-IN':('स्थान सुधार की जाँच करें।','पुरानी जगह','सुझाई गई नई जगह','कारण',
+      'असली शेल्फ की जाँच के बाद ही नई जगह की पुष्टि करो कहें। सुधारने के लिए वापस, रोकने के लिए रुको कहें।'),
+    'hi-en':('Location correction check karo.','Purani location','Nayi location','Reason',
+      'Actual shelf verify karne ke baad nayi jagah confirm karo. Edit ke liye back, pause ke liye stop.'),
+    'te-IN':('స్థాన మార్పును పరిశీలించండి.','పాత స్థానం','సూచించిన కొత్త స్థానం','కారణం',
+      'కొత్త షెల్ఫ్‌ను నిజంగా చూసిన తర్వాత మాత్రమే కొత్త స్థానం నిర్ధారించు అనండి. సవరించడానికి వెనక్కి, ఆపడానికి ఆపు అనండి.')
+   }
+   intro,old_label,new_label,reason_label,commands=templates[body.language]
+   message=f"{intro} {p['name']}, {p['sku']}. {old_label}: {loc_text(source)}. {new_label}: {loc_text(destination)}. {reason_label}: {payload['reason']}. {commands}"
   return Response(await voice.speak(message,body.language),media_type='audio/wav',headers={'Cache-Control':'no-store'})
  @app.post('/api/warehouse/moves/{token}/confirm')
  def move_confirm(token:str,request:Request):
@@ -1034,11 +1088,23 @@ def install_warehouse(app,path):
    product=public(item_row(c,issue['collection'],issue['sku']))
    recorded=next((loc for loc in product['placements'] if loc['code']==issue['location_code']),None)
    if not recorded:raise HTTPException(409,'Recorded shelf changed. Refresh before approving.')
-   labels={
-    'confirmed_original':'You are confirming that the original shelf was physically verified.',
-    'unconfirmed':'You are keeping this report open because the shelf is not confirmed.'
+   templates={
+    'en-IN':('Last recorded location','You are confirming that the original shelf was physically verified.',
+      'You are keeping this report open because the shelf is not confirmed.','Your review note',
+      'Say save review to confirm, back to edit, or stop.'),
+    'hi-IN':('दर्ज जगह','आप पुष्टि कर रहे हैं कि पुरानी जगह की भौतिक जाँच हो चुकी है।',
+      'जगह की पुष्टि नहीं हुई, इसलिए रिपोर्ट खुली रहेगी।','आपकी जाँच की टिप्पणी',
+      'सेव करने के लिए समीक्षा सेव करो, सुधारने के लिए वापस, रोकने के लिए रुको कहें।'),
+    'hi-en':('Recorded location','Aapne original shelf check karke verify ki hai.',
+      'Shelf confirm nahi hui. Report open rahegi.','Review note',
+      'Save karne ke liye review save karo, edit ke liye back, pause ke liye stop.'),
+    'te-IN':('నమోదైన స్థానం','పాత షెల్ఫ్‌ను నిజంగా పరిశీలించి నిర్ధారిస్తున్నట్లు మీరు చెబుతున్నారు.',
+      'స్థానం నిర్ధారణ కాలేదు. నివేదిక తెరిచే ఉంటుంది.','మీ పరిశీలన గమనిక',
+      'సేవ్ చేయడానికి సమీక్షను సేవ్ చేయి, సవరించడానికి వెనక్కి, ఆపడానికి ఆపు అనండి.')
    }
-   message=f"{product['name']}, {product['sku']}. Last recorded location: {loc_text(recorded)}. {labels[body.action]} Your review note: {body.note}. Say save review to confirm, back to edit, or stop."
+   place_label,verified,unconfirmed,note_label,commands=templates[body.language]
+   decision=verified if body.action=='confirmed_original' else unconfirmed
+   message=f"{product['name']}, {product['sku']}. {place_label}: {loc_text(recorded)}. {decision} {note_label}: {body.note}. {commands}"
   return Response(await voice.speak(message,body.language),media_type='audio/wav',headers={'Cache-Control':'no-store'})
  @app.post('/api/warehouse/issues/{iid}/review-audio')
  async def spoken_issue_review(iid:int,body:ReviewAudio,request:Request):
@@ -1050,9 +1116,18 @@ def install_warehouse(app,path):
    p=public(item_row(c,issue['collection'],issue['sku']))
    old=next((loc for loc in p['placements'] if loc['code']==issue['location_code']),None)
    if not old:raise HTTPException(409,'Recorded location has changed. Refresh to review.')
-   prefix={'hi-IN':'स्थान की रिपोर्ट की समीक्षा करें।','hi-en':'Review the reported shelf.',
-           'te-IN':'నివేదించిన స్థానాన్ని సమీక్షించండి.','en-IN':'Review the reported shelf.'}[body.language]
-   message=f"{prefix} {p['name']}, {p['sku']}. Last recorded location: {loc_text(old)}. If found here, confirm this location. If not confirmed, keep the report open. If moved, verify a new location before saving."
+   templates={
+    'en-IN':('Review the reported shelf.','Last recorded location',
+      'If found here, confirm the original location. If unconfirmed, leave the report open. For another shelf, verify a correction.'),
+    'hi-IN':('रिपोर्ट की जगह जाँचें।','दर्ज जगह',
+      'सामान यहीं मिला हो तो पुरानी जगह सही है कहें। जगह पता नहीं हो तो रिपोर्ट खुली रखें। दूसरी जगह मिले तो जाँचकर सुधारें।'),
+    'hi-en':('Reported shelf check karo.','Recorded location',
+      'Yahin mila toh original location verify karo. Confirm nahi toh report open rakho. Dusri shelf mile toh verify karke correct karo.'),
+    'te-IN':('నివేదించిన షెల్ఫ్‌ను పరిశీలించండి.','నమోదైన స్థానం',
+      'ఇక్కడ దొరికితే పాత స్థానాన్ని నిర్ధారించండి. తెలియకపోతే నివేదిక తెరిచి ఉంచండి. మరో షెల్ఫ్‌లో దొరికితే పరిశీలించి సవరించండి.')
+   }
+   intro,place_label,guide=templates[body.language]
+   message=f"{intro} {p['name']}, {p['sku']}. {place_label}: {loc_text(old)}. {guide}"
   return Response(await voice.speak(message,body.language),media_type='audio/wav',headers={'Cache-Control':'no-store'})
  @app.post('/api/warehouse/issues/{iid}/resolve')
  def resolve(iid:int,body:Resolve,request:Request):

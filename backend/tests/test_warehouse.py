@@ -1572,10 +1572,14 @@ def test_gnani_review_audio_requires_owner_and_reads_saved_locations(setup,monke
 
 @pytest.mark.parametrize('step,owner_only',[
  ('review_outcome',True),('review_note',True),('review_confirm',True),
+ ('review_outcome_retry',True),('review_note_retry',True),('review_confirm_retry',True),
  ('review_pending_saved',True),('review_verified_saved',True),
  ('move_destination',True),('move_reason',True),('move_preview',True),
+ ('move_destination_retry',True),('move_reason_retry',True),
+ ('move_preview_retry',True),('move_confirm_retry',True),
  ('move_confirm',True),('move_saved',True),
  ('report_reason',False),('report_suggestion',False),('report_confirm',False),
+ ('report_reason_retry',False),('report_suggestion_retry',False),('report_confirm_retry',False),
  ('report_saved',False),('pick_done',False),('pick_undo',False),
  ('help_pick',False),('help_verify',False),('unknown_pick',False)
 ])
@@ -1757,3 +1761,113 @@ def test_hinglish_guidance_reads_hinglish_and_english_location_labels(setup):
   result=post(c,f'/tasks/{tid}/picking/command',{'transcript':command,'line':0})
   assert result.status_code==200,result.text
   assert expected.lower() in result.json()['text'].lower()
+
+@pytest.mark.parametrize('language,label,command',[
+ ('en-IN','Recorded location','send report'),
+ ('hi-IN','दर्ज जगह','रिपोर्ट भेजो'),
+ ('hi-en','Recorded location','report bhejo'),
+ ('te-IN','నమోదైన స్థానం','నివేదిక పంపండి')
+])
+def test_report_voice_confirmation_stays_in_selected_language_without_repeating_english(
+ setup,monkeypatch,language,label,command
+):
+ c,path=setup
+ spoken=[]
+ async def fake_speak(text,chosen_language):
+  spoken.append((text,chosen_language))
+  return b'RIFF-localized-report'
+ monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
+ draft_task=search(c,'CLO-001')
+ loc=draft_task['lines'][0]['location']
+ payload={'language':language,'collection':'clothing','sku':'CLO-001',
+  'location_code':loc['code'],'reason':'Found the item elsewhere',
+  'suggested_location':'Rack C Shelf 4'}
+ result=c.post('/api/warehouse/voice/report-preview-audio',headers=H,json=payload)
+ assert result.status_code==200,result.text
+ assert result.headers['cache-control']=='no-store'
+ message,actual_language=spoken[-1]
+ assert actual_language==language
+ assert label in message
+ assert command in message
+ assert payload['reason'] in message
+ assert payload['suggested_location'] in message
+ assert message.count(payload['reason'])==1
+ assert message.count(payload['suggested_location'])==1
+ if language!='en-IN':
+  assert 'Say send report to submit' not in message
+ assert c.get('/api/warehouse/issues').json()==[]
+ with connect(path) as db:
+  assert db.execute('SELECT COUNT(*) FROM wh_events').fetchone()[0]==0
+ for stage in ['report_reason_retry','report_suggestion_retry','report_confirm_retry']:
+  prompt=c.post('/api/warehouse/voice/step-audio',params={'step':stage},headers=H,
+   json={'language':language})
+  assert prompt.status_code==200,prompt.text
+  short_text,_=spoken[-1]
+  assert len(short_text)<190,(language,stage,short_text)
+  assert 'Item: ' not in short_text
+ assert c.get('/api/warehouse/issues').json()==[]
+
+
+def test_duplicate_open_wrong_location_report_is_not_submitted_twice(setup):
+ c,path=setup
+ location=search(c,'CLO-001')['lines'][0]['location']
+ payload={'collection':'clothing','sku':'CLO-001','kind':'wrong_location',
+  'location_code':location['code'],'reason':'Physically checked and item was missing'}
+ first=post(c,'/issues',payload)
+ assert first.status_code==200,first.text
+ again=post(c,'/issues',payload)
+ assert again.status_code==200,again.text
+ assert first.json()['id']==again.json()['id']
+ assert again.json()['already_reported'] is True
+ with connect(path) as db:
+  assert db.execute("SELECT COUNT(*) FROM wh_issues WHERE kind='wrong_location'").fetchone()[0]==1
+
+
+@pytest.mark.parametrize('language,original_label,move_label,review_save',[
+ ('en-IN','Last recorded location','Previous location','save review'),
+ ('hi-IN','दर्ज जगह','पुरानी जगह','समीक्षा सेव करो'),
+ ('hi-en','Recorded location','Purani location','review save karo'),
+ ('te-IN','నమోదైన స్థానం','పాత స్థానం','సమీక్షను సేవ్ చేయి'),
+])
+def test_owner_approval_readbacks_use_selected_voice_language_without_writing(
+ setup,monkeypatch,language,original_label,move_label,review_save
+):
+ c,path=setup
+ speech=[]
+ async def fake_speak(text,voice_language):
+  speech.append((text,voice_language))
+  return b'RIFF-owner-localized'
+ monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
+ task=search(c,'CLO-001')
+ line=task['lines'][0]
+ recorded=line['location']
+ report=post(c,'/issues',{'collection':'clothing','sku':'CLO-001',
+  'kind':'wrong_location','location_code':recorded['code'],'reason':'Wrong shelf was reported'})
+ assert report.status_code==200,report.text
+ iid=report.json()['id']
+ initial=c.post(f'/api/warehouse/issues/{iid}/review-audio',headers=H,
+  json={'language':language})
+ assert initial.status_code==200,initial.text
+ assert speech[-1][1]==language
+ assert original_label in speech[-1][0]
+ decision=c.post(f'/api/warehouse/issues/{iid}/resolution-preview-audio',headers=H,
+  json={'language':language,'action':'confirmed_original','note':'I inspected this original shelf'})
+ assert decision.status_code==200,decision.text
+ assert review_save in speech[-1][0]
+ if language!='en-IN':
+  assert 'Say save review to confirm' not in speech[-1][0]
+ updated_location={k:v for k,v in recorded.items() if k!='code'}
+ updated_location['rack']='SECONDARY-RACK'
+ move=post(c,'/moves/preview',{'collection':'clothing','sku':'CLO-001',
+  'revision':line['selected']['revision'],'source':recorded['code'],
+  'destination':updated_location,'reason':'I verified the alternate rack'})
+ assert move.status_code==200,move.text
+ audio=c.post('/api/warehouse/moves/'+move.json()['token']+'/review-audio',
+  headers=H,json={'language':language})
+ assert audio.status_code==200,audio.text
+ assert move_label in speech[-1][0]
+ assert 'SECONDARY-RACK' in speech[-1][0]
+ if language!='en-IN':
+  assert 'Confirm only after physically verifying' not in speech[-1][0]
+ assert c.get('/api/warehouse/issues').json()[0]['status']=='open'
+ assert search(c,'CLO-001')['lines'][0]['location']['code']==recorded['code']

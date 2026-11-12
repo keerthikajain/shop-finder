@@ -1,7 +1,9 @@
-import React,{useEffect,useRef,useState} from 'react';
+import React,{useContext,useEffect,useRef,useState} from 'react';
 import {startRecording} from './recording.js';
 import {request} from './accounts.jsx';
 import {dialogueControl} from './voice-review-commands.js';
+import {reportVoiceCopy} from './report-voice-copy.js';
+import {Locale} from './locale.js';
 
 /*
  * One owner voice turn at a time. Listen ONLY after Gnani finishes speaking.
@@ -10,14 +12,17 @@ import {dialogueControl} from './voice-review-commands.js';
  * A failed speaker, microphone or transcription always leaves manual inputs.
  */
 export default function GuidedVoiceTurn({
- language='en-IN',stage,promptEndpoint=null,promptBody=null,onTranscript,onBack,onStop,
+ language='en-IN',stage,promptEndpoint=null,promptBody=null,retryStep=null,onTranscript,onBack,onStop,
  onError=()=>{},onActiveChange=()=>{},disabled=false,context='location review'
 }){
+ const appLanguage=useContext(Locale);
  const [active,SetActive]=useState(false),[cycle,Cycle]=useState(0);
  const [status,Status]=useState('idle'),[error,ErrorMessage]=useState('');
  const [heard,Heard]=useState('');
  const handlers=useRef({onTranscript,onBack,onStop,onError,onActiveChange}),promptBodyRef=useRef(promptBody);
- const stageRef=useRef(stage),silence=useRef(0);
+ const stageRef=useRef(stage),silence=useRef(0),retryNarration=useRef(false);
+ const uiLanguage=appLanguage==='hi'?'hi-IN':appLanguage==='te'?'te-IN':appLanguage==='en'?'en-IN':language;
+ const copy=key=>reportVoiceCopy(uiLanguage,key);
  handlers.current={onTranscript,onBack,onStop,onError,onActiveChange};
  promptBodyRef.current=promptBody;
  stageRef.current=stage;
@@ -53,11 +58,12 @@ export default function GuidedVoiceTurn({
        headers:{'Content-Type':'audio/wav'},body:blob,signal:controller.signal});
       if(cancelled)return;
       const transcript=String(result.transcript||'').trim();
-      if(!transcript){fail('No words recognized. You can retry or use the form.');return}
+      if(!transcript){fail(copy('noWords'));return}
       silence.current=0;Heard(transcript);
       const control=dialogueControl(language,transcript);
       if(control==='stop'){SetActive(false);handlers.current.onActiveChange(false);Status('stopped');handlers.current.onStop?.();return}
-      if(control==='repeat'||control==='help'){nextTurn(stage);return}
+      if(control==='repeat'){retryNarration.current=false;nextTurn(stage);return}
+      if(control==='help'){retryNarration.current=!!retryStep;nextTurn(stage);return}
       if(control==='back'){
        Status('processing');
        await handlers.current.onBack?.(stage);
@@ -67,25 +73,32 @@ export default function GuidedVoiceTurn({
       const outcome=await handlers.current.onTranscript(transcript,stage);
       if(cancelled)return;
       if(outcome===false){SetActive(false);handlers.current.onActiveChange(false);Status('idle');return}
+      // A misunderstood command should NOT replay the entire report or review.
+      // Use one short localized retry prompt, then listen at the same stage.
+      if(outcome==='retry'&&retryStep){retryNarration.current=true}
       nextTurn(stage);
      }catch(e){
-      if(!cancelled)fail(e.message||'Voice recognition failed. Use retry or type instead.');
+      if(!cancelled)fail(e.message||copy('voiceFail'));
      }
     },e=>{
      if(cancelled)return;
      if(e.message==='No speech detected.'&&silence.current++<1){
+      if(retryStep)retryNarration.current=true;
       nextTurn(stage);return;
      }
-     fail(e.message==='No speech detected.'?'I did not hear an answer. Retry voice or use the form.':e.message);
+     fail(e.message==='No speech detected.'?copy('noSpeech'):e.message);
     },{stopOnSilence:true});
     if(cancelled)handle.stop(true);
     else recorder=handle;
-   }catch(e){fail(e.message||'Microphone unavailable. Use the manual form.')}
+   }catch(e){fail(e.message||copy('micFail'))}
   };
   const narrate=async()=>{
    Status('speaking');ErrorMessage('');
    try{
-    const endpoint=promptEndpoint||'voice/step-audio?step='+encodeURIComponent(stage);
+    const short=retryNarration.current&&!!retryStep;
+    retryNarration.current=false;
+    const endpoint=short?'voice/step-audio?step='+encodeURIComponent(retryStep):
+      promptEndpoint||'voice/step-audio?step='+encodeURIComponent(stage);
     const response=await fetch('/api/warehouse/'+endpoint,{
      method:'POST',credentials:'same-origin',
      headers:{'Content-Type':'application/json','X-Shop-Request':'1'},
@@ -93,43 +106,42 @@ export default function GuidedVoiceTurn({
     });
     if(!response.ok){
      const reason=await response.json().catch(()=>({}));
-     throw Error(reason.detail||'Voice guidance unavailable. Continue manually.');
+     throw Error(reason.detail||copy('voiceFail'));
     }
     if(cancelled)return;
     url=URL.createObjectURL(await response.blob());
     if(cancelled)return;
     audio=new Audio(url);
     audio.onended=()=>{cleanupAudio();listen()};
-    audio.onerror=()=>fail('Audio playback failed. Try again or continue manually.');
+    audio.onerror=()=>fail(copy('audioFail'));
     await audio.play();
    }catch(e){
     if(!cancelled&&e.name!=='AbortError')
-     fail(e.name==='NotAllowedError'?'Tap Retry voice to allow playback, or use the form.':e.message);
+     fail(e.name==='NotAllowedError'?copy('playbackFail'):e.message);
    }
   };
   narrate();
   return ()=>{cancelled=true;controller.abort();recorder?.stop(true);cleanupAudio()};
- },[active,disabled,stage,promptEndpoint,language,cycle]);
+ },[active,disabled,stage,promptEndpoint,retryStep,language,cycle]);
 
  function stop(){
   SetActive(false);handlers.current.onActiveChange(false);Status('stopped');handlers.current.onStop?.();
  }
  function start(){
-  silence.current=0;ErrorMessage('');Heard('');SetActive(true);handlers.current.onActiveChange(true);Cycle(v=>v+1);
+  silence.current=0;retryNarration.current=false;ErrorMessage('');Heard('');SetActive(true);handlers.current.onActiveChange(true);Cycle(v=>v+1);
  }
  return <section className="sf-guided-owner-voice" aria-label={context}>
   <div className="sf-guided-owner-voice-actions">
-   {!active?<button type="button" disabled={disabled} onClick={start}>{status==='paused'?'Retry voice guide':'Start automatic voice guide'}</button>:
-    <button type="button" onClick={stop}>Stop voice guide</button>}
-   {active&&<button type="button" disabled={disabled} onClick={()=>Cycle(v=>v+1)}>Repeat instructions</button>}
+   {!active?<button type="button" disabled={disabled} onClick={start}>{copy(status==='paused'?'guideRetry':'guideStart')}</button>:
+    <button type="button" onClick={stop}>{copy('guideStop')}</button>}
+   {active&&<button type="button" disabled={disabled} onClick={()=>{retryNarration.current=false;Cycle(v=>v+1)}}>{copy('guideRepeat')}</button>}
   </div>
   <small role="status" aria-live="polite">{active?(
-   status==='speaking'?'Finder is speaking. The microphone will open afterward.':
-   status==='listening'?'Listening for your answer…':
-   status==='transcribing'?'Recognizing your answer…':'Working on your answer…'
-  ):status==='paused'?'Voice paused. Your work is saved in this form. Retry or continue manually.':
-   'Voice is optional. All manual controls below still work.'}</small>
-  {heard&&<p className="sf-guided-owner-transcript"><strong>Heard:</strong> {heard}</p>}
+   status==='speaking'?copy('speaking'):
+   status==='listening'?copy('listening'):
+   status==='transcribing'?copy('transcribing'):copy('processing')
+  ):status==='stopped'?copy('stopped'):status==='paused'?copy('pausedVoice'):copy('optionalVoice')}</small>
+  {heard&&<p className="sf-guided-owner-transcript"><strong>{copy('heard')}:</strong> {heard}</p>}
   {error&&<p role="alert">{error}</p>}
  </section>;
 }
