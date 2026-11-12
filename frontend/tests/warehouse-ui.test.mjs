@@ -239,7 +239,7 @@ test('report displays recognized voice text and keeps reporting separate from ca
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/className="sf-report-voice-panel"/);
  assert.match(src,/className="sf-report-transcript"/);
- assert.match(src,/Speak report/);
+ assert.ok(src.includes("label={copy('record')}"));
  assert.match(src,/onText=\{voiceCommand\}/);
  assert.match(src,/onPartial=\{text=>\{H\(text\);HF\('listening'\)\}\}/);
  assert.match(src,/suggested_location:suggested\.trim\(\)/);
@@ -636,7 +636,7 @@ test('wrong-location handoff pauses pick capture and opens an editable report st
  assert.match(source,/playPickGuidance\('report',source,answer\.line\)/);
  assert.match(listener,/if\(outcome===false\)\{shouldContinue=false;Status\('paused'\);\}/);
  assert.match(listener,/if\(!cancelled&&shouldContinue\)Next\(/);
- assert.match(source,/Picking is paused — report the problem/);
+ assert.ok(source.includes("{copy('paused')}"));
  assert.match(source,/Write or edit what needs checking/);
  assert.match(source,/Speak once and pause/);
 });
