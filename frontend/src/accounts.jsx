@@ -80,7 +80,7 @@ export function Login({ready,configured,language,L,error,busy,notice='',demoEnab
  }
 
  const heading=joining?t('Join workspace'):signingUp?t('Create your workspace'):t('Welcome back');
- const subtitle=signingUp?'Organize your products, manage locations, and help your team find items faster.':joining?t('Find your team and start working in your shared workspace.'):t('Sign in to pick up where you left off.');
+ const subtitle=signingUp?t('Organize your products, manage locations, and help your team find items faster.'):joining?t('Find your team and start working in your shared workspace.'):t('Sign in to pick up where you left off.');
  const intro=joining&&!joinMethod?t('Choose how you would like to join your team.'):'';
  const codeLabel=joinMethod==='workspace'?t('Workspace code'):t('Staff invitation code');
  const joinWithWorkspace=joinMethod==='workspace';
