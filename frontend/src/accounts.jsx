@@ -80,7 +80,7 @@ export function Login({ready,configured,language,L,error,busy,notice='',demoEnab
  }
 
  const heading=joining?t('Join workspace'):signingUp?t('Create your workspace'):t('Welcome back');
- const subtitle=signingUp?'Set up your space, organize your items, and find everything with ease.':joining?t('Find your team and start working in your shared workspace.'):t('Sign in to pick up where you left off.');
+ const subtitle=signingUp?'Organize your products, manage locations, and help your team find items faster.':joining?t('Find your team and start working in your shared workspace.'):t('Sign in to pick up where you left off.');
  const intro=joining&&!joinMethod?t('Choose how you would like to join your team.'):'';
  const codeLabel=joinMethod==='workspace'?t('Workspace code'):t('Staff invitation code');
  const joinWithWorkspace=joinMethod==='workspace';
@@ -105,7 +105,7 @@ export function Login({ready,configured,language,L,error,busy,notice='',demoEnab
      <select aria-label={t('App language')} value={language} onChange={e=>L(e.target.value)}>{APP_LANGUAGES.map(([code,label])=><option key={code} value={code}>{label}</option>)}</select>
     </label>
     {intro&&<p className="sf-auth-intro">{intro}</p>}
-    {!ready?<p role="status">{t('Loading…')}</p>:!configured?<p role="status">{t('This workspace is not set up yet. Ask the installer to create the first owner account.')}</p>:signingUp?<form className="sf-auth-fields" onSubmit={async e=>{e.preventDefault();const data=new FormData(e.currentTarget);try{await onChallenge({username:data.get('username'),password:data.get('password')})}catch{}}} aria-busy={busy}><p>Set up your own space to explore products, imports, shelves and team management.</p><label>Username<input name="username" required minLength={3} maxLength={50} pattern="[A-Za-z0-9_.-]+" autoComplete="username"/></label><label>Password (12+ characters)<input type="password" name="password" autoComplete="new-password" required minLength={12} maxLength={128}/></label><button className="primary full-width sf-signin" disabled={busy}>Create workspace <Glyph name="arrow"/></button><p className="quiet">Your products and changes stay separate from other visitors.</p><button type="button" className="sf-auth-text-link" onClick={()=>navigate('login')}>Already have an account? Sign in</button></form>:!joining?
+    {!ready?<p role="status">{t('Loading…')}</p>:!configured?<p role="status">{t('This workspace is not set up yet. Ask the installer to create the first owner account.')}</p>:signingUp?<form className="sf-auth-fields" onSubmit={async e=>{e.preventDefault();const data=new FormData(e.currentTarget);try{await onChallenge({username:data.get('username'),password:data.get('password')})}catch{}}} aria-busy={busy}><label>Username<input name="username" required minLength={3} maxLength={50} pattern="[A-Za-z0-9_.-]+" autoComplete="username"/></label><label>Password<input type="password" name="password" autoComplete="new-password" aria-describedby="sf-signup-password-help" required minLength={12} maxLength={128}/><small id="sf-signup-password-help">Use at least 12 characters.</small></label><button className="primary full-width sf-signin" disabled={busy}>Create workspace <Glyph name="arrow"/></button><p className="quiet">Your workspace data is kept separate from other workspaces.</p><button type="button" className="sf-auth-text-link" onClick={()=>navigate('login')}>Already have an account? Sign in</button></form>:!joining?
     <><form className="sf-auth-fields" onSubmit={onSubmit} aria-busy={busy}>
      <label htmlFor="sf-signin-username">{t('Username')}<input id="sf-signin-username" name="username" autoComplete="username" placeholder={t('Enter username')} required maxLength={80}/></label>
      <div className="sf-auth-password">
@@ -146,7 +146,7 @@ export function Login({ready,configured,language,L,error,busy,notice='',demoEnab
     </div>}
     {error&&<p className="error sf-auth-message" role="alert">{t(error)}</p>}
     {notice&&<p className="sf-auth-success sf-auth-message" role="status">{t(notice)}</p>}
-    {ready&&configured&&<p className="quiet sf-auth-footer">{joining?t('Already have an account?'):t('New to the team?')} <button type="button" className="sf-auth-text-link" onClick={()=>navigate(joining?'login':'join')}>{t(joining?'Sign in':'Join workspace')}</button></p>}
+    {ready&&configured&&<p className="quiet sf-auth-footer">{joining?t('Already have an account?'):t(signingUp?'Joining an existing team?':'New to the team?')} <button type="button" className="sf-auth-text-link" onClick={()=>navigate(joining?'login':'join')}>{t(joining?'Sign in':'Join workspace')}</button></p>}
    </section>
   </div>
  </main>;
