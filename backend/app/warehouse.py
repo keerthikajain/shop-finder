@@ -130,6 +130,7 @@ class Issue(Strict):
  kind:Literal['general','wrong_location']='general'
  location_code:str=Field(default='',max_length=50)
  suggested_location:str=Field(default='',max_length=200)
+ request_id:str=Field(default='',max_length=64)
 class FailedSearchReview(Strict):
  action:Literal['alias','dismiss']
  collection:str=Field(default='',max_length=40)
@@ -154,10 +155,11 @@ def initialize_warehouse(path,demo=True):
   CREATE TABLE IF NOT EXISTS wh_issues(id INTEGER PRIMARY KEY,collection TEXT,sku TEXT,reason TEXT,actor TEXT,at TEXT,status TEXT DEFAULT 'open',note TEXT DEFAULT '');
   CREATE TABLE IF NOT EXISTS wh_location_checks(id INTEGER PRIMARY KEY,task_id TEXT NOT NULL,line_index INTEGER NOT NULL,collection TEXT NOT NULL,sku TEXT NOT NULL,location_code TEXT NOT NULL,revision INTEGER NOT NULL,actor TEXT NOT NULL,at TEXT NOT NULL,UNIQUE(task_id,line_index));''')
   columns={row['name'] for row in c.execute('PRAGMA table_info(wh_issues)')}
-  for name in ('resolved_at','resolved_by','kind','location_code','suggested_location'):
+  for name in ('resolved_at','resolved_by','kind','location_code','suggested_location','request_id'):
    if name not in columns:
     default='general' if name=='kind' else ''
     c.execute(f"ALTER TABLE wh_issues ADD COLUMN {name} TEXT NOT NULL DEFAULT '{default}'")
+  c.execute("CREATE UNIQUE INDEX IF NOT EXISTS wh_issue_request_unique ON wh_issues(actor,request_id) WHERE request_id!=''")
   from .store_operations import initialize_store
   initialize_store(c)
   unknowns.initialize(c)
@@ -1072,13 +1074,16 @@ def install_warehouse(app,path):
   u=identity(request)
   with connect(path) as c:
    c.execute('BEGIN IMMEDIATE')
+   if body.request_id:
+    replay=c.execute('SELECT id,status FROM wh_issues WHERE actor=? AND request_id=?',(u['username'],body.request_id)).fetchone()
+    if replay:return {'ok':True,'id':replay['id'],'status':replay['status'],'already_reported':True}
    if body.kind=='wrong_location':
     if not body.sku or not body.location_code:raise HTTPException(422,'Choose an exact item and recorded location to report.')
     p=public(item_row(c,body.collection,body.sku))
     if not any(l['code']==body.location_code for l in p['placements']):raise HTTPException(409,'Location changed. Search again before reporting.')
     existing=c.execute("SELECT id FROM wh_issues WHERE collection=? AND sku=? AND kind='wrong_location' AND location_code=? AND status='open' LIMIT 1",(body.collection,body.sku,body.location_code)).fetchone()
     if existing:return {'ok':True,'id':existing['id'],'status':'open','already_reported':True}
-   result=c.execute('INSERT INTO wh_issues(collection,sku,reason,actor,at,kind,location_code,suggested_location) VALUES(?,?,?,?,?,?,?,?)',(body.collection,body.sku,body.reason,u['username'],now(),body.kind,body.location_code,body.suggested_location))
+   result=c.execute('INSERT INTO wh_issues(collection,sku,reason,actor,at,kind,location_code,suggested_location,request_id) VALUES(?,?,?,?,?,?,?,?,?)',(body.collection,body.sku,body.reason,u['username'],now(),body.kind,body.location_code,body.suggested_location,body.request_id))
    report_id=result.lastrowid
   return {'ok':True,'id':report_id,'status':'open'}
  @app.get('/api/warehouse/issues')
