@@ -1576,6 +1576,7 @@ def test_gnani_review_audio_requires_owner_and_reads_saved_locations(setup,monke
  ('move_destination',True),('move_reason',True),('move_preview',True),
  ('move_confirm',True),('move_saved',True),
  ('report_reason',False),('report_suggestion',False),('report_confirm',False),
+ ('report_reason_retry',False),('report_suggestion_retry',False),('report_confirm_retry',False),
  ('report_saved',False),('pick_done',False),('pick_undo',False),
  ('help_pick',False),('help_verify',False),('unknown_pick',False)
 ])
@@ -1757,3 +1758,63 @@ def test_hinglish_guidance_reads_hinglish_and_english_location_labels(setup):
   result=post(c,f'/tasks/{tid}/picking/command',{'transcript':command,'line':0})
   assert result.status_code==200,result.text
   assert expected.lower() in result.json()['text'].lower()
+
+@pytest.mark.parametrize('language,label,command',[
+ ('en-IN','Recorded location','send report'),
+ ('hi-IN','दर्ज जगह','रिपोर्ट भेजो'),
+ ('hi-en','Recorded location','report bhejo'),
+ ('te-IN','నమోదైన స్థానం','నివేదిక పంపండి')
+])
+def test_report_voice_confirmation_stays_in_selected_language_without_repeating_english(
+ setup,monkeypatch,language,label,command
+):
+ c,path=setup
+ spoken=[]
+ async def fake_speak(text,chosen_language):
+  spoken.append((text,chosen_language))
+  return b'RIFF-localized-report'
+ monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
+ draft_task=search(c,'CLO-001')
+ loc=draft_task['lines'][0]['location']
+ payload={'language':language,'collection':'clothing','sku':'CLO-001',
+  'location_code':loc['code'],'reason':'Found the item elsewhere',
+  'suggested_location':'Rack C Shelf 4'}
+ result=c.post('/api/warehouse/voice/report-preview-audio',headers=H,json=payload)
+ assert result.status_code==200,result.text
+ assert result.headers['cache-control']=='no-store'
+ message,actual_language=spoken[-1]
+ assert actual_language==language
+ assert label in message
+ assert command in message
+ assert payload['reason'] in message
+ assert payload['suggested_location'] in message
+ assert message.count(payload['reason'])==1
+ assert message.count(payload['suggested_location'])==1
+ if language!='en-IN':
+  assert 'Say send report to submit' not in message
+ assert c.get('/api/warehouse/issues').json()==[]
+ with connect(path) as db:
+  assert db.execute('SELECT COUNT(*) FROM wh_events').fetchone()[0]==0
+ for stage in ['report_reason_retry','report_suggestion_retry','report_confirm_retry']:
+  prompt=c.post('/api/warehouse/voice/step-audio',params={'step':stage},headers=H,
+   json={'language':language})
+  assert prompt.status_code==200,prompt.text
+  short_text,_=spoken[-1]
+  assert len(short_text)<190,(language,stage,short_text)
+  assert 'Item: ' not in short_text
+ assert c.get('/api/warehouse/issues').json()==[]
+
+
+def test_duplicate_open_wrong_location_report_is_not_submitted_twice(setup):
+ c,path=setup
+ location=search(c,'CLO-001')['lines'][0]['location']
+ payload={'collection':'clothing','sku':'CLO-001','kind':'wrong_location',
+  'location_code':location['code'],'reason':'Physically checked and item was missing'}
+ first=post(c,'/issues',payload)
+ assert first.status_code==200,first.text
+ again=post(c,'/issues',payload)
+ assert again.status_code==200,again.text
+ assert first.json()['id']==again.json()['id']
+ assert again.json()['already_reported'] is True
+ with connect(path) as db:
+  assert db.execute("SELECT COUNT(*) FROM wh_issues WHERE kind='wrong_location'").fetchone()[0]==1
