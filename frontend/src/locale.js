@@ -1,5 +1,6 @@
 import {createContext,useContext} from 'react';
 import {additionalLocales,APP_LANGUAGES,SUPPORTED_APP_CODES} from './locale-multilingual.js';
+import {uiLanguageCoverage} from './locale-ui-coverage.js';
 export {APP_LANGUAGES,SUPPORTED_APP_CODES};
 export const Locale=createContext('en');
 export const hindi={
@@ -387,3 +388,10 @@ Object.assign(hindi,{
  'Add verified alias':'पुष्टि किया गया नाम जोड़ें','Dismiss with note':'टिप्पणी के साथ खारिज करें','Reviewed by':'समीक्षक',
  'No unmatched search patterns for this filter.':'इस फ़िल्टर में बिना मेल की खोजें नहीं हैं।'
 });
+
+// Shared UI translation parity for all selectable app languages.
+// Apply after older dictionaries so the same key receives the reviewed wording.
+Object.assign(hindi,uiLanguageCoverage.hi);
+for(const [code,words] of Object.entries(uiLanguageCoverage)){
+ if(code!=='hi'&&additionalLocales[code])Object.assign(additionalLocales[code],words);
+}
