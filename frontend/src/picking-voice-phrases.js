@@ -82,11 +82,11 @@ export const PICK_VOICE_BUTTON_PHRASES={
     "help": "मदद"
   },
   "hi-en": {
-    "next": "next item",
-    "repeat": "repeat location",
-    "verify": "found it",
-    "report": "wrong location",
-    "stop": "stop",
+    "next": "agla item",
+    "repeat": "location dobara batao",
+    "verify": "mil gaya",
+    "report": "galat jagah",
+    "stop": "ruko",
     "help": "help"
   }
 };
