@@ -1818,3 +1818,53 @@ def test_duplicate_open_wrong_location_report_is_not_submitted_twice(setup):
  assert again.json()['already_reported'] is True
  with connect(path) as db:
   assert db.execute("SELECT COUNT(*) FROM wh_issues WHERE kind='wrong_location'").fetchone()[0]==1
+
+
+@pytest.mark.parametrize('language,original_label,move_label,review_save',[
+ ('en-IN','Last recorded location','Previous location','save review'),
+ ('hi-IN','दर्ज जगह','पुरानी जगह','समीक्षा सेव करो'),
+ ('hi-en','Recorded location','Purani location','review save karo'),
+ ('te-IN','నమోదైన స్థానం','పాత స్థానం','సమీక్షను సేవ్ చేయి'),
+])
+def test_owner_approval_readbacks_use_selected_voice_language_without_writing(
+ setup,monkeypatch,language,original_label,move_label,review_save
+):
+ c,path=setup
+ speech=[]
+ async def fake_speak(text,voice_language):
+  speech.append((text,voice_language))
+  return b'RIFF-owner-localized'
+ monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
+ task=search(c,'CLO-001')
+ line=task['lines'][0]
+ recorded=line['location']
+ report=post(c,'/issues',{'collection':'clothing','sku':'CLO-001',
+  'kind':'wrong_location','location_code':recorded['code'],'reason':'Wrong shelf was reported'})
+ assert report.status_code==200,report.text
+ iid=report.json()['id']
+ initial=c.post(f'/api/warehouse/issues/{iid}/review-audio',headers=H,
+  json={'language':language})
+ assert initial.status_code==200,initial.text
+ assert speech[-1][1]==language
+ assert original_label in speech[-1][0]
+ decision=c.post(f'/api/warehouse/issues/{iid}/resolution-preview-audio',headers=H,
+  json={'language':language,'action':'confirmed_original','note':'I inspected this original shelf'})
+ assert decision.status_code==200,decision.text
+ assert review_save in speech[-1][0]
+ if language!='en-IN':
+  assert 'Say save review to confirm' not in speech[-1][0]
+ updated_location={k:v for k,v in recorded.items() if k!='code'}
+ updated_location['rack']='SECONDARY-RACK'
+ move=post(c,'/moves/preview',{'collection':'clothing','sku':'CLO-001',
+  'revision':line['selected']['revision'],'source':recorded['code'],
+  'destination':updated_location,'reason':'I verified the alternate rack'})
+ assert move.status_code==200,move.text
+ audio=c.post('/api/warehouse/moves/'+move.json()['token']+'/review-audio',
+  headers=H,json={'language':language})
+ assert audio.status_code==200,audio.text
+ assert move_label in speech[-1][0]
+ assert 'SECONDARY-RACK' in speech[-1][0]
+ if language!='en-IN':
+  assert 'Confirm only after physically verifying' not in speech[-1][0]
+ assert c.get('/api/warehouse/issues').json()[0]['status']=='open'
+ assert search(c,'CLO-001')['lines'][0]['location']['code']==recorded['code']
