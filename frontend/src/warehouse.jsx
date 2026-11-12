@@ -38,7 +38,7 @@ const friendlyPath=(l,isStarter=false)=>pathText(l,isStarter);
 export const cleanItem=p=>({sku:p.sku,collection:p.collection,name:p.name,category:p.category,brand:p.brand||'',aliases:p.aliases,barcode:p.barcode,photo_url:p.photo_url||'',specs:p.specs,synthetic:p.synthetic,placements:p.placements.map(l=>({...Object.fromEntries(locationFields.map(k=>[k,l[k]||''])),quantity:l.quantity??null}))});
 export function VoiceButton({language,enabled,onText,onError,onPartial,live=false,autoStop=false,small=false,nav=false,iconOnly=false,label='',style='transcribe',enhanced=true,collection='all',candidates=[]}){
  const t=useT(),ref=useRef(),transcription=useRef(null),generation=useRef(0),[state,S]=useState('idle');
- useEffect(()=>()=>{generation.current++;transcription.current?.abort();transcription.current=null;ref.current?.stop(true);ref.current=null},[language,collection]);
+ useEffect(()=>{S('idle');return ()=>{generation.current++;transcription.current?.abort();transcription.current=null;ref.current?.stop(true);ref.current=null}},[language,collection]);
  async function record(){
   // Stopping a transcription must discard its eventual response, not submit an old command.
   if(state==='processing'){
