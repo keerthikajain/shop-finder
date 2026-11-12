@@ -72,10 +72,12 @@ def test_move_revision_confirmation_history_and_replay(setup):
  assert next(x for x in items(c) if x['sku']==p['sku'])['placements'][0]['rack']==source['rack']
  result=post(c,'/moves/'+token+'/confirm');assert result.status_code==200,result.text
  assert result.json()['placements'][0]['rack']=='Z'
- assert post(c,'/moves/'+token+'/confirm').status_code==410
+ replay=post(c,'/moves/'+token+'/confirm');assert replay.status_code==200,replay.text
+ assert replay.json()==result.json()  # Response lost; no duplicate write.
  h=c.get('/api/warehouse/history?collection=clothing').json()[0]
  assert h['actor']=='owner' and h['before']['placements'][0]['rack']==source['rack'] and h['after']['placements'][0]['rack']=='Z'
  with connect(path) as db:assert json.loads(db.execute('SELECT payload FROM wh_items WHERE collection=? AND sku=?',('clothing',p['sku'])).fetchone()[0])['placements'][0]['rack']=='Z'
+ with connect(path) as db:assert db.execute("SELECT count(*) FROM wh_events WHERE action='move' AND collection=? AND sku=?",('clothing',p['sku'])).fetchone()[0]==1
 
 def test_owner_only_mutations_and_private_sessions(setup):
  c,_=setup;t=search(c,'CLO-001');p=items(c)[0]
@@ -1871,3 +1873,82 @@ def test_owner_approval_readbacks_use_selected_voice_language_without_writing(
   assert 'Confirm only after physically verifying' not in speech[-1][0]
  assert c.get('/api/warehouse/issues').json()[0]['status']=='open'
  assert search(c,'CLO-001')['lines'][0]['location']['code']==recorded['code']
+
+
+def test_two_owner_previews_cannot_overwrite_a_concurrent_verified_move(setup):
+ c,path=setup
+ item=items(c)[0]
+ source=item['placements'][0]
+ base={k:v for k,v in source.items() if k!='code'}
+ first={**base,'rack':'RACE-A'}
+ second={**base,'rack':'RACE-B'}
+ data=lambda dest: {'collection':'clothing','sku':item['sku'],'revision':item['revision'],
+                    'source':source['code'],'destination':dest,'reason':'Physically checked location'}
+ one=post(c,'/moves/preview',data(first))
+ two=post(c,'/moves/preview',data(second))
+ assert one.status_code==200 and two.status_code==200
+ token_one=one.json()['token'];token_two=two.json()['token']
+ success=post(c,f'/moves/{token_one}/confirm')
+ assert success.status_code==200,success.text
+ conflict=post(c,f'/moves/{token_two}/confirm')
+ assert conflict.status_code==409,conflict.text
+ assert post(c,f'/moves/{token_one}/confirm').json()==success.json()
+ updated=next(p for p in items(c) if p['sku']==item['sku'])
+ assert updated['placements'][0]['rack']=='RACE-A'
+ with connect(path) as db:
+  assert db.execute("SELECT count(*) FROM wh_events WHERE action='move' AND collection=? AND sku=?",
+                    ('clothing',item['sku'])).fetchone()[0]==1
+
+
+def test_active_picking_refuses_an_item_modified_after_worker_search(setup):
+ c,_=setup
+ task=search(c,'CLO-001')
+ line=task['lines'][0]
+ assert line['selected']['sku']=='CLO-001'
+ chosen=next(p for p in items(c) if p['sku']==line['selected']['sku'])
+ chosen['name']='Owner-edited product while picking'
+ assert save(c,chosen,chosen['revision']).status_code==200
+ restored=c.get(f"/api/warehouse/tasks/{task['id']}",headers=H)
+ assert restored.status_code==200
+ assert restored.json()['lines'][0]['stale_catalogue'] is True
+ scan=post(c,f"/tasks/{task['id']}/scan",{'line':0,'kind':'manual','value':'confirmed'})
+ assert scan.status_code==409
+ assert not c.get(f"/api/warehouse/tasks/{task['id']}",headers=H).json()['lines'][0]['complete']
+
+
+def test_import_preview_rejects_duplicate_sku_conflicting_identifiers_and_blank_location(setup):
+ c,_=setup
+ source=('sku,name,category,barcode,rack\n'
+         'NEW-A,Example A,Example,SHARED,B1\n'
+         'NEW-B,Example B,Example,SHARED,B2\n')
+ preview=sheet(c,source.encode('utf-8'))
+ assert preview['errors']
+ assert post(c,'/imports/'+preview['token']+'/confirm').status_code==422
+ missing=('sku,name,category,barcode,rack\n'
+          'NEW-C,Example C,Example,CHECK-BLANK,\n')
+ blank_preview=sheet(c,missing.encode('utf-8'))
+ assert blank_preview['errors']
+ assert post(c,'/imports/'+blank_preview['token']+'/confirm').status_code==422
+ assert all(p['sku'] not in {'NEW-A','NEW-B','NEW-C'} for p in items(c))
+
+
+def test_report_response_loss_retries_do_not_duplicate_general_reports(setup):
+ c,path=setup
+ body={'collection':'clothing','sku':'CLO-001','kind':'general',
+       'reason':'Please inspect label printing','request_id':'test-unique-issue-001'}
+ saved=post(c,'/issues',body)
+ assert saved.status_code==200,saved.text
+ retried=post(c,'/issues',{**body,'reason':'A second browser attempt'})
+ assert retried.status_code==200,retried.text
+ assert retried.json()['id']==saved.json()['id']
+ assert retried.json()['already_reported'] is True
+ with connect(path) as db:
+  report=db.execute('SELECT reason FROM wh_issues WHERE id=?',(saved.json()['id'],)).fetchone()
+  assert report['reason']=='Please inspect label printing'
+  assert db.execute('SELECT count(*) FROM wh_issues WHERE actor=? AND request_id=?',
+                    ('owner',body['request_id'])).fetchone()[0]==1
+ # A different account must not be shown the other user's replay receipt.
+ login(c,'staff')
+ staff_report=post(c,'/issues',{**body,'reason':'Staff independently found an issue'})
+ assert staff_report.status_code==200,staff_report.text
+ assert staff_report.json()['id']!=saved.json()['id']

@@ -63,7 +63,8 @@ export function MoveEditor({item,source,collection,fields,run,busy,language,voic
   audioStop.current?.();
   const saved=await run(async()=>{await api('/moves/'+preview.token+'/confirm',{});return true});
   if(!saved)return false;
-  await onSave();
+  // Do not retry a committed catalogue move because the follow-up UI refresh failed.
+  try{await onSave()}catch(e){onError(e.message||t('Refresh the workspace to see the saved location.'))}
   return true;
  }
  function spokenMoveConfirmation(text){
@@ -89,7 +90,7 @@ export function MoveEditor({item,source,collection,fields,run,busy,language,voic
     if(!voiceAction(language,'move',text)){
      SetVoiceError(t('Say: ')+actionPhrases(language,'move')[0]);return 'retry';
     }
-    await confirmMove();return false;
+    const saved=await confirmMove();return saved?false:'retry';
    }
    return false;
   }
@@ -126,11 +127,13 @@ function TeamReportCard({issue,owner,busy,voice,language,onError,onCorrectLocati
      payload={...payload,action:'unconfirmed'};
     }
    }
-   const result=await api('/issues/'+issue.id+'/resolve',payload);
-   await reload();
-   return result;
+   return await api('/issues/'+issue.id+'/resolve',payload);
   });
-  if(saved&&voice)onSaved?.(saved);
+  if(saved){
+   // A successful server commit must not be treated as failed if the UI refresh fails.
+   try{await reload()}catch(e){onError(e.message||t('Refresh the workspace to see the saved review.'))}
+   if(voice)onSaved?.(saved);
+  }
   return !!saved;
  }
  async function guidedReviewAnswer(text,step){
@@ -150,7 +153,7 @@ function TeamReportCard({issue,owner,busy,voice,language,onError,onCorrectLocati
    if(!voiceAction(language,'review',text)){
     SetVoiceError(t('Say: ')+actionPhrases(language,'review')[0]);return 'retry';
    }
-   await markResolved();return false;
+   const saved=await markResolved();return saved?false:'retry';
   }
   return false;
  }

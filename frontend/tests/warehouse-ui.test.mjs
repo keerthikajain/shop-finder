@@ -194,7 +194,7 @@ test('Prisma V3 keeps focus-language recognition settings behind a simple staff 
  assert.doesNotMatch(src,/t\('Gnani Prisma V3/);
  assert.doesNotMatch(src,/transcriptStyle,TS/);
  assert.match(src,/URLSearchParams\(\{language,style,enhanced:String\(enhanced\),collection\}\)/);
- assert.match(src,/onText\(r\.transcript,r\.search_language,r\)/);
+ assert.match(src,/onText\(result\.transcript,result\.search_language,result\)/);
  assert.match(src,/language,\s*brand:/);
 });
 
@@ -267,7 +267,7 @@ test('setup guidance is limited to Find when workspace setup is unfinished',asyn
 test('catalogue label is not repeated as inert decoration on workspace pages',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/meta&&!\['find','account','business','more','settings'\]\.includes\(page\)/);
- assert.match(src,/aria-label="Product type"/);
+ assert.match(src,/aria-label=\{t\('Product type'\)\}/);
  assert.doesNotMatch(src,/className="sf-scope-note"/);
  assert.doesNotMatch(src,/t\('Your catalogue'\)/);
  assert.match(src,/\['catalogue','grid','Catalogue'\]/);
@@ -663,9 +663,9 @@ test('pink disabled and recording buttons have readable, high-contrast foregroun
 
 test('report mic waits until spoken guidance stops to avoid transcribing itself',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(src,/function Report\(\{item,location,collection,run,busy,speaking=false/);
+ assert.match(src,/function Report\(\{item,location,collection,userId,run,busy,speaking=false/);
  assert.ok(src.includes("VoiceButton small autoStop enabled={!busy&&!speaking&&!guidedActive}"));
- assert.match(src,/collection=\{modal\.item\.collection\} \{\.\.\.\{run,busy,voice,language,speaking\}\}/);
+ assert.match(src,/collection=\{modal\.item\.collection\} userId=\{user\.id\} \{\.\.\.\{run,busy,voice,language,speaking\}\}/);
 });
 
 test('activity report card groups issue, shelf locations and resolution instead of wide scattered flex rows',async()=>{
@@ -737,7 +737,7 @@ test('login illustration and form share one background across desktop and phone'
 test('sample shelf labels do not repeat on every item and recent requests are stored tasks',async()=>{
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const backend=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
- assert.match(ui,/Saved recent requests/);
+ assert.match(ui,/<summary>\{t\('Recent requests'\)\}<\/summary>/);
  assert.match(ui,/request\('\/warehouse\/tasks'\)/);
  assert.match(ui,/recent\.filter\(r=>collection/);
  assert.doesNotMatch(backend,/Sample catalogue locations, not verified for your store/);
@@ -750,10 +750,11 @@ test('sample shelf labels do not repeat on every item and recent requests are st
 
 test('manual microphone can always stop recording even when a parent becomes unavailable',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(src,/disabled=\{\(state!=='recording'&&!enabled\)\|\|state==='starting'\|\|state==='processing'\}/);
+ assert.match(src,/disabled=\{\(!stopping&&!enabled\)\|\|state==='starting'\}/);
  assert.match(src,/if\(state==='recording'\)\{S\('processing'\);ref\.current\?\.stop\(\);return\}/);
  assert.match(src,/\{stopOnSilence:autoStop\}/);
- assert.match(src,/aria-pressed=\{state==='recording'\}/);
+ assert.match(src,/aria-pressed=\{stopping\}/);
+ assert.match(src,/transcription\.current\?\.abort\(\)/);
 });
 
 test('picking pause and resume persist progress while automatic listening starts only after confirmation',async()=>{
