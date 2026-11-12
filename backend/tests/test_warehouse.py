@@ -1905,7 +1905,7 @@ def test_active_picking_refuses_an_item_modified_after_worker_search(setup):
  task=search(c,'CLO-001')
  line=task['lines'][0]
  assert line['selected']['sku']=='CLO-001'
- chosen=items(c)[0]
+ chosen=next(p for p in items(c) if p['sku']==line['selected']['sku'])
  chosen['name']='Owner-edited product while picking'
  assert save(c,chosen,chosen['revision']).status_code==200
  restored=c.get(f"/api/warehouse/tasks/{task['id']}",headers=H)
