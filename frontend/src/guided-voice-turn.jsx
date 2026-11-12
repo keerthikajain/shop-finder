@@ -134,13 +134,13 @@ export default function GuidedVoiceTurn({
   <div className="sf-guided-owner-voice-actions">
    {!active?<button type="button" disabled={disabled} onClick={start}>{copy(status==='paused'?'guideRetry':'guideStart')}</button>:
     <button type="button" onClick={stop}>{copy('guideStop')}</button>}
-   {active&&<button type="button" disabled={disabled} onClick={()=>Cycle(v=>v+1)}>{copy('guideRepeat')}</button>}
+   {active&&<button type="button" disabled={disabled} onClick={()=>{retryNarration.current=false;Cycle(v=>v+1)}}>{copy('guideRepeat')}</button>}
   </div>
   <small role="status" aria-live="polite">{active?(
    status==='speaking'?copy('speaking'):
    status==='listening'?copy('listening'):
    status==='transcribing'?copy('transcribing'):copy('processing')
-  ):status==='paused'?copy('pausedVoice'):copy('optionalVoice')}</small>
+  ):status==='stopped'?copy('stopped'):status==='paused'?copy('pausedVoice'):copy('optionalVoice')}</small>
   {heard&&<p className="sf-guided-owner-transcript"><strong>{copy('heard')}:</strong> {heard}</p>}
   {error&&<p role="alert">{error}</p>}
  </section>;
