@@ -33,10 +33,10 @@ test('product filter and recent-request labels use app localization',async()=>{
 });
 
 
-test('guided voice text follows spoken language, not an unrelated app-menu locale',async()=>{
+test('guided voice UI follows app locale but recognition keeps speech locale',async()=>{
  const src=await readFile(new URL('../src/guided-voice-turn.jsx',import.meta.url),'utf8');
- assert.match(src,/reportVoiceCopy\(language,key\)/);
- assert.doesNotMatch(src,/appLanguage==='hi'/);
+ assert.match(src,/reportUiCopy\(appLanguage,key\)/);
+ assert.match(src,/const appLanguage=useContext\(Locale\)/);
  assert.match(src,/dialogueControl\(language,transcript\)/);
  assert.match(src,/URLSearchParams\(\{language,style:'transcribe'/);
 });
