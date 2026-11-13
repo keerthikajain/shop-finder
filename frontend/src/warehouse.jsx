@@ -210,6 +210,18 @@ export default function WarehouseApp({user,preferences,logout}){
   });
   return false;
  }
+ async function undoLookupPick(source=task,index=lookupSelection){
+  if(!source||index==null||index<0||!source.lines[index]?.complete){
+   N(lookupCopy(appLanguage,'selectFirst'));return false;
+  }
+  await run(async()=>{
+   const next=await api('/tasks/'+source.id+'/picking/undo',{line:index,reason:'Worker corrected a lookup-only pick confirmation'});
+   T(next);SetLookupPendingSafe(null);
+   N(t('Confirmation undone. This item is ready to verify again.'));
+   R(await request('/warehouse/tasks'));
+  });
+  return false;
+ }
  async function requestLookupPick(source=task,index=lookupSelection){
   if(!source||index==null||index<0||index>=source.lines.length){
    N(lookupCopy(appLanguage,'selectFirst'));return false;
@@ -261,6 +273,7 @@ export default function WarehouseApp({user,preferences,logout}){
    N(lookupCopy(appLanguage,'strictConfirmation'));return true;
   }
   if(intent.action==='guided')return chooseSearchMode('guided',source);
+  if(intent.action==='undo')return undoLookupPick(source,lookupSelection);
   if(intent.action==='select'){
    const line=source.lines[intent.line];
    if(!line?.selected||!line?.location){N(lookupCopy(appLanguage,'resolve'));return true}
@@ -574,7 +587,10 @@ export default function WarehouseApp({user,preferences,logout}){
    <p>{friendlyPath(task.lines[lookupSelection].location,!!task.lines[lookupSelection].selected.synthetic)}</p>
    <div className="sf-lookup-actions">
     <button type="button" disabled={busy||task.lines[lookupSelection].complete||task.lines[lookupSelection].location_report_open} onClick={()=>requestLookupPick()}>{lookupCopy(appLanguage,'markPicked')}</button>
+    {task.lines[lookupSelection].complete&&<button type="button" disabled={busy} onClick={()=>undoLookupPick()}>{lookupCopy(appLanguage,'undo')}</button>}
     <button type="button" disabled={busy} onClick={()=>reportLookupLocation()}>{lookupCopy(appLanguage,'report')}</button>
+    {owner&&<button type="button" disabled={busy} onClick={()=>D({type:'move',item:task.lines[lookupSelection].selected,location:task.lines[lookupSelection].location})}>{t('Correct location')}</button>}
+    {(owner||meta?.settings?.staff_stock)&&<button type="button" disabled={busy} onClick={()=>D({type:'stock',item:task.lines[lookupSelection].selected,location:task.lines[lookupSelection].location})}>{lookupCopy(appLanguage,'updateStock')}</button>}
     <button type="button" disabled={busy} onClick={()=>speak(task,lookupSelection)}>{lookupCopy(appLanguage,'repeat')}</button>
    </div>
   </div>}
