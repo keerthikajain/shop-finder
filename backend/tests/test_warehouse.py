@@ -1952,3 +1952,55 @@ def test_report_response_loss_retries_do_not_duplicate_general_reports(setup):
  staff_report=post(c,'/issues',{**body,'reason':'Staff independently found an issue'})
  assert staff_report.status_code==200,staff_report.text
  assert staff_report.json()['id']!=saved.json()['id']
+
+
+@pytest.mark.parametrize('locale,transcript,expected',[
+ ('te-IN','तप्पु स्थानम्','report'),
+ ('te-IN','तप्पु स्थानम','report'),
+ ('te-IN','తప్పు స్థానము','report'),
+ ('te-IN','తప్పు లొకేషన్','report'),
+ ('te-IN','location दोबारा बताओ','repeat'),
+ ('te-IN','लोकेशन दोबारा बताओ।','repeat'),
+ ('te-IN','location మళ్లీ చెప్పండి','repeat'),
+ ('te-IN','location dobara batao','repeat'),
+ ('te-IN','హెల్ప్','help'),
+ ('te-IN','స్టాప్','stop'),
+ ('hi-en','location दोबारा बताओ','repeat'),
+ ('hi-IN','लोकेशन दोबारा बताओ','repeat'),
+ ('en-IN','location दोबारा बताओ','repeat'),
+ ('hi-en','हेल्प','help'),
+ ('hi-IN','स्टॉप','stop'),
+ ('en-IN','  REPEAT LOCATION! ','repeat')
+])
+def test_mixed_script_stt_variations_are_recognized_without_fuzzy_matching(locale,transcript,expected):
+ from app.warehouse_voice_guide import intent
+ assert intent(transcript,locale)==expected
+
+@pytest.mark.parametrize('transcript',[
+ 'तप्पु स्थानम और सामान मिल गया',
+ 'location दोबारा बताओ and confirm',
+ 'not wrong location',
+ 'do not repeat location',
+ 'next item then found it',
+ 'yes',
+ 'confirm',
+ 'delete all items',
+ 'कुछ भी कर दो',
+ 'स्थान गलत नहीं है'
+])
+def test_mixed_script_stt_does_not_execute_ambiguous_consequential_commands(transcript):
+ from app.warehouse_voice_guide import intent
+ assert intent(transcript,'te-IN')=='unknown'
+
+
+def test_variants_are_informational_requests_not_automatic_picking_confirmation(setup):
+ c,_=setup
+ task=post(c,'/search',{'collection':'clothing','query':'CLO-001','language':'te-IN'}).json()
+ assert post(c,'/tasks/'+task['id']+'/picking/start').status_code==200
+ original=c.get('/api/warehouse/tasks/'+task['id']).json()
+ for phrase,expected in [('तप्पु स्थानम','report'),('location दोबारा बताओ','repeat')]:
+  response=post(c,'/tasks/'+task['id']+'/picking/command',{'transcript':phrase,'line':0})
+  assert response.status_code==200,response.text
+  assert response.json()['action']==expected
+ assert c.get('/api/warehouse/tasks/'+task['id']).json()==original
+ assert c.get('/api/warehouse/issues').json()==[]
