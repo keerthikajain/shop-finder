@@ -873,7 +873,7 @@ test('voice picking keeps speaker and microphone turn-taking automatic but respe
  assert.match(ui,/if\(!voiceGuidePaused\)\{PV\(null\);stopVoiceFlow\(\);return\}/);
  assert.match(ui,/voiceFlowStopped\.current=false;VGP\(false\)/);
  assert.match(ui,/playPickGuidance\('repeat',task,activeLine,true\)/);
- assert.match(ui,/if\(voice&&auto&&!voiceFlowStopped\.current\)await playFixedVoice\('pick_later_ready',next\.language,false,true\)/);
+ assert.match(ui,/await playFixedVoice\(retryable\?'pick_later_ready':'pick_exceptions_done',next\.language,false,true\)/);
  assert.match(listener,/if\(!enabled\)\{Status\('paused'\);return;/);
  assert.match(listener,/if\(cancelled\)return/);
  assert.match(listener,/recorder\?\.stop\(true\)/);
