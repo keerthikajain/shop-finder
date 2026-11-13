@@ -1,10 +1,13 @@
-import React,{useEffect,useRef,useState} from 'react';
+import React,{useContext,useEffect,useRef,useState} from 'react';
 import {startRecording} from './recording.js';
 import {request} from './accounts.jsx';
+import {Locale} from './locale.js';
 
 // This component asks about an unresolved catalogue choice. Speech alone never
 // selects a product: the existing server-side /clarify endpoint validates it.
 export default function VariantVoiceClarifier({taskId,index,language,enabled,onReply,onError=()=>{}}){
+ const appLanguage=useContext(Locale);
+ const copy={en:{heading:'Choose a size or model',speaking:'Finder is explaining the available choices…',listening:'Listening for size, model or SKU…',transcribing:'Recognizing your answer…',checking:'Checking the exact catalogue variant…',review:'Check the available variants below.',default:'Say the size or SKU, or tap the matching option below.',heard:'Gnani heard',again:'Ask again by voice',manual:'Choose manually'},hi:{heading:'साइज़ या मॉडल चुनें',speaking:'फ़ाइंडर उपलब्ध विकल्प बता रहा है…',listening:'साइज़, मॉडल या एसकेयू सुन रहा है…',transcribing:'आपकी आवाज़ समझ रहा है…',checking:'कैटलॉग में सही विकल्प जाँच रहा है…',review:'नीचे दिए गए विकल्प जाँचें।',default:'साइज़ या एसकेयू बोलें या नीचे चुनें।',heard:'ग्नानी ने सुना',again:'फिर पूछें',manual:'खुद चुनें'},te:{heading:'సైజు లేదా మోడల్ ఎంచుకోండి',speaking:'ఫైండర్ అందుబాటులో ఉన్న ఎంపికలను చెబుతోంది…',listening:'సైజు, మోడల్ లేదా ఎస్ కే యూ వింటోంది…',transcribing:'మీ సమాధానాన్ని గుర్తిస్తోంది…',checking:'కేటలాగ్‌లో సరైన రకాన్ని చూస్తోంది…',review:'కింద ఉన్న ఎంపికలను పరిశీలించండి.',default:'సైజు లేదా ఎస్ కే యూ చెప్పండి, లేదా కింద ఎంచుకోండి.',heard:'గ్నాని విన్నది',again:'మళ్లీ అడగండి',manual:'నేనే ఎంచుకుంటాను'}}[appLanguage]||{heading:'Choose a size or model',speaking:'Finder is explaining the available choices…',listening:'Listening for size, model or SKU…',transcribing:'Recognizing your answer…',checking:'Checking the exact catalogue variant…',review:'Check the available variants below.',default:'Say the size or SKU, or tap below.',heard:'Gnani heard',again:'Ask again by voice',manual:'Choose manually'};
  const [status,Status]=useState('idle'),[heard,Heard]=useState(''),[manual,Manual]=useState(false),[cycle,Cycle]=useState(0);
  const callback=useRef(onReply),report=useRef(onError);
  callback.current=onReply;report.current=onError;
@@ -53,10 +56,10 @@ export default function VariantVoiceClarifier({taskId,index,language,enabled,onR
   return ()=>{cancelled=true;controller.abort();recorder?.stop(true);if(audio){audio.onended=null;audio.onerror=null;audio.pause();audio.removeAttribute('src')}if(url)URL.revokeObjectURL(url)};
  },[enabled,manual,taskId,index,language,cycle]);
  return <div className="sf-voice-detail-transcript" role="status" aria-live="polite">
-  <strong>{language==='te-IN'?'సైజు లేదా మోడల్ ఎంచుకోండి':language==='hi-IN'?'साइज़ या मॉडल चुनें':'Choose a size or model'}</strong>
-  <p>{status==='speaking'?'Finder is explaining the available choices…':status==='listening'?'Listening for size, model or SKU…':status==='transcribing'?'Recognizing your answer…':status==='checking'?'Checking the exact catalogue variant…':status==='review'?'Check the available variants below.':'Say the size or SKU, or tap the matching option below.'}</p>
-  {heard&&<p><strong>{language==='te-IN'?'గ్నాని విన్నది':language==='hi-IN'?'ग्नानी ने सुना':'Gnani heard'}:</strong> <span lang={language}>{heard}</span></p>}
-  {status!=='speaking'&&status!=='listening'&&status!=='transcribing'&&status!=='checking'&&<button type="button" onClick={()=>{Heard('');Manual(false);Cycle(n=>n+1)}}>🔊 {language==='te-IN'?'మళ్లీ అడగండి':language==='hi-IN'?'फिर पूछें':'Ask again by voice'}</button>}
-  <button type="button" onClick={()=>{Manual(true);Status('manual')}} disabled={manual}> {language==='te-IN'?'నేనే ఎంచుకుంటాను':language==='hi-IN'?'खुद चुनें':'Choose manually'} </button>
+  <strong>{copy.heading}</strong>
+  <p>{copy[status]||copy.default}</p>
+  {heard&&<p><strong>{copy.heard}:</strong> <span lang={language}>{heard}</span></p>}
+  {!['speaking','listening','transcribing','checking'].includes(status)&&<button type="button" onClick={()=>{Heard('');Manual(false);Cycle(n=>n+1)}}>🔊 {copy.again}</button>}
+  <button type="button" onClick={()=>{Manual(true);Status('manual')}} disabled={manual}>{copy.manual}</button>
  </div>;
 }
