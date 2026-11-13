@@ -1,5 +1,5 @@
 import {pickVoicePhrase} from './picking-voice-phrases.js';
-import {dialogueControl} from './voice-review-commands.js';
+import {dialogueControl,voiceAction} from './voice-review-commands.js';
 import {pickConfirmationIntent} from './picking-confirmations.js';
 
 // Explicit whole-phrase commands. Do not interpret unclear speech as permission
@@ -34,6 +34,7 @@ export function lookupVoiceIntent(language,text,lines=[]){
  const phrase=norm(text);
  if(!phrase)return {action:'unknown'};
  if(modeChoiceIntent(language,text)==='guided')return {action:'guided'};
+ if(voiceAction(language,'undo',text))return {action:'undo'};
  const confirmation=pickConfirmationIntent(language,text);
  if(confirmation!=='unknown')return {action:confirmation};
  const control=dialogueControl(language,text);
