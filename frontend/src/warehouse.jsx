@@ -151,6 +151,131 @@ export default function WarehouseApp({user,preferences,logout}){
    }
   }
  }
+ // Search results stay on screen until the user chooses a workflow.
+ // No pick, stock update, or report is created by selecting a mode.
+ async function offerSearchMode(next){
+  const serial=++modeChoiceSerial.current;
+  SetLookupMode('choice');SetModeListening(false);
+  SetLookupPendingSafe(null);SetLookupSelection(null);SetLookupVoicePaused(false);
+  const resolved=next.lines?.length&&next.lines.every(l=>l.selected&&l.location)&&
+   next.lines.some(l=>l.selected&&l.location&&!l.location_report_open&&!l.complete);
+  if(!resolved||!voice||!PICKING_VOICE_LANGUAGES.includes(next.language))return;
+  await playFixedVoice('choose_mode',next.language,true,true);
+  if(serial===modeChoiceSerial.current)SetModeListening(true);
+ }
+ function SetLookupPendingSafe(next){SetLookupPending(next)}
+ async function chooseSearchMode(choice,source=task){
+  if(!source||busy)return false;
+  const ready=source.lines?.length&&source.lines.every(l=>l.selected&&l.location)&&
+   source.lines.some(l=>l.selected&&l.location&&!l.location_report_open&&!l.complete);
+  if(!ready){N(lookupCopy(appLanguage,'resolve'));return false}
+  modeChoiceSerial.current++;SetModeListening(false);stopSpeech();
+  if(choice==='guided'){
+   SetLookupMode('guided');SetLookupPendingSafe(null);SetLookupVoicePaused(true);
+   await pickAction('start');return false;
+  }
+  if(choice!=='locations')return false;
+  const options=source.lines.map((line,index)=>({...line,index})).filter(x=>x.selected&&x.location&&!x.location_report_open);
+  SetLookupMode('locations');SetLookupPendingSafe(null);
+  SetLookupSelection(options.length===1?options[0].index:null);
+  SetLookupVoicePaused(false);N(lookupCopy(appLanguage,'locationsHint'));
+  if(voice)await speak(source);
+  return false;
+ }
+ async function confirmLookupPick(approved,source=task){
+  const pending=lookupPending;
+  if(!pending||!source||pending.taskId!==source.id)return false;
+  if(!approved){
+   SetLookupPendingSafe(null);N(lookupCopy(appLanguage,'cancelled'));
+   if(voice)await playFixedVoice('lookup_cancelled',source.language,false,true);
+   return false;
+  }
+  await run(async()=>{
+   const line=source.lines[pending.line];
+   if(!line||line.selected?.sku!==pending.sku||line.complete||line.location_report_open)
+    throw Error(lookupCopy(appLanguage,'resolve'));
+   let next;
+   try{
+    next=await api('/tasks/'+source.id+'/scan',{line:pending.line,kind:'manual',value:'confirmed'});
+   }catch(e){
+    // A request may have committed but its response may have been lost.
+    const current=await request('/warehouse/tasks/'+encodeURIComponent(source.id));
+    if(!current.lines[pending.line]?.complete)throw e;
+    next=current;
+   }
+   T(next);SetLookupPendingSafe(null);
+   N(lookupCopy(appLanguage,'saved'));
+   R(await request('/warehouse/tasks'));
+   if(voice)await playFixedVoice('lookup_picked_saved',next.language,false,true);
+  });
+  return false;
+ }
+ async function requestLookupPick(source=task,index=lookupSelection){
+  if(!source||index==null||index<0||index>=source.lines.length){
+   N(lookupCopy(appLanguage,'selectFirst'));return false;
+  }
+  const line=source.lines[index];
+  if(!line.selected||!line.location||line.location_report_open||line.complete){
+   N(lookupCopy(appLanguage,line.location_report_open?'reportPending':'resolve'));return false;
+  }
+  SetLookupPendingSafe({taskId:source.id,line:index,sku:line.selected.sku});
+  N(lookupCopy(appLanguage,'confirmPicked'));
+  if(voice)await playFixedVoice('lookup_confirm',source.language,false,true);
+  return false;
+ }
+ async function reportLookupLocation(source=task,index=lookupSelection){
+  if(!source||index==null||index<0||index>=source.lines.length){
+   N(lookupCopy(appLanguage,'selectFirst'));return false;
+  }
+  const line=source.lines[index];
+  if(!line.selected||!line.location){N(lookupCopy(appLanguage,'resolve'));return false}
+  SetLookupVoicePaused(true);SetLookupPendingSafe(null);
+  D({type:'report',item:line.selected,location:line.location,index,autoGuide:true});
+  return false;
+ }
+ async function handleModeSpeech(transcript,source=task){
+  const choice=modeChoiceIntent(source?.language||language,transcript);
+  if(!source)return false;
+  VGC(transcript);
+  if(choice)return chooseSearchMode(choice,source);
+  N(lookupCopy(appLanguage,'unknown'));
+  return true;
+ }
+ async function handleLookupSpeech(transcript,source=task){
+  if(!source)return false;
+  VGC(transcript);
+  const intent=lookupVoiceIntent(source.language,transcript,source.lines);
+  if(intent.action==='stop'){SetLookupVoicePaused(true);stopSpeech();N(lookupCopy(appLanguage,'paused'));return false}
+  if(intent.action==='help'){
+   N(lookupCopy(appLanguage,'voiceHint'));
+   if(voice)await playFixedVoice('lookup_help',source.language,false,true);
+   return true;
+  }
+  if(lookupPending){
+   if(intent.action==='yes'||intent.action==='no')
+    return confirmLookupPick(intent.action==='yes',source);
+   if(intent.action==='repeat'){
+    if(voice)await playFixedVoice('lookup_confirm',source.language,false,true);
+    return true;
+   }
+   N(lookupCopy(appLanguage,'strictConfirmation'));return true;
+  }
+  if(intent.action==='guided')return chooseSearchMode('guided',source);
+  if(intent.action==='select'){
+   const line=source.lines[intent.line];
+   if(!line?.selected||!line?.location){N(lookupCopy(appLanguage,'resolve'));return true}
+   SetLookupSelection(intent.line);N(lookupCopy(appLanguage,'modeSaved'));
+   if(voice)await speak(source,intent.line);
+   return true;
+  }
+  if(intent.action==='repeat'){
+   if(voice)await speak(source,lookupSelection);
+   return true;
+  }
+  if(intent.action==='verify')return requestLookupPick(source,lookupSelection);
+  if(intent.action==='report')return reportLookupLocation(source,lookupSelection);
+  N(lookupCopy(appLanguage,'unknown'));return true;
+ }
  async function search(text=query,fromVoice=voiceQuery,global=false,spokenLanguage=null){
   PV(null);VGC('');VGT('');stopVoiceFlow();
   if(!fromVoice)ST('');
