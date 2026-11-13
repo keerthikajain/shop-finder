@@ -80,7 +80,7 @@ test('voice mode prompt and spoken location readback use bounded server generate
 
 test('search choice does not start picking; locations mode offers explicit confirmation and reporting',async()=>{
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(ui,/void offerSearchMode\(result\)/);
+ assert.match(ui,/pendingModePrompt\.current=result\.id/);
  assert.match(ui,/picking\.status==='ready'&&lookupMode==='choice'/);
  assert.match(ui,/modeChoiceIntent\(source\.language,transcript\)/);
  assert.match(ui,/chooseSearchMode\('locations'\)/);
