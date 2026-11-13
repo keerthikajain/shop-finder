@@ -769,6 +769,21 @@ def install_warehouse(app,path):
     if body.value not in ('confirmed','yes','checked'):raise HTTPException(422,'Manual verification requires explicit confirmation.')
     line.update(complete=True,confirmation='manual',confirmed_at=now())
    return task_put(c,t)
+ @app.post('/api/warehouse/tasks/{tid}/lookup-line-audio/{index}')
+ async def lookup_line_audio(tid:str,index:int,request:Request):
+  """Speak only a verified, selected item's recorded location; never mutate a pick."""
+  u=identity(request)
+  if index<0:raise HTTPException(422,'Invalid task line.')
+  with connect(path) as c:
+   task=task_get(c,tid,u)
+   line,item=current_line(c,task,index)
+   location=line.get('location')
+   if not location or not any(x['code']==location['code'] for x in item['placements']):
+    raise HTTPException(409,'The recorded shelf changed. Refresh before picking.')
+   speech_text=f"{item['name']}, {item['sku']}. {loc_text(location)}."
+  audio=await voice.speak(speech_text,task['language'])
+  return Response(audio,media_type='audio/wav',headers={'Cache-Control':'no-store'})
+
  @app.post('/api/warehouse/tasks/{tid}/speak')
  async def speech(tid:str,request:Request):
   u=identity(request)
