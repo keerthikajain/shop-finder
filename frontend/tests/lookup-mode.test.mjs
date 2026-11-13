@@ -106,3 +106,27 @@ test('locations mode never starts handsfree picking without an explicit choice',
  assert.match(ui,/location_report_open/);
  assert.match(ui,/lookupVoiceIntent\(source\.language,transcript,source\.lines\)/);
 });
+
+
+test('speech listener displays status in app language while recognizing the selected voice language',async()=>{
+ const component=await readFile(new URL('../src/hands-free-picking.jsx',import.meta.url),'utf8');
+ const parent=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(component,/appLanguage=null/);
+ assert.match(component,/appLanguage\?pickingUiCopy\(appLanguage,key\):pickingCopy\(language,key\)/);
+ const callSites=parent.match(/<HandsFreePicking appLanguage=\{appLanguage\}/g)||[];
+ assert.equal(callSites.length,3);
+ assert.match(parent,/language=\{task\.language\}/);
+});
+test('when a pick is awaiting confirmation, the user cannot silently switch products',async()=>{
+ const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(ui,/disabled=\{busy\|\|!!lookupPending\} aria-pressed=\{lookupSelection===index\}/);
+ assert.match(ui,/if\(!pending\|\|!source\|\|pending\.taskId!==source\.id\)return false/);
+ assert.match(ui,/line\.selected\?\.sku!==pending\.sku/);
+});
+test('lookup correction and stock changes still require the existing permissions',async()=>{
+ const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(ui,/\{owner&&<button type="button" disabled=\{busy\} onClick=\{\(\)=>D\(\{type:'move'/);
+ assert.match(ui,/\{\(owner\|\|meta\?\.settings\?\.staff_stock\)&&<button/);
+ assert.match(ui,/autoGuide:true/);
+ assert.match(ui,/lookupVoicePaused/);
+});
