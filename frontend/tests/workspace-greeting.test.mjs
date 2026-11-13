@@ -53,7 +53,6 @@ test('localized spoken greetings and guest fallback never invent a name',()=>{
 test('workspace requests authenticated Gnani female welcome once with no replay button',async()=>{
  const src=await readFile(new URL('../src/workspace-greeting.jsx',import.meta.url),'utf8');
  const app=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- const css=await readFile(new URL('../src/workspace-greeting.css',import.meta.url),'utf8');
  assert.match(app,/import WorkspaceGreeting from '\.\/workspace-greeting\.jsx'/);
  assert.match(app,/<WorkspaceGreeting user=\{user\} appLanguage=\{appLanguage\} interrupt=/);
  assert.match(src,/playWelcomeOnce\(/);
@@ -65,6 +64,7 @@ test('workspace requests authenticated Gnani female welcome once with no replay 
  assert.match(src,/if\(interrupt\)stopGreeting\(\)/);
  assert.match(src,/stopWelcome\(activeSpeech\.current\)/);
  assert.doesNotMatch(src,/Hear greeting|Stop greeting|Mute automatic greeting/);
- assert.match(css,/@media\(max-width:480px\)/);
+ assert.match(src,/return null;/);
+ assert.doesNotMatch(src,/<section className="sf-workspace-greeting"|<p>\{message\}<\/p>/);
  assert.doesNotMatch(src,/GNANI_API_KEY|apiKey=/);
 });
