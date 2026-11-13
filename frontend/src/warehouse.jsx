@@ -418,7 +418,8 @@ export default function WarehouseApp({user,preferences,logout}){
   const next=await api('/tasks/'+source.id+'/picking/defer',{line,reason});
   PV(null);
   await progressAfterPick(next,true);
-  R(await request('/warehouse/tasks'));
+  // History refresh is nonessential; don't delay the next microphone turn.
+  void request('/warehouse/tasks').then(R).catch(()=>{});
  }
  async function retryPick(line){
   if(!task||busy||pickPaused)return;
