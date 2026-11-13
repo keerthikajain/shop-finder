@@ -2036,7 +2036,7 @@ def test_telugu_voice_typo_recovery_is_not_pick_approval(transcript):
 
 def test_telugu_picking_report_and_repeat_voice_commands_do_not_commit_picks(setup):
  c,_=setup
- task=search(c,'APP-003',collection='appliances')
+ task=post(c,'/search',{'collection':'appliances','query':'APP-003','language':'te-IN'}).json()
  assert post(c,f"/tasks/{task['id']}/picking/start").status_code==200
  before=c.get('/api/warehouse/tasks/'+task['id'],headers=H).json()
  for transcript,action in [('तप्पू स्थानम','report'),('స్థానాన్ని మళ్ళీ చెప్పండి','repeat')]:
