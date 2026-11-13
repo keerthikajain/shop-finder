@@ -90,7 +90,7 @@ class PickCommand(Strict):
  line:int=Field(default=0,ge=0,le=9)
 class PickDefer(Strict):
  line:int=Field(ge=0,le=9)
- reason:Literal['declined','reported']
+ reason:Literal['declined','reported','later','skipped','cancelled']
 class PickRetry(Strict):
  line:int=Field(ge=0,le=9)
 class PickUndo(Strict):
@@ -896,7 +896,7 @@ def install_warehouse(app,path):
   'report_reason_retry','report_suggestion_retry','report_confirm_retry',
   'review_outcome_retry','review_note_retry','review_confirm_retry',
   'move_destination_retry','move_reason_retry','move_preview_retry','move_confirm_retry',
-  'pick_done','pick_undo','help_pick','help_verify','unknown_pick',
+  'pick_done','pick_undo','pick_defer_choice','pick_cancel_confirm','pick_later_ready','help_pick','help_verify','unknown_pick',
   'choose_mode','lookup_help','lookup_confirm','lookup_picked_saved','lookup_cancelled','lookup_select','lookup_unknown'
  ],request:Request):
   identity(request,step.startswith(('review_','move_')))
@@ -1005,6 +1005,18 @@ def install_warehouse(app,path):
      'पिछली पुष्टि वापस हो गई। सामान को दोबारा जाँचें।',
      'Last pick confirmation undone. Check the item again.',
      'చివరి నిర్ధారణ రద్దయింది. అంశాన్ని మళ్ళీ పరిశీలించండి.'),
+   'pick_defer_choice':('Do you want this item later or skip it? Say later, skip, or cancel this item.',
+     'यह सामान बाद में चाहिए या छोड़ना है? बोलिए बाद में, स्किप या इस सामान को रद्द करो।',
+     'Yeh item baad mein chahiye ya skip karna hai? Bolo later, skip, ya cancel this item.',
+     'ఈ వస్తువును తర్వాత తీసుకోవాలా లేదా స్కిప్ చేయాలా? తర్వాత, స్కిప్, లేదా ఈ వస్తువును రద్దు చేయి అనండి.'),
+   'pick_cancel_confirm':('Remove this item from the current picking session? Say yes to remove it, or no to keep it.',
+     'इस सामान को मौजूदा पिकिंग सूची से हटाना है? हटाने के लिए हाँ, रखने के लिए नहीं कहें।',
+     'Is item ko current picking se hatana hai? Haan bolo hatane ke liye, nahi bolo rakhne ke liye.',
+     'ఈ వస్తువును ప్రస్తుత పికింగ్ జాబితా నుంచి తీసివేయాలా? అవును లేదా కాదు అనండి.'),
+   'pick_later_ready':('Items saved for later are still unconfirmed. Choose Retry this item when ready.',
+     'बाद के लिए रखे सामान अभी बिना पुष्टि के हैं। तैयार हों तो फिर से कोशिश करें।',
+     'Later wale items abhi unconfirmed hain. Ready ho toh retry karo.',
+     'తర్వాత కోసం ఉంచిన వస్తువులు ఇంకా నిర్ధారించలేదు. సిద్ధంగా ఉన్నప్పుడు మళ్లీ ప్రయత్నించండి.'),
    'help_pick':('Say found it, wrong location, repeat location, next item, undo last confirmation or stop. You can also use the buttons.',
      'कहें मिल गया, गलत जगह, जगह दोहराओ, अगला सामान, या रुको। बटन भी उपलब्ध हैं।',
      'Say found it, wrong location, repeat location, undo last confirmation or stop.',
