@@ -126,6 +126,9 @@ export default function WarehouseApp({user,preferences,logout}){
     T(null);D(null);restoreReady.current=true;
     E(err.message);
    });
+  }else if(snapshot&&snapshot.collection===collection){
+   // Keep an unsent search draft and the page being explored.
+   T(null);D(snapshot.modal?.type==='lookup'?{type:'lookup'}:null);restoreReady.current=true;
   }else{T(null);Q('');D(null);restoreReady.current=true}
   E('');F('');CAT('');BR('');LF('');SZ('');FO(false);audio.current?.pause();SP(false);
   localStorage.setItem('sf-collection',collection);
