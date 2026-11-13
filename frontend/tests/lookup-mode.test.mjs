@@ -137,3 +137,20 @@ test('lookup correction and stock changes still require the existing permissions
  assert.match(ui,/autoGuide:true/);
  assert.match(ui,/lookupVoicePaused/);
 });
+
+
+test('Telugu speech in Hindi script and small spelling variation only opens a report or repeats a shelf',()=>{
+ for(const transcript of ['तप्पु स्थानम','तप्पू स्थानम','తప్పు స్థానమ','తప్పు స్థానము']){
+  assert.equal(lookupVoiceIntent('te-IN',transcript).action,'report',transcript);
+ }
+ for(const transcript of ['స్థానాన్ని మళ్లీ చెప్పండి','స్థానాన్ని మళ్ళీ చెప్పండి','స్థానాన్ని మల్లీ చెప్పండి']){
+  assert.equal(lookupVoiceIntent('te-IN',transcript).action,'repeat',transcript);
+ }
+ for(const transcript of ['తప్పు స్థానం కాదు','तप्पु स्थानम नहीं','not wrong location','స్థానాన్ని మళ్లీ చెప్పండి వద్దు']){
+  assert.equal(lookupVoiceIntent('te-IN',transcript).action,'unknown',transcript);
+ }
+ for(const transcript of ['దొరికిందీ','అవునూ','తప్పు స్థానము and confirm']){
+  assert.notEqual(lookupVoiceIntent('te-IN',transcript).action,'yes');
+  assert.notEqual(lookupVoiceIntent('te-IN',transcript).action,'verify');
+ }
+});
