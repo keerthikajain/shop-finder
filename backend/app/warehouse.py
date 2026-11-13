@@ -631,8 +631,12 @@ def install_warehouse(app,path):
   with connect(path) as c:
    c.execute('BEGIN IMMEDIATE');task=task_get(c,tid,u)
    state=picking_state(task)
-   if state['status'] not in ('active','completed'):
-    raise HTTPException(409,'Only a started picking session can undo a confirmation.')
+   if state['status'] not in ('ready','active','completed'):
+    raise HTTPException(409,'Cannot undo a confirmation for this task.')
+   # Locations Only can record a manual pick before guided picking starts.
+   # Undo only that explicit confirmation; never reopen a ready barcode task.
+   if state['status']=='ready' and (body.line<0 or body.line>=len(task['lines']) or task['lines'][body.line].get('confirmation')!='manual'):
+    raise HTTPException(409,'Only a manually confirmed lookup pick can be undone.')
    if state.get('paused'):raise HTTPException(409,'Resume picking before undoing a confirmation.')
    if body.line>=len(task['lines']):raise HTTPException(422,'Invalid task line.')
    line=task['lines'][body.line]
@@ -769,6 +773,21 @@ def install_warehouse(app,path):
     if body.value not in ('confirmed','yes','checked'):raise HTTPException(422,'Manual verification requires explicit confirmation.')
     line.update(complete=True,confirmation='manual',confirmed_at=now())
    return task_put(c,t)
+ @app.post('/api/warehouse/tasks/{tid}/lookup-line-audio/{index}')
+ async def lookup_line_audio(tid:str,index:int,request:Request):
+  """Speak only a verified, selected item's recorded location; never mutate a pick."""
+  u=identity(request)
+  if index<0:raise HTTPException(422,'Invalid task line.')
+  with connect(path) as c:
+   task=task_get(c,tid,u)
+   line,item=current_line(c,task,index)
+   location=line.get('location')
+   if not location or not any(x['code']==location['code'] for x in item['placements']):
+    raise HTTPException(409,'The recorded shelf changed. Refresh before picking.')
+   speech_text=f"{item['name']}, {item['sku']}. {loc_text(location)}."
+  audio=await voice.speak(speech_text,task['language'])
+  return Response(audio,media_type='audio/wav',headers={'Cache-Control':'no-store'})
+
  @app.post('/api/warehouse/tasks/{tid}/speak')
  async def speech(tid:str,request:Request):
   u=identity(request)
@@ -838,7 +857,8 @@ def install_warehouse(app,path):
   'report_reason_retry','report_suggestion_retry','report_confirm_retry',
   'review_outcome_retry','review_note_retry','review_confirm_retry',
   'move_destination_retry','move_reason_retry','move_preview_retry','move_confirm_retry',
-  'pick_done','pick_undo','help_pick','help_verify','unknown_pick'
+  'pick_done','pick_undo','help_pick','help_verify','unknown_pick',
+  'choose_mode','lookup_help','lookup_confirm','lookup_picked_saved','lookup_cancelled','lookup_select','lookup_unknown'
  ],request:Request):
   identity(request,step.startswith(('review_','move_')))
   prompts={
@@ -957,11 +977,39 @@ def install_warehouse(app,path):
    'unknown_pick':('I did not understand that command. Say help to hear the available choices, or use the buttons.',
      'यह आदेश समझ नहीं आया। विकल्प सुनने के लिए मदद कहें या बटन दबाएं।',
      'I did not understand. Say help, or use the buttons.',
-     'ఆదేశం అర్థం కాలేదు. సహాయం అనండి లేదా బటన్లను వాడండి.')
+     'ఆదేశం అర్థం కాలేదు. సహాయం అనండి లేదా బటన్లను వాడండి.'),
+   'choose_mode':('Would you like guided picking, or just the locations?',
+     'क्या आप सामान चुनने में मदद चाहते हैं, या सिर्फ जगह जानना चाहते हैं?',
+     'Picking mein help chahiye ya sirf locations?',
+     'వస్తువులు తీసుకోవడానికి సహాయం కావాలా, లేక వాటి స్థానాలు మాత్రమే కావాలా?'),
+   'lookup_help':('You can say repeat locations, start picking, found it, wrong location or stop. Choose the item first when there is more than one.',
+     'आप जगह दोहराओ, पिकिंग शुरू करो, मिल गया, गलत जगह या रुको कह सकते हैं। कई सामान हों तो पहले एक चुनें।',
+     'Repeat location, start picking, found it, wrong location ya stop bolo. Multiple items hain toh pehle item select karo.',
+     'స్థానాలు మళ్లీ చెప్పండి, పికింగ్ ప్రారంభించండి, దొరికింది, తప్పు స్థానం లేదా ఆపు అనవచ్చు. ఒకటి కంటే ఎక్కువ ఉంటే ముందుగా వస్తువును ఎంచుకోండి.'),
+   'lookup_confirm':('Did you actually pick this item? Say yes to record it, or no to cancel.',
+     'क्या आपने सच में यह सामान उठाया है? दर्ज करने के लिए हाँ, रद्द करने के लिए नहीं कहें।',
+     'Kya item sach mein pick kiya? Save karne ke liye yes, cancel ke liye no bolo.',
+     'ఈ వస్తువును నిజంగా తీసుకున్నారా? నమోదు చేయడానికి అవును, రద్దు చేయడానికి కాదు అనండి.'),
+   'lookup_picked_saved':('This item is marked picked. The saved shelf and stock quantity have not changed.',
+     'सामान उठाया हुआ दर्ज हो गया। शेल्फ और स्टॉक की मात्रा नहीं बदली है।',
+     'Item picked mark ho gaya. Shelf aur stock quantity nahi badli.',
+     'ఈ వస్తువు తీసుకున్నట్లు నమోదు అయ్యింది. షెల్ఫ్ మరియు స్టాక్ పరిమాణం మారలేదు.'),
+   'lookup_cancelled':('Not confirmed. Your saved items have not changed.',
+     'पुष्टि नहीं हुई। दर्ज सामान नहीं बदला है।',
+     'Confirm nahi hua. Saved items unchanged hain.',
+     'నిర్ధారించలేదు. నమోదు చేసిన వస్తువుల్లో మార్పు లేదు.'),
+   'lookup_select':('Which item do you mean? Say item one, item two, or an exact SKU. You can also tap an item.',
+     'कौन सा सामान? आइटम एक, आइटम दो या सही SKU बोलें, या सामान पर टैप करें।',
+     'Kaunsa item? Item one, item two ya exact SKU bolo. Button bhi use kar sakte ho.',
+     'ఏ వస్తువు? ఐటెమ్ ఒకటి, ఐటెమ్ రెండు లేదా ఖచ్చితమైన SKU చెప్పండి. బటన్ కూడా నొక్కవచ్చు.'),
+   'lookup_unknown':('I did not understand. Say help, repeat locations, start picking, or use the buttons.',
+     'समझ नहीं आया। मदद, जगह दोहराओ, पिकिंग शुरू करो कहें या बटन दबाएँ।',
+     'Samajh nahi aaya. Help, repeat location ya start picking bolo.',
+     'అర్థం కాలేదు. సహాయం, స్థానాలు మళ్లీ చెప్పండి, పికింగ్ ప్రారంభించండి అనండి లేదా బటన్ నొక్కండి.')
   }
   language_index={'en-IN':0,'hi-IN':1,'hi-en':2,'te-IN':3}[body.language]
   phrase=prompts[step][language_index]
-  if step not in ('review_pending_saved','review_verified_saved','move_saved','report_saved','pick_done','pick_undo') and not step.endswith('_retry') and not step.startswith('report_'):
+  if step not in ('review_pending_saved','review_verified_saved','move_saved','report_saved','pick_done','pick_undo','choose_mode','lookup_help','lookup_confirm','lookup_picked_saved','lookup_cancelled','lookup_select','lookup_unknown') and not step.endswith('_retry') and not step.startswith('report_'):
    phrase+=' '+(
     'You can say help, repeat, back or stop.' if body.language=='en-IN' else
     'Help, repeat, back ya stop bol sakte ho.' if body.language=='hi-en' else
