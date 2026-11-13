@@ -10,6 +10,7 @@ import {lookupCopy} from './lookup-mode-copy.js';
 import GuidedVoiceTurn from './guided-voice-turn.jsx';
 import WorkspaceGreeting from './workspace-greeting.jsx';
 import {pickConfirmationIntent} from './picking-confirmations.js';
+import {nextItemChoice,nextItemPhrase,nextItemUi} from './pick-next-intent.js';
 import {voiceAction,actionPhrases,dialogueControl,plausibleShelfSuggestion,reportSubmitCommand,unclearReportSubmit} from './voice-review-commands.js';
 import {fixedVoicePrompt} from './fixed-voice-prompt.js';
 import {readWorkspaceSession,writeWorkspaceSession,clearWorkspaceSession,resumeModal} from './workspace-resume.js';
@@ -84,7 +85,7 @@ export default function WarehouseApp({user,preferences,logout}){
  if(restoredWorkspace.current===undefined)restoredWorkspace.current=readWorkspaceSession(sessionStorage,user.id)||null;
  const savedWorkspace=restoredWorkspace.current;
  const restoreReady=useRef(!savedWorkspace?.taskId);
- const [feedbackText,FB]=useState(''),[feedbackSent,FBS]=useState(false),[ownerFeedback,OF]=useState([]),[voiceGuideText,VGT]=useState(''),[voiceGuideCommand,VGC]=useState(''),[voiceGuidePaused,VGP]=useState(true),[meta,M]=useState(null),[items,I]=useState([]),[collection,C]=useState(()=>savedWorkspace?.collection||'all'),[page,P]=useState(()=>savedWorkspace?.page||'find'),[brand,BR]=useState(''),[locationFilter,LF]=useState(''),[query,Q]=useState(()=>savedWorkspace?.query||''),[task,T]=useState(null),[recent,R]=useState([]),[busy,B]=useState(false),[error,E]=useState(''),[notice,N]=useState(''),[modal,D]=useState(null),[group,G]=useState(()=>savedWorkspace?.group||'request'),[filter,F]=useState(''),[category,CAT]=useState(''),[language,L]=useState(()=>{const saved=localStorage.getItem('sf-voice-'+user.id);return ACTIVE_VOICE_CODES.has(saved)?saved:(VOICE_LANGUAGE_DEFAULT[user.language]||'en-IN')}),[liveMode,LM]=useState(false),[detectedSearchLanguage,DSL]=useState(null),[hintLanguages,HL]=useState([]),[auto,AUTO]=useState(true),[handsFree,HF]=useState(true),[pendingVoicePick,PV]=useState(null),[searchTranscript,ST]=useState(''),[voiceQuery,VQ]=useState(false),[tour,TOUR]=useState(user.tour_done?null:0),[theme,TH]=useState(()=>getThemePreference(localStorage)),[speaking,SP]=useState(false),[filtersOpen,FO]=useState(false),[sizeFilter,SZ]=useState(''),[activeLine,AL]=useState(()=>savedWorkspace?.activeLine||0),[reviewNonce,RV]=useState(0),[lookupMode,SetLookupMode]=useState(()=>savedWorkspace?.lookupMode||'choice'),[modeListening,SetModeListening]=useState(false),[lookupVoicePaused,SetLookupVoicePaused]=useState(false),[lookupSelection,SetLookupSelection]=useState(null),[lookupPending,SetLookupPending]=useState(null),[modeSpeechResult,SetModeSpeechResult]=useState(null);
+ const [feedbackText,FB]=useState(''),[feedbackSent,FBS]=useState(false),[ownerFeedback,OF]=useState([]),[voiceGuideText,VGT]=useState(''),[voiceGuideCommand,VGC]=useState(''),[voiceGuidePaused,VGP]=useState(true),[meta,M]=useState(null),[items,I]=useState([]),[collection,C]=useState(()=>savedWorkspace?.collection||'all'),[page,P]=useState(()=>savedWorkspace?.page||'find'),[brand,BR]=useState(''),[locationFilter,LF]=useState(''),[query,Q]=useState(()=>savedWorkspace?.query||''),[task,T]=useState(null),[recent,R]=useState([]),[busy,B]=useState(false),[error,E]=useState(''),[notice,N]=useState(''),[modal,D]=useState(null),[group,G]=useState(()=>savedWorkspace?.group||'request'),[filter,F]=useState(''),[category,CAT]=useState(''),[language,L]=useState(()=>{const saved=localStorage.getItem('sf-voice-'+user.id);return ACTIVE_VOICE_CODES.has(saved)?saved:(VOICE_LANGUAGE_DEFAULT[user.language]||'en-IN')}),[liveMode,LM]=useState(false),[detectedSearchLanguage,DSL]=useState(null),[hintLanguages,HL]=useState([]),[auto,AUTO]=useState(true),[handsFree,HF]=useState(true),[pendingVoicePick,PV]=useState(null),[pendingNextPick,PN]=useState(null),[searchTranscript,ST]=useState(''),[voiceQuery,VQ]=useState(false),[tour,TOUR]=useState(user.tour_done?null:0),[theme,TH]=useState(()=>getThemePreference(localStorage)),[speaking,SP]=useState(false),[filtersOpen,FO]=useState(false),[sizeFilter,SZ]=useState(''),[activeLine,AL]=useState(()=>savedWorkspace?.activeLine||0),[reviewNonce,RV]=useState(0),[lookupMode,SetLookupMode]=useState(()=>savedWorkspace?.lookupMode||'choice'),[modeListening,SetModeListening]=useState(false),[lookupVoicePaused,SetLookupVoicePaused]=useState(false),[lookupSelection,SetLookupSelection]=useState(null),[lookupPending,SetLookupPending]=useState(null),[modeSpeechResult,SetModeSpeechResult]=useState(null);
  const audio=useRef(),audioURL=useRef(),audioRequest=useRef(null),playbackSerial=useRef(0),voiceFlowStopped=useRef(false),reportResumeRef=useRef(false),generation=useRef(0),main=useRef(),taskVoice=useRef(false),pendingResume=useRef(null),audioEndResolve=useRef(null),modeChoiceSerial=useRef(0),pendingModePrompt=useRef(null);
  const pack=collection==='all'?{id:'all',name:'Whole store',fields:[...new Set(meta?.collections.flatMap(c=>[...c.fields,...(meta.settings.custom_fields[c.id]||[])])||[])]}:meta?.collections.find(c=>c.id===collection),labels=meta?.field_labels||{},voice=!!meta?.voice,prismaV3=meta?.stt_model!=='prisma-v2.5';
  const invalidHints=false;
@@ -394,15 +395,15 @@ export default function WarehouseApp({user,preferences,logout}){
   const deferred=next.lines.filter(line=>line.deferred_reason&&!line.complete).length;
   const index=nextPendingPickIndex(next.lines);
   if(index<0){
-   VGP(true);PV(null);AL(0);
+   VGP(true);PV(null);PN(null);AL(0);
    if(!deferred&&next.lines.every(line=>line.complete)){
     const finished=await api('/tasks/'+next.id+'/picking/finish',{});
     T(finished);N(t('All done! Your picking list is complete.'));
     if(voice&&auto&&!voiceFlowStopped.current)await playFixedVoice('pick_done',finished.language);
    }else{
-    if(voice&&auto&&!voiceFlowStopped.current)await playPickGuidance('next',next,0);
-    N(t('No more items to guide right now. Unconfirmed and reported items are saved for review. Retry an item manually when ready.'));
-    VGT(t('Remaining items are not marked picked. You can retry deferred items or pause picking.'));
+    if(voice&&auto&&!voiceFlowStopped.current)await playFixedVoice('pick_later_ready',next.language,false,true);
+    N(t('No more regular items. Deferred items remain unconfirmed and can be retried below.'));
+    VGT(nextItemUi(appLanguage,'laterRemaining'));
    }
    return;
   }
