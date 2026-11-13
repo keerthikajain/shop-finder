@@ -21,9 +21,9 @@ test('Telugu mode choice rejects mixed, negated, consequential or unrelated spee
 test('The Telugu prompt and microphone use the search task voice locale',async()=>{
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const backend=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
- assert.match(ui,/playFixedVoice\('choose_mode',next\.language,true,true\)/);
+ assert.match(ui,/await playFixedVoice\('choose_mode',next\.language,true,true\)/);
  assert.match(ui,/modeChoiceIntent\(source\.language,transcript\)/);
  assert.match(ui,/language=\{task\.language\} collection=\{collection\} onError=\{E\} onCommand=\{text=>handleModeSpeech\(text\)\}/);
- assert.match(backend,/పికింగ్ సహాయం కావాలి అనండి/);
+ assert.match(backend,/పికింగ్ సహాయం లేదా స్థానాలు మాత్రమే అనండి/);
  assert.equal(modeChoicePhrases('te-IN').locations,'స్థానాలు మాత్రమే');
 });
