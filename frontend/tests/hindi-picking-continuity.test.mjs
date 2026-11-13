@@ -24,7 +24,7 @@ test('Hindi confirmation resumes the next guided item except after an explicit S
  assert.ok(source.includes("VGT(pickingUiCopy(appLanguage,'confirmed'))"));
  assert.ok(source.includes("onError={message=>{E(message)}} onCommand={transcript=>voicePickCommand(transcript)}"));
  assert.ok(source.includes("if(control==='stop'){PV(null);stopVoiceFlow()"));
- assert.ok(source.includes("VGP(true);PV(null);AL(0)"));
+ assert.ok(source.includes("VGP(true);PV(null);PN(null);AL(0)"));
 });
 
 test('HandsFreePicking pauses safely on errors and limits silence loops',async()=>{
