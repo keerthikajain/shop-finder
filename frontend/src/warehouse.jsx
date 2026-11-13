@@ -767,7 +767,7 @@ export default function WarehouseApp({user,preferences,logout}){
   {lastConfirmedIndex>=0&&<div className="sf-picking-undo"><button type="button" disabled={busy||pickPaused} onClick={()=>undoPick(lastConfirmedIndex)}>{pickingUiCopy(appLanguage,'undo')}</button></div>}
   {picking.status!=='completed'&&<div className="sf-voice-guide">
     {picking.status==='ready'&&<p className="sf-voice-guide-preview" role="status">{unresolvedLines.length>0?t('Choose or remove the unresolved variants below before starting. Finder will not guess a size or version.'):reportedLines.length>0?t('Reported shelf locations are skipped until verified. Confirm to guide the remaining items automatically.'):t('All items are ready. Confirm search once; Finder will speak the first location and then listen automatically.')}</p>}
-   {picking.status==='active'&&voice&&<div className="sf-voice-current-status" role="status" aria-live="polite">{pickingUiCopy(appLanguage,pickPaused||voiceGuidePaused?'paused':speaking?'speaking':'listening')}</div>}
+   {picking.status==='active'&&voice&&handsFree&&<div className="sf-voice-current-status" role="status" aria-live="polite">{pickingUiCopy(appLanguage,pickPaused||voiceGuidePaused?'paused':speaking?'speaking':'listening')}</div>}
    {PICKING_VOICE_LANGUAGES.includes(task.language)?<>
     <div className="sf-voice-guide-actions">
       {picking.status==='active'&&voice&&(!handsFree||voiceGuidePaused)&&<VoiceButton small autoStop enabled={!busy&&!speaking&&!pickPaused} language={task.language} onError={E} onText={transcript=>voicePickCommand(transcript,task,true)} label={pickingUiCopy(appLanguage,'listen')}/>}
@@ -776,7 +776,7 @@ export default function WarehouseApp({user,preferences,logout}){
     </div>
     <div className="sf-voice-guide-choices" aria-label={pickingUiCopy(appLanguage,'secondary')}>
       {['verify','report','next'].map(action=><button key={action} type="button" disabled={picking.status!=='active'||busy||pickPaused||(action==='next'&&nextPickIndex<0)} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,action))}>
-        <span className="sf-voice-command-label">{pickingCommandLabel(appLanguage,action)}</span>
+        <span className="sf-voice-command-label">{action==='report'?t('Report issue'):pickingCommandLabel(appLanguage,action)}</span>
       </button>)}
     </div>
     <div className="sf-voice-guide-secondary">
