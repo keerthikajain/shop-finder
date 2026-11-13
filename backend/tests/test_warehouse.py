@@ -2115,7 +2115,7 @@ def test_telugu_stt_typo_recovery_never_executed_on_negation_or_confirmation(tra
 
 def test_telugu_report_and_repeat_voice_intents_are_safe_read_only(setup):
  c,_=setup
- t=search(c,'APP-003',collection='appliances')
+ t=post(c,'/search',{'collection':'appliances','query':'APP-003','language':'te-IN'}).json()
  assert post(c,f"/tasks/{t['id']}/picking/start").status_code==200
  before=c.get('/api/warehouse/tasks/'+t['id'],headers=H).json()
  for transcript,action in [('तप्पू स्थानम','report'),('స్థానాన్ని మళ్ళీ చెప్పండి','repeat')]:
