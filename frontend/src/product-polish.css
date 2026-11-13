@@ -211,6 +211,23 @@
  max-width:100%;
  overflow-wrap:anywhere;
 }
+.sf-compact-app .sf-voice-guide-choices button{
+ flex-direction:column;
+ gap:3px;
+ text-align:center;
+}
+.sf-compact-app .sf-voice-guide-choices .sf-voice-command-label{
+ font-size:12px;
+ font-weight:650;
+ line-height:1.3;
+}
+.sf-compact-app .sf-voice-guide-choices .sf-voice-command-phrase{
+ color:var(--wh-muted,#716b7c);
+ font-size:11px;
+ font-weight:400;
+ line-height:1.3;
+ overflow-wrap:anywhere;
+}
 .sf-compact-app .sf-voice-guide-choices button:first-child{
  color:var(--wh-accent,#7135cf);
  border-color:var(--wh-accent,#7135cf);
