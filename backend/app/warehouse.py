@@ -682,9 +682,11 @@ def install_warehouse(app,path):
    if state['status']=='completed':return task
    if state['status']!='active':raise HTTPException(409,'Start the picking session before completing it.')
    if state.get('paused'):raise HTTPException(409,'Resume picking before finishing.')
-   if not all(line.get('complete') for line in task['lines']):
-    raise HTTPException(409,'Verify every item and recorded shelf before completing this picking session.')
-   picking_check(c,task)
+   # Skipped/cancelled lines are explicitly left unconfirmed, not counted as picks.
+   # Later, declined, or reported items still require retry or owner review.
+   if not all(line.get('complete') or line.get('deferred_reason') in ('skipped','cancelled') for line in task['lines']):
+    raise HTTPException(409,'Finish verified items or explicitly skip/cancel remaining items. Later or reported items still need review.')
+   picking_check(c,task,allow_deferred=True)
    state.update(status='completed',completed_at=now())
    return task_put(c,task)
  @app.delete('/api/warehouse/tasks/{tid}/lines/{index}')
@@ -898,7 +900,7 @@ def install_warehouse(app,path):
   'report_reason_retry','report_suggestion_retry','report_confirm_retry',
   'review_outcome_retry','review_note_retry','review_confirm_retry',
   'move_destination_retry','move_reason_retry','move_preview_retry','move_confirm_retry',
-  'pick_done','pick_undo','pick_defer_choice','pick_cancel_confirm','pick_later_ready','help_pick','help_verify','unknown_pick',
+  'pick_done','pick_undo','pick_exceptions_done','pick_defer_choice','pick_cancel_confirm','pick_later_ready','help_pick','help_verify','unknown_pick',
   'choose_mode','lookup_help','lookup_confirm','lookup_picked_saved','lookup_cancelled','lookup_select','lookup_unknown'
  ],request:Request):
   identity(request,step.startswith(('review_','move_')))
@@ -1015,6 +1017,10 @@ def install_warehouse(app,path):
      'इस सामान को मौजूदा पिकिंग सूची से हटाना है? हटाने के लिए हाँ, रखने के लिए नहीं कहें।',
      'Is item ko current picking se hatana hai? Haan bolo hatane ke liye, nahi bolo rakhne ke liye.',
      'ఈ వస్తువును ప్రస్తుత పికింగ్ జాబితా నుంచి తీసివేయాలా? అవును లేదా కాదు అనండి.'),
+   'pick_exceptions_done':('Skipped and cancelled items remain unconfirmed. You can finish the worklist without changing stock.',
+     'छोड़े गए और रद्द सामान अपुष्ट हैं। आप बिना स्टॉक बदले पिकिंग सूची पूरी कर सकते हैं।',
+     'Skip aur cancel wale items unconfirmed hain. Aap stock badle bina worklist finish kar sakte ho.',
+     'స్కిప్ లేదా రద్దు చేసిన వస్తువులు నిర్ధారించబడలేదు. స్టాక్ మార్చకుండా జాబితాను ముగించవచ్చు.'),
    'pick_later_ready':('Items saved for later are still unconfirmed. Choose Retry this item when ready.',
      'बाद के लिए रखे सामान अभी बिना पुष्टि के हैं। तैयार हों तो फिर से कोशिश करें।',
      'Later wale items abhi unconfirmed hain. Ready ho toh retry karo.',
@@ -1062,7 +1068,7 @@ def install_warehouse(app,path):
   }
   language_index={'en-IN':0,'hi-IN':1,'hi-en':2,'te-IN':3}[body.language]
   phrase=prompts[step][language_index]
-  if step not in ('review_pending_saved','review_verified_saved','move_saved','report_saved','pick_done','pick_undo','pick_defer_choice','pick_cancel_confirm','pick_later_ready','choose_mode','lookup_help','lookup_confirm','lookup_picked_saved','lookup_cancelled','lookup_select','lookup_unknown') and not step.endswith('_retry') and not step.startswith('report_'):
+  if step not in ('review_pending_saved','review_verified_saved','move_saved','report_saved','pick_done','pick_undo','pick_exceptions_done','pick_defer_choice','pick_cancel_confirm','pick_later_ready','choose_mode','lookup_help','lookup_confirm','lookup_picked_saved','lookup_cancelled','lookup_select','lookup_unknown') and not step.endswith('_retry') and not step.startswith('report_'):
    phrase+=' '+(
     'You can say help, repeat, back or stop.' if body.language=='en-IN' else
     'Help, repeat, back ya stop bol sakte ho.' if body.language=='hi-en' else
