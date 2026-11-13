@@ -2006,3 +2006,41 @@ def test_variants_are_informational_requests_not_automatic_picking_confirmation(
   assert response.json()['action']==expected
  assert c.get('/api/warehouse/tasks/'+task['id']).json()==original
  assert c.get('/api/warehouse/issues').json()==[]
+
+
+@pytest.mark.parametrize('transcript,expected',[
+ ('तप्पु स्थानम','report'),
+ ('तप्पू स्थानम','report'),
+ ('తప్పు స్థానమ','report'),
+ ('తప్పు స్థానము','report'),
+ ('తప్పు స్థానము.','report'),
+ ('స్థానాన్ని మళ్లీ చెప్పండి','repeat'),
+ ('స్థానాన్ని మళ్ళీ చెప్పండి','repeat'),
+ ('స్థానాన్ని మల్లీ చెప్పండి','repeat')
+])
+def test_telugu_voice_transcript_script_and_typo_variants(transcript,expected):
+ from app.warehouse_voice_guide import intent
+ assert intent(transcript,'te-IN')==expected
+
+
+@pytest.mark.parametrize('transcript',[
+ 'తప్పు స్థానం కాదు','తప్పు స్థానమ వద్దు','तप्पु स्थानम नहीं',
+ 'not wrong location','do not repeat location','స్థానాన్ని మళ్లీ చెప్పండి వద్దు',
+ 'తప్పు స్థానము దొరికింది','తప్పు స్థానము confirm',
+ 'స్థానాన్ని మళ్లీ చెప్పండి and confirm','దొరికిందీ','అవునూ'
+])
+def test_telugu_voice_typo_recovery_is_not_pick_approval(transcript):
+ from app.warehouse_voice_guide import intent
+ assert intent(transcript,'te-IN')=='unknown'
+
+
+def test_telugu_picking_report_and_repeat_voice_commands_do_not_commit_picks(setup):
+ c,_=setup
+ task=search(c,'APP-003',collection='appliances')
+ assert post(c,f"/tasks/{task['id']}/picking/start").status_code==200
+ before=c.get('/api/warehouse/tasks/'+task['id'],headers=H).json()
+ for transcript,action in [('तप्पू स्थानम','report'),('స్థానాన్ని మళ్ళీ చెప్పండి','repeat')]:
+  r=post(c,f"/tasks/{task['id']}/picking/command",{'transcript':transcript,'line':0})
+  assert r.status_code==200,r.text
+  assert r.json()['action']==action
+ assert c.get('/api/warehouse/tasks/'+task['id'],headers=H).json()==before
