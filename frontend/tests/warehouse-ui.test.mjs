@@ -399,7 +399,7 @@ test('voice picking is discoverable before starting and unmatched requests can b
  assert.match(ui,/picking.status!=='completed'&&<div className="sf-voice-guide"/);
  assert.match(ui,/All items are ready\. Confirm search once/);
  assert.match(ui,/picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused/);
-  assert.match(ui,/HandsFreePicking enabled=/);
+  assert.match(ui,/HandsFreePicking appLanguage=\{appLanguage\} enabled=/);
  assert.match(ui,/async function removeUnresolvedLine\(index\)/);
  assert.match(ui,/Remove from worklist/);
  assert.match(server,/def remove_unresolved_line\(tid:str,index:int,request:Request\)/);
