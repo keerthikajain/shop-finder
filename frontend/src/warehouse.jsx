@@ -585,7 +585,7 @@ export default function WarehouseApp({user,preferences,logout}){
    <button className="primary" type="button" disabled={busy||!canStartPick||nextPickIndex<0} onClick={()=>chooseSearchMode('guided')}><Glyph name="check"/>{lookupCopy(appLanguage,'startGuided')}</button>
   </div>
   {task.lines.filter(line=>line.selected&&line.location).length>1&&<div className="sf-lookup-items" aria-label={lookupCopy(appLanguage,'select')}>
-   {task.lines.map((line,index)=>line.selected&&line.location?<button type="button" key={index} disabled={busy} aria-pressed={lookupSelection===index} onClick={()=>{SetLookupSelection(index);if(voice)void speak(task,index)}}>
+   {task.lines.map((line,index)=>line.selected&&line.location?<button type="button" key={index} disabled={busy||!!lookupPending} aria-pressed={lookupSelection===index} onClick={()=>{SetLookupSelection(index);if(voice)void speak(task,index)}}>
     {line.selected.name} · {line.selected.sku}{line.complete?' ✓':''}
    </button>:null)}
   </div>}
@@ -593,9 +593,9 @@ export default function WarehouseApp({user,preferences,logout}){
    <strong>{lookupCopy(appLanguage,'selected')}: {task.lines[lookupSelection].selected.name} · {task.lines[lookupSelection].selected.sku}</strong>
    <p>{friendlyPath(task.lines[lookupSelection].location,!!task.lines[lookupSelection].selected.synthetic)}</p>
    <div className="sf-lookup-actions">
-    <button type="button" disabled={busy||task.lines[lookupSelection].complete||task.lines[lookupSelection].location_report_open} onClick={()=>requestLookupPick()}>{lookupCopy(appLanguage,'markPicked')}</button>
+    <button type="button" disabled={busy||!!lookupPending||task.lines[lookupSelection].complete||task.lines[lookupSelection].location_report_open} onClick={()=>requestLookupPick()}>{lookupCopy(appLanguage,'markPicked')}</button>
     {task.lines[lookupSelection].complete&&<button type="button" disabled={busy} onClick={()=>undoLookupPick()}>{lookupCopy(appLanguage,'undo')}</button>}
-    <button type="button" disabled={busy} onClick={()=>reportLookupLocation()}>{lookupCopy(appLanguage,'report')}</button>
+    <button type="button" disabled={busy||!!lookupPending} onClick={()=>reportLookupLocation()}>{lookupCopy(appLanguage,'report')}</button>
     {owner&&<button type="button" disabled={busy} onClick={()=>D({type:'move',item:task.lines[lookupSelection].selected,location:task.lines[lookupSelection].location})}>{t('Correct location')}</button>}
     {(owner||meta?.settings?.staff_stock)&&<button type="button" disabled={busy} onClick={()=>D({type:'stock',item:task.lines[lookupSelection].selected,location:task.lines[lookupSelection].location})}>{lookupCopy(appLanguage,'updateStock')}</button>}
     <button type="button" disabled={busy} onClick={()=>speak(task,lookupSelection)}>{lookupCopy(appLanguage,'repeat')}</button>
