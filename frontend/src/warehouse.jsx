@@ -573,7 +573,7 @@ export default function WarehouseApp({user,preferences,logout}){
   </div>
   {voice&&PICKING_VOICE_LANGUAGES.includes(task.language)&&canStartPick&&<>
    <p className="sf-lookup-phrase" role="status">{lookupCopy(appLanguage,'voiceHint')} <span lang={task.language==='hi-en'?'hi-Latn':task.language}>{modeChoicePhrases(task.language).guided} / {modeChoicePhrases(task.language).locations}</span></p>
-   {modeListening?<div className="sf-lookup-voice"><HandsFreePicking enabled={!busy&&!speaking&&!modal&&page==='find'} language={task.language} collection={collection} onError={E} onCommand={text=>handleModeSpeech(text)}/><button type="button" onClick={()=>SetModeListening(false)}>{lookupCopy(appLanguage,'stopVoice')}</button></div>:
+   {modeListening?<div className="sf-lookup-voice"><HandsFreePicking appLanguage={appLanguage} enabled={!busy&&!speaking&&!modal&&page==='find'} language={task.language} collection={collection} onError={E} onCommand={text=>handleModeSpeech(text)}/><button type="button" onClick={()=>SetModeListening(false)}>{lookupCopy(appLanguage,'stopVoice')}</button></div>:
     <div className="sf-lookup-voice"><VoiceButton small autoStop enabled={!busy&&!speaking} language={task.language} onText={text=>handleModeSpeech(text)} onError={E} label={lookupCopy(appLanguage,'speakChoice')}/><button type="button" disabled={busy||speaking} onClick={()=>void offerSearchMode(task)}>{lookupCopy(appLanguage,'listen')}</button></div>}
   </>}
  </section>}
@@ -610,7 +610,7 @@ export default function WarehouseApp({user,preferences,logout}){
   </div>}
   {voice&&PICKING_VOICE_LANGUAGES.includes(task.language)&&<>
    <div className="sf-lookup-voice">
-    {!lookupVoicePaused?<HandsFreePicking enabled={!busy&&!speaking&&!modal&&page==='find'} language={task.language} collection={collection} onError={E} onCommand={text=>handleLookupSpeech(text)}/>:
+    {!lookupVoicePaused?<HandsFreePicking appLanguage={appLanguage} enabled={!busy&&!speaking&&!modal&&page==='find'} language={task.language} collection={collection} onError={E} onCommand={text=>handleLookupSpeech(text)}/>:
       <VoiceButton small autoStop enabled={!busy&&!speaking} language={task.language} label={lookupCopy(appLanguage,'speakChoice')} onError={E} onText={text=>handleLookupSpeech(text)}/>}
     <button type="button" disabled={busy&&!speaking} onClick={()=>{if(speaking){stopSpeech();SetLookupVoicePaused(true)}else SetLookupVoicePaused(v=>!v)}}>{lookupCopy(appLanguage,lookupVoicePaused&&!speaking?'resumeVoice':'stopVoice')}</button>
     <button type="button" disabled={busy} onClick={()=>handleLookupSpeech(pickVoicePhrase(task.language,'help'))}>{lookupCopy(appLanguage,'help')}</button>
@@ -629,7 +629,7 @@ export default function WarehouseApp({user,preferences,logout}){
     <div className="sf-voice-guide-actions">
      
      {picking.status==='active'&&voice&&(!handsFree||voiceGuidePaused)&&<VoiceButton small autoStop enabled={!busy&&!speaking&&!pickPaused} language={task.language} onError={E} onText={transcript=>voicePickCommand(transcript)} label={pickingUiCopy(appLanguage,'listen')}/>}
-     {picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused&&<HandsFreePicking enabled={!busy&&!speaking&&!modal&&page==='find'} language={task.language} collection={collection} onError={message=>{E(message)}} onCommand={transcript=>voicePickCommand(transcript)}/>}
+     {picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused&&<HandsFreePicking appLanguage={appLanguage} enabled={!busy&&!speaking&&!modal&&page==='find'} language={task.language} collection={collection} onError={message=>{E(message)}} onCommand={transcript=>voicePickCommand(transcript)}/>}
      <button type="button" disabled={picking.status!=='active'||(busy&&!speaking)||(!speaking&&(!voice||pickPaused))} onClick={()=>speaking?stopVoiceFlow():playPickGuidance('repeat',task,activeLine,true)}>{pickingUiCopy(appLanguage,speaking?'stopAudio':'read')}</button>
      {picking.status==='active'&&voice&&handsFree&&<button type="button" className="sf-voice-listen-toggle" aria-pressed={!voiceGuidePaused} disabled={voiceGuidePaused&&(busy||speaking||pickPaused)} onClick={()=>{if(!voiceGuidePaused){PV(null);stopVoiceFlow();return}voiceFlowStopped.current=false;VGP(false);if(task&&nextPickIndex>=0&&auto)playPickGuidance('repeat',task,nextPickIndex)}}>{pickingUiCopy(appLanguage,voiceGuidePaused?'resume':'stop')}</button>}
     </div>
