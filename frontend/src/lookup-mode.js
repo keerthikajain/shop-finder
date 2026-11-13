@@ -18,10 +18,17 @@ const EXTRA={
  'te-IN':{report:['తప్పు స్థానం','తప్పు స్థానము','తప్పు లొకేషన్','तप्पु स्थानम','wrong location'],verify:['దొరికింది','found it'],repeat:['స్థానాన్ని మళ్లీ చెప్పండి','location दोबारा बताओ','repeat location'],help:['సహాయం','help'],stop:['ఆపు','stop']}
 };
 const ITEM_WORDS={
- 'en-IN':[/^(?:item|number)\s+(\d{1,2})$/,/^(first|second|third|fourth|fifth)\s+item$/],
- 'hi-IN':[/^(?:सामान|आइटम)\s+(\d{1,2})$/],
- 'hi-en':[/^(?:item|number)\s+(\d{1,2})$/],
- 'te-IN':[/^(?:item|number)\s+(\d{1,2})$/,/^(?:వస్తువు|ఐటెమ్)\s+(\d{1,2})$/]
+ 'en-IN':[/^(?:item|number)\s+(\d{1,2}|one|two|three|four|five)$/,/^(first|second|third|fourth|fifth)\s+item$/],
+ 'hi-IN':[/^(?:सामान|आइटम)\s+(\d{1,2}|एक|दो|तीन|चार|पाँच|पांच)$/],
+ 'hi-en':[/^(?:item|number|आइटम)\s+(\d{1,2}|one|two|three|four|five|ek|do|teen|char|panch|एक|दो)$/],
+ 'te-IN':[/^(?:item|number|వస్తువు|ఐటెమ్)\s+(\d{1,2}|one|two|three|four|five|ఒకటి|రెండు|మూడు|నాలుగు|ఐదు)$/]
+};
+const INDEX_WORDS={
+ one:0,two:1,three:2,four:3,five:4,
+ first:0,second:1,third:2,fourth:3,fifth:4,
+ ek:0,do:1,teen:2,char:3,panch:4,
+ 'एक':0,'दो':1,'तीन':2,'चार':3,'पाँच':4,'पांच':4,
+ 'ఒకటి':0,'రెండు':1,'మూడు':2,'నాలుగు':3,'ఐదు':4
 };
 export function modeChoiceIntent(language,text){
  const phrase=norm(text);
@@ -50,8 +57,7 @@ export function lookupVoiceIntent(language,text,lines=[]){
  for(const pattern of ITEM_WORDS[language]||ITEM_WORDS['en-IN']){
   const match=phrase.match(pattern);
   if(!match)continue;
-  const index=/^\d+$/.test(match[1])?Number(match[1])-1:
-   ['first','second','third','fourth','fifth'].indexOf(match[1]);
+  const index=/^\d+$/.test(match[1])?Number(match[1])-1:(INDEX_WORDS[match[1]]??-1);
   if(index>=0&&index<lines.length)return {action:'select',line:index};
  }
  return {action:'unknown'};
