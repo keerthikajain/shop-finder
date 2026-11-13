@@ -65,6 +65,7 @@ const PHRASES={
 };
 // Short, safe navigation variants observed in real mixed-script Prisma
 // transcripts. Keep owner approval, saving, and item confirmation exact.
+import {safeNavigationVariant} from './safe-navigation-variants.js';
 const NAVIGATION_VARIANTS={
  'te-IN':{
   repeat:['location दोबारा बताओ','लोकेशन दोबारा बताओ','location dobara batao','location మళ్లీ చెప్పండి','లొకేషన్ మళ్ళీ చెప్పండి'],
@@ -101,7 +102,8 @@ export function dialogueControl(language,transcript){
   // English fallback is intentional: a worker can say "stop" or "back to edit"
   // even if the speech recognizer code-switches to English mid-conversation.
   if(voiceAction(language,action,transcript)||voiceAction('en-IN',action,transcript)||
-     (NAVIGATION_VARIANTS[language]?.[action]||[]).some(phrase=>normalize(phrase)===normalize(transcript)))return action;
+     (NAVIGATION_VARIANTS[language]?.[action]||[]).some(phrase=>normalize(phrase)===normalize(transcript))||
+     (action==='repeat'&&safeNavigationVariant(transcript,[...actionPhrases(language,action),...actionPhrases('en-IN',action),...(NAVIGATION_VARIANTS[language]?.[action]||[])])))return action;
  }
  return null;
 }
