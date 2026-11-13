@@ -246,7 +246,7 @@ export default function WarehouseApp({user,preferences,logout}){
   }catch(err){if(err.name!=='AbortError'&&serial===playbackSerial.current){VGP(true);E(err.name==='NotAllowedError'?t('Tap Read guidance to allow audio playback. Then start listening when ready.'):err.message)}if(serial===playbackSerial.current)SP(false)}
   finally{if(audioRequest.current===controller)audioRequest.current=null}
  }
- async function voicePickCommand(transcript,source=task){
+ async function voicePickCommand(transcript,source=task,manualRequest=false){
   if(!source||!transcript?.trim())return;
   const control=dialogueControl(source.language,transcript);
   // Informational Help remains available while picking is paused.
@@ -261,7 +261,10 @@ export default function WarehouseApp({user,preferences,logout}){
    return;
   }
   if(control==='repeat'){
-   if(voice&&!voiceFlowStopped.current)await playPickGuidance(pendingVoicePick?'verify':'repeat',source,pendingVoicePick?.line??activeLine);
+   // A worker can explicitly request a repeat while automatic voice is paused.
+   // Play one answer; do not restart hands-free listening or change pick progress.
+   if(voice&&(!voiceFlowStopped.current||manualRequest))
+    await playPickGuidance(pendingVoicePick?'verify':'repeat',source,pendingVoicePick?.line??activeLine,manualRequest);
    return;
   }
   if(control==='back'){
@@ -423,7 +426,7 @@ export default function WarehouseApp({user,preferences,logout}){
    {PICKING_VOICE_LANGUAGES.includes(task.language)?<>
     <div className="sf-voice-guide-actions">
      
-     {picking.status==='active'&&voice&&(!handsFree||voiceGuidePaused)&&<VoiceButton small autoStop enabled={!busy&&!speaking&&!pickPaused} language={task.language} onError={E} onText={transcript=>voicePickCommand(transcript)} label={pickingUiCopy(appLanguage,'listen')}/>}
+     {picking.status==='active'&&voice&&(!handsFree||voiceGuidePaused)&&<VoiceButton small autoStop enabled={!busy&&!speaking&&!pickPaused} language={task.language} onError={E} onText={transcript=>voicePickCommand(transcript,task,true)} label={pickingUiCopy(appLanguage,'listen')}/>}
      {picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused&&<HandsFreePicking enabled={!busy&&!speaking&&!modal&&page==='find'} language={task.language} collection={collection} onError={message=>{E(message)}} onCommand={transcript=>voicePickCommand(transcript)}/>}
      <button type="button" disabled={picking.status!=='active'||(busy&&!speaking)||(!speaking&&(!voice||pickPaused))} onClick={()=>speaking?stopVoiceFlow():playPickGuidance('repeat',task,activeLine,true)}>{pickingUiCopy(appLanguage,speaking?'stopAudio':'read')}</button>
      {picking.status==='active'&&voice&&handsFree&&<button type="button" className="sf-voice-listen-toggle" aria-pressed={!voiceGuidePaused} disabled={voiceGuidePaused&&(busy||speaking||pickPaused)} onClick={()=>{if(!voiceGuidePaused){PV(null);stopVoiceFlow();return}voiceFlowStopped.current=false;VGP(false);if(task&&nextPickIndex>=0&&auto)playPickGuidance('repeat',task,nextPickIndex)}}>{pickingUiCopy(appLanguage,voiceGuidePaused?'resume':'stop')}</button>}
