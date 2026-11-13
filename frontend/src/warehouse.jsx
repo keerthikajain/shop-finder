@@ -464,12 +464,51 @@ export default function WarehouseApp({user,preferences,logout}){
   }catch(err){if(err.name!=='AbortError'&&serial===playbackSerial.current){VGP(true);E(err.name==='NotAllowedError'?t('Tap Read guidance to allow audio playback. Then start listening when ready.'):err.message)}if(serial===playbackSerial.current)SP(false)}
   finally{if(audioRequest.current===controller)audioRequest.current=null}
  }
+ async function applyNextChoice(source,line,choice){
+  if(!source||!['later','skipped','cancelled'].includes(choice))return;
+  const current=source.lines?.[line];
+  if(!current||current.complete||current.deferred_reason||!current.selected||!current.location){
+   PN(null);E(t('The picking list changed. Check the current item again.'));return;
+  }
+  PN(null);PV(null);
+  await run(async()=>{
+   await deferPick(source,line,choice);
+   if(choice==='later')VGT(nextItemUi(appLanguage,'laterStatus'));
+   else if(choice==='skipped')VGT(nextItemUi(appLanguage,'skippedStatus'));
+   else VGT(nextItemUi(appLanguage,'cancelledStatus'));
+  });
+ }
+ function askNextChoice(source,line){
+  const current=source?.lines?.[line];
+  if(!current||current.complete||current.deferred_reason||!current.selected||!current.location){
+   N(nextItemUi(appLanguage,'unknown'));return;
+  }
+  PV(null);PN({taskId:source.id,line,phase:'choose',sku:current.selected.sku});AL(line);
+  VGT(nextItemUi(appLanguage,'question'));
+  if(voice&&!voiceFlowStopped.current)void playFixedVoice('pick_defer_choice',source.language,false,true);
+ }
  async function voicePickCommand(transcript,source=task,manualRequest=false){
   if(!source||!transcript?.trim())return;
   const control=dialogueControl(source.language,transcript);
   // Informational Help remains available while picking is paused.
   if(source.picking?.paused&&control!=='help')return;
   VGC(transcript);
+  if(pendingNextPick&&pendingNextPick.taskId===source.id){
+   if(control==='stop'){PN(null);stopVoiceFlow();return false}
+   if(control==='repeat'){if(voice)await playFixedVoice(pendingNextPick.phase==='cancel'?'pick_cancel_confirm':'pick_defer_choice',source.language,false,true);return}
+   const answer=pendingNextPick.phase==='cancel'?pickConfirmationIntent(source.language,transcript):nextItemChoice(source.language,transcript);
+   if(pendingNextPick.phase==='cancel'){
+    if(answer==='yes')return applyNextChoice(source,pendingNextPick.line,'cancelled');
+    if(answer==='no'){PN(null);VGT(nextItemUi(appLanguage,'question'));return}
+   }else{
+    if(answer==='later')return applyNextChoice(source,pendingNextPick.line,'later');
+    if(answer==='skip')return applyNextChoice(source,pendingNextPick.line,'skipped');
+    if(answer==='cancel'){PN({...pendingNextPick,phase:'cancel'});VGT(nextItemUi(appLanguage,'confirmCancel'));if(voice)await playFixedVoice('pick_cancel_confirm',source.language,false,true);return}
+    if(answer==='back'||control==='back'){PN(null);VGT(nextItemUi(appLanguage,'back'));return}
+   }
+   VGT(nextItemUi(appLanguage,'unknown'));
+   return;
+  }
   if(control==='stop'){PV(null);stopVoiceFlow();VGT(pickingUiCopy(appLanguage,'stopSaved'));return false}
   if(control==='help'){
    VGT(pendingVoicePick?pickingUiTip(appLanguage,'confirm'):pickingUiTip(appLanguage,'available'));
@@ -537,9 +576,8 @@ export default function WarehouseApp({user,preferences,logout}){
     reportResumeRef.current=handsFree&&!voiceGuidePaused;
     PV(null);VGP(true);
     if(selected?.selected){
-     D({type:'report',item:selected.selected,location:selected.location,index});
+     D({type:'report',item:selected.selected,location:selected.location,index,autoGuide:true});
      VGT(pickingUiCopy(appLanguage,'reportHandoff'));
-     if(voice)await playPickGuidance('report',source,index);
     }
     return false;
    }
@@ -550,6 +588,11 @@ export default function WarehouseApp({user,preferences,logout}){
   return await run(async()=>{
    const answer=await api('/tasks/'+source.id+'/picking/command',{transcript,line:activeLine});
    VGT(answer.action==='unknown'?pickingUiTip(appLanguage,'available'):pickingUiCopy(appLanguage,'active'));
+   if(answer.action==='next'){
+    const index=nextPendingPickIndex(source.lines);
+    askNextChoice(source,index>=0?index:activeLine);
+    return;
+   }
    if(answer.line!=null)AL(answer.line);
    if(answer.action==='verify'&&answer.line!=null){PV({taskId:source.id,line:answer.line,sku:source.lines[answer.line]?.selected?.sku});VGT(pickingUiTip(appLanguage,'confirm'));}
    if(answer.action==='report'&&answer.line!=null){
@@ -557,9 +600,8 @@ export default function WarehouseApp({user,preferences,logout}){
     PV(null);VGP(true); // Stop the pick microphone before changing to the report step.
     const selected=source.lines[answer.line];
     if(selected?.selected){
-     D({type:'report',item:selected.selected,location:selected.location,index:answer.line});
+     D({type:'report',item:selected.selected,location:selected.location,index:answer.line,autoGuide:true});
      VGT(pickingUiCopy(appLanguage,'reportHandoff'));
-     if(voice)await playPickGuidance('report',source,answer.line);
     }
     return false; // The voice loop must not restart for this command.
    }
