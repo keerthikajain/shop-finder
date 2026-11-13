@@ -14,7 +14,7 @@ import {fixedVoicePrompt} from './fixed-voice-prompt.js';
  */
 export default function GuidedVoiceTurn({
  language='en-IN',stage,promptEndpoint=null,promptBody=null,retryStep=null,onTranscript,onBack,onStop,
- onError=()=>{},onActiveChange=()=>{},disabled=false,context='location review'
+ onError=()=>{},onActiveChange=()=>{},disabled=false,autoStart=false,context='location review'
 }){
  const appLanguage=useContext(Locale);
  const [active,SetActive]=useState(false),[cycle,Cycle]=useState(0);
@@ -22,6 +22,7 @@ export default function GuidedVoiceTurn({
  const [heard,Heard]=useState('');
  const handlers=useRef({onTranscript,onBack,onStop,onError,onActiveChange}),promptBodyRef=useRef(promptBody);
  const stageRef=useRef(stage),silence=useRef(0),retryNarration=useRef(false);
+ const autoStarted=useRef(false);
  // Control labels and status follow the app language. Recognition and narration
  // intentionally remain in the selected speech language.
  const copy=key=>reportUiCopy(appLanguage,key);
@@ -140,6 +141,9 @@ export default function GuidedVoiceTurn({
  function start(){
   silence.current=0;retryNarration.current=false;ErrorMessage('');Heard('');SetActive(true);handlers.current.onActiveChange(true);Cycle(v=>v+1);
  }
+ // A voice-initiated location report should begin its existing safe guided review
+ // automatically. An ordinary manually opened report remains opt-in.
+ useEffect(()=>{if(autoStart&&!disabled&&!autoStarted.current){autoStarted.current=true;start()}},[autoStart,disabled]);
  return <section className="sf-guided-owner-voice" aria-label={context}>
   <div className="sf-guided-owner-voice-actions">
    {!active?<button type="button" disabled={disabled} onClick={start}>{copy(status==='paused'?'guideRetry':'guideStart')}</button>:
