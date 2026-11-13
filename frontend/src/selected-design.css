@@ -2813,3 +2813,16 @@ html,body,#root{max-width:100%;overflow-x:clip}
  .sf-find-page .wh-task .wh-task-footer>div{margin-left:auto}
  .sf-find-page .wh-task .sf-location-check{margin:0}
 }
+
+/* Compact search: clear input without erasing saved worklist, and show long search diagnostics on demand. */
+.sf-find-page .wh-ask form .sf-search-input-wrap{position:relative;flex:1 1 auto;min-width:0}
+.sf-find-page .wh-ask form .sf-search-input-wrap #wh-query{width:100%;box-sizing:border-box;padding-right:45px}
+.sf-find-page .sf-clear-query{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:34px;height:34px;min-height:34px!important;padding:0;border:0;border-radius:8px;background:transparent;color:var(--wh-muted);cursor:pointer}
+.sf-find-page .sf-clear-query:hover,.sf-find-page .sf-clear-query:focus-visible{background:var(--wh-soft);color:var(--wh-accent)}
+.sf-find-page .sf-search-details{margin:0 0 12px;border:1px solid var(--wh-border);border-radius:10px;padding:7px 12px;background:var(--wh-surface);color:var(--wh-muted);font-size:12px}
+.sf-find-page .sf-search-details summary{cursor:pointer;max-width:max-content;font-size:12px;font-weight:600;color:var(--wh-muted)}
+.sf-find-page .sf-search-details-body{margin-top:8px;border-top:1px solid var(--wh-border);padding-top:8px;overflow-wrap:anywhere}
+.sf-find-page .sf-search-details-body p{margin:4px 0;font-size:12px;line-height:1.55}
+.sf-find-page .sf-search-details-body .sf-mode-speech-result{margin:8px 0 0;font-size:12px}
+.sf-find-page .sf-unrecognized-voice{margin:0 0 10px;padding:9px 12px;background:var(--wh-soft);border-radius:8px;font-size:12px;color:var(--wh-text)}
+@media(max-width:700px){.sf-find-page .wh-ask form .sf-search-input-wrap{flex:1 1 100%}.sf-find-page .sf-clear-query{right:5px}}
