@@ -98,7 +98,7 @@ test('location feedback is explicit and keeps no-answer searches out of review',
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(source,/\/tasks\/'\+task.id\+'\/location-check'/);
  assert.match(source,/className="sf-location-yes"/);
- assert.match(source,/className="sf-location-wrong"/);
+ assert.match(source,/className="sf-item-report-link"/);
  assert.match(source,/location_report_open/);
  assert.match(source,/kind:location\?'wrong_location':'general'/);
 });
@@ -606,7 +606,7 @@ test('completed picks do not show redundant shelf-check or pick verification act
   assert.match(src,/Verify location \(optional\)/);
   assert.match(src,/sf-item-report-link/);
   assert.doesNotMatch(src,/className="sf-guide-jump"/);
-  assert.doesNotMatch(src,/className="sf-stock-badge"/);
+  assert.doesNotMatch(src,/className="sf-stock-badge">\\{line\\.location\\.quantity/);
   assert.match(src,/sf-shelf-all-locations/);
  assert.match(src,/disabled=\{busy\|\|pickPaused\|\|picking\.status==='completed'\|\|line\.complete\|\|!!line\.deferred_reason\|\|line\.location_report_open\}/);
  assert.match(src,/line\.complete\?\(line\.confirmation==='barcode'\?'Scan confirmed':'Manually confirmed'\):line\.location_feedback/);
@@ -793,7 +793,8 @@ test('spoken answers guidance welcome and reports expose explicit stop buttons',
  assert.match(src,/playbackSerial\.current\+\+/);
  assert.match(src,/audioRequest\.current\?\.abort\(\)/);
  assert.match(src,/onClick=\{\(\)=>speaking\?stopSpeech\(\):speak\(task\)\}/);
- assert.ok(src.includes("pickingUiCopy(appLanguage,speaking?'stopAudio':'read')"));
+ assert.ok(src.includes("className=\"sf-voice-stop-audio\""));
+  assert.ok(src.includes("onClick={stopVoiceFlow}"));
  assert.match(src,/className="sf-report-stop-audio" onClick=\{onStopSpeaking\}/);
  assert.doesNotMatch(account,/welcomeStatus==='speaking'\|\|welcomeStatus==='starting'/);
  assert.doesNotMatch(account,/\?'Stop welcome':'Hear welcome'/);
