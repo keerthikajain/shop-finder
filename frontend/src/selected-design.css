@@ -2907,3 +2907,36 @@ html,body,#root{max-width:100%;overflow-x:clip}
  .sf-find-page .wh-work-grid>.wh-route{grid-row:1;grid-column:1}
  .sf-find-page .wh-work-grid>.wh-task-list{grid-row:2;grid-column:1}
 }
+
+/* Compact guided picking: retain all functions without a tall empty voice panel. */
+.sf-find-page .sf-guided-picking{gap:8px;padding:12px 16px;margin-bottom:12px}
+.sf-find-page .sf-picking-head{gap:8px;align-items:center}
+.sf-find-page .sf-picking-head h3{font-size:18px;margin:0 0 2px}
+.sf-find-page .sf-picking-head small{font-size:11px;line-height:1.35}
+.sf-find-page .sf-guided-picking>progress{height:6px;margin:1px 0}
+.sf-find-page .sf-guided-picking .sf-picking-undo{margin:0}
+.sf-find-page .sf-guided-picking .sf-picking-undo button{min-height:34px;padding:5px 10px;font-size:12px}
+.sf-find-page .sf-guided-picking .sf-voice-guide{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 12px;background:var(--wh-soft)}
+.sf-find-page .sf-guided-picking .sf-voice-current-status{flex:0 1 auto;margin:0;padding:5px 9px;font-size:12px}
+.sf-find-page .sf-guided-picking .sf-voice-guide-actions{display:flex;align-items:center;flex:0 1 auto;gap:7px;margin:0}
+.sf-find-page .sf-guided-picking .sf-voice-guide-actions button{min-height:36px;padding:6px 10px;font-size:12px}
+.sf-find-page .sf-guided-picking .sf-voice-guide-choices{display:flex;flex:0 1 auto;gap:7px;margin:0}
+.sf-find-page .sf-guided-picking .sf-voice-guide-choices button{min-height:38px;padding:6px 12px;font-size:12px}
+.sf-find-page .sf-guided-picking .sf-voice-guide-secondary{display:flex;align-items:center;gap:6px;margin:0}
+.sf-find-page .sf-guided-picking .sf-voice-guide-secondary button{min-height:34px;padding:5px 10px;font-size:12px}
+.sf-find-page .sf-guided-picking .sf-voice-details{flex:1 1 100%}
+.sf-find-page .sf-guided-picking .sf-voice-pick-confirm,
+.sf-find-page .sf-guided-picking .sf-next-choice,
+.sf-find-page .sf-guided-picking .sf-guide-reply,
+.sf-find-page .sf-guided-picking .sf-voice-guide-preview{flex:1 1 100%;margin:0}
+.sf-find-page .sf-guided-picking .sf-picking-actions{gap:8px}
+.sf-find-page .sf-guided-picking .sf-picking-actions>div{gap:7px}
+.sf-find-page .sf-guided-picking .sf-picking-actions button{min-height:36px;padding:6px 11px;font-size:12px}
+@media(max-width:700px){
+ .sf-find-page .sf-guided-picking{padding:10px}
+ .sf-find-page .sf-guided-picking .sf-voice-guide{gap:8px;padding:9px}
+ .sf-find-page .sf-guided-picking .sf-voice-guide-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:1 1 100%}
+ .sf-find-page .sf-guided-picking .sf-voice-guide-choices button{min-width:0;padding:7px 3px}
+ .sf-find-page .sf-guided-picking .sf-voice-guide-actions{flex-wrap:wrap}
+ .sf-find-page .sf-guided-picking .sf-picking-actions>span{flex-basis:100%}
+}
