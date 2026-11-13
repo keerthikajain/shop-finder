@@ -2165,3 +2165,42 @@ def test_telugu_clarification_speech_uses_selected_task_locale(setup,monkeypatch
  assert texts[-1][1]=='te-IN'
  assert 'సైజు' in texts[-1][0]
  assert task['lines'][0]['selected'] is None
+
+
+def test_next_item_later_skip_cancel_are_unconfirmed_and_do_not_change_inventory(setup):
+ c,_=setup
+ before=items(c)
+ for reason in ('later','skipped','cancelled'):
+  task=search(c,'CLO-001 and CLO-004');tid=task['id']
+  assert post(c,f'/tasks/{tid}/picking/start').status_code==200
+  response=post(c,f'/tasks/{tid}/picking/defer',{'line':0,'reason':reason})
+  assert response.status_code==200,response.text
+  line=response.json()['lines'][0]
+  assert line['deferred_reason']==reason
+  assert line['complete'] is False and line['product_scanned'] is False
+  assert post(c,f'/tasks/{tid}/scan',{'line':0,'kind':'manual','value':'confirmed'}).status_code==409
+  assert post(c,f'/tasks/{tid}/picking/defer',{'line':0,'reason':reason}).status_code==409
+  next_item=post(c,f'/tasks/{tid}/picking/command',{'transcript':'next item','line':0})
+  assert next_item.status_code==200,next_item.text
+  assert next_item.json()['line']==1
+  if reason=='cancelled':
+   assert post(c,f'/tasks/{tid}/picking/retry',{'line':0}).status_code==409
+  else:
+   retried=post(c,f'/tasks/{tid}/picking/retry',{'line':0})
+   assert retried.status_code==200,retried.text
+   assert 'deferred_reason' not in retried.json()['lines'][0]
+ assert items(c)==before
+
+
+def test_next_item_voice_choice_audio_is_localized_and_read_only(setup,monkeypatch):
+ c,_=setup
+ task=search(c,'CLO-001 and CLO-004')
+ async def fake_speak(message,language):
+  return b'RIFF-test'
+ monkeypatch.setattr('backend.app.warehouse.voice.speak',fake_speak)
+ for code in ('en-IN','hi-IN','hi-en','te-IN'):
+  for step in ('pick_defer_choice','pick_cancel_confirm','pick_later_ready'):
+   response=post(c,'/voice/step-audio/'+step,{'language':code})
+   assert response.status_code==200,response.text
+   assert response.content==b'RIFF-test'
+ assert items(c)==items(c)
