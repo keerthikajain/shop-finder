@@ -2063,3 +2063,24 @@ def test_locations_only_wrong_location_reports_without_changing_recorded_shelf(s
  assert current['placements']==original['placements']
  assert current['revision']==original['revision']
  assert c.get('/api/warehouse/issues',params={'collection':'clothing'},headers=H).json()
+
+
+def test_lookup_only_pick_can_be_undone_with_audit_while_ready(setup):
+ c,path=setup
+ task=search(c,'CLO-001')
+ task_id=task['id']
+ result=post(c,f'/tasks/{task_id}/scan',{'line':0,'kind':'manual','value':'confirmed'})
+ assert result.status_code==200
+ assert result.json()['picking']['status']=='ready'
+ undone=post(c,f'/tasks/{task_id}/picking/undo',
+             {'line':0,'reason':'Corrected mistaken lookup confirmation'})
+ assert undone.status_code==200,undone.text
+ state=undone.json()
+ assert state['picking']['status']=='ready'
+ assert state['lines'][0]['complete'] is False
+ assert state['pick_adjustments'][-1]['reason']=='Corrected mistaken lookup confirmation'
+ assert post(c,f'/tasks/{task_id}/picking/undo',{'line':0}).status_code==409
+ assert post(c,f'/tasks/{task_id}/scan',
+             {'line':0,'kind':'manual','value':'confirmed'}).status_code==200
+ with connect(path) as db:
+  assert db.execute('SELECT count(*) FROM wh_items WHERE sku=?',('CLO-001',)).fetchone()[0]==1
