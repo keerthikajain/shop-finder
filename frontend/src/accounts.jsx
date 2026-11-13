@@ -33,7 +33,7 @@ export function Login({ready,configured,language,L,error,busy,notice='',demoEnab
   welcomePlayback.current=playback;
   const locale=APP_GREETING_VOICE[language]||'en-IN';
   playWelcomeOnce({
-   url:'/api/welcome/audio?language='+encodeURIComponent(locale),
+   url:'/api/welcome/audio?language='+encodeURIComponent(locale)+'&v=calm2',
    language:locale,text:greeting,controller,playback,gnaniOnly:true
   });
   return ()=>stopWelcome(playback);
