@@ -7,7 +7,8 @@ test('all resolved picking cards retain the same location and footer surfaces',a
  const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
  assert.match(ui,/sf-task-reported/);
  assert.match(ui,/sf-task-skipped/);
- assert.match(ui,/line\.complete\?t\('Picked and verified\. This item is complete\.'\)/);
+ assert.match(ui,/line\.location_feedback\?\.status==='correct'\?t\('Shelf location checked'\)/);
+  assert.match(ui,/className="sf-location-check"/);
  assert.match(ui,/line\.complete\|\|picking\.status==='completed'/);
  assert.match(ui,/t\(line\.complete\?'Picked and verified':'Confirm picked item'\)/);
  assert.match(css,/\.sf-find-page \.wh-task-list>\.wh-task/);
