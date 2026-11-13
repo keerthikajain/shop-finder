@@ -8,7 +8,7 @@ test('variant clarification runs before mode selection and retains manual choice
  assert.match(ui,/line\.index===firstVoiceClarification/);
  assert.match(ui,/VariantVoiceClarifier/);
  assert.match(ui,/api\('\/tasks\/'\+task\.id\+'\/clarify'/);
- assert.match(ui,/if\(next\.lines\.every\(x=>x\.selected&&x\.location\)\)void offerSearchMode\(next\)/);
+ assert.match(ui,/if\(next\.lines\.every\(x=>x\.selected&&x\.location\)\)pendingModePrompt\.current=next\.id/);
  assert.match(ui,/<Clarification key=/);
 });
 
