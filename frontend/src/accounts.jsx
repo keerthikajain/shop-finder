@@ -2,6 +2,7 @@ import React,{useState,useEffect,useRef} from 'react';
 import {Mark,Glyph} from './warehouse-ui.jsx';
 import {Locale,useT,APP_LANGUAGES} from './locale.js';
 import {playWelcomeOnce,stopWelcome} from './welcome-audio.js';
+import {APP_GREETING_VOICE,PUBLIC_GREETING} from './greeting-language.js';
 export async function request(path,options={}){
  const r=await fetch('/api'+path,{signal:AbortSignal.timeout(45000),...options,headers:{'Content-Type':'application/json','X-Shop-Request':'1',...options.headers}});
  if(r.status===401&&path!='/auth/login')window.dispatchEvent(new Event('session-expired'));
@@ -17,30 +18,23 @@ export function AccountGate({children}){
 }
 // The public sign-in requests a fixed cached welcome clip. No client API key
 // and no arbitrary unauthenticated synthesis request can be made.
-const WELCOME_TEXT={
- en:"Hi there! Welcome to Finder. Let's make finding things easier!",
- hi:'नमस्ते! फाइंडर में आपका स्वागत है। चलिए, आज का काम आसान बनाते हैं!',
- kn:'ಫೈಂಡರ್‌ಗೆ ಸ್ವಾಗತ! ಬನ್ನಿ, ಇಂದಿನ ಕೆಲಸವನ್ನು ಸುಲಭಗೊಳಿಸೋಣ!',
- te:'నమస్కారం! ఫైండర్‌కు స్వాగతం. ఈ రోజు పని మరింత సులభంగా చేద్దాం!'
-};
-const WELCOME_LANGUAGE={en:'en-IN',hi:'hi-IN',kn:'kn-IN',te:'te-IN'};
 export function Login({ready,configured,language,L,error,busy,notice='',demoEnabled=false,signupEnabled=false,onChallenge,onDemo,onSubmit,onJoin,onRegister,onClearFeedback}){
  const t=useT();
  const [screen,setScreen]=useState('login');
  const [joinMethod,setJoinMethod]=useState(null);
  const [showPassword,setShowPassword]=useState(false);
  const welcomeAttempted=useRef(false),welcomePlayback=useRef(null);
- const greeting=WELCOME_TEXT[language]||WELCOME_TEXT.en;
+ const greeting=PUBLIC_GREETING[language]||PUBLIC_GREETING.en;
  useEffect(()=>{
   if(!ready||!configured||welcomeAttempted.current)return;
   welcomeAttempted.current=true;
   const controller=new AbortController();
   const playback={controller,audio:null,url:null};
   welcomePlayback.current=playback;
-  const locale=WELCOME_LANGUAGE[language]||'en-IN';
+  const locale=APP_GREETING_VOICE[language]||'en-IN';
   playWelcomeOnce({
    url:'/api/welcome/audio?language='+encodeURIComponent(locale),
-   language:locale,text:greeting,controller,playback
+   language:locale,text:greeting,controller,playback,gnaniOnly:true
   });
   return ()=>stopWelcome(playback);
  },[ready,configured]);
