@@ -1970,6 +1970,8 @@ def test_report_response_loss_retries_do_not_duplicate_general_reports(setup):
  ('en-IN','location दोबारा बताओ','repeat'),
  ('hi-en','हेल्प','help'),
  ('hi-IN','स्टॉप','stop'),
+ ('hi-IN','हेल्प','help'),
+ ('en-IN','मदद','help'),
  ('en-IN','  REPEAT LOCATION! ','repeat')
 ])
 def test_mixed_script_stt_variations_are_recognized_without_fuzzy_matching(locale,transcript,expected):
