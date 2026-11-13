@@ -143,7 +143,7 @@ test('login and registration expose all ten persistent interface languages',asyn
  assert.match(file,/document\.documentElement\.lang/);
 });
 
-test('public welcome offers browser speech without requiring an API key or blocking login',async()=>{
+test('public welcome uses Gnani without requiring a client API key or blocking login',async()=>{
  const html=render({signupEnabled:true});
  assert.doesNotMatch(html,/Hear welcome|Stop welcome/);
  assert.match(html,/Sign in to pick up where you left off\./);
@@ -154,8 +154,8 @@ test('public welcome offers browser speech without requiring an API key or block
  assert.match(src,/playWelcomeOnce/);
  assert.match(src,/\/api\/welcome\/audio\?language=/);
  assert.match(src,/stopWelcome\(playback\)/);
- assert.match(src,/welcomeAttempted\.current=true/);
- assert.match(src,/welcomeAttempted\.current=true/);
+ assert.match(src,/welcomeAttempted\.current=language/);
+ assert.match(src,/welcomeAttempted\.current=language/);
  assert.match(src,/url:'\/api\/welcome\/audio\?language='/);
  assert.doesNotMatch(src,/onClick=\{speakWelcome\}/);
  assert.doesNotMatch(src,/GNANI_API_KEY|\/voice\/speak/);
@@ -169,7 +169,7 @@ test('signup has a dedicated setup subtitle while welcome speech stays separate'
  assert.match(signup,/Sign in to pick up where you left off/);
  const src=await (await import('node:fs/promises')).readFile(new URL('../src/accounts.jsx',import.meta.url),'utf8');
  assert.match(src,/Organize your products, manage locations, and help your team find items faster/);
- assert.match(src,/Hi there! Welcome to Finder/);
+ assert.match(src,/PUBLIC_GREETING\[language\]\|\|PUBLIC_GREETING\.en/);
  assert.doesNotMatch(src,/<p>\{greeting\}<\/p>/);
  const css=await (await import('node:fs/promises')).readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
  assert.match(css,/\.login-shell \.sf-auth-welcome-row\{/);
