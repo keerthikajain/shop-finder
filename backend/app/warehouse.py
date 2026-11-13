@@ -601,6 +601,7 @@ def install_warehouse(app,path):
     raise HTTPException(409,'Resume active picking before deferring an item.')
    line,p=current_line(c,task,body.line)
    if line.get('complete'):raise HTTPException(409,'A confirmed pick cannot be deferred.')
+   if line.get('deferred_reason'):raise HTTPException(409,'Item already deferred. Retry it before changing its status.')
    if body.reason=='reported':
     report=c.execute("SELECT id FROM wh_issues WHERE collection=? AND sku=? AND kind='wrong_location' AND location_code=? AND status='open' LIMIT 1",(p['collection'],p['sku'],line['location']['code'])).fetchone()
     if not report:raise HTTPException(409,'Submit the wrong-location report before moving to another item.')
@@ -619,6 +620,7 @@ def install_warehouse(app,path):
    line,p=current_line(c,task,body.line)
    if line.get('complete'):raise HTTPException(409,'This item was already confirmed.')
    if not line.get('deferred_reason'):raise HTTPException(409,'Only deferred items can be retried.')
+   if line.get('deferred_reason')=='cancelled':raise HTTPException(409,'Cancelled item cannot be retried in this picking session. Start a new search to request it again.')
    if location_status(c,p,line['location'])['location_report_open']:
     raise HTTPException(409,'This shelf report is still open. Ask the owner to verify the location before retrying.')
    line.pop('deferred_reason',None)
@@ -1060,7 +1062,7 @@ def install_warehouse(app,path):
   }
   language_index={'en-IN':0,'hi-IN':1,'hi-en':2,'te-IN':3}[body.language]
   phrase=prompts[step][language_index]
-  if step not in ('review_pending_saved','review_verified_saved','move_saved','report_saved','pick_done','pick_undo','choose_mode','lookup_help','lookup_confirm','lookup_picked_saved','lookup_cancelled','lookup_select','lookup_unknown') and not step.endswith('_retry') and not step.startswith('report_'):
+  if step not in ('review_pending_saved','review_verified_saved','move_saved','report_saved','pick_done','pick_undo','pick_defer_choice','pick_cancel_confirm','pick_later_ready','choose_mode','lookup_help','lookup_confirm','lookup_picked_saved','lookup_cancelled','lookup_select','lookup_unknown') and not step.endswith('_retry') and not step.startswith('report_'):
    phrase+=' '+(
     'You can say help, repeat, back or stop.' if body.language=='en-IN' else
     'Help, repeat, back ya stop bol sakte ho.' if body.language=='hi-en' else
