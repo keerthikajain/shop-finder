@@ -82,7 +82,7 @@ test('search choice does not start picking; locations mode offers explicit confi
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(ui,/void offerSearchMode\(result\)/);
  assert.match(ui,/picking\.status==='ready'&&lookupMode==='choice'/);
- assert.match(ui,/modeChoiceIntent\(source\?\.language\|\|language,transcript\)/);
+ assert.match(ui,/modeChoiceIntent\(source\.language,transcript\)/);
  assert.match(ui,/chooseSearchMode\('locations'\)/);
  assert.match(ui,/if\(choice==='guided'\)/);
  assert.match(ui,/await pickAction\('start'\)/);

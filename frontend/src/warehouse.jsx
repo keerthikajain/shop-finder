@@ -78,7 +78,7 @@ export function VoiceButton({language,enabled,onText,onError,onPartial,live=fals
 }
 export default function WarehouseApp({user,preferences,logout}){
  const t=useT(),appLanguage=useContext(Locale),owner=user.role==='owner';
- const [feedbackText,FB]=useState(''),[feedbackSent,FBS]=useState(false),[ownerFeedback,OF]=useState([]),[voiceGuideText,VGT]=useState(''),[voiceGuideCommand,VGC]=useState(''),[voiceGuidePaused,VGP]=useState(true),[meta,M]=useState(null),[items,I]=useState([]),[collection,C]=useState('all'),[page,P]=useState('find'),[brand,BR]=useState(''),[locationFilter,LF]=useState(''),[query,Q]=useState(''),[task,T]=useState(null),[recent,R]=useState([]),[busy,B]=useState(false),[error,E]=useState(''),[notice,N]=useState(''),[modal,D]=useState(null),[group,G]=useState('request'),[filter,F]=useState(''),[category,CAT]=useState(''),[language,L]=useState(()=>{const saved=localStorage.getItem('sf-voice-'+user.id);return ACTIVE_VOICE_CODES.has(saved)?saved:(VOICE_LANGUAGE_DEFAULT[user.language]||'en-IN')}),[liveMode,LM]=useState(false),[detectedSearchLanguage,DSL]=useState(null),[hintLanguages,HL]=useState([]),[auto,AUTO]=useState(true),[handsFree,HF]=useState(true),[pendingVoicePick,PV]=useState(null),[searchTranscript,ST]=useState(''),[voiceQuery,VQ]=useState(false),[tour,TOUR]=useState(user.tour_done?null:0),[theme,TH]=useState(()=>getThemePreference(localStorage)),[speaking,SP]=useState(false),[filtersOpen,FO]=useState(false),[sizeFilter,SZ]=useState(''),[activeLine,AL]=useState(0),[reviewNonce,RV]=useState(0),[lookupMode,SetLookupMode]=useState('choice'),[modeListening,SetModeListening]=useState(false),[lookupVoicePaused,SetLookupVoicePaused]=useState(false),[lookupSelection,SetLookupSelection]=useState(null),[lookupPending,SetLookupPending]=useState(null);
+ const [feedbackText,FB]=useState(''),[feedbackSent,FBS]=useState(false),[ownerFeedback,OF]=useState([]),[voiceGuideText,VGT]=useState(''),[voiceGuideCommand,VGC]=useState(''),[voiceGuidePaused,VGP]=useState(true),[meta,M]=useState(null),[items,I]=useState([]),[collection,C]=useState('all'),[page,P]=useState('find'),[brand,BR]=useState(''),[locationFilter,LF]=useState(''),[query,Q]=useState(''),[task,T]=useState(null),[recent,R]=useState([]),[busy,B]=useState(false),[error,E]=useState(''),[notice,N]=useState(''),[modal,D]=useState(null),[group,G]=useState('request'),[filter,F]=useState(''),[category,CAT]=useState(''),[language,L]=useState(()=>{const saved=localStorage.getItem('sf-voice-'+user.id);return ACTIVE_VOICE_CODES.has(saved)?saved:(VOICE_LANGUAGE_DEFAULT[user.language]||'en-IN')}),[liveMode,LM]=useState(false),[detectedSearchLanguage,DSL]=useState(null),[hintLanguages,HL]=useState([]),[auto,AUTO]=useState(true),[handsFree,HF]=useState(true),[pendingVoicePick,PV]=useState(null),[searchTranscript,ST]=useState(''),[voiceQuery,VQ]=useState(false),[tour,TOUR]=useState(user.tour_done?null:0),[theme,TH]=useState(()=>getThemePreference(localStorage)),[speaking,SP]=useState(false),[filtersOpen,FO]=useState(false),[sizeFilter,SZ]=useState(''),[activeLine,AL]=useState(0),[reviewNonce,RV]=useState(0),[lookupMode,SetLookupMode]=useState('choice'),[modeListening,SetModeListening]=useState(false),[lookupVoicePaused,SetLookupVoicePaused]=useState(false),[lookupSelection,SetLookupSelection]=useState(null),[lookupPending,SetLookupPending]=useState(null),[modeSpeechResult,SetModeSpeechResult]=useState(null);
  const audio=useRef(),audioURL=useRef(),audioRequest=useRef(null),playbackSerial=useRef(0),voiceFlowStopped=useRef(false),reportResumeRef=useRef(false),generation=useRef(0),main=useRef(),taskVoice=useRef(false),pendingResume=useRef(null),audioEndResolve=useRef(null),modeChoiceSerial=useRef(0);
  const pack=collection==='all'?{id:'all',name:'Whole store',fields:[...new Set(meta?.collections.flatMap(c=>[...c.fields,...(meta.settings.custom_fields[c.id]||[])])||[])]}:meta?.collections.find(c=>c.id===collection),labels=meta?.field_labels||{},voice=!!meta?.voice,prismaV3=meta?.stt_model!=='prisma-v2.5';
  const invalidHints=false;
@@ -155,7 +155,7 @@ export default function WarehouseApp({user,preferences,logout}){
  // No pick, stock update, or report is created by selecting a mode.
  async function offerSearchMode(next){
   const serial=++modeChoiceSerial.current;
-  SetLookupMode('choice');SetModeListening(false);
+  SetLookupMode('choice');SetModeListening(false);SetModeSpeechResult(null);
   SetLookupPendingSafe(null);SetLookupSelection(null);SetLookupVoicePaused(false);
   const resolved=next.lines?.length&&next.lines.every(l=>l.selected&&l.location)&&
    next.lines.some(l=>l.selected&&l.location&&!l.location_report_open&&!l.complete);
@@ -250,8 +250,11 @@ export default function WarehouseApp({user,preferences,logout}){
   return false;
  }
  async function handleModeSpeech(transcript,source=task){
-  const choice=modeChoiceIntent(source?.language||language,transcript);
   if(!source)return false;
+  const choice=modeChoiceIntent(source.language,transcript);
+  // Keep the Gnani transcript visible even after the workflow switches modes.
+  // This does not record audio or change inventory.
+  SetModeSpeechResult({taskId:source.id,transcript:String(transcript||'').trim(),choice,language:source.language});
   VGC(transcript);
   if(choice)return chooseSearchMode(choice,source);
   N(lookupCopy(appLanguage,'unknown'));
@@ -297,7 +300,7 @@ export default function WarehouseApp({user,preferences,logout}){
   return true;
  }
  async function search(text=query,fromVoice=voiceQuery,global=false,spokenLanguage=null){
-  PV(null);VGC('');VGT('');stopVoiceFlow();
+  SetModeSpeechResult(null);PV(null);VGC('');VGT('');stopVoiceFlow();
   if(!fromVoice)ST('');
   await run(async()=>{
    const result=await api('/search',{
@@ -317,7 +320,7 @@ export default function WarehouseApp({user,preferences,logout}){
    void offerSearchMode(result);
   });
  }
- function navigate(p){if(p===page)return;PV(null);modeChoiceSerial.current++;SetModeListening(false);SetLookupVoicePaused(true);stopVoiceFlow();P(p);E('');N('');D(null);if(p!=='find')TOUR(null);main.current?.focus();window.scrollTo(0,0)}
+ function navigate(p){if(p===page)return;SetModeSpeechResult(null);PV(null);modeChoiceSerial.current++;SetModeListening(false);SetLookupVoicePaused(true);stopVoiceFlow();P(p);E('');N('');D(null);if(p!=='find')TOUR(null);main.current?.focus();window.scrollTo(0,0)}
  function goBack(){navigate('more')}
  async function choose(line,p,l){await run(async()=>{const next=await api('/tasks/'+task.id+'/choose',{line,collection:p.collection,sku:p.sku,location:l.code});T(next);AL(line);N(lookupCopy(appLanguage,'modeSaved'));if(next.lines.every(x=>x.selected&&x.location))void offerSearchMode(next)})}
  async function progressAfterPick(next,completed){
@@ -566,13 +569,17 @@ export default function WarehouseApp({user,preferences,logout}){
  <button type="button" className="sf-mobile-filter-toggle" aria-expanded={filtersOpen} aria-controls="wh-packs" onClick={()=>FO(v=>!v)}><Glyph name="grid"/>{t('Filters')} {filtersOpen?'−':'+'}</button>{meta&&<div id="wh-packs" className={'sf-search-filters '+(filtersOpen?'is-open':'')}><label>{t('Product type')}<select aria-label={t('Product type')} value={collection} disabled={busy} onChange={e=>C(e.target.value)}><option value="all">{t('All types')}</option>{meta.collections.filter(c=>meta.settings.collections.includes(c.id)).map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label> {page==='find'&&<><label>{t('Brand')}<select aria-label={t('Brand')} value={brand} onChange={e=>BR(e.target.value)}><option value="">{t('All brands')}</option>{[...new Set(items.map(p=>p.brand).filter(Boolean))].sort().map(b=><option key={b}>{b}</option>)}</select></label><label>{t('Size filter')}<select aria-label={t('Size filter')} value={sizeFilter} onChange={e=>SZ(e.target.value)}><option value="">{t('All sizes')}</option>{sizeOptions.map(sz=><option key={sz} value={sz}>{sz}</option>)}</select></label><label>{t('Location filter')}<select aria-label={t('Location filter')} value={locationFilter} onChange={e=>LF(e.target.value)}><option value="">{t('Every location')}</option>{locations.map(l=><option key={l.code} value={l.code}>{pathText(l,locationIsStarter(l))}</option>)}</select></label></>}</div>}
  <section id="wh-results" className="wh-results"><div className="wh-section-title"><div><span className="wh-eyebrow">{t(task?'YOUR WORK LIST':'EXPLORE THE WORKSPACE')}</span><h2>{task?<>{t('Your worklist')} <small className="sf-work-summary">{selected.length} {t('located')} · {task.lines.filter(l=>!l.selected&&l.candidates.length).length} {t('need a detail')} · {task.lines.filter(l=>!l.selected&&!l.candidates.length).length} {t('Not found')}</small></>:t(items.length?'Explore your catalogue':'Get your catalogue ready')}</h2></div>{task?<div className="wh-toolbar sf-worklist-controls"><select className="sf-worklist-order" aria-label={t('Group results')} value={group} onChange={e=>G(e.target.value)}><option value="request">{t('Request order')}</option><option value="category">{t('By category')}</option><option value="location">{t('By location')}</option></select><button disabled={!voice||(busy&&!speaking)} onClick={()=>speaking?stopSpeech():speak(task)}><Glyph name="sound"/>{t(speaking?'Stop audio':'Read answer')}</button></div>:items.length?<button className="sf-view-catalogue" onClick={()=>navigate('catalogue')}>{t('View catalogue')}<Glyph name="arrow"/></button>:null}</div>
  {task?<><div className="sf-request-review" role="status"><strong>{t('Confirm your request')}</strong><p>{task.query}</p><small>{t('Is this the item you meant? Check the matched products and locations below. To correct the request, edit the search above and select Find items again.')}</small></div><p className="wh-response" role="status">{task.display_text||task.spoken_text}</p>
+ {modeSpeechResult?.taskId===task.id&&<div className="sf-guide-transcript sf-mode-speech-result" role="status" aria-live="polite" data-voice-language={modeSpeechResult.language}>
+   <strong>{lookupCopy(appLanguage,'heardChoice')}:</strong> <span lang={modeSpeechResult.language==='hi-en'?'hi-Latn':modeSpeechResult.language}>{modeSpeechResult.transcript||'—'}</span>
+   <p><strong>{lookupCopy(appLanguage,'interpretedChoice')}:</strong> {modeSpeechResult.choice?lookupCopy(appLanguage,modeSpeechResult.choice):lookupCopy(appLanguage,'notRecognizedChoice')}</p>
+  </div>}
  {hasSearchCandidates?<>
  {picking.status==='ready'&&lookupMode==='choice'&&<section className="wh-panel sf-lookup-mode" aria-label={lookupCopy(appLanguage,'heading')}>
   <h3>{lookupCopy(appLanguage,'heading')}</h3>
   <p>{lookupCopy(appLanguage,unresolvedLines.length?'resolve':'question')}</p>
   <div className="sf-lookup-actions">
-   <button className="primary" type="button" disabled={busy||!canStartPick} onClick={()=>chooseSearchMode('guided')}><Glyph name="check"/>{lookupCopy(appLanguage,'guided')}</button>
-   <button type="button" disabled={busy||!canStartPick} onClick={()=>chooseSearchMode('locations')}><Glyph name="pin"/>{lookupCopy(appLanguage,'locations')}</button>
+   <button className="primary" type="button" disabled={busy||!canStartPick} onClick={()=>{SetModeSpeechResult(null);chooseSearchMode('guided')}}><Glyph name="check"/>{lookupCopy(appLanguage,'guided')}</button>
+   <button type="button" disabled={busy||!canStartPick} onClick={()=>{SetModeSpeechResult(null);chooseSearchMode('locations')}}><Glyph name="pin"/>{lookupCopy(appLanguage,'locations')}</button>
   </div>
   {voice&&PICKING_VOICE_LANGUAGES.includes(task.language)&&canStartPick&&<>
    <p className="sf-lookup-phrase" role="status">{lookupCopy(appLanguage,'voiceHint')} <span lang={task.language==='hi-en'?'hi-Latn':task.language}>{modeChoicePhrases(task.language).guided} / {modeChoicePhrases(task.language).locations}</span></p>

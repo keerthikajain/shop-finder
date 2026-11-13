@@ -1,5 +1,8 @@
 export const LOOKUP_UI={
   "en": {
+    "heardChoice": "Gnani heard",
+    "interpretedChoice": "Finder understood",
+    "notRecognizedChoice": "Not recognized",
     "heading": "How would you like to continue?",
     "question": "Would you like help picking, or just the locations?",
     "guided": "Guided picking",
@@ -34,6 +37,9 @@ export const LOOKUP_UI={
     "updateStock": "Update stock"
   },
   "hi": {
+    "heardChoice": "ग्नानी ने सुना",
+    "interpretedChoice": "फ़ाइंडर ने समझा",
+    "notRecognizedChoice": "पहचान नहीं हुई",
     "heading": "आप कैसे आगे बढ़ना चाहेंगे?",
     "question": "सामान चुनने में मदद चाहिए या सिर्फ जगह जाननी है?",
     "guided": "सामान चुनने में मदद",
@@ -68,6 +74,9 @@ export const LOOKUP_UI={
     "updateStock": "स्टॉक बदलें"
   },
   "te": {
+    "heardChoice": "గ్నాని విన్నది",
+    "interpretedChoice": "ఫైండర్ అర్థం చేసుకున్నది",
+    "notRecognizedChoice": "గుర్తించలేదు",
     "heading": "ఎలా కొనసాగాలనుకుంటున్నారు?",
     "question": "వస్తువులు తీసుకోవడానికి సహాయం కావాలా, స్థానాలు మాత్రమే కావాలా?",
     "guided": "మార్గదర్శకంతో తీసుకోవడం",
@@ -102,6 +111,9 @@ export const LOOKUP_UI={
     "updateStock": "స్టాక్‌ను నవీకరించండి"
   },
   "bn": {
+    "heardChoice": "গনানি শুনেছে",
+    "interpretedChoice": "ফাইন্ডার বুঝেছে",
+    "notRecognizedChoice": "চেনা যায়নি",
     "heading": "কীভাবে এগোতে চান?",
     "question": "পণ্য তুলতে সাহায্য চান, নাকি শুধু অবস্থান?",
     "guided": "নির্দেশিত পিকিং",
@@ -136,6 +148,9 @@ export const LOOKUP_UI={
     "updateStock": "স্টক পরিবর্তন করুন"
   },
   "mr": {
+    "heardChoice": "ग्नानीने ऐकले",
+    "interpretedChoice": "फाइंडरला समजले",
+    "notRecognizedChoice": "ओळखले नाही",
     "heading": "कसे पुढे जायचे?",
     "question": "सामान उचलण्यासाठी मदत हवी की फक्त जागा?",
     "guided": "मार्गदर्शित पिकिंग",
@@ -170,6 +185,9 @@ export const LOOKUP_UI={
     "updateStock": "स्टॉक बदला"
   },
   "gu": {
+    "heardChoice": "ગ્નાનીએ સાંભળ્યું",
+    "interpretedChoice": "ફાઇન્ડરે સમજ્યું",
+    "notRecognizedChoice": "ઓળખાયું નથી",
     "heading": "કેવી રીતે આગળ વધવું છે?",
     "question": "સામાન લેવા મદદ જોઈએ કે ફક્ત સ્થાન?",
     "guided": "માર્ગદર્શિત પિકિંગ",
@@ -204,6 +222,9 @@ export const LOOKUP_UI={
     "updateStock": "સ્ટોક બદલો"
   },
   "pa": {
+    "heardChoice": "ਗਨਾਨੀ ਨੇ ਸੁਣਿਆ",
+    "interpretedChoice": "ਫਾਈਂਡਰ ਨੇ ਸਮਝਿਆ",
+    "notRecognizedChoice": "ਪਛਾਣਿਆ ਨਹੀਂ",
     "heading": "ਕਿਵੇਂ ਅੱਗੇ ਵਧਣਾ ਹੈ?",
     "question": "ਸਮਾਨ ਚੁੱਕਣ ਵਿੱਚ ਮਦਦ ਚਾਹੀਦੀ ਹੈ ਜਾਂ ਸਿਰਫ਼ ਥਾਵਾਂ?",
     "guided": "ਮਾਰਗਦਰਸ਼ਿਤ ਪਿਕਿੰਗ",
@@ -238,6 +259,9 @@ export const LOOKUP_UI={
     "updateStock": "ਸਟਾਕ ਬਦਲੋ"
   },
   "kn": {
+    "heardChoice": "ಗ್ನಾನಿ ಕೇಳಿದ್ದು",
+    "interpretedChoice": "ಫೈಂಡರ್ ಅರ್ಥೈಸಿದ್ದು",
+    "notRecognizedChoice": "ಗುರುತಿಸಲಾಗಿಲ್ಲ",
     "heading": "ಹೇಗೆ ಮುಂದುವರಿಸಬೇಕು?",
     "question": "ವಸ್ತುಗಳನ್ನು ಆಯ್ಕೆ ಮಾಡಲು ಸಹಾಯ ಬೇಕೇ, ಅಥವಾ ಸ್ಥಳಗಳು ಮಾತ್ರವೇ?",
     "guided": "ಮಾರ್ಗದರ್ಶಿತ ಪಿಕಿಂಗ್",
@@ -272,6 +296,9 @@ export const LOOKUP_UI={
     "updateStock": "ಸ್ಟಾಕ್ ನವೀಕರಿಸಿ"
   },
   "ta": {
+    "heardChoice": "ஞானி கேட்டது",
+    "interpretedChoice": "ஃபைண்டர் புரிந்துகொண்டது",
+    "notRecognizedChoice": "அடையாளம் காணப்படவில்லை",
     "heading": "எப்படித் தொடர விரும்புகிறீர்கள்?",
     "question": "பொருட்களை எடுக்க உதவி வேண்டுமா, இடங்கள் மட்டும் வேண்டுமா?",
     "guided": "வழிகாட்டியுடன் பொருள் எடுப்பு",
@@ -306,6 +333,9 @@ export const LOOKUP_UI={
     "updateStock": "இருப்பை மாற்று"
   },
   "ml": {
+    "heardChoice": "ഗ്നാനി കേട്ടത്",
+    "interpretedChoice": "ഫൈൻഡർ മനസ്സിലാക്കിയത്",
+    "notRecognizedChoice": "തിരിച്ചറിഞ്ഞില്ല",
     "heading": "എങ്ങനെ തുടരാൻ ആഗ്രഹിക്കുന്നു?",
     "question": "സാധനങ്ങൾ എടുക്കാൻ സഹായം വേണോ, സ്ഥലങ്ങൾ മാത്രം മതിയോ?",
     "guided": "വഴികാട്ടിയുള്ള പിക്കിംഗ്",
