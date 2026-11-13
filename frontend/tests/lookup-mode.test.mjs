@@ -46,6 +46,11 @@ test('a voice selection must identify an exact SKU or an explicit valid item num
  assert.deepEqual(lookupVoiceIntent('en-IN','APP-004',lines),{action:'select',line:0});
  assert.deepEqual(lookupVoiceIntent('hi-en','item 1',lines),{action:'select',line:0});
  assert.deepEqual(lookupVoiceIntent('te-IN','వస్తువు 2',lines),{action:'select',line:1});
+ assert.deepEqual(lookupVoiceIntent('en-IN','item one',lines),{action:'select',line:0});
+ assert.deepEqual(lookupVoiceIntent('hi-IN','आइटम दो',lines),{action:'select',line:1});
+ assert.deepEqual(lookupVoiceIntent('hi-en','item two',lines),{action:'select',line:1});
+ assert.deepEqual(lookupVoiceIntent('te-IN','ఐటెమ్ ఒకటి',lines),{action:'select',line:0});
+ assert.deepEqual(lookupVoiceIntent('te-IN','ఐటెమ్ రెండు',lines),{action:'select',line:1});
  assert.equal(lookupVoiceIntent('en-IN','item 3',lines).action,'unknown');
  assert.equal(lookupVoiceIntent('en-IN','APP-009',lines).action,'unknown');
  assert.equal(lookupVoiceIntent('en-IN','rice cooker',lines).action,'unknown');
