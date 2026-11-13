@@ -716,8 +716,8 @@ export default function WarehouseApp({user,preferences,logout}){
   N('Report #'+report.id+' sent to your manager.');
  }
 }}/></Modal>}
- {modal?.type==='scan'&&task&&<Modal title={t('Confirm picked item')} onClose={()=>D(null)}><ScanTask line={task.lines[modal.index]} onRead={value=>scan(modal.index,task.lines[modal.index].product_scanned?'location':'product',value)} onManual={()=>scan(modal.index,'manual','confirmed')} busy={busy} onError={E}/></Modal>}
- {modal?.type==='lookup'&&<Modal title={t('Scan a label')} onClose={()=>D(null)}><ScanBox onError={E} onRead={value=>{const location=locations.find(l=>l.code===value);D(null);if(location){P('locations');F(pathText(location))}else{const parts=value.split(':');Q(value);search(value,false,true)}}}/></Modal>}
+ {modal?.type==='scan'&&task&&<Modal title={t('Confirm picked item')} onClose={()=>D(null)} showNotice={false}><ScanTask line={task.lines[modal.index]} onRead={value=>scan(modal.index,task.lines[modal.index].product_scanned?'location':'product',value)} onManual={()=>scan(modal.index,'manual','confirmed')} busy={busy} onError={E}/></Modal>}
+ {modal?.type==='lookup'&&<Modal title={t('Scan a label')} onClose={()=>D(null)} showNotice={false}><ScanBox onError={E} onRead={value=>{const location=locations.find(l=>l.code===value);D(null);if(location){P('locations');F(pathText(location))}else{const parts=value.split(':');Q(value);search(value,false,true)}}}/></Modal>}
  {modal?.type==='label'&&<Modal title={t('Print labels')} onClose={()=>D(null)} wide><div className="wh-print-area">{modal.item&&<Label value={'ITEM:'+modal.item.collection+':'+modal.item.sku} name={modal.item.name} subtitle={modal.item.sku+' · '+Object.values(modal.item.specs).join(' / ')}/>}<Label value={modal.location.code} name={t('Storage location')} subtitle={pathText(modal.location)}/></div><button className="primary" onClick={()=>window.print()}>{t('Print labels')}</button></Modal>}
  </div></Feedback.Provider>
 }
