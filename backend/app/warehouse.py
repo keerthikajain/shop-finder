@@ -981,7 +981,7 @@ def install_warehouse(app,path):
    'choose_mode':('Would you like guided picking, or just the locations?',
      'क्या आप सामान चुनने में मदद चाहते हैं, या सिर्फ जगह जानना चाहते हैं?',
      'Picking mein help chahiye ya sirf locations?',
-     'వస్తువులు తీసుకోవడానికి సహాయం కావాలా, లేక వాటి స్థానాలు మాత్రమే కావాలా?'),
+     'వస్తువులు తీసుకోవడానికి సహాయం కావాలా, లేక వాటి స్థానాలు మాత్రమే కావాలా? పికింగ్ కోసం పికింగ్ సహాయం కావాలి అనండి. స్థానాలు మాత్రమే కావాలంటే స్థానాలు మాత్రమే అనండి.'),
    'lookup_help':('You can say repeat locations, start picking, found it, wrong location or stop. Choose the item first when there is more than one.',
      'आप जगह दोहराओ, पिकिंग शुरू करो, मिल गया, गलत जगह या रुको कह सकते हैं। कई सामान हों तो पहले एक चुनें।',
      'Repeat location, start picking, found it, wrong location ya stop bolo. Multiple items hain toh pehle item select karo.',
