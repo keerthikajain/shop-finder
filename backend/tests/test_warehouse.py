@@ -2199,8 +2199,29 @@ def test_next_item_voice_choice_audio_is_localized_and_read_only(setup,monkeypat
   return b'RIFF-test'
  monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
  for code in ('en-IN','hi-IN','hi-en','te-IN'):
-  for step in ('pick_defer_choice','pick_cancel_confirm','pick_later_ready'):
+  for step in ('pick_defer_choice','pick_cancel_confirm','pick_later_ready','pick_exceptions_done'):
    response=post(c,'/voice/step-audio?step='+step,{'language':code})
    assert response.status_code==200,response.text
    assert response.content==b'RIFF-test'
  assert task['lines'][0]['complete'] is False
+
+
+@pytest.mark.parametrize('reason,expected_finish',[
+ ('later',409),('declined',409),('skipped',200),('cancelled',200)
+])
+def test_only_explicit_skip_or_cancel_can_finish_with_unconfirmed_items(setup,reason,expected_finish):
+ c,_=setup
+ original=items(c)
+ task=search(c,'CLO-001 and CLO-004');tid=task['id']
+ assert post(c,f'/tasks/{tid}/picking/start').status_code==200
+ changed=post(c,f'/tasks/{tid}/picking/defer',{'line':0,'reason':reason})
+ assert changed.status_code==200,changed.text
+ saved=post(c,f'/tasks/{tid}/scan',{'line':1,'kind':'manual','value':'confirmed'})
+ assert saved.status_code==200,saved.text
+ finish=post(c,f'/tasks/{tid}/picking/finish')
+ assert finish.status_code==expected_finish,finish.text
+ if expected_finish==200:
+  assert finish.json()['picking']['status']=='completed'
+  assert finish.json()['lines'][0]['complete'] is False
+  assert finish.json()['lines'][0]['deferred_reason']==reason
+ assert items(c)==original
