@@ -607,3 +607,8 @@ const finderFilterTranslations={
  ml:{'Product type':'ഉൽപ്പന്ന തരം','Brand':'ബ്രാൻഡ്','Recent requests':'സമീപകാല അഭ്യർത്ഥനകൾ','Size filter':'വലുപ്പ ഫിൽട്ടർ','Location filter':'സ്ഥല ഫിൽട്ടർ'}
 };
 for(const [language,entries] of Object.entries(finderFilterTranslations))Object.assign(uiLanguageCoverage[language],entries);
+// Recovery notices for Telugu-language workspaces.
+Object.assign(uiLanguageCoverage.te,{
+ 'Previous work restored. Continue where you left off.':'మునుపటి పని తిరిగి తెరవబడింది. మీరు ఆపిన చోటు నుంచి కొనసాగించండి.',
+ 'Saved work is no longer available. Start a new search.':'సేవ్ చేసిన పని ఇప్పుడు అందుబాటులో లేదు. కొత్త శోధన ప్రారంభించండి.'
+});
