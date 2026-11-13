@@ -2006,3 +2006,121 @@ def test_variants_are_informational_requests_not_automatic_picking_confirmation(
   assert response.json()['action']==expected
  assert c.get('/api/warehouse/tasks/'+task['id']).json()==original
  assert c.get('/api/warehouse/issues').json()==[]
+
+
+def test_locations_only_narrates_selected_catalogue_item_without_mutation(setup,monkeypatch):
+ c,_=setup
+ task=search(c,'CLO-001')
+ before=c.get('/api/warehouse/tasks/'+task['id'],headers=H).json()
+ spoken=[]
+ async def gnani_speak(text,language,**kwargs):
+  spoken.append((text,language))
+  return b'RIFF-voice-audio'
+ monkeypatch.setattr('app.warehouse.voice.speak',gnani_speak)
+ r=post(c,'/tasks/'+task['id']+'/lookup-line-audio/0')
+ assert r.status_code==200,r.text
+ assert r.content==b'RIFF-voice-audio'
+ assert spoken and task['lines'][0]['selected']['sku'] in spoken[0][0]
+ assert spoken[0][1]==task['language']
+ assert post(c,'/tasks/'+task['id']+'/lookup-line-audio/-1').status_code==422
+ assert post(c,'/tasks/'+task['id']+'/lookup-line-audio/99').status_code==422
+ after=c.get('/api/warehouse/tasks/'+task['id'],headers=H).json()
+ assert after==before
+
+
+def test_locations_only_pick_needs_explicit_confirmation_and_does_not_change_stock(setup):
+ c,_=setup
+ task=search(c,'CLO-001')
+ selected=task['lines'][0]['selected']
+ original=next(p for p in items(c) if p['sku']==selected['sku'])
+ bad=post(c,'/tasks/'+task['id']+'/scan',{'line':0,'kind':'manual','value':'found it'})
+ assert bad.status_code==422
+ unchanged=c.get('/api/warehouse/tasks/'+task['id'],headers=H).json()
+ assert unchanged['picking']['status']=='ready' and not unchanged['lines'][0]['complete']
+ saved=post(c,'/tasks/'+task['id']+'/scan',{'line':0,'kind':'manual','value':'confirmed'})
+ assert saved.status_code==200,saved.text
+ result=saved.json()
+ assert result['picking']['status']=='ready'
+ assert result['lines'][0]['complete']
+ assert result['lines'][0]['confirmation']=='manual'
+ updated=next(p for p in items(c) if p['sku']==selected['sku'])
+ assert updated['placements']==original['placements']
+ assert updated['revision']==original['revision']
+ assert post(c,'/tasks/'+task['id']+'/scan',{'line':0,'kind':'manual','value':'confirmed'}).status_code==409
+
+
+def test_locations_only_wrong_location_reports_without_changing_recorded_shelf(setup):
+ c,_=setup
+ task=search(c,'CLO-001')
+ item=task['lines'][0]['selected']
+ location=task['lines'][0]['location']
+ original=next(p for p in items(c) if p['sku']==item['sku'])
+ reported=post(c,'/issues',{'collection':'clothing','sku':item['sku'],
+    'kind':'wrong_location','reason':'Shelf is wrong; checked in person',
+    'location_code':location['code'],'suggested_location':'Rack Z shelf 7'})
+ assert reported.status_code==200,reported.text
+ current=next(p for p in items(c) if p['sku']==item['sku'])
+ assert current['placements']==original['placements']
+ assert current['revision']==original['revision']
+ assert c.get('/api/warehouse/issues',params={'collection':'clothing'},headers=H).json()
+
+
+def test_lookup_only_pick_can_be_undone_with_audit_while_ready(setup):
+ c,path=setup
+ task=search(c,'CLO-001')
+ task_id=task['id']
+ result=post(c,f'/tasks/{task_id}/scan',{'line':0,'kind':'manual','value':'confirmed'})
+ assert result.status_code==200
+ assert result.json()['picking']['status']=='ready'
+ undone=post(c,f'/tasks/{task_id}/picking/undo',
+             {'line':0,'reason':'Corrected mistaken lookup confirmation'})
+ assert undone.status_code==200,undone.text
+ state=undone.json()
+ assert state['picking']['status']=='ready'
+ assert state['lines'][0]['complete'] is False
+ assert state['pick_adjustments'][-1]['reason']=='Corrected mistaken lookup confirmation'
+ assert post(c,f'/tasks/{task_id}/picking/undo',{'line':0}).status_code==409
+ assert post(c,f'/tasks/{task_id}/scan',
+             {'line':0,'kind':'manual','value':'confirmed'}).status_code==200
+ with connect(path) as db:
+  assert db.execute('SELECT count(*) FROM wh_items WHERE sku=?',('CLO-001',)).fetchone()[0]==1
+
+
+@pytest.mark.parametrize('transcript,action',[
+ ('तप्पु स्थानम','report'),
+ ('तप्पू स्थानम','report'),
+ ('తప్పు స్థానమ','report'),
+ ('తప్పు స్థానము','report'),
+ ('తప్పు స్థానము.','report'),
+ ('స్థానాన్ని మళ్లీ చెప్పండి','repeat'),
+ ('స్థానాన్ని మళ్ళీ చెప్పండి','repeat'),
+ ('స్థానాన్ని మల్లీ చెప్పండి','repeat'),
+ ('स्थानాన్ని మళ్ళీ చెప్పండి','unknown'),
+])
+def test_telugu_stt_script_and_minimal_letter_variants(transcript,action):
+ from app.warehouse_voice_guide import intent
+ assert intent(transcript,'te-IN')==action
+
+
+@pytest.mark.parametrize('transcript',[
+ 'తప్పు స్థానం కాదు','తప్పు స్థానమ వద్దు','तप्पु स्थानम नहीं',
+ 'not wrong location','do not repeat location','స్థానాన్ని మళ్లీ చెప్పండి వద్దు',
+ 'తప్పు స్థానము దొరికింది','తప్పు స్థానము confirm',
+ 'స్థానాన్ని మళ్లీ చెప్పండి and confirm','దొరికిందీ','అవునూ'
+])
+def test_telugu_stt_typo_recovery_never_executed_on_negation_or_confirmation(transcript):
+ from app.warehouse_voice_guide import intent
+ assert intent(transcript,'te-IN')=='unknown'
+
+
+def test_telugu_report_and_repeat_voice_intents_are_safe_read_only(setup):
+ c,_=setup
+ t=post(c,'/search',{'collection':'appliances','query':'APP-003','language':'te-IN'}).json()
+ assert post(c,f"/tasks/{t['id']}/picking/start").status_code==200
+ before=c.get('/api/warehouse/tasks/'+t['id'],headers=H).json()
+ for transcript,action in [('तप्पू स्थानम','report'),('స్థానాన్ని మళ్ళీ చెప్పండి','repeat')]:
+  r=post(c,f"/tasks/{t['id']}/picking/command",{'transcript':transcript,'line':0})
+  assert r.status_code==200,r.text
+  assert r.json()['action']==action
+ after=c.get('/api/warehouse/tasks/'+t['id'],headers=H).json()
+ assert before==after

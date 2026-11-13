@@ -345,7 +345,8 @@ test('voice-guided picking uses real Prisma transcript and Timbre audio with saf
  assert.match(src,/async function playPickGuidance\(command/);
  assert.match(src,/\/picking\/command/);
  assert.match(src,/\/picking\/guide-audio/);
- assert.match(src,/onText=\{transcript=>voicePickCommand\(transcript\)\}/);
+ assert.match(src,/onText=\{transcript=>voicePickCommand\(transcript,task,true\)\}/);
+ assert.match(src,/onCommand=\{transcript=>voicePickCommand\(transcript\)\}/);
  assert.match(src,/answer\.action==='verify'&&answer\.line!=null/);
  assert.match(src,/PV\(\{taskId:source\.id,line:answer\.line,sku:source\.lines\[answer\.line\]\?\.selected\?\.sku\}\)/);
  assert.match(src,/answer\.action==='report'&&answer\.line!=null/);
@@ -399,7 +400,7 @@ test('voice picking is discoverable before starting and unmatched requests can b
  assert.match(ui,/picking.status!=='completed'&&<div className="sf-voice-guide"/);
  assert.match(ui,/All items are ready\. Confirm search once/);
  assert.match(ui,/picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused/);
-  assert.match(ui,/HandsFreePicking enabled=/);
+  assert.match(ui,/HandsFreePicking appLanguage=\{appLanguage\} enabled=/);
  assert.match(ui,/async function removeUnresolvedLine\(index\)/);
  assert.match(ui,/Remove from worklist/);
  assert.match(server,/def remove_unresolved_line\(tid:str,index:int,request:Request\)/);
@@ -454,7 +455,9 @@ test('public challenge preview has an explicit guest entry and feedback screen',
 test('a fully unmatched request does not show unusable picking commands and search stays responsive',async()=>{
  const jsx=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
- assert.match(jsx,/hasSearchCandidates\?<section className="wh-panel sf-guided-picking"/);
+ assert.match(jsx,/hasSearchCandidates\?<>/);
+  assert.match(jsx,/picking\.status==='ready'&&lookupMode==='choice'/);
+  assert.match(jsx,/\(picking\.status!=='ready'\|\|lookupMode==='guided'\)&&<section className="wh-panel sf-guided-picking"/);
  assert.match(jsx,/No items ready to pick/);
  assert.match(css,/\.sf-find-page \.wh-work-grid\{grid-template-columns:minmax\(0,1fr\) minmax\(0,280px\)\}/);
  assert.match(css,/@media\(max-width:900px\)/);
@@ -501,7 +504,8 @@ test('search shows a review stage until the worker confirms the picking list',as
  assert.doesNotMatch(source,/async function startIfReady\(result\)/);
  assert.doesNotMatch(source,/const next=await startIfReady\(result\)/);
  assert.match(source,/T\(result\)/);
- assert.match(source,/Review the matched items\. Confirm the search once to hear the first location/);
+ assert.match(source,/void offerSearchMode\(result\)/);
+ assert.match(source,/N\(result\.lines\.every\(line=>line\.selected&&line\.location\)\?lookupCopy\(appLanguage,'question'\):lookupCopy\(appLanguage,'resolve'\)\)/);
  assert.match(source,/Confirm search and begin picking/);
  assert.match(source,/Confirm search by voice/);
  assert.match(source,/await pickAction\('start'\)/);
@@ -515,7 +519,7 @@ test('hands-free picking is bounded and pauses while sound, modals or work is ac
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const listener=await readFile(new URL('../src/hands-free-picking.jsx',import.meta.url),'utf8');
  const recording=await readFile(new URL('../src/recording.js',import.meta.url),'utf8');
- assert.match(source,/HandsFreePicking enabled=\{!busy&&!speaking&&!modal&&page==='find'\}/);
+ assert.match(source,/HandsFreePicking appLanguage=\{appLanguage\} enabled=\{!busy&&!speaking&&!modal&&page==='find'\}/);
  assert.match(source,/\[handsFree,HF\]=useState\(true\)/);
  assert.match(source,/\[voiceGuidePaused,VGP\]=useState\(true\)/);
  assert.ok(source.includes("pickingUiCopy(appLanguage,voiceGuidePaused?'resume':'stop')"));
@@ -665,7 +669,7 @@ test('report mic waits until spoken guidance stops to avoid transcribing itself'
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/function Report\(\{item,location,collection,userId,run,busy,speaking=false/);
  assert.ok(src.includes("VoiceButton small autoStop enabled={!busy&&!speaking&&!guidedActive}"));
- assert.match(src,/collection=\{modal\.item\.collection\} userId=\{user\.id\} \{\.\.\.\{run,busy,voice,language,speaking\}\}/);
+ assert.match(src,/collection=\{modal\.item\.collection\} userId=\{user\.id\} autoGuide=\{!!modal\.autoGuide\} \{\.\.\.\{run,busy,voice,language,speaking\}\}/);
 });
 
 test('activity report card groups issue, shelf locations and resolution instead of wide scattered flex rows',async()=>{

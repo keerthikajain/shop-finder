@@ -61,6 +61,7 @@ test('Picking workflow uses same next-item handoff in Hinglish and Telugu',async
  assert.ok(src.includes("pickingUiCopy(appLanguage,'yesPicked')"));
  assert.ok(src.includes("pickingUiCopy(appLanguage,'noNext')"));
  assert.ok(src.includes("pickingUiCopy(appLanguage,'reportHandoff')"));
- assert.ok(recorder.includes("status==='transcribing'?pickingCopy(language,'transcribing')"));
- assert.ok(recorder.includes(">{pickingCopy(language,'retry')}</button>"));
+ assert.ok(recorder.includes("status==='transcribing'?uiText('transcribing')"));
+ assert.ok(recorder.includes("appLanguage?pickingUiCopy(appLanguage,key):pickingCopy(language,key)"));
+ assert.ok(recorder.includes(">{uiText('retry')}</button>"));
 });

@@ -17,3 +17,33 @@ body{background:var(--wh-bg);color:var(--wh-text)}.wh-app{font-size:14px;line-he
 .wh-panel-title .wh-scan-shortcut{min-height:28px;font-size:10px;padding:4px 8px;background:transparent;border-color:var(--wh-border)}.wh-scan-shortcut svg{width:15px;height:15px}
 
 .wh-app input,.wh-app textarea,.wh-app select,.wh-modal input,.wh-modal textarea,.wh-modal select{font-family:inherit}
+
+
+/* Search workflow choice and lightweight interactive locations mode. */
+.sf-compact-app .sf-lookup-mode{display:grid;gap:12px;min-width:0}
+.sf-compact-app .sf-lookup-mode h3{margin:0;font-size:1.14rem}
+.sf-compact-app .sf-lookup-mode p{margin:0;line-height:1.5}
+.sf-compact-app .sf-lookup-actions,.sf-compact-app .sf-lookup-voice{
+ display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0
+}
+.sf-compact-app .sf-lookup-actions button,.sf-compact-app .sf-lookup-voice button{
+ min-height:42px;max-width:100%;white-space:normal;text-align:center
+}
+.sf-compact-app .sf-lookup-phrase{font-size:.82rem;color:var(--wh-muted,#665f73)}
+.sf-compact-app .sf-lookup-phrase span{overflow-wrap:anywhere}
+.sf-compact-app .sf-lookup-items{display:flex;flex-wrap:wrap;gap:8px}
+.sf-compact-app .sf-lookup-items button[aria-pressed="true"]{
+ border-color:var(--wh-accent,#7b39dc);box-shadow:0 0 0 1px var(--wh-accent,#7b39dc)
+}
+.sf-compact-app .sf-lookup-selected,.sf-compact-app .sf-lookup-confirm{
+ display:grid;gap:9px;padding:13px;border:1px solid var(--wh-border,#ded9e7);
+ border-radius:13px;min-width:0
+}
+.sf-compact-app .sf-lookup-selected strong,.sf-compact-app .sf-lookup-confirm strong{
+ overflow-wrap:anywhere
+}
+@media(max-width:700px){
+ .sf-compact-app .sf-lookup-actions button{flex:1 1 145px}
+ .sf-compact-app .sf-lookup-items button{flex:1 1 150px;white-space:normal}
+ .sf-compact-app .sf-lookup-mode{padding:14px}
+}
