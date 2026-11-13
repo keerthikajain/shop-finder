@@ -315,10 +315,10 @@ export default function WarehouseApp({user,preferences,logout}){
    T(result);
    N(result.lines.every(line=>line.selected&&line.location)?lookupCopy(appLanguage,'question'):lookupCopy(appLanguage,'resolve'));
    if(global)N(t('Label lookup searched across all product types, brands and locations.'));
-   R(await request('/warehouse/tasks'));
-   // Ask for a workflow only when every product variant is identified.
-   // An unresolved item must be chosen before voice mode selection begins.
+   // Start the next spoken prompt immediately. A recent-tasks refresh must
+   // not delay TTS, and ambiguous variants still block picking-mode selection.
    void offerSearchMode(result);
+   void request('/warehouse/tasks').then(R).catch(()=>{});
   });
  }
  function navigate(p){if(p===page)return;PV(null);modeChoiceSerial.current++;SetModeListening(false);SetLookupVoicePaused(true);stopVoiceFlow();P(p);E('');N('');D(null);if(p!=='find')TOUR(null);main.current?.focus();window.scrollTo(0,0)}
