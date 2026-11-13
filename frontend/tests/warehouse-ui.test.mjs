@@ -345,7 +345,8 @@ test('voice-guided picking uses real Prisma transcript and Timbre audio with saf
  assert.match(src,/async function playPickGuidance\(command/);
  assert.match(src,/\/picking\/command/);
  assert.match(src,/\/picking\/guide-audio/);
- assert.match(src,/onText=\{transcript=>voicePickCommand\(transcript\)\}/);
+ assert.match(src,/onText=\{transcript=>voicePickCommand\(transcript,task,true\)\}/);
+ assert.match(src,/onCommand=\{transcript=>voicePickCommand\(transcript\)\}/);
  assert.match(src,/answer\.action==='verify'&&answer\.line!=null/);
  assert.match(src,/PV\(\{taskId:source\.id,line:answer\.line,sku:source\.lines\[answer\.line\]\?\.selected\?\.sku\}\)/);
  assert.match(src,/answer\.action==='report'&&answer\.line!=null/);
