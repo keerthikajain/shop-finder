@@ -599,8 +599,12 @@ test('spoken search waits for the worker to approve the proposed picking list',a
 
 test('completed picks do not show redundant shelf-check or pick verification actions',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(src,/\{<div className="sf-location-check"/);
- assert.match(src,/line\.complete\?t\('Picked and verified\. This item is complete\.'\)/);
+  assert.match(src,/<details className="sf-location-check"><summary>/);
+  assert.match(src,/Verify location \\(optional\\)/);
+  assert.match(src,/sf-item-report-link/);
+  assert.doesNotMatch(src,/className="sf-guide-jump"/);
+  assert.doesNotMatch(src,/className="sf-stock-badge"/);
+  assert.match(src,/sf-shelf-all-locations/);
  assert.match(src,/disabled=\{busy\|\|pickPaused\|\|picking\.status==='completed'\|\|line\.complete\|\|!!line\.deferred_reason\|\|line\.location_report_open\}/);
  assert.match(src,/line\.complete\?\(line\.confirmation==='barcode'\?'Scan confirmed':'Manually confirmed'\):line\.location_feedback/);
 });
