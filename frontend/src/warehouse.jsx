@@ -429,6 +429,7 @@ export default function WarehouseApp({user,preferences,logout}){
      <button type="button" disabled={picking.status!=='active'||(busy&&!speaking)||(!speaking&&(!voice||pickPaused))} onClick={()=>speaking?stopVoiceFlow():playPickGuidance('repeat',task,activeLine,true)}>{pickingUiCopy(appLanguage,speaking?'stopAudio':'read')}</button>
      {picking.status==='active'&&voice&&handsFree&&<button type="button" className="sf-voice-listen-toggle" aria-pressed={!voiceGuidePaused} disabled={voiceGuidePaused&&(busy||speaking||pickPaused)} onClick={()=>{if(!voiceGuidePaused){PV(null);stopVoiceFlow();return}voiceFlowStopped.current=false;VGP(false);if(task&&nextPickIndex>=0&&auto)playPickGuidance('repeat',task,nextPickIndex)}}>{pickingUiCopy(appLanguage,voiceGuidePaused?'resume':'stop')}</button>}
     </div>
+    <small className="sf-voice-guide-spoken-hint">{pickingUiTip(appLanguage,'speakHint')}</small>
     <div className="sf-voice-guide-choices" aria-label={pickingUiCopy(appLanguage,'secondary')}>
     {['verify','report','repeat','next','stop','help'].map(action=><button key={action} type="button" disabled={action==='help'?(!voice||busy):(picking.status!=='active'||busy||pickPaused)} onClick={()=>action==='repeat'&&voiceFlowStopped.current?playPickGuidance('repeat',task,activeLine,true):voicePickCommand(pickVoicePhrase(task.language,action))}>
      <span className="sf-voice-command-label">{pickingCommandLabel(appLanguage,action)}</span>
