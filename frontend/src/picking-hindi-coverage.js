@@ -1,6 +1,8 @@
 // Additional Hindi translations for workspace, picking, report review and shelf visualizations.
 // These translate interface copy, never user-entered names, SKUs or storage values.
 export const pickingHindiCoverage={
+  "Previous work restored. Continue where you left off.": "पिछला काम वापस आ गया है। जहाँ रुके थे, वहीं से जारी रखें।",
+  "Saved work is no longer available. Start a new search.": "सेव किया हुआ काम अब उपलब्ध नहीं है। नई खोज शुरू करें।",
   "Not confirmed. Finder is guiding you to the remaining items.": "पुष्टि नहीं हुई। फ़ाइंडर आपको बाकी सामान तक मार्गदर्शन दे रहा है।",
   "Review the matched items. Confirm the search once to hear the first location and start voice-guided picking.": "मिले हुए सामान जाँचें। पहली जगह सुनने और आवाज़ से सामान चुनना शुरू करने के लिए खोज की पुष्टि करें।",
   "Item choice saved. Review the full list before starting picking.": "सामान का चयन सेव हो गया। सामान चुनना शुरू करने से पहले पूरी सूची जाँचें।",
