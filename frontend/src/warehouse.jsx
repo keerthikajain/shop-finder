@@ -229,7 +229,7 @@ export default function WarehouseApp({user,preferences,logout}){
   }
   const line=source.lines[index];
   if(!line.selected||!line.location){N(lookupCopy(appLanguage,'resolve'));return false}
-  SetLookupVoicePaused(true);SetLookupPendingSafe(null);
+  SetLookupVoicePaused(true);SetLookupPendingSafe(null);stopSpeech();
   D({type:'report',item:line.selected,location:line.location,index,autoGuide:true});
   return false;
  }
@@ -662,7 +662,7 @@ export default function WarehouseApp({user,preferences,logout}){
  {modal?.type==='stock'&&<Modal title="Update recorded stock" onClose={()=>D(null)} wide><StockEditor {...{owner,locations,run,busy,voice,language}} fields={meta.settings.location_fields} item={modal.item} source={modal.location} onError={E} onSave={async()=>{D(null);T(null);await reload();N('Stock updated. The change is recorded in history.')}}/></Modal>}
  {modal?.type==='edit'&&<Modal title={t(modal.item?'Edit item':'Add item')} onClose={()=>D(null)} wide><ItemEditor item={modal.item} collection={modal.item?.collection||(collection==='all'?meta.settings.collections[0]:collection)} pack={meta.collections.find(c=>c.id===(modal.item?.collection||(collection==='all'?meta.settings.collections[0]:collection)))} collections={meta.collections.filter(c=>meta.settings.collections.includes(c.id))} settings={meta.settings} {...{labels,run,busy}} onSave={async()=>{D(null);await reload();N(t('Item saved.'))}}/></Modal>}
  {modal?.type==='move'&&<Modal title={t('Correct location')} onClose={()=>D(null)} wide><MoveEditor collection={modal.item.collection} fields={meta.settings.location_fields} {...{run,busy,language,voice}} item={modal.item} source={modal.location} onError={E} onSave={async()=>{const previous=task?.query;D(null);await reload();RV(v=>v+1);if(previous&&page==='find'){await search(previous,false);N(t('Location saved. Search results now show the updated shelf. Review the new list before picking.'))}else{T(null);N(t('Verified location saved and shown in future searches.'))}if(voice)await playFixedVoice('move_saved',language,false,true)}}/></Modal>}
- {modal?.type==='report'&&<Modal title={t('Report an issue')} onClose={()=>{reportResumeRef.current=false;D(null);VGP(true)}}><Report item={modal.item} location={modal.location} collection={modal.item.collection} userId={user.id} {...{run,busy,voice,language,speaking}} onStopSpeaking={stopSpeech} onError={E} onSave={async report=>{
+ {modal?.type==='report'&&<Modal title={t('Report an issue')} onClose={()=>{reportResumeRef.current=false;D(null);VGP(true)}}><Report item={modal.item} location={modal.location} collection={modal.item.collection} userId={user.id} autoGuide={!!modal.autoGuide} {...{run,busy,voice,language,speaking}} onStopSpeaking={stopSpeech} onError={E} onSave={async report=>{
  const index=modal.index,active=task?.picking?.status==='active'&&!task.picking?.paused;
  const shouldResume=reportResumeRef.current;
  reportResumeRef.current=false;
@@ -683,7 +683,7 @@ export default function WarehouseApp({user,preferences,logout}){
  {modal?.type==='label'&&<Modal title={t('Print labels')} onClose={()=>D(null)} wide><div className="wh-print-area">{modal.item&&<Label value={'ITEM:'+modal.item.collection+':'+modal.item.sku} name={modal.item.name} subtitle={modal.item.sku+' · '+Object.values(modal.item.specs).join(' / ')}/>}<Label value={modal.location.code} name={t('Storage location')} subtitle={pathText(modal.location)}/></div><button className="primary" onClick={()=>window.print()}>{t('Print labels')}</button></Modal>}
  </div></Feedback.Provider>
 }
-function Report({item,location,collection,userId,run,busy,speaking=false,voice,language,onError,onStopSpeaking,onSave}){
+function Report({item,location,collection,userId,run,busy,speaking=false,voice,language,autoGuide=false,onError,onStopSpeaking,onSave}){
  const t=useT(),appLanguage=useContext(Locale);
  // UI copy follows the app language. Actual voice input and TTS use language.
  const copy=key=>reportUiCopy(appLanguage,key);
@@ -778,7 +778,7 @@ function Report({item,location,collection,userId,run,busy,speaking=false,voice,l
   <strong>{copy('paused')}</strong>
   <span>{copy('steps')}</span>
  </div>
- {voice&&<GuidedVoiceTurn language={language} stage={guideStage} context="Automatic wrong-location report" disabled={busy}
+ {voice&&<GuidedVoiceTurn language={language} stage={guideStage} context="Automatic wrong-location report" disabled={busy} autoStart={autoGuide}
   retryStep={guideStage+'_retry'}
   promptEndpoint={guideStage==='report_confirm'?'voice/report-preview-audio':null}
   promptBody={guideStage==='report_confirm'?{collection,sku:item.sku,reason,suggested_location:suggested,location_code:location?.code||''}:null}
