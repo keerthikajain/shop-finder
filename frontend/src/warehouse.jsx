@@ -774,7 +774,7 @@ export default function WarehouseApp({user,preferences,logout}){
     </div>
     <div className="sf-voice-guide-choices" aria-label={pickingUiCopy(appLanguage,'secondary')}>
       {['verify','report','next'].map(action=><button key={action} type="button" disabled={picking.status!=='active'||busy||pickPaused||(action==='next'&&nextPickIndex<0)} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,action))}>
-        <span className="sf-voice-command-label">{action==='report'?t('Report issue'):pickingCommandLabel(appLanguage,action)}</span>
+        <span className="sf-voice-command-label">{pickingCommandLabel(appLanguage,action)}</span>
       </button>)}
     </div>
     <div className="sf-voice-guide-secondary">
