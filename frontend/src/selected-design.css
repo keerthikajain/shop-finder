@@ -2722,3 +2722,44 @@ html,body,#root{max-width:100%;overflow-x:clip}
  .wh-modal .wh-scan form .primary{width:100%}
  .wh-modal:has(>.wh-scan){padding:16px}
 }
+
+/* A final odd worklist item takes available desktop width instead of leaving
+   an empty second card slot. Split its information into two useful columns. */
+@media(min-width:1181px){
+ .sf-find-page .wh-task-list>.wh-task:last-child:nth-child(odd):not(:first-child){
+  grid-column:1 / -1;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  column-gap:22px;
+  align-content:start;
+  align-items:start;
+  height:auto;
+ }
+ .sf-find-page .wh-task-list>.wh-task:last-child:nth-child(odd):not(:first-child) .wh-task-heading{
+  grid-column:1;grid-row:1;
+ }
+ .sf-find-page .wh-task-list>.wh-task:last-child:nth-child(odd):not(:first-child) .wh-item-meta{
+  grid-column:1;grid-row:2;
+ }
+ .sf-find-page .wh-task-list>.wh-task:last-child:nth-child(odd):not(:first-child) .wh-place{
+  grid-column:2;grid-row:1;
+  margin-top:0;
+ }
+ .sf-find-page .wh-task-list>.wh-task:last-child:nth-child(odd):not(:first-child) .sf-stock-badge{
+  grid-column:1;grid-row:3;
+ }
+ .sf-find-page .wh-task-list>.wh-task:last-child:nth-child(odd):not(:first-child) .sf-location-check{
+  grid-column:2;grid-row:2 / span 2;
+  margin-top:0;
+ }
+ .sf-find-page .wh-task-list>.wh-task:last-child:nth-child(odd):not(:first-child) .wh-task-footer{
+  grid-column:1 / -1;
+  grid-row:4;
+  margin-top:16px;
+ }
+ .sf-find-page .wh-task-list>.wh-task:last-child:nth-child(odd):not(:first-child) .sf-deferred-pick{
+  grid-column:1;grid-row:auto;
+ }
+}
+/* On smaller screens use the ordinary single-column card, never a horizontal
+   overflow merely to fill unused desktop space. */
