@@ -366,10 +366,12 @@ test('native voice picking commands are wired for every supported input language
  const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
  assert.match(src,/PICKING_VOICE_LANGUAGES\.includes\(task\.language\)/);
  assert.match(src,/PICKING_VOICE_LANGUAGES\.includes\(next\.language\)/);
- assert.match(src,/\['verify','report','repeat','next','stop','help'\]\.map\(action/);
+ assert.match(src,/\['verify','report','next'\]\.map\(action/);
  assert.match(src,/pickVoicePhrase\(task\.language,action\)/);
  assert.match(src,/pickingCommandLabel\(appLanguage,action\)/);
- assert.match(src,/sf-voice-command-phrase/);
+ assert.match(src,/sf-voice-guide-secondary/);
+  assert.match(src,/sf-voice-details/);
+  assert.doesNotMatch(src,/sayUndo/);
  assert.match(src,/voicePickCommand\(pickVoicePhrase\(task\.language,action\)\)/);
  for(const code of ['kn-IN','ta-IN','te-IN','ml-IN','mr-IN','bn-IN','gu-IN','pa-IN'])assert.ok(terms.includes('"'+code+'"'),code);
  assert.match(server,/voice_guide\.intent\(body\.transcript,task\['language'\]\)/);
