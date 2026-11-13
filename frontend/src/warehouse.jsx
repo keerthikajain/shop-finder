@@ -12,6 +12,7 @@ import WorkspaceGreeting from './workspace-greeting.jsx';
 import {pickConfirmationIntent} from './picking-confirmations.js';
 import {voiceAction,actionPhrases,dialogueControl,plausibleShelfSuggestion,reportSubmitCommand,unclearReportSubmit} from './voice-review-commands.js';
 import {fixedVoicePrompt} from './fixed-voice-prompt.js';
+import {readWorkspaceSession,writeWorkspaceSession,clearWorkspaceSession,resumeModal} from './workspace-resume.js';
 import {pickingUiCopy,pickingCommandLabel,pickingUiTip,reportUiCopy,reportUiTip,spokenYesNo} from './voice-ui-copy.js';
 import {getThemePreference,resolveTheme} from './theme.js';
 import {Mark,Glyph,Modal,Place,Specs,ItemArt,ScanBox,Label,Feedback} from './warehouse-ui.jsx';
@@ -79,7 +80,11 @@ export function VoiceButton({language,enabled,onText,onError,onPartial,live=fals
 }
 export default function WarehouseApp({user,preferences,logout}){
  const t=useT(),appLanguage=useContext(Locale),owner=user.role==='owner';
- const [feedbackText,FB]=useState(''),[feedbackSent,FBS]=useState(false),[ownerFeedback,OF]=useState([]),[voiceGuideText,VGT]=useState(''),[voiceGuideCommand,VGC]=useState(''),[voiceGuidePaused,VGP]=useState(true),[meta,M]=useState(null),[items,I]=useState([]),[collection,C]=useState('all'),[page,P]=useState('find'),[brand,BR]=useState(''),[locationFilter,LF]=useState(''),[query,Q]=useState(''),[task,T]=useState(null),[recent,R]=useState([]),[busy,B]=useState(false),[error,E]=useState(''),[notice,N]=useState(''),[modal,D]=useState(null),[group,G]=useState('request'),[filter,F]=useState(''),[category,CAT]=useState(''),[language,L]=useState(()=>{const saved=localStorage.getItem('sf-voice-'+user.id);return ACTIVE_VOICE_CODES.has(saved)?saved:(VOICE_LANGUAGE_DEFAULT[user.language]||'en-IN')}),[liveMode,LM]=useState(false),[detectedSearchLanguage,DSL]=useState(null),[hintLanguages,HL]=useState([]),[auto,AUTO]=useState(true),[handsFree,HF]=useState(true),[pendingVoicePick,PV]=useState(null),[searchTranscript,ST]=useState(''),[voiceQuery,VQ]=useState(false),[tour,TOUR]=useState(user.tour_done?null:0),[theme,TH]=useState(()=>getThemePreference(localStorage)),[speaking,SP]=useState(false),[filtersOpen,FO]=useState(false),[sizeFilter,SZ]=useState(''),[activeLine,AL]=useState(0),[reviewNonce,RV]=useState(0),[lookupMode,SetLookupMode]=useState('choice'),[modeListening,SetModeListening]=useState(false),[lookupVoicePaused,SetLookupVoicePaused]=useState(false),[lookupSelection,SetLookupSelection]=useState(null),[lookupPending,SetLookupPending]=useState(null),[modeSpeechResult,SetModeSpeechResult]=useState(null);
+ const restoredWorkspace=useRef(undefined);
+ if(restoredWorkspace.current===undefined)restoredWorkspace.current=readWorkspaceSession(sessionStorage,user.id)||null;
+ const savedWorkspace=restoredWorkspace.current;
+ const restoreReady=useRef(!savedWorkspace?.taskId);
+ const [feedbackText,FB]=useState(''),[feedbackSent,FBS]=useState(false),[ownerFeedback,OF]=useState([]),[voiceGuideText,VGT]=useState(''),[voiceGuideCommand,VGC]=useState(''),[voiceGuidePaused,VGP]=useState(true),[meta,M]=useState(null),[items,I]=useState([]),[collection,C]=useState(()=>savedWorkspace?.collection||'all'),[page,P]=useState(()=>savedWorkspace?.page||'find'),[brand,BR]=useState(''),[locationFilter,LF]=useState(''),[query,Q]=useState(()=>savedWorkspace?.query||''),[task,T]=useState(null),[recent,R]=useState([]),[busy,B]=useState(false),[error,E]=useState(''),[notice,N]=useState(''),[modal,D]=useState(null),[group,G]=useState(()=>savedWorkspace?.group||'request'),[filter,F]=useState(''),[category,CAT]=useState(''),[language,L]=useState(()=>{const saved=localStorage.getItem('sf-voice-'+user.id);return ACTIVE_VOICE_CODES.has(saved)?saved:(VOICE_LANGUAGE_DEFAULT[user.language]||'en-IN')}),[liveMode,LM]=useState(false),[detectedSearchLanguage,DSL]=useState(null),[hintLanguages,HL]=useState([]),[auto,AUTO]=useState(true),[handsFree,HF]=useState(true),[pendingVoicePick,PV]=useState(null),[searchTranscript,ST]=useState(''),[voiceQuery,VQ]=useState(false),[tour,TOUR]=useState(user.tour_done?null:0),[theme,TH]=useState(()=>getThemePreference(localStorage)),[speaking,SP]=useState(false),[filtersOpen,FO]=useState(false),[sizeFilter,SZ]=useState(''),[activeLine,AL]=useState(()=>savedWorkspace?.activeLine||0),[reviewNonce,RV]=useState(0),[lookupMode,SetLookupMode]=useState(()=>savedWorkspace?.lookupMode||'choice'),[modeListening,SetModeListening]=useState(false),[lookupVoicePaused,SetLookupVoicePaused]=useState(false),[lookupSelection,SetLookupSelection]=useState(null),[lookupPending,SetLookupPending]=useState(null),[modeSpeechResult,SetModeSpeechResult]=useState(null);
  const audio=useRef(),audioURL=useRef(),audioRequest=useRef(null),playbackSerial=useRef(0),voiceFlowStopped=useRef(false),reportResumeRef=useRef(false),generation=useRef(0),main=useRef(),taskVoice=useRef(false),pendingResume=useRef(null),audioEndResolve=useRef(null),modeChoiceSerial=useRef(0);
  const pack=collection==='all'?{id:'all',name:'Whole store',fields:[...new Set(meta?.collections.flatMap(c=>[...c.fields,...(meta.settings.custom_fields[c.id]||[])])||[])]}:meta?.collections.find(c=>c.id===collection),labels=meta?.field_labels||{},voice=!!meta?.voice,prismaV3=meta?.stt_model!=='prisma-v2.5';
  const invalidHints=false;
@@ -92,7 +97,51 @@ export default function WarehouseApp({user,preferences,logout}){
  // This is a bounded fixed prompt, never an item-specific or private readback.
  useEffect(()=>{if(voice&&PICKING_VOICE_LANGUAGES.includes(language))void fixedVoicePrompt('choose_mode',language).catch(()=>{});},[voice,language]);
  useEffect(()=>{let active=true;request('/warehouse/meta').then(x=>{if(active){M(x);if(owner&&!x.settings.configured&&!user.is_challenge){P('business');TOUR(null)}}}).catch(e=>E(e.message));return()=>{active=false;audioRequest.current?.abort();audio.current?.pause();if(audioURL.current)URL.revokeObjectURL(audioURL.current)}},[]);
- useEffect(()=>{const n=++generation.current;const restoring=pendingResume.current;if(restoring&&restoring.collection===collection){T(restoring);Q(restoring.query);G('location');AL(Math.max(0,restoring.lines.findIndex(l=>!l.complete)));pendingResume.current=null}else{T(null);Q('')}E('');F('');CAT('');BR('');LF('');SZ('');FO(false);D(null);audio.current?.pause();SP(false);localStorage.setItem('sf-collection',collection);request('/warehouse/items?collection='+collection).then(x=>{if(n===generation.current)I(x)}).catch(e=>E(e.message));request('/warehouse/tasks').then(R).catch(e=>E(e.message))},[collection]);
+ useEffect(()=>{
+  const n=++generation.current;
+  const restoring=pendingResume.current;
+  const snapshot=restoredWorkspace.current;
+  restoredWorkspace.current=null;
+  // Never display a stale browser task. Recover it through the authenticated
+  // API and restore the exact saved step only if this is still the same view.
+  if(restoring&&restoring.collection===collection){
+   T(restoring);Q(restoring.query);G('location');AL(Math.max(0,nextPendingPickIndex(restoring.lines)));pendingResume.current=null;
+  }else if(snapshot?.taskId&&snapshot.collection===collection){
+   request('/warehouse/tasks/'+encodeURIComponent(snapshot.taskId)).then(serverTask=>{
+    if(n!==generation.current)return;
+    T(serverTask);Q(snapshot.query||serverTask.query);
+    AL(Math.min(snapshot.activeLine,Math.max(0,serverTask.lines.length-1)));
+    G(snapshot.group);
+    // A previously spoken instruction is not replayed; the worker can resume
+    // speaking deliberately. No unverified action is retried on refresh.
+    VGP(true);SetModeListening(false);SetLookupVoicePaused(true);
+    if(snapshot.lookupMode==='guided'&&serverTask.picking?.status==='active')SetLookupMode('guided');
+    else if(snapshot.lookupMode==='locations')SetLookupMode('locations');
+    else SetLookupMode('choice');
+    D(resumeModal(snapshot,serverTask));
+    restoreReady.current=true;
+   }).catch(err=>{
+    if(n!==generation.current)return;
+    clearWorkspaceSession(sessionStorage,user.id);
+    T(null);D(null);restoreReady.current=true;
+    E(err.message);
+   });
+  }else if(snapshot&&snapshot.collection===collection){
+   // Keep an unsent search draft and the page being explored.
+   T(null);D(snapshot.modal?.type==='lookup'?{type:'lookup'}:null);restoreReady.current=true;
+  }else{T(null);Q('');D(null);restoreReady.current=true}
+  E('');F('');CAT('');BR('');LF('');SZ('');FO(false);audio.current?.pause();SP(false);
+  localStorage.setItem('sf-collection',collection);
+  request('/warehouse/items?collection='+collection).then(x=>{if(n===generation.current)I(x)}).catch(e=>E(e.message));
+  request('/warehouse/tasks').then(R).catch(e=>E(e.message));
+ },[collection]);
+ useEffect(()=>{
+  if(!restoreReady.current)return;
+  writeWorkspaceSession(sessionStorage,user.id,{
+   page,collection,query,taskId:task?.id||null,activeLine,group,lookupMode,
+   modal:modal?.type==='scan'?{type:'scan',index:modal.index}:modal?.type==='report'&&Number.isInteger(modal.index)?{type:'report',index:modal.index}:modal?.type==='lookup'?{type:'lookup'}:null
+  });
+ },[user.id,page,collection,query,task?.id,activeLine,group,lookupMode,modal]);
  async function run(fn){B(true);E('');N('');try{return await fn()}catch(e){E(e.message)}finally{B(false)}}
  async function reload(){I(await request('/warehouse/items?collection='+collection));M(await request('/warehouse/meta'));R(await request('/warehouse/tasks'))}
  function stopSpeech(){
