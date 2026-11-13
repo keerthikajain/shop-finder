@@ -1,8 +1,9 @@
-import React,{useEffect,useRef,useState} from 'react';
+import React,{useContext,useEffect,useRef,useState} from 'react';
 import {startRecording} from './recording.js';
 import {request} from './accounts.jsx';
 import {dialogueControl} from './voice-review-commands.js';
-import {reportVoiceCopy} from './report-voice-copy.js';
+import {Locale} from './locale.js';
+import {reportUiCopy} from './voice-ui-copy.js';
 import {fixedVoicePrompt} from './fixed-voice-prompt.js';
 
 /*
@@ -15,14 +16,15 @@ export default function GuidedVoiceTurn({
  language='en-IN',stage,promptEndpoint=null,promptBody=null,retryStep=null,onTranscript,onBack,onStop,
  onError=()=>{},onActiveChange=()=>{},disabled=false,context='location review'
 }){
+ const appLanguage=useContext(Locale);
  const [active,SetActive]=useState(false),[cycle,Cycle]=useState(0);
  const [status,Status]=useState('idle'),[error,ErrorMessage]=useState('');
  const [heard,Heard]=useState('');
  const handlers=useRef({onTranscript,onBack,onStop,onError,onActiveChange}),promptBodyRef=useRef(promptBody);
  const stageRef=useRef(stage),silence=useRef(0),retryNarration=useRef(false);
- // The spoken guide must show exactly the commands it is listening for,
- // even when the surrounding app menus use a different language.
- const copy=key=>reportVoiceCopy(language,key);
+ // Control labels and status follow the app language. Recognition and narration
+ // intentionally remain in the selected speech language.
+ const copy=key=>reportUiCopy(appLanguage,key);
  handlers.current={onTranscript,onBack,onStop,onError,onActiveChange};
  promptBodyRef.current=promptBody;
  stageRef.current=stage;

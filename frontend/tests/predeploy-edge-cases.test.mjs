@@ -16,7 +16,7 @@ test('guided voice cancels pending narration and recognition when locale or step
  assert.match(src,/controller\.abort\(\)/);
  assert.match(src,/recorder\?\.stop\(true\)/);
  assert.match(src,/\[active,disabled,stage,promptEndpoint,retryStep,language,cycle\]/);
- assert.match(src,/reportVoiceCopy\(language,key\)/);
+ assert.match(src,/reportUiCopy\(appLanguage,key\)/);
 });
 test('consequential voice commands do not accept approximate or contradictory commands',()=>{
  for(const language of ['en-IN','hi-IN','hi-en','te-IN']){
