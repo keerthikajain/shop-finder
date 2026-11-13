@@ -365,11 +365,11 @@ test('native voice picking commands are wired for every supported input language
  const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
  assert.match(src,/PICKING_VOICE_LANGUAGES\.includes\(task\.language\)/);
  assert.match(src,/PICKING_VOICE_LANGUAGES\.includes\(next\.language\)/);
- assert.match(src,/pickVoicePhrase\(task\.language,'next'\)/);
- assert.match(src,/pickVoicePhrase\(task\.language,'repeat'\)/);
- assert.match(src,/pickVoicePhrase\(task\.language,'verify'\)/);
- assert.match(src,/pickVoicePhrase\(task\.language,'report'\)/);
- assert.match(src,/pickVoicePhrase\(task\.language,'stop'\)/);
+ assert.match(src,/\['verify','report','repeat','next','stop','help'\]\.map\(action/);
+ assert.match(src,/pickVoicePhrase\(task\.language,action\)/);
+ assert.match(src,/pickingCommandLabel\(appLanguage,action\)/);
+ assert.match(src,/sf-voice-command-phrase/);
+ assert.match(src,/voicePickCommand\(pickVoicePhrase\(task\.language,action\)\)/);
  for(const code of ['kn-IN','ta-IN','te-IN','ml-IN','mr-IN','bn-IN','gu-IN','pa-IN'])assert.ok(terms.includes('"'+code+'"'),code);
  assert.match(server,/voice_guide\.intent\(body\.transcript,task\['language'\]\)/);
  assert.match(src,/if\(answer\.action==='verify'&&answer\.line!=null\)\{PV\(/);
@@ -518,8 +518,8 @@ test('hands-free picking is bounded and pauses while sound, modals or work is ac
  assert.match(source,/HandsFreePicking enabled=\{!busy&&!speaking&&!modal&&page==='find'\}/);
  assert.match(source,/\[handsFree,HF\]=useState\(true\)/);
  assert.match(source,/\[voiceGuidePaused,VGP\]=useState\(true\)/);
- assert.ok(source.includes("pickingCopy(task.language,voiceGuidePaused?'resume':'stop')"));
- assert.ok(source.includes("pickingCopy(task.language,voiceGuidePaused?'resume':'stop')"));
+ assert.ok(source.includes("pickingUiCopy(appLanguage,voiceGuidePaused?'resume':'stop')"));
+ assert.ok(source.includes("pickingUiCopy(appLanguage,voiceGuidePaused?'resume':'stop')"));
  assert.match(listener,/stopOnSilence:true/);
  assert.match(listener,/\.stop\(true\)/);
  assert.match(listener,/request\('\/voice\/transcribe\?'/);
@@ -648,8 +648,8 @@ test('spoken report submission resumes the next eligible item only after report 
  assert.match(source,/reportResumeRef\.current=handsFree&&!voiceGuidePaused/);
  assert.match(source,/The item remains unconfirmed; Finder moved to the next available item/);
  assert.match(source,/onClose=\{\(\)=>\{reportResumeRef\.current=false;D\(null\);VGP\(true\)\}\}/);
- assert.ok(source.includes("pickingCopy(task.language,voiceGuidePaused?'resume':'stop')"));
- assert.ok(source.includes("pickingCopy(task.language,voiceGuidePaused?'resume':'stop')"));
+ assert.ok(source.includes("pickingUiCopy(appLanguage,voiceGuidePaused?'resume':'stop')"));
+ assert.ok(source.includes("pickingUiCopy(appLanguage,voiceGuidePaused?'resume':'stop')"));
 });
 test('pink disabled and recording buttons have readable, high-contrast foreground',async()=>{
  const css=await readFile(new URL('../src/product-polish.css',import.meta.url),'utf8');
@@ -763,7 +763,7 @@ test('picking pause and resume persist progress while automatic listening starts
  assert.match(src,/async function togglePickPause\(\)/);
  assert.match(src,/task\.picking\?\.paused\?'resume':'pause'/);
  assert.match(src,/className="sf-pick-pause-toggle"/);
- assert.ok(src.includes("pickingCopy(task.language,pickPaused?'resumePicking':'pause')"));
+ assert.ok(src.includes("pickingUiCopy(appLanguage,pickPaused?'resumePicking':'pause')"));
  assert.match(src,/\[handsFree,HF\]=useState\(true\)/);
  assert.match(src,/\[voiceGuidePaused,VGP\]=useState\(true\)/);
  assert.match(src,/onClick=\{\(\)=>\{if\(!voiceGuidePaused\)\{PV\(null\);stopVoiceFlow\(\);return\}/);
@@ -780,7 +780,7 @@ test('spoken answers guidance welcome and reports expose explicit stop buttons',
  assert.match(src,/playbackSerial\.current\+\+/);
  assert.match(src,/audioRequest\.current\?\.abort\(\)/);
  assert.match(src,/onClick=\{\(\)=>speaking\?stopSpeech\(\):speak\(task\)\}/);
- assert.ok(src.includes("pickingCopy(task.language,speaking?'stopAudio':'read')"));
+ assert.ok(src.includes("pickingUiCopy(appLanguage,speaking?'stopAudio':'read')"));
  assert.match(src,/className="sf-report-stop-audio" onClick=\{onStopSpeaking\}/);
  assert.doesNotMatch(account,/welcomeStatus==='speaking'\|\|welcomeStatus==='starting'/);
  assert.doesNotMatch(account,/\?'Stop welcome':'Hear welcome'/);
