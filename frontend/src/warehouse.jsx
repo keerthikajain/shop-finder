@@ -116,7 +116,7 @@ export default function WarehouseApp({user,preferences,logout}){
      SetModeListening(false);SetLookupVoicePaused(true);VGP(true);SetRestoredWork(true);
      // A report draft is already stored separately; restore its editor but never submit.
      const reportLine=restored.lines[saved.reportIndex];
-     if(saved.reportIndex!==null&&reportLine?.selected&&reportLine?.location)
+     if(saved.reportIndex!==null&&reportLine?.selected&&reportLine?.location&&!reportLine.complete&&!reportLine.location_report_open)
       D({type:'report',item:reportLine.selected,location:reportLine.location,index:saved.reportIndex});
      N(t('Previous work restored. Continue where you left off.'));
     }else{
