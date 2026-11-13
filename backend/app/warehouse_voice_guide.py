@@ -53,7 +53,7 @@ VARIANTS={
  },
  'en-IN':{
   'repeat':('location dobara batao','location दोबारा बताओ'),
-  'help':('मदद'),
+  'help':('मदद',),
  }
 }
 def normalized_command(value):
