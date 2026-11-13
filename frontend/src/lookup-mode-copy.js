@@ -29,7 +29,9 @@ export const LOOKUP_UI={
     "help": "Help",
     "strictConfirmation": "Pick confirmation requires an explicit yes or no.",
     "reportPending": "The saved location has an open report. Ask the owner to verify it.",
-    "listen": "Listen to locations"
+    "listen": "Listen to locations",
+    "undo": "Undo confirmation",
+    "updateStock": "Update stock"
   },
   "hi": {
     "heading": "आप कैसे आगे बढ़ना चाहेंगे?",
@@ -61,7 +63,9 @@ export const LOOKUP_UI={
     "help": "मदद",
     "strictConfirmation": "पुष्टि के लिए साफ़ हाँ या नहीं कहें।",
     "reportPending": "इस जगह की रिपोर्ट खुली है। मालिक से सत्यापन कराएँ।",
-    "listen": "जगह सुनें"
+    "listen": "जगह सुनें",
+    "undo": "पुष्टि वापस लें",
+    "updateStock": "स्टॉक बदलें"
   },
   "te": {
     "heading": "ఎలా కొనసాగాలనుకుంటున్నారు?",
@@ -93,7 +97,9 @@ export const LOOKUP_UI={
     "help": "సహాయం",
     "strictConfirmation": "నిర్ధారణకు అవును లేదా కాదు స్పష్టంగా చెప్పండి.",
     "reportPending": "ఈ స్థానంపై నివేదిక ఉంది. యజమాని నిర్ధారించాలి.",
-    "listen": "స్థానాలను వినండి"
+    "listen": "స్థానాలను వినండి",
+    "undo": "నిర్ధారణను రద్దు చేయండి",
+    "updateStock": "స్టాక్‌ను నవీకరించండి"
   },
   "bn": {
     "heading": "কীভাবে এগোতে চান?",
@@ -125,7 +131,9 @@ export const LOOKUP_UI={
     "help": "সহায়তা",
     "strictConfirmation": "নিশ্চিত করতে স্পষ্ট হ্যাঁ বা না বলুন।",
     "reportPending": "অবস্থানের রিপোর্ট খোলা আছে। মালিককে যাচাই করতে বলুন।",
-    "listen": "অবস্থান শুনুন"
+    "listen": "অবস্থান শুনুন",
+    "undo": "নিশ্চিতকরণ ফিরিয়ে নিন",
+    "updateStock": "স্টক পরিবর্তন করুন"
   },
   "mr": {
     "heading": "कसे पुढे जायचे?",
@@ -157,7 +165,9 @@ export const LOOKUP_UI={
     "help": "मदत",
     "strictConfirmation": "पुष्टीसाठी स्पष्ट होय किंवा नाही सांगा.",
     "reportPending": "या जागेवर अहवाल आहे. मालकाकडून पडताळणी करा.",
-    "listen": "जागा ऐका"
+    "listen": "जागा ऐका",
+    "undo": "पुष्टी मागे घ्या",
+    "updateStock": "स्टॉक बदला"
   },
   "gu": {
     "heading": "કેવી રીતે આગળ વધવું છે?",
@@ -189,7 +199,9 @@ export const LOOKUP_UI={
     "help": "મદદ",
     "strictConfirmation": "પુષ્ટિ માટે સ્પષ્ટ હા કે ના કહો.",
     "reportPending": "આ સ્થાન પર ખુલ્લો રિપોર્ટ છે. માલિક પાસે ચકાસાવો.",
-    "listen": "સ્થાનો સાંભળો"
+    "listen": "સ્થાનો સાંભળો",
+    "undo": "પુષ્ટિ પાછી લો",
+    "updateStock": "સ્ટોક બદલો"
   },
   "pa": {
     "heading": "ਕਿਵੇਂ ਅੱਗੇ ਵਧਣਾ ਹੈ?",
@@ -221,7 +233,9 @@ export const LOOKUP_UI={
     "help": "ਮਦਦ",
     "strictConfirmation": "ਪੁਸ਼ਟੀ ਲਈ ਸਪਸ਼ਟ ਹਾਂ ਜਾਂ ਨਹੀਂ ਕਹੋ।",
     "reportPending": "ਇਸ ਥਾਂ ਬਾਰੇ ਰਿਪੋਰਟ ਖੁੱਲ੍ਹੀ ਹੈ। ਮਾਲਕ ਤੋਂ ਜਾਂਚ ਕਰਵਾਓ।",
-    "listen": "ਥਾਵਾਂ ਸੁਣੋ"
+    "listen": "ਥਾਵਾਂ ਸੁਣੋ",
+    "undo": "ਪੁਸ਼ਟੀ ਵਾਪਸ ਲਓ",
+    "updateStock": "ਸਟਾਕ ਬਦਲੋ"
   },
   "kn": {
     "heading": "ಹೇಗೆ ಮುಂದುವರಿಸಬೇಕು?",
@@ -253,7 +267,9 @@ export const LOOKUP_UI={
     "help": "ಸಹಾಯ",
     "strictConfirmation": "ದೃಢೀಕರಣಕ್ಕೆ ಸ್ಪಷ್ಟ ಹೌದು ಅಥವಾ ಇಲ್ಲ ಎಂದು ಹೇಳಿ.",
     "reportPending": "ಈ ಸ್ಥಳದ ವರದಿ ತೆರೆದಿದೆ. ಮಾಲೀಕರಿಂದ ಪರಿಶೀಲಿಸಿ.",
-    "listen": "ಸ್ಥಳಗಳನ್ನು ಕೇಳಿ"
+    "listen": "ಸ್ಥಳಗಳನ್ನು ಕೇಳಿ",
+    "undo": "ದೃಢೀಕರಣ ರದ್ದುಗೊಳಿಸಿ",
+    "updateStock": "ಸ್ಟಾಕ್ ನವೀಕರಿಸಿ"
   },
   "ta": {
     "heading": "எப்படித் தொடர விரும்புகிறீர்கள்?",
@@ -285,7 +301,9 @@ export const LOOKUP_UI={
     "help": "உதவி",
     "strictConfirmation": "உறுதிப்படுத்தத் தெளிவாக ஆம் அல்லது இல்லை என்று சொல்லுங்கள்.",
     "reportPending": "இந்த இடத்துக்கு திறந்த புகார் உள்ளது. உரிமையாளர் சரிபார்க்க வேண்டும்.",
-    "listen": "இடங்களைக் கேள்"
+    "listen": "இடங்களைக் கேள்",
+    "undo": "உறுதிப்படுத்தலைத் திரும்பப் பெறு",
+    "updateStock": "இருப்பை மாற்று"
   },
   "ml": {
     "heading": "എങ്ങനെ തുടരാൻ ആഗ്രഹിക്കുന്നു?",
@@ -317,7 +335,9 @@ export const LOOKUP_UI={
     "help": "സഹായം",
     "strictConfirmation": "സ്ഥിരീകരിക്കാൻ വ്യക്തമായി അതെ അല്ലെങ്കിൽ ഇല്ല എന്ന് പറയൂ.",
     "reportPending": "ഈ സ്ഥലത്ത് റിപ്പോർട്ട് ഉണ്ട്. ഉടമ പരിശോധിക്കണം.",
-    "listen": "സ്ഥലങ്ങൾ കേൾക്കൂ"
+    "listen": "സ്ഥലങ്ങൾ കേൾക്കൂ",
+    "undo": "സ്ഥിരീകരണം പിൻവലിക്കൂ",
+    "updateStock": "സ്റ്റോക്ക് മാറ്റൂ"
   }
 };
 export function lookupCopy(appLanguage,key){return (LOOKUP_UI[appLanguage]||LOOKUP_UI.en)[key]||key;}
