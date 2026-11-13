@@ -503,7 +503,8 @@ test('search shows a review stage until the worker confirms the picking list',as
  assert.doesNotMatch(source,/async function startIfReady\(result\)/);
  assert.doesNotMatch(source,/const next=await startIfReady\(result\)/);
  assert.match(source,/T\(result\)/);
- assert.match(source,/Review the matched items\. Confirm the search once to hear the first location/);
+ assert.match(source,/void offerSearchMode\(result\)/);
+ assert.match(source,/N\(result\.lines\.every\(line=>line\.selected&&line\.location\)\?lookupCopy\(appLanguage,'question'\):lookupCopy\(appLanguage,'resolve'\)\)/);
  assert.match(source,/Confirm search and begin picking/);
  assert.match(source,/Confirm search by voice/);
  assert.match(source,/await pickAction\('start'\)/);
@@ -517,7 +518,7 @@ test('hands-free picking is bounded and pauses while sound, modals or work is ac
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const listener=await readFile(new URL('../src/hands-free-picking.jsx',import.meta.url),'utf8');
  const recording=await readFile(new URL('../src/recording.js',import.meta.url),'utf8');
- assert.match(source,/HandsFreePicking enabled=\{!busy&&!speaking&&!modal&&page==='find'\}/);
+ assert.match(source,/HandsFreePicking appLanguage=\{appLanguage\} enabled=\{!busy&&!speaking&&!modal&&page==='find'\}/);
  assert.match(source,/\[handsFree,HF\]=useState\(true\)/);
  assert.match(source,/\[voiceGuidePaused,VGP\]=useState\(true\)/);
  assert.ok(source.includes("pickingUiCopy(appLanguage,voiceGuidePaused?'resume':'stop')"));
