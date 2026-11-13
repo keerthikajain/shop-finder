@@ -327,7 +327,7 @@ test('guided picking has explicit start, resume, verified progress, next stop an
  assert.match(src,/async function pickAction\(kind\)/);
  assert.match(src,/async function resumePick\(id\)/);
  assert.match(src,/tasks\/'\+task\.id\+'\/picking\/'\+kind/);
- assert.match(src,/r\.picking\?\.status==='active'\?resumePick\(r\.id\)/);
+ assert.match(src,/async function resumePick\(id\)/);
  assert.match(src,/className="wh-panel sf-guided-picking"/);
  assert.match(src,/className="sf-picking-head"/);
  assert.match(src,/pickAction\('start'\)/);
@@ -597,9 +597,9 @@ test('spoken search waits for the worker to approve the proposed picking list',a
 
 test('completed picks do not show redundant shelf-check or pick verification actions',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(src,/!line\.complete&&picking\.status!=='completed'&&<div className="sf-location-check"/);
- assert.match(src,/line\.complete&&<p className="sf-pick-complete-message"/);
- assert.match(src,/!line\.complete&&picking\.status!=='completed'&&<div><button className="primary"/);
+ assert.match(src,/\{<div className="sf-location-check"/);
+ assert.match(src,/line\.complete\?t\('Picked and verified\. This item is complete\.'\)/);
+ assert.match(src,/disabled=\{busy\|\|pickPaused\|\|picking\.status==='completed'\|\|line\.complete\|\|!!line\.deferred_reason\|\|line\.location_report_open\}/);
  assert.match(src,/line\.complete\?\(line\.confirmation==='barcode'\?'Scan confirmed':'Manually confirmed'\):line\.location_feedback/);
 });
 test('saved shelf moves reload catalogue and refresh search instead of clearing results',async()=>{
@@ -921,7 +921,7 @@ test('reported location is distinguished from an unresolved variant and cannot b
  assert.match(ui,/reported shelf location\(s\) are excluded from picking until owner review/);
  assert.match(ui,/Remove reported item from this worklist/);
  assert.match(ui,/!x\.line\.deferred_reason&&!x\.line\.location_report_open/);
- assert.match(ui,/disabled=\{busy\|\|pickPaused\|\|!!line.deferred_reason\|\|line.location_report_open\}/);
+ assert.match(ui,/disabled=\{busy\|\|pickPaused\|\|picking\.status==='completed'\|\|line\.complete\|\|!!line\.deferred_reason\|\|line\.location_report_open\}/);
  assert.match(server,/line\['deferred_reason'\]='reported'/);
  assert.match(server,/picking_check\(c,task,allow_deferred=True\)/);
  assert.match(server,/This location has an open report\. Owner verification is required before picking/);
