@@ -480,6 +480,14 @@ export default function WarehouseApp({user,preferences,logout}){
    else VGT(nextItemUi(appLanguage,'cancelledStatus'));
   });
  }
+ function currentNextLine(source){
+  if(pendingVoicePick?.taskId===source?.id&&Number.isInteger(pendingVoicePick.line))
+   return pendingVoicePick.line;
+  const current=source?.lines?.[activeLine];
+  if(current&&current.selected&&current.location&&!current.complete&&!current.deferred_reason&&!current.location_report_open)
+   return activeLine;
+  return nextPendingPickIndex(source?.lines);
+ }
  function askNextChoice(source,line){
   const current=source?.lines?.[line];
   if(!current||current.complete||current.deferred_reason||!current.selected||!current.location){
@@ -498,7 +506,7 @@ export default function WarehouseApp({user,preferences,logout}){
   if(source.picking?.paused&&control!=='help')return;
   VGC(transcript);
   if(!pendingNextPick&&nextItemChoice(source.language,transcript)==='next'){
-   askNextChoice(source,pendingVoicePick?.line??nextPendingPickIndex(source.lines));
+   askNextChoice(source,currentNextLine(source));
    return;
   }
   if(pendingNextPick&&pendingNextPick.taskId===source.id){
@@ -606,8 +614,8 @@ export default function WarehouseApp({user,preferences,logout}){
    const answer=await api('/tasks/'+source.id+'/picking/command',{transcript,line:activeLine});
    VGT(answer.action==='unknown'?pickingUiTip(appLanguage,'available'):pickingUiCopy(appLanguage,'active'));
    if(answer.action==='next'){
-    const index=nextPendingPickIndex(source.lines);
-    askNextChoice(source,index>=0?index:activeLine);
+    const index=currentNextLine(source);
+    askNextChoice(source,index);
     return;
    }
    if(answer.line!=null)AL(answer.line);
