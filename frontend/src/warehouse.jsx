@@ -402,7 +402,7 @@ export default function WarehouseApp({user,preferences,logout}){
     if(voice&&auto&&!voiceFlowStopped.current)await playFixedVoice('pick_done',finished.language);
    }else{
     if(voice&&auto&&!voiceFlowStopped.current)await playFixedVoice('pick_later_ready',next.language,false,true);
-    N(t('No more regular items. Deferred items remain unconfirmed and can be retried below.'));
+    N(nextItemUi(appLanguage,'laterRemaining'));
     VGT(nextItemUi(appLanguage,'laterRemaining'));
    }
    return;
