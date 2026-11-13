@@ -482,7 +482,9 @@ export default function WarehouseApp({user,preferences,logout}){
  function askNextChoice(source,line){
   const current=source?.lines?.[line];
   if(!current||current.complete||current.deferred_reason||!current.selected||!current.location){
-   N(nextItemUi(appLanguage,'unknown'));return;
+   VGT(nextItemUi(appLanguage,'laterRemaining'));
+   if(voice&&!voiceFlowStopped.current)void playFixedVoice('pick_later_ready',source.language,false,true);
+   return;
   }
   PV(null);PN({taskId:source.id,line,phase:'choose',sku:current.selected.sku});AL(line);
   VGT(nextItemUi(appLanguage,'question'));
@@ -767,7 +769,7 @@ export default function WarehouseApp({user,preferences,logout}){
     </div>
     <small className="sf-voice-guide-spoken-hint">{pickingUiTip(appLanguage,'speakHint')}</small>
     <div className="sf-voice-guide-choices" aria-label={pickingUiCopy(appLanguage,'secondary')}>
-    {['verify','report','repeat','next','stop','help'].map(action=><button key={action} type="button" disabled={action==='help'?(!voice||busy):(picking.status!=='active'||busy||pickPaused)} onClick={()=>action==='repeat'&&voiceFlowStopped.current?playPickGuidance('repeat',task,activeLine,true):voicePickCommand(pickVoicePhrase(task.language,action))}>
+    {['verify','report','repeat','next','stop','help'].map(action=><button key={action} type="button" disabled={action==='help'?(!voice||busy):(picking.status!=='active'||busy||pickPaused||(action==='next'&&nextPickIndex<0))} onClick={()=>action==='repeat'&&voiceFlowStopped.current?playPickGuidance('repeat',task,activeLine,true):voicePickCommand(pickVoicePhrase(task.language,action))}>
      <span className="sf-voice-command-label">{pickingCommandLabel(appLanguage,action)}</span>
      <small className="sf-voice-command-phrase" lang={task.language==='hi-en'?'hi-Latn':task.language}>{pickVoicePhrase(task.language,action)}</small>
     </button>)}
