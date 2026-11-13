@@ -612,7 +612,7 @@ export default function WarehouseApp({user,preferences,logout}){
    <div className="sf-lookup-voice">
     {!lookupVoicePaused?<HandsFreePicking enabled={!busy&&!speaking&&!modal&&page==='find'} language={task.language} collection={collection} onError={E} onCommand={text=>handleLookupSpeech(text)}/>:
       <VoiceButton small autoStop enabled={!busy&&!speaking} language={task.language} label={lookupCopy(appLanguage,'speakChoice')} onError={E} onText={text=>handleLookupSpeech(text)}/>}
-    <button type="button" disabled={busy||speaking} onClick={()=>SetLookupVoicePaused(v=>!v)}>{lookupCopy(appLanguage,lookupVoicePaused?'resumeVoice':'stopVoice')}</button>
+    <button type="button" disabled={busy&&!speaking} onClick={()=>{if(speaking){stopSpeech();SetLookupVoicePaused(true)}else SetLookupVoicePaused(v=>!v)}}>{lookupCopy(appLanguage,lookupVoicePaused&&!speaking?'resumeVoice':'stopVoice')}</button>
     <button type="button" disabled={busy} onClick={()=>handleLookupSpeech(pickVoicePhrase(task.language,'help'))}>{lookupCopy(appLanguage,'help')}</button>
    </div>
    <small className="sf-lookup-phrase">{lookupCopy(appLanguage,'voiceHint')} <span lang={task.language==='hi-en'?'hi-Latn':task.language}>{pickVoicePhrase(task.language,'verify')} / {pickVoicePhrase(task.language,'report')} / {pickVoicePhrase(task.language,'repeat')}</span></small>
