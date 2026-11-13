@@ -43,8 +43,10 @@ export function lookupVoiceIntent(language,text,lines=[]){
   if(variants.some(x=>norm(x)===phrase)||norm(pickVoicePhrase(language,action))===phrase)return {action};
  }
  // An exact SKU or a numbered line is an unambiguous choice. No fuzzy names.
- const itemBySku=lines.findIndex(line=>line.selected?.sku&&norm(line.selected.sku)===phrase);
- if(itemBySku>=0)return {action:'select',line:itemBySku};
+ const skuMatches=lines.map((line,index)=>({line,index})).filter(({line})=>line.selected?.sku&&norm(line.selected.sku)===phrase);
+ // Catalogues may reuse the same SKU; never guess which product was intended.
+ if(skuMatches.length===1)return {action:'select',line:skuMatches[0].index};
+ if(skuMatches.length>1)return {action:'unknown'};
  for(const pattern of ITEM_WORDS[language]||ITEM_WORDS['en-IN']){
   const match=phrase.match(pattern);
   if(!match)continue;
