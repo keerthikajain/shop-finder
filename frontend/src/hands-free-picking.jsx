@@ -2,10 +2,11 @@ import React,{useEffect,useRef,useState} from 'react';
 import {startRecording} from './recording.js';
 import {request} from './accounts.jsx';
 import {pickingCopy} from './picking-copy.js';
+import {pickingUiCopy} from './voice-ui-copy.js';
 
 /* One microphone turn at a time. Never capture while Finder speaks.
    Stops after repeated silence/error; manual actions are always available. */
-export default function HandsFreePicking({enabled,language,collection='all',onCommand,onError}){
+export default function HandsFreePicking({enabled,language,appLanguage=null,collection='all',onCommand,onError}){
  const [cycle,Next]=useState(0),[status,Status]=useState('idle'),[halted,Halt]=useState(false);
  const commandRef=useRef(onCommand),errorRef=useRef(onError),silenceRef=useRef(0);
  useEffect(()=>{commandRef.current=onCommand;errorRef.current=onError},[onCommand,onError]);
@@ -55,13 +56,14 @@ export default function HandsFreePicking({enabled,language,collection='all',onCo
   }).catch(e=>stopWithError(e.message||pickingCopy(language,'noMic')));
   return ()=>{cancelled=true;transcription.abort();recorder?.stop(true);};
  },[enabled,language,collection,cycle,halted]);
- const hint=halted?pickingCopy(language,'noMic'):
-  !enabled?pickingCopy(language,'paused'):
-  status==='transcribing'?pickingCopy(language,'transcribing'):
-  status==='listening'?pickingCopy(language,'listening'):pickingCopy(language,'speaking');
+ const uiText=key=>appLanguage?pickingUiCopy(appLanguage,key):pickingCopy(language,key);
+ const hint=halted?uiText('noMic'):
+  !enabled?uiText('paused'):
+  status==='transcribing'?uiText('transcribing'):
+  status==='listening'?uiText('listening'):uiText('speaking');
  return <div className="sf-hands-free-status" role="status" aria-live="polite">
   <span className={'sf-listen-dot '+(enabled&&!halted&&status==='listening'?'active':'')} aria-hidden="true"/>
   <span>{hint}</span>
-  {halted&&<button type="button" onClick={()=>{silenceRef.current=0;Halt(false);Next(n=>n+1)}}>{pickingCopy(language,'retry')}</button>}
+  {halted&&<button type="button" onClick={()=>{silenceRef.current=0;Halt(false);Next(n=>n+1)}}>{uiText('retry')}</button>}
  </div>;
 }
