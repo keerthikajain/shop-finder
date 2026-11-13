@@ -2006,3 +2006,60 @@ def test_variants_are_informational_requests_not_automatic_picking_confirmation(
   assert response.json()['action']==expected
  assert c.get('/api/warehouse/tasks/'+task['id']).json()==original
  assert c.get('/api/warehouse/issues').json()==[]
+
+
+def test_locations_only_narrates_selected_catalogue_item_without_mutation(setup,monkeypatch):
+ c,_=setup
+ task=search(c,'CLO-001')
+ before=c.get('/api/warehouse/tasks/'+task['id'],headers=H).json()
+ spoken=[]
+ async def gnani_speak(text,language,**kwargs):
+  spoken.append((text,language))
+  return b'RIFF-voice-audio'
+ monkeypatch.setattr('app.warehouse.voice.speak',gnani_speak)
+ r=post(c,'/tasks/'+task['id']+'/lookup-line-audio/0')
+ assert r.status_code==200,r.text
+ assert r.content==b'RIFF-voice-audio'
+ assert spoken and task['lines'][0]['selected']['sku'] in spoken[0][0]
+ assert spoken[0][1]==task['language']
+ assert post(c,'/tasks/'+task['id']+'/lookup-line-audio/-1').status_code==422
+ assert post(c,'/tasks/'+task['id']+'/lookup-line-audio/99').status_code==422
+ after=c.get('/api/warehouse/tasks/'+task['id'],headers=H).json()
+ assert after==before
+
+
+def test_locations_only_pick_needs_explicit_confirmation_and_does_not_change_stock(setup):
+ c,_=setup
+ task=search(c,'CLO-001')
+ selected=task['lines'][0]['selected']
+ original=next(p for p in items(c) if p['sku']==selected['sku'])
+ bad=post(c,'/tasks/'+task['id']+'/scan',{'line':0,'kind':'manual','value':'found it'})
+ assert bad.status_code==422
+ unchanged=c.get('/api/warehouse/tasks/'+task['id'],headers=H).json()
+ assert unchanged['picking']['status']=='ready' and not unchanged['lines'][0]['complete']
+ saved=post(c,'/tasks/'+task['id']+'/scan',{'line':0,'kind':'manual','value':'confirmed'})
+ assert saved.status_code==200,saved.text
+ result=saved.json()
+ assert result['picking']['status']=='ready'
+ assert result['lines'][0]['complete']
+ assert result['lines'][0]['confirmation']=='manual'
+ updated=next(p for p in items(c) if p['sku']==selected['sku'])
+ assert updated['placements']==original['placements']
+ assert updated['revision']==original['revision']
+ assert post(c,'/tasks/'+task['id']+'/scan',{'line':0,'kind':'manual','value':'confirmed'}).status_code==409
+
+
+def test_locations_only_wrong_location_reports_without_changing_recorded_shelf(setup):
+ c,_=setup
+ task=search(c,'CLO-001')
+ item=task['lines'][0]['selected']
+ location=task['lines'][0]['location']
+ original=next(p for p in items(c) if p['sku']==item['sku'])
+ reported=post(c,'/issues',{'collection':'clothing','sku':item['sku'],
+    'kind':'wrong_location','reason':'Shelf is wrong; checked in person',
+    'location_code':location['code'],'suggested_location':'Rack Z shelf 7'})
+ assert reported.status_code==200,reported.text
+ current=next(p for p in items(c) if p['sku']==item['sku'])
+ assert current['placements']==original['placements']
+ assert current['revision']==original['revision']
+ assert c.get('/api/warehouse/issues',params={'collection':'clothing'},headers=H).json()
