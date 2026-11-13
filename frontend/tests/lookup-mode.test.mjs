@@ -49,6 +49,8 @@ test('a voice selection must identify an exact SKU or an explicit valid item num
  assert.equal(lookupVoiceIntent('en-IN','item 3',lines).action,'unknown');
  assert.equal(lookupVoiceIntent('en-IN','APP-009',lines).action,'unknown');
  assert.equal(lookupVoiceIntent('en-IN','rice cooker',lines).action,'unknown');
+ const sameSkuInTwoCatalogues=[{selected:{collection:'appliances',sku:'SHARED-01'}},{selected:{collection:'grocery',sku:'SHARED-01'}}];
+ assert.equal(lookupVoiceIntent('en-IN','SHARED-01',sameSkuInTwoCatalogues).action,'unknown');
 });
 
 test('all ten app languages have separate interface copy',()=>{
