@@ -2,7 +2,6 @@ import React,{useContext,useEffect,useRef,useState} from 'react';
 import {startRecording} from './recording.js';
 import {request} from './accounts.jsx';
 import {dialogueControl} from './voice-review-commands.js';
-import {reportVoiceCopy} from './report-voice-copy.js';
 import {Locale} from './locale.js';
 import {reportUiCopy} from './voice-ui-copy.js';
 import {fixedVoicePrompt} from './fixed-voice-prompt.js';
