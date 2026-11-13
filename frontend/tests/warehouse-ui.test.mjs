@@ -504,7 +504,7 @@ test('search shows a review stage until the worker confirms the picking list',as
  assert.doesNotMatch(source,/async function startIfReady\(result\)/);
  assert.doesNotMatch(source,/const next=await startIfReady\(result\)/);
  assert.match(source,/T\(result\)/);
- assert.match(source,/void offerSearchMode\(result\)/);
+ assert.match(source,/pendingModePrompt\.current=result\.id/);
  assert.match(source,/N\(result\.lines\.every\(line=>line\.selected&&line\.location\)\?lookupCopy\(appLanguage,'question'\):lookupCopy\(appLanguage,'resolve'\)\)/);
  assert.match(source,/Confirm search and begin picking/);
  assert.match(source,/Confirm search by voice/);
