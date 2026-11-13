@@ -332,7 +332,7 @@ test('guided picking has explicit start, resume, verified progress, next stop an
  assert.match(src,/className="sf-picking-head"/);
  assert.match(src,/pickAction\('start'\)/);
  assert.match(src,/pickAction\('finish'\)/);
- assert.match(src,/verifiedCount!==task\.lines\.length/);
+ assert.match(src,/!task\.lines\.every\(line=>line\.complete\|\|\['skipped','cancelled'\]\.includes\(line\.deferred_reason\)\)/);
  assert.match(src,/id=\{'sf-picking-line-'\+line\.index\}/);
  assert.match(src,/task\?\.lines\.filter\(l=>l\.complete\)\.length/);
  assert.match(css,/\.sf-guided-picking\{/);
@@ -771,7 +771,7 @@ test('picking pause and resume persist progress while automatic listening starts
  assert.match(src,/\[handsFree,HF\]=useState\(true\)/);
  assert.match(src,/\[voiceGuidePaused,VGP\]=useState\(true\)/);
  assert.match(src,/onClick=\{\(\)=>\{if\(!voiceGuidePaused\)\{PV\(null\);stopVoiceFlow\(\);return\}/);
- assert.match(src,/disabled=\{busy\|\|pickPaused\|\|verifiedCount!==task\.lines\.length\}/);
+ assert.match(src,/disabled=\{busy\|\|pickPaused\|\|!task\.lines\.every\(line=>line\.complete\|\|\['skipped','cancelled'\]\.includes\(line\.deferred_reason\)\)\}/);
  assert.match(backend,/def pause_picking\(tid:str,request:Request\)/);
  assert.match(backend,/def resume_picking\(tid:str,request:Request\)/);
  assert.match(backend,/picking_state\(t\)\.get\('paused'\)/);
