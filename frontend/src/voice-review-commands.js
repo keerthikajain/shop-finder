@@ -68,7 +68,7 @@ const PHRASES={
 import {safeNavigationVariant} from './safe-navigation-variants.js';
 const NAVIGATION_VARIANTS={
  'te-IN':{
-  repeat:['location दोबारा बताओ','लोकेशन दोबारा बताओ','location dobara batao','location మళ్లీ చెప్పండి','లొకేషన్ మళ్ళీ చెప్పండి'],
+  repeat:['location दोबारा बताओ','लोकेशन दोबारा बताओ','location dobara batao','location మళ్లీ చెప్పండి','లొకేషన్ మళ్ళీ చెప్పండి','స్థానాన్ని మళ్ళీ చెప్పండి','స్థానాన్ని మళ్లీ చెప్పండి'],
   help:['హెల్ప్','help'],
   stop:['స్టాప్','stop','voice stop']
  },
