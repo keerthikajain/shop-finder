@@ -28,7 +28,7 @@ test('scanner ignores unrelated worklist notices and keeps focused manual and ca
  assert.match(ui,/type==='lookup'&&<Modal[^>]*showNotice=\{false\}/);
  assert.match(ui,/type==='scan'&&task&&<Modal[^>]*showNotice=\{false\}/);
  assert.match(modal,/showNotice&&feedback\.notice/);
- assert.match(modal,/t\('Use camera'\)/); // Verify scanner still has camera/manual access
+ assert.match(modal,/t\(camera\?'Stop camera':'Use camera'\)/); // Verify scanner still has camera/manual access
  assert.match(css,/\.wh-modal \.wh-scan form\{/);
  assert.match(css,/@media\(max-width:520px\)/);
 });
