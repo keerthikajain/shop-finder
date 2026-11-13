@@ -858,7 +858,7 @@ def install_warehouse(app,path):
   'review_outcome_retry','review_note_retry','review_confirm_retry',
   'move_destination_retry','move_reason_retry','move_preview_retry','move_confirm_retry',
   'pick_done','pick_undo','help_pick','help_verify','unknown_pick',
-  'choose_mode','lookup_help','lookup_confirm','lookup_picked_saved','lookup_cancelled'
+  'choose_mode','lookup_help','lookup_confirm','lookup_picked_saved','lookup_cancelled','lookup_select','lookup_unknown'
  ],request:Request):
   identity(request,step.startswith(('review_','move_')))
   prompts={
@@ -997,11 +997,19 @@ def install_warehouse(app,path):
    'lookup_cancelled':('Not confirmed. Your saved items have not changed.',
      'पुष्टि नहीं हुई। दर्ज सामान नहीं बदला है।',
      'Confirm nahi hua. Saved items unchanged hain.',
-     'నిర్ధారించలేదు. నమోదు చేసిన వస్తువుల్లో మార్పు లేదు.')
+     'నిర్ధారించలేదు. నమోదు చేసిన వస్తువుల్లో మార్పు లేదు.'),
+   'lookup_select':('Which item do you mean? Say item one, item two, or an exact SKU. You can also tap an item.',
+     'कौन सा सामान? आइटम एक, आइटम दो या सही SKU बोलें, या सामान पर टैप करें।',
+     'Kaunsa item? Item one, item two ya exact SKU bolo. Button bhi use kar sakte ho.',
+     'ఏ వస్తువు? ఐటెమ్ ఒకటి, ఐటెమ్ రెండు లేదా ఖచ్చితమైన SKU చెప్పండి. బటన్ కూడా నొక్కవచ్చు.'),
+   'lookup_unknown':('I did not understand. Say help, repeat locations, start picking, or use the buttons.',
+     'समझ नहीं आया। मदद, जगह दोहराओ, पिकिंग शुरू करो कहें या बटन दबाएँ।',
+     'Samajh nahi aaya. Help, repeat location ya start picking bolo.',
+     'అర్థం కాలేదు. సహాయం, స్థానాలు మళ్లీ చెప్పండి, పికింగ్ ప్రారంభించండి అనండి లేదా బటన్ నొక్కండి.')
   }
   language_index={'en-IN':0,'hi-IN':1,'hi-en':2,'te-IN':3}[body.language]
   phrase=prompts[step][language_index]
-  if step not in ('review_pending_saved','review_verified_saved','move_saved','report_saved','pick_done','pick_undo','choose_mode','lookup_help','lookup_confirm','lookup_picked_saved','lookup_cancelled') and not step.endswith('_retry') and not step.startswith('report_'):
+  if step not in ('review_pending_saved','review_verified_saved','move_saved','report_saved','pick_done','pick_undo','choose_mode','lookup_help','lookup_confirm','lookup_picked_saved','lookup_cancelled','lookup_select','lookup_unknown') and not step.endswith('_retry') and not step.startswith('report_'):
    phrase+=' '+(
     'You can say help, repeat, back or stop.' if body.language=='en-IN' else
     'Help, repeat, back ya stop bol sakte ho.' if body.language=='hi-en' else
