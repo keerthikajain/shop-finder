@@ -77,3 +77,13 @@ test('Telugu repeat-location accepts common spelling variants while leaving appr
   assert.equal(voiceAction('te-IN','report_send',phrase),false);
  }
 });
+
+
+test('explicit Repeat location works while automatic voice is paused without restarting the hands-free mic',async()=>{
+ const {readFile}=await import('node:fs/promises');
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ assert.match(src,/async function voicePickCommand\(transcript,source=task,manualRequest=false\)/);
+ assert.match(src,/if\(voice&&\(!voiceFlowStopped\.current\|\|manualRequest\)\)/);
+ assert.match(src,/await playPickGuidance\(pendingVoicePick\?'verify':'repeat',source,pendingVoicePick\?\.line\?\?activeLine,manualRequest\)/);
+ assert.match(src,/onText=\{transcript=>voicePickCommand\(transcript,task,true\)\}/);
+});
