@@ -11,6 +11,7 @@ import {voiceAction,actionPhrases,dialogueControl,plausibleShelfSuggestion,repor
 import {reportVoiceCopy} from './report-voice-copy.js';
 import {fixedVoicePrompt} from './fixed-voice-prompt.js';
 import {pickingCopy} from './picking-copy.js';
+import {pickingUiCopy,pickingCommandLabel,pickingUiTip,reportUiCopy,spokenYesNo} from './voice-ui-copy.js';
 import {getThemePreference,resolveTheme} from './theme.js';
 import {Mark,Glyph,Modal,Place,Specs,ItemArt,ScanBox,Label,Feedback} from './warehouse-ui.jsx';
 import {ImportPanel,ItemEditor,MoveEditor,ReviewPanel} from './warehouse-manage.jsx';
@@ -76,7 +77,7 @@ export function VoiceButton({language,enabled,onText,onError,onPartial,live=fals
  return <button type="button" className={'wh-voice '+(small?'small ':'')+(nav?'sf-mobile-speak ':'')+(iconOnly?'icon-only ':'')+(state==='recording'?'recording':'')} aria-label={iconOnly?(stopping?t('Stop recording')+' — ':'')+t(label||'Speak'):t(stopping?'Stop recording':live?'Speak live':'Speak')} title={iconOnly?t(label||'Speak'):undefined} aria-pressed={stopping} disabled={(!stopping&&!enabled)||state==='starting'} onClick={record}><Glyph name="mic"/>{iconOnly?null:nav?<span>{t('Speak')}</span>:t(stopping?'Stop recording':live?'Speak live':label||'Speak')}{!nav&&!iconOnly&&<span className="wh-wave" aria-hidden="true">{Array.from({length:9},(_,i)=><i key={i} style={{height:6+(i*7)%17}}/>)}</span>}</button>;
 }
 export default function WarehouseApp({user,preferences,logout}){
- const t=useT(),owner=user.role==='owner';
+ const t=useT(),appLanguage=useContext(Locale),owner=user.role==='owner';
  const [feedbackText,FB]=useState(''),[feedbackSent,FBS]=useState(false),[ownerFeedback,OF]=useState([]),[voiceGuideText,VGT]=useState(''),[voiceGuideCommand,VGC]=useState(''),[voiceGuidePaused,VGP]=useState(true),[meta,M]=useState(null),[items,I]=useState([]),[collection,C]=useState('all'),[page,P]=useState('find'),[brand,BR]=useState(''),[locationFilter,LF]=useState(''),[query,Q]=useState(''),[task,T]=useState(null),[recent,R]=useState([]),[busy,B]=useState(false),[error,E]=useState(''),[notice,N]=useState(''),[modal,D]=useState(null),[group,G]=useState('request'),[filter,F]=useState(''),[category,CAT]=useState(''),[language,L]=useState(()=>{const saved=localStorage.getItem('sf-voice-'+user.id);return ACTIVE_VOICE_CODES.has(saved)?saved:(VOICE_LANGUAGE_DEFAULT[user.language]||'en-IN')}),[liveMode,LM]=useState(false),[detectedSearchLanguage,DSL]=useState(null),[hintLanguages,HL]=useState([]),[auto,AUTO]=useState(true),[handsFree,HF]=useState(true),[pendingVoicePick,PV]=useState(null),[searchTranscript,ST]=useState(''),[voiceQuery,VQ]=useState(false),[tour,TOUR]=useState(user.tour_done?null:0),[theme,TH]=useState(()=>getThemePreference(localStorage)),[speaking,SP]=useState(false),[filtersOpen,FO]=useState(false),[sizeFilter,SZ]=useState(''),[activeLine,AL]=useState(0),[reviewNonce,RV]=useState(0);
  const audio=useRef(),audioURL=useRef(),audioRequest=useRef(null),playbackSerial=useRef(0),voiceFlowStopped=useRef(false),reportResumeRef=useRef(false),generation=useRef(0),main=useRef(),taskVoice=useRef(false),pendingResume=useRef(null),audioEndResolve=useRef(null);
  const pack=collection==='all'?{id:'all',name:'Whole store',fields:[...new Set(meta?.collections.flatMap(c=>[...c.fields,...(meta.settings.custom_fields[c.id]||[])])||[])]}:meta?.collections.find(c=>c.id===collection),labels=meta?.field_labels||{},voice=!!meta?.voice,prismaV3=meta?.stt_model!=='prisma-v2.5';
@@ -192,7 +193,7 @@ export default function WarehouseApp({user,preferences,logout}){
   }
   AL(index);
   if(voice&&handsFree&&auto&&!voiceFlowStopped.current&&!next.picking?.paused)VGP(false);
-  N(completed?pickingCopy(next.language,'confirmed'):t('Moving to the next item. The previous item is saved as unresolved.'));
+  N(completed?pickingUiCopy(appLanguage,'confirmed'):t('Moving to the next item. The previous item is saved as unresolved.'));
   if(window.matchMedia('(max-width:700px)').matches)
    requestAnimationFrame(()=>document.getElementById('sf-picking-line-'+index)?.scrollIntoView({behavior:'smooth',block:'center'}));
   if(voice&&auto&&!voiceFlowStopped.current)await playPickGuidance('next',next,index);
@@ -253,9 +254,9 @@ export default function WarehouseApp({user,preferences,logout}){
   // Informational Help remains available while picking is paused.
   if(source.picking?.paused&&control!=='help')return;
   VGC(transcript);
-  if(control==='stop'){PV(null);stopVoiceFlow();VGT(pickingCopy(source.language,'stopSaved'));return false}
+  if(control==='stop'){PV(null);stopVoiceFlow();VGT(pickingUiCopy(appLanguage,'stopSaved'));return false}
   if(control==='help'){
-   VGT(pickingCopy(source.language,pendingVoicePick?'verify':'help'));
+   VGT(pickingUiCopy(appLanguage,pendingVoicePick?'verify':'help'));
    // Help is explicitly requested. It must speak even when automatic
    // hands-free guidance is paused; do not resume listening or change picks.
    if(voice)await playPickGuidance('help',source,pendingVoicePick?.line??activeLine,true);
@@ -266,13 +267,13 @@ export default function WarehouseApp({user,preferences,logout}){
    return;
   }
   if(control==='back'){
-   if(pendingVoicePick){const previous=pendingVoicePick.line;PV(null);VGT(pickingCopy(source.language,'backConfirm'));if(voice&&!voiceFlowStopped.current)await playPickGuidance('repeat',source,previous);return}
-   const previous=Math.max(0,activeLine-1);AL(previous);VGT(pickingCopy(source.language,'backItem'));
+   if(pendingVoicePick){const previous=pendingVoicePick.line;PV(null);VGT(pickingUiCopy(appLanguage,'backConfirm'));if(voice&&!voiceFlowStopped.current)await playPickGuidance('repeat',source,previous);return}
+   const previous=Math.max(0,activeLine-1);AL(previous);VGT(pickingUiCopy(appLanguage,'backItem'));
    if(voice&&!voiceFlowStopped.current)await playPickGuidance('repeat',source,previous);
    return;
   }
   if(voiceAction(source.language,'undo',transcript)){
-   if(lastConfirmedIndex<0){VGT(pickingCopy(source.language,'noConfirmedUndo'));return}
+   if(lastConfirmedIndex<0){VGT(pickingUiCopy(appLanguage,'noConfirmedUndo'));return}
    PV(null);
    await undoPick(lastConfirmedIndex);
    // The reader pauses the microphone during Gnani TTS and resumes after playback.
@@ -281,7 +282,7 @@ export default function WarehouseApp({user,preferences,logout}){
   }
   if(pendingVoicePick){
    const response=pickConfirmationIntent(source.language,transcript);
-   if(response==='no'){const index=pendingVoicePick.line;PV(null);VGT(pickingCopy(source.language,'declined'));await run(()=>deferPick(source,index,'declined'));return}
+   if(response==='no'){const index=pendingVoicePick.line;PV(null);VGT(pickingUiCopy(appLanguage,'declined'));await run(()=>deferPick(source,index,'declined'));return}
    if(response==='yes'){
     const current=source.lines[pendingVoicePick.line];
     if(source.id!==pendingVoicePick.taskId||!current||current.complete||current.selected?.sku!==pendingVoicePick.sku){
@@ -290,7 +291,7 @@ export default function WarehouseApp({user,preferences,logout}){
     PV(null);
     await run(async()=>{
      const next=await api('/tasks/'+source.id+'/scan',{line:pendingVoicePick.line,kind:'manual',value:'confirmed'});
-     VGT(pickingCopy(source.language,'confirmed'));
+     VGT(pickingUiCopy(appLanguage,'confirmed'));
      await progressAfterPick(next,true);
      R(await request('/warehouse/tasks'));
     });
@@ -299,17 +300,17 @@ export default function WarehouseApp({user,preferences,logout}){
    // During confirmation, Repeat replays the question rather than losing the pending item.
    const responseCommand=await api('/tasks/'+source.id+'/picking/command',{transcript,line:pendingVoicePick.line});
    if(responseCommand.action==='repeat'){
-    VGT(pickingCopy(source.language,'verify'));
+    VGT(pickingUiCopy(appLanguage,'verify'));
     if(voice)await playPickGuidance('repeat',source,pendingVoicePick.line);
     return;
    }
    if(responseCommand.action==='verify'){
-    VGT(pickingCopy(source.language,'verify'));
+    VGT(pickingUiCopy(appLanguage,'verify'));
     if(voice)await playPickGuidance('verify',source,pendingVoicePick.line);
     return;
    }
    if(responseCommand.action==='stop'){
-    PV(null);stopVoiceFlow();VGT(pickingCopy(source.language,'stopSaved'));
+    PV(null);stopVoiceFlow();VGT(pickingUiCopy(appLanguage,'stopSaved'));
     return false;
    }
    if(responseCommand.action==='report'){
@@ -318,12 +319,12 @@ export default function WarehouseApp({user,preferences,logout}){
     PV(null);VGP(true);
     if(selected?.selected){
      D({type:'report',item:selected.selected,location:selected.location,index});
-     VGT(pickingCopy(source.language,'reportHandoff'));
+     VGT(pickingUiCopy(appLanguage,'reportHandoff'));
      if(voice)await playPickGuidance('report',source,index);
     }
     return false;
    }
-   VGT(pickingCopy(source.language,'verify'));
+   VGT(pickingUiCopy(appLanguage,'verify'));
    if(voice)await playPickGuidance('verify',source,pendingVoicePick.line);
    return;
   }
@@ -331,19 +332,19 @@ export default function WarehouseApp({user,preferences,logout}){
    const answer=await api('/tasks/'+source.id+'/picking/command',{transcript,line:activeLine});
    VGT(answer.text);
    if(answer.line!=null)AL(answer.line);
-   if(answer.action==='verify'&&answer.line!=null){PV({taskId:source.id,line:answer.line,sku:source.lines[answer.line]?.selected?.sku});VGT(pickingCopy(source.language,'verify'));}
+   if(answer.action==='verify'&&answer.line!=null){PV({taskId:source.id,line:answer.line,sku:source.lines[answer.line]?.selected?.sku});VGT(pickingUiCopy(appLanguage,'verify'));}
    if(answer.action==='report'&&answer.line!=null){
     reportResumeRef.current=handsFree&&!voiceGuidePaused;
     PV(null);VGP(true); // Stop the pick microphone before changing to the report step.
     const selected=source.lines[answer.line];
     if(selected?.selected){
      D({type:'report',item:selected.selected,location:selected.location,index:answer.line});
-     VGT(pickingCopy(source.language,'reportHandoff'));
+     VGT(pickingUiCopy(appLanguage,'reportHandoff'));
      if(voice)await playPickGuidance('report',source,answer.line);
     }
     return false; // The voice loop must not restart for this command.
    }
-   if(answer.action==='stop'){PV(null);stopVoiceFlow();VGT(pickingCopy(source.language,'stopSaved'));return false}
+   if(answer.action==='stop'){PV(null);stopVoiceFlow();VGT(pickingUiCopy(appLanguage,'stopSaved'));return false}
    if(voice&&!voiceFlowStopped.current)await playPickGuidance(answer.action,source,answer.line??activeLine);
   })
  }
@@ -415,27 +416,27 @@ export default function WarehouseApp({user,preferences,logout}){
  <section id="wh-results" className="wh-results"><div className="wh-section-title"><div><span className="wh-eyebrow">{t(task?'YOUR WORK LIST':'EXPLORE THE WORKSPACE')}</span><h2>{task?<>{t('Your worklist')} <small className="sf-work-summary">{selected.length} {t('located')} · {task.lines.filter(l=>!l.selected&&l.candidates.length).length} {t('need a detail')} · {task.lines.filter(l=>!l.selected&&!l.candidates.length).length} {t('Not found')}</small></>:t(items.length?'Explore your catalogue':'Get your catalogue ready')}</h2></div>{task?<div className="wh-toolbar sf-worklist-controls"><select className="sf-worklist-order" aria-label={t('Group results')} value={group} onChange={e=>G(e.target.value)}><option value="request">{t('Request order')}</option><option value="category">{t('By category')}</option><option value="location">{t('By location')}</option></select><button disabled={!voice||(busy&&!speaking)} onClick={()=>speaking?stopSpeech():speak(task)}><Glyph name="sound"/>{t(speaking?'Stop audio':'Read answer')}</button></div>:items.length?<button className="sf-view-catalogue" onClick={()=>navigate('catalogue')}>{t('View catalogue')}<Glyph name="arrow"/></button>:null}</div>
  {task?<><div className="sf-request-review" role="status"><strong>{t('Confirm your request')}</strong><p>{task.query}</p><small>{t('Is this the item you meant? Check the matched products and locations below. To correct the request, edit the search above and select Find items again.')}</small></div><p className="wh-response" role="status">{task.display_text||task.spoken_text}</p>
  {hasSearchCandidates?<section className="wh-panel sf-guided-picking" aria-label={t('Guided picking')}>
-  <div className="sf-picking-head"><div><span className="wh-eyebrow">{t('Guided picking')}</span><h3>{t(picking.status==='completed'?'Picking completed':pickPaused?'Picking paused':picking.status==='active'?'Picking in progress':'Ready to pick')}</h3><small>{pickingCopy(task.language,picking.status==='ready'?'ready':'active')}</small></div><b>{verifiedCount}/{task.lines.length}</b></div>
+  <div className="sf-picking-head"><div><span className="wh-eyebrow">{t('Guided picking')}</span><h3>{t(picking.status==='completed'?'Picking completed':pickPaused?'Picking paused':picking.status==='active'?'Picking in progress':'Ready to pick')}</h3><small>{pickingUiCopy(appLanguage,picking.status==='ready'?'ready':'active')}</small></div><b>{verifiedCount}/{task.lines.length}</b></div>
   <progress aria-label={t('Picking progress')} max={task.lines.length} value={verifiedCount}/>
-  {lastConfirmedIndex>=0&&<div className="sf-picking-undo"><button type="button" disabled={busy||pickPaused} onClick={()=>undoPick(lastConfirmedIndex)}>{pickingCopy(task.language,'undo')}</button>{voice&&<VoiceButton small autoStop enabled={!busy&&!pickPaused&&!speaking} language={task.language} label={pickingCopy(task.language,'sayUndo')} onError={E} onText={text=>{if(voiceAction(task.language,'undo',text))undoPick(lastConfirmedIndex);else E(t('Say: ')+actionPhrases(task.language,'undo')[0])}}/>}</div>}
+  {lastConfirmedIndex>=0&&<div className="sf-picking-undo"><button type="button" disabled={busy||pickPaused} onClick={()=>undoPick(lastConfirmedIndex)}>{pickingUiCopy(appLanguage,'undo')}</button>{voice&&<VoiceButton small autoStop enabled={!busy&&!pickPaused&&!speaking} language={task.language} label={pickingUiCopy(appLanguage,'sayUndo')} onError={E} onText={text=>{if(voiceAction(task.language,'undo',text))undoPick(lastConfirmedIndex);else E(t('Say: ')+actionPhrases(task.language,'undo')[0])}}/>}</div>}
   {picking.status!=='completed'&&<div className="sf-voice-guide">
     {picking.status==='ready'&&<p className="sf-voice-guide-preview" role="status">{unresolvedLines.length>0?t('Choose or remove the unresolved variants below before starting. Finder will not guess a size or version.'):reportedLines.length>0?t('Reported shelf locations are skipped until verified. Confirm to guide the remaining items automatically.'):t('All items are ready. Confirm search once; Finder will speak the first location and then listen automatically.')}</p>}
-   <div className="sf-voice-guide-heading"><strong>{pickingCopy(task.language,'heading')}</strong><small>{picking.status==='ready'?(unresolvedLines.length?t('Finish reviewing your choices to begin.'):reportedLines.length?t('Reported locations are skipped until checked.'):pickingCopy(task.language,'ready')):pickingCopy(task.language,pendingVoicePick?'verify':'help')}</small></div>
+   <div className="sf-voice-guide-heading"><strong>{pickingUiCopy(appLanguage,'heading')}</strong><small>{picking.status==='ready'?(unresolvedLines.length?t('Finish reviewing your choices to begin.'):reportedLines.length?t('Reported locations are skipped until checked.'):pickingUiCopy(appLanguage,'ready')):pickingUiCopy(appLanguage,pendingVoicePick?'verify':'help')}</small></div>
    {PICKING_VOICE_LANGUAGES.includes(task.language)?<>
     <div className="sf-voice-guide-actions">
      
-     {picking.status==='active'&&voice&&(!handsFree||voiceGuidePaused)&&<VoiceButton small autoStop enabled={!busy&&!speaking&&!pickPaused} language={task.language} onError={E} onText={transcript=>voicePickCommand(transcript)} label={pickingCopy(task.language,'listen')}/>}
+     {picking.status==='active'&&voice&&(!handsFree||voiceGuidePaused)&&<VoiceButton small autoStop enabled={!busy&&!speaking&&!pickPaused} language={task.language} onError={E} onText={transcript=>voicePickCommand(transcript)} label={pickingUiCopy(appLanguage,'listen')}/>}
      {picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused&&<HandsFreePicking enabled={!busy&&!speaking&&!modal&&page==='find'} language={task.language} collection={collection} onError={message=>{E(message)}} onCommand={transcript=>voicePickCommand(transcript)}/>}
-     <button type="button" disabled={picking.status!=='active'||(busy&&!speaking)||(!speaking&&(!voice||pickPaused))} onClick={()=>speaking?stopVoiceFlow():playPickGuidance('repeat',task,activeLine,true)}>{pickingCopy(task.language,speaking?'stopAudio':'read')}</button>
-     {picking.status==='active'&&voice&&handsFree&&<button type="button" className="sf-voice-listen-toggle" aria-pressed={!voiceGuidePaused} disabled={voiceGuidePaused&&(busy||speaking||pickPaused)} onClick={()=>{if(!voiceGuidePaused){PV(null);stopVoiceFlow();return}voiceFlowStopped.current=false;VGP(false);if(task&&nextPickIndex>=0&&auto)playPickGuidance('repeat',task,nextPickIndex)}}>{pickingCopy(task.language,voiceGuidePaused?'resume':'stop')}</button>}
+     <button type="button" disabled={picking.status!=='active'||(busy&&!speaking)||(!speaking&&(!voice||pickPaused))} onClick={()=>speaking?stopVoiceFlow():playPickGuidance('repeat',task,activeLine,true)}>{pickingUiCopy(appLanguage,speaking?'stopAudio':'read')}</button>
+     {picking.status==='active'&&voice&&handsFree&&<button type="button" className="sf-voice-listen-toggle" aria-pressed={!voiceGuidePaused} disabled={voiceGuidePaused&&(busy||speaking||pickPaused)} onClick={()=>{if(!voiceGuidePaused){PV(null);stopVoiceFlow();return}voiceFlowStopped.current=false;VGP(false);if(task&&nextPickIndex>=0&&auto)playPickGuidance('repeat',task,nextPickIndex)}}>{pickingUiCopy(appLanguage,voiceGuidePaused?'resume':'stop')}</button>}
     </div>
-    <div className="sf-voice-guide-choices" aria-label={pickingCopy(task.language,'secondary')}><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'verify'))}>{pickVoicePhrase(task.language,'verify')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'report'))}>{pickVoicePhrase(task.language,'report')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voiceFlowStopped.current?playPickGuidance('repeat',task,activeLine,true):voicePickCommand(pickVoicePhrase(task.language,'repeat'))}>{pickVoicePhrase(task.language,'repeat')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'next'))}>{pickVoicePhrase(task.language,'next')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'stop'))}>{pickVoicePhrase(task.language,'stop')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'help'))}>{pickVoicePhrase(task.language,'help')}</button></div>
+    <div className="sf-voice-guide-choices" aria-label={pickingUiCopy(appLanguage,'secondary')}><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'verify'))}>{pickVoicePhrase(task.language,'verify')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'report'))}>{pickVoicePhrase(task.language,'report')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voiceFlowStopped.current?playPickGuidance('repeat',task,activeLine,true):voicePickCommand(pickVoicePhrase(task.language,'repeat'))}>{pickVoicePhrase(task.language,'repeat')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'next'))}>{pickVoicePhrase(task.language,'next')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'stop'))}>{pickVoicePhrase(task.language,'stop')}</button><button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'help'))}>{pickVoicePhrase(task.language,'help')}</button></div>
    </>:<small>{t('This language is not supported for spoken picking commands. Use scanning or manual verification.')}</small>}
-   {voiceGuideCommand&&<div className="sf-guide-transcript" role="status"><strong>{pickingCopy(task.language,'recognized')}:</strong> {voiceGuideCommand}</div>}{pendingVoicePick&&<div className="sf-voice-pick-confirm" role="status"><strong>{pickingCopy(task.language,'askYesNo')}</strong><span>{task.lines[pendingVoicePick.line]?.selected?.name} · {task.lines[pendingVoicePick.line]?.selected?.sku}</span><p>{pickingCopy(task.language,'verify')}</p><div><button type="button" disabled={busy} onClick={()=>voicePickCommand(task.language==='hi-IN'?'हाँ':task.language==='kn-IN'?'ಹೌದು':task.language==='te-IN'?'అవును':'yes')}>{pickingCopy(task.language,'yesPicked')}</button><button type="button" disabled={busy} onClick={()=>{const index=pendingVoicePick.line;PV(null);VGT(pickingCopy(task.language,'declined'));run(()=>deferPick(task,index,'declined'))}}>{pickingCopy(task.language,'noNext')}</button></div></div>}
-   {voiceGuideText&&<p className="sf-guide-reply" role="status">{voiceGuideText}</p>}{picking.status==='active'&&voice&&handsFree&&<small role="status">{pickingCopy(task.language,voiceGuidePaused?'paused':speaking?'speaking':'listening')}</small>}
+   {voiceGuideCommand&&<div className="sf-guide-transcript" role="status"><strong>{pickingUiCopy(appLanguage,'recognized')}:</strong> {voiceGuideCommand}</div>}{pendingVoicePick&&<div className="sf-voice-pick-confirm" role="status"><strong>{pickingUiCopy(appLanguage,'askYesNo')}</strong><span>{task.lines[pendingVoicePick.line]?.selected?.name} · {task.lines[pendingVoicePick.line]?.selected?.sku}</span><p>{pickingUiCopy(appLanguage,'verify')}</p><div><button type="button" disabled={busy} onClick={()=>voicePickCommand(task.language==='hi-IN'?'हाँ':task.language==='kn-IN'?'ಹೌದು':task.language==='te-IN'?'అవును':'yes')}>{pickingUiCopy(appLanguage,'yesPicked')}</button><button type="button" disabled={busy} onClick={()=>{const index=pendingVoicePick.line;PV(null);VGT(pickingUiCopy(appLanguage,'declined'));run(()=>deferPick(task,index,'declined'))}}>{pickingUiCopy(appLanguage,'noNext')}</button></div></div>}
+   {voiceGuideText&&<p className="sf-guide-reply" role="status">{voiceGuideText}</p>}{picking.status==='active'&&voice&&handsFree&&<small role="status">{pickingUiCopy(appLanguage,voiceGuidePaused?'paused':speaking?'speaking':'listening')}</small>}
   </div>}
   {picking.status==='ready'?<div className="sf-picking-actions"><button className="primary" type="button" disabled={busy||!canStartPick} onClick={()=>pickAction('start')}><Glyph name="check"/>{t('Confirm search and begin picking')}</button>{voice&&PICKING_START_VOICE_LANGUAGES.includes(task.language)&&<VoiceButton small autoStop enabled={!busy&&canStartPick} language={task.language} label={t('Confirm search by voice')} onError={E} onText={voiceStartPicking}/>} {!canStartPick&&unresolvedLines.length>0&&<div className="sf-pick-review-needed" role="status"><strong>{unresolvedLines.length} {t('item(s) still need your choice before picking can start.')}</strong><button type="button" disabled={busy} onClick={()=>{const index=task.lines.findIndex(line=>!line.selected||!line.location);if(index>=0){AL(index);document.getElementById('sf-picking-line-'+index)?.scrollIntoView({behavior:'smooth',block:'center'});document.getElementById('sf-picking-line-'+index)?.focus({preventScroll:true})}}}>{t('Review unresolved items')} <Glyph name="arrow"/></button></div>} {reportedLines.length>0&&<small className="sf-pick-reported-note" role="status">{reportedLines.length} {t('reported shelf location(s) are excluded from picking until owner review. They remain unconfirmed.')}</small>}{!canStartPick&&!unresolvedLines.length&&<small role="status">{t('No eligible items remain. Ask the owner to verify the reported locations.')}</small>}</div>:
-   picking.status==='active'?<div className="sf-picking-actions"><span>{nextPickIndex<0?t(verifiedCount===task.lines.length?'All items verified. Finish the pick.':'No more pending picks. Review deferred items below.'):pickingCopy(task.language,'current')+': '+task.lines[nextPickIndex].selected.name+' · '+pathText(task.lines[nextPickIndex].location,!!task.lines[nextPickIndex].selected.synthetic)}</span><div><button type="button" className="sf-pick-pause-toggle" aria-pressed={pickPaused} disabled={busy} onClick={togglePickPause}>{pickingCopy(task.language,pickPaused?'resumePicking':'pause')}</button><button type="button" disabled={busy||pickPaused||nextPickIndex<0} onClick={()=>{AL(nextPickIndex);document.getElementById('sf-picking-line-'+nextPickIndex)?.scrollIntoView({behavior:'smooth',block:'center'})}}>{pickingCopy(task.language,'next')}</button><button className="primary" type="button" disabled={busy||pickPaused||verifiedCount!==task.lines.length} onClick={()=>pickAction('finish')}>{pickingCopy(task.language,'finish')}</button></div></div>:
+   picking.status==='active'?<div className="sf-picking-actions"><span>{nextPickIndex<0?t(verifiedCount===task.lines.length?'All items verified. Finish the pick.':'No more pending picks. Review deferred items below.'):pickingUiCopy(appLanguage,'current')+': '+task.lines[nextPickIndex].selected.name+' · '+pathText(task.lines[nextPickIndex].location,!!task.lines[nextPickIndex].selected.synthetic)}</span><div><button type="button" className="sf-pick-pause-toggle" aria-pressed={pickPaused} disabled={busy} onClick={togglePickPause}>{pickingUiCopy(appLanguage,pickPaused?'resumePicking':'pause')}</button><button type="button" disabled={busy||pickPaused||nextPickIndex<0} onClick={()=>{AL(nextPickIndex);document.getElementById('sf-picking-line-'+nextPickIndex)?.scrollIntoView({behavior:'smooth',block:'center'})}}>{pickingUiCopy(appLanguage,'next')}</button><button className="primary" type="button" disabled={busy||pickPaused||verifiedCount!==task.lines.length} onClick={()=>pickAction('finish')}>{pickingUiCopy(appLanguage,'finish')}</button></div></div>:
    <p className="sf-picking-done">{t('All requested items were verified. Picking is recorded without changing stock.')}</p>}
  </section>:<section className="wh-panel sf-no-picking-results" role="status"><h3>{t('No items ready to pick')}</h3><p>{t('We could not find a saved product for this request. Try another product name, browse the catalogue or ask the owner to add it. You can start picking when an item is found.')}</p></section>}
  <div className="wh-work-grid"><div className="wh-task-list">{ordered.map(line=><article id={'sf-picking-line-'+line.index} className={'wh-panel wh-task '+(line.complete?'complete':'')+(activeLine===line.index?' sf-task-active':'')+(!line.selected?' sf-task-unresolved':'')} tabIndex={-1} key={line.index}><div className="wh-task-heading">{(line.selected||line.candidates[0])&&<ItemArt collection={(line.selected||line.candidates[0]).collection} photo={(line.selected||line.candidates[0]).photo_url} name={(line.selected||line.candidates[0]).name}/> }<span className="wh-step">{line.complete?<Glyph name="check"/>:String(line.index+1).padStart(2,'0')}</span><div><small>{line.query}</small><h3>{line.selected?.name||t(line.candidates.length?'Choose the right variant':'Item not found')}</h3></div><span className={'wh-status '+(line.location_report_open?'amber':line.complete||line.location_feedback?.status==='correct'?'green':line.selected?'purple':'amber')}>{t(line.location_report_open?'Location reported':line.deferred_reason==='declined'?'Not confirmed — skipped':line.complete?(line.confirmation==='barcode'?'Scan confirmed':'Manually confirmed'):line.location_feedback?.status==='correct'?'Shelf location checked':line.selected?'Recorded location':line.candidates.length?'Needs a detail':'Not found')}</span></div>{line.selected?<><div className="wh-item-meta"><code>{line.selected.sku}</code><span>{line.selected.brand} · {meta.collections.find(c=>c.id===line.selected.collection)?.name}</span><Specs item={line.selected} labels={labels}/></div><Place location={line.location} example={!!line.selected?.synthetic}/>{line.deferred_reason&&picking.status==='active'&&<div className="sf-deferred-pick" role="status"><span>{t(line.deferred_reason==='reported'?'Reported — awaiting location verification. This item is not marked picked.':'Not confirmed. Finder is guiding you to the remaining items.')}</span>{line.deferred_reason==='declined'&&<button type="button" disabled={busy||pickPaused} onClick={()=>retryPick(line.index)}>{t('Retry this item')}</button>}</div>}<p className="sf-stock-badge">{line.location.quantity==null?t('Quantity not added yet'):line.location.quantity+' '+t('units recorded here')}</p>{!line.complete&&picking.status!=='completed'&&<div className="sf-location-check"><div className="sf-location-check-intro"><strong>{t('Does this saved shelf location match?')}</strong><small>{line.location_report_open?t('Location reported. Owner review pending.'):line.location_feedback?.status==='correct'?t('Shelf checked. Pick completion is recorded separately.'):line.last_confirmed_at?t('Last checked: ')+new Date(line.last_confirmed_at).toLocaleString():t('No reply needed if the recorded location looks right.')}</small></div><div className="sf-location-check-actions"><button type="button" className="sf-location-yes" disabled={busy||pickPaused||!!line.deferred_reason||line.location_report_open||line.location_feedback?.status==='correct'} onClick={()=>run(async()=>{const next=await api('/tasks/'+task.id+'/location-check',{line:line.index});T(next);N(t('Location checked for this visit.'))})}><Glyph name="check"/>{t('Shelf matches')}</button><button type="button" className="sf-location-wrong" disabled={busy||pickPaused} onClick={()=>{reportResumeRef.current=handsFree&&!voiceGuidePaused;VGP(true);D({type:'report',item:line.selected,location:line.location,index:line.index})}}><Glyph name="close"/>{t('Wrong location')}</button></div></div>}{line.complete&&<p className="sf-pick-complete-message" role="status">{t('Picked and verified. This item is complete.')}</p>}<div className="wh-task-footer"><button onClick={()=>D({type:'detail',item:line.selected})}>{t('Item details')}</button><button className="sf-guide-jump" type="button" aria-pressed={activeLine===line.index} onClick={()=>{AL(line.index);document.getElementById('sf-shelf-guide')?.scrollIntoView({behavior:'smooth',block:'nearest'})}}><Glyph name="pin"/>{t('Shelf guide')}</button>{!line.complete&&picking.status!=='completed'&&<div><button className="primary" disabled={busy||pickPaused||!!line.deferred_reason||line.location_report_open} onClick={()=>D({type:'scan',index:line.index})}><Glyph name="scan"/>{t('Confirm picked item')}</button></div>}</div>{picking.status==='ready'&&line.location_report_open&&task.lines.length>1&&<button type="button" className="wh-text-button" disabled={busy} onClick={()=>removeUnresolvedLine(line.index)}>{t('Remove reported item from this worklist')}</button>}{picking.status==='ready'&&line.candidates.length>1&&<button className="wh-text-button" onClick={()=>T({...task,lines:task.lines.map((l,i)=>i===line.index?{...l,selected:null}:l)})}>{t('Choose another variant')}</button>}</>:line.candidates.length?<div className="wh-candidates"><p>{t('Choose the correct size or version. We will not choose one for you.')}</p><Clarification key={task.id+'-'+line.index} {...{voice,language,busy}} onError={E} onReply={reply=>run(async()=>{const next=await api('/tasks/'+task.id+'/clarify',{line:line.index,reply});T(next);/* Choice stays in review until search confirmation. */})}/>{line.candidates.map(p=><div className="wh-candidate" key={p.collection+':'+p.sku}><ItemArt collection={p.collection} photo={p.photo_url} name={p.name}/><div><small>{p.brand} · {meta.collections.find(c=>c.id===p.collection)?.name}</small><b>{p.name}</b><code>{p.sku}</code><Specs item={p} labels={labels}/><div className="wh-candidate-places">{p.placements.map(l=><button disabled={busy} key={l.code} onClick={()=>choose(line.index,p,l)}><Glyph name="pin"/>{friendlyPath(l,!!p.synthetic)}<Glyph name="arrow"/></button>)}</div></div></div>)}</div>:<div className="wh-no-match"><p>{items.length===0?t(owner?'No catalogue items are saved yet. In Import items, review the column mapping, select Preview changes, then Confirm import to save the spreadsheet.':'No catalogue items are available yet. Ask your owner to finish importing the spreadsheet.'):t('This exact item is not in your saved catalogue. Check the name or size, or browse saved items. Nothing has been reported.')}</p>{items.length===0&&owner&&<button type="button" disabled={busy} onClick={()=>navigate('import')}>{t('Go to Import items')}</button>}{picking.status==='ready'&&task.lines.length>1&&<div className="sf-unmatched-tools"><p>{/^\d+(?:[.\/-]\d+)?$/.test(line.query.trim())?t('This looks like a size rather than an item. Add it to the product name in your search, or remove it.'):t('This item was not found. Remove it to continue with the items we did find.')}</p><button type="button" disabled={busy} onClick={()=>removeUnresolvedLine(line.index)}>{t('Remove from worklist')}</button></div>}<button type="button" disabled={busy} onClick={()=>run(async()=>{const report=await api('/issues',{collection,sku:'',reason:('Missing catalogue item: '+line.query).slice(0,400),kind:'general'});N(t('Missing-item report sent to review.')+' #'+report.id)})}>{t('Report missing item')}</button><button type="button" onClick={()=>navigate('catalogue')}>{t('Browse saved items')}</button></div>}</article>)}</div><aside id="sf-shelf-guide" className="wh-route wh-panel"><div className="wh-panel-title"><span><Glyph name="pin"/>{t('Shelf guide')}</span></div><p>{t('Choose an item to see where it is kept.')}</p>{guideLine?.location&&<ShelfGuide location={guideLine.location} items={items}/>}
@@ -497,9 +498,9 @@ export default function WarehouseApp({user,preferences,logout}){
  </div></Feedback.Provider>
 }
 function Report({item,location,collection,userId,run,busy,speaking=false,voice,language,onError,onStopSpeaking,onSave}){
- const t=useT();
- // The guide labels must match the recognized speech commands, even if app menus differ.
- const copy=key=>reportVoiceCopy(language,key);
+ const t=useT(),appLanguage=useContext(Locale);
+ // UI copy follows the app language. Actual voice input and TTS use language.
+ const copy=key=>reportUiCopy(appLanguage,key);
  const draftKey='sf-report-draft-'+userId+'-'+collection+'-'+item.sku+'-'+(location?.code||'general');
  const readDraft=()=>{try{
   const stored=JSON.parse(sessionStorage.getItem(draftKey)||'null');
