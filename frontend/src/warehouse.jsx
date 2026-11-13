@@ -469,7 +469,7 @@ export default function WarehouseApp({user,preferences,logout}){
   if(!source||!['later','skipped','cancelled'].includes(choice))return;
   const current=source.lines?.[line];
   if(!current||current.complete||current.deferred_reason||!current.selected||!current.location){
-   PN(null);E(t('The picking list changed. Check the current item again.'));return;
+   PN(null);E(nextItemUi(appLanguage,'changed'));return;
   }
   PN(null);PV(null);
   await run(async()=>{
