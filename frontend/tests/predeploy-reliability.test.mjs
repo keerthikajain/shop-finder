@@ -16,14 +16,14 @@ test('guided owner changes remain at confirmation when saving fails',async()=>{
  assert.match(src,/try\{await reload\(\)\}catch\(e\)/);
 });
 
-test('product filter and recent-request labels use app localization',async()=>{
+test('product filters use app localization without a Recent requests panel',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.doesNotMatch(src,/<label>Product type<select/);
  assert.doesNotMatch(src,/<label>Brand<select/);
  assert.doesNotMatch(src,/<summary>Saved recent requests<\/summary>/);
  assert.match(src,/aria-label=\{t\('Product type'\)\}/);
  assert.match(src,/aria-label=\{t\('Brand'\)\}/);
- assert.match(src,/<summary>\{t\('Recent requests'\)\}<\/summary>/);
+ assert.doesNotMatch(src,/<summary>\{t\('Recent requests'\)\}<\/summary>/);
  for(const [locale] of APP_LANGUAGES){
   if(locale==='en')continue;
   for(const label of ['Product type','Brand','Recent requests']){

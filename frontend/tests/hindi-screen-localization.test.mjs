@@ -42,5 +42,5 @@ test('shelf diagram and quantity status use translated labels, preserving stored
  assert.match(shelf,/\{t\('Schematic based on saved locations\.'\)\}/);
  assert.match(workspace,/line\.location\.quantity==null\?t\('Quantity not added yet'\)/);
  assert.match(workspace,/line\.selected\.name/);
- assert.match(workspace,/t\('Recent requests'\)/);
+ assert.doesNotMatch(workspace,/<summary>\{t\('Recent requests'\)\}<\/summary>/);
 });

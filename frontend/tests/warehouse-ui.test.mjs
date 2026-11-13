@@ -327,7 +327,7 @@ test('guided picking has explicit start, resume, verified progress, next stop an
  assert.match(src,/async function pickAction\(kind\)/);
  assert.match(src,/async function resumePick\(id\)/);
  assert.match(src,/tasks\/'\+task\.id\+'\/picking\/'\+kind/);
- assert.match(src,/r\.picking\?\.status==='active'\?resumePick\(r\.id\)/);
+ assert.match(src,/async function resumePick\(id\)/);
  assert.match(src,/className="wh-panel sf-guided-picking"/);
  assert.match(src,/className="sf-picking-head"/);
  assert.match(src,/pickAction\('start'\)/);
@@ -597,9 +597,9 @@ test('spoken search waits for the worker to approve the proposed picking list',a
 
 test('completed picks do not show redundant shelf-check or pick verification actions',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(src,/!line\.complete&&picking\.status!=='completed'&&<div className="sf-location-check"/);
- assert.match(src,/line\.complete&&<p className="sf-pick-complete-message"/);
- assert.match(src,/!line\.complete&&picking\.status!=='completed'&&<div><button className="primary"/);
+ assert.match(src,/\{<div className="sf-location-check"/);
+ assert.match(src,/line\.complete\?t\('Picked and verified\. This item is complete\.'\)/);
+ assert.match(src,/disabled=\{busy\|\|pickPaused\|\|picking\.status==='completed'\|\|line\.complete\|\|!!line\.deferred_reason\|\|line\.location_report_open\}/);
  assert.match(src,/line\.complete\?\(line\.confirmation==='barcode'\?'Scan confirmed':'Manually confirmed'\):line\.location_feedback/);
 });
 test('saved shelf moves reload catalogue and refresh search instead of clearing results',async()=>{
@@ -738,12 +738,12 @@ test('login illustration and form share one background across desktop and phone'
  assert.match(css,/\.login-shell \.login-card\{\s*display:block;\s*position:relative/);
 });
 
-test('sample shelf labels do not repeat on every item and recent requests are stored tasks',async()=>{
+test('sample shelf labels remain bounded, and the unnecessary Recent requests panel is removed',async()=>{
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const backend=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
- assert.match(ui,/<summary>\{t\('Recent requests'\)\}<\/summary>/);
+ assert.doesNotMatch(ui,/<summary>\{t\('Recent requests'\)\}<\/summary>/);
+ assert.doesNotMatch(ui,/className="wh-panel wh-session-card"/);
  assert.match(ui,/request\('\/warehouse\/tasks'\)/);
- assert.match(ui,/recent\.filter\(r=>collection/);
  assert.doesNotMatch(backend,/Sample catalogue locations, not verified for your store/);
  assert.doesNotMatch(backend,/\{'Example shelf/);
  assert.match(ui,/example=\{!!line.selected\?\.synthetic\}/);
@@ -921,7 +921,7 @@ test('reported location is distinguished from an unresolved variant and cannot b
  assert.match(ui,/reported shelf location\(s\) are excluded from picking until owner review/);
  assert.match(ui,/Remove reported item from this worklist/);
  assert.match(ui,/!x\.line\.deferred_reason&&!x\.line\.location_report_open/);
- assert.match(ui,/disabled=\{busy\|\|pickPaused\|\|!!line.deferred_reason\|\|line.location_report_open\}/);
+ assert.match(ui,/disabled=\{busy\|\|pickPaused\|\|picking\.status==='completed'\|\|line\.complete\|\|!!line\.deferred_reason\|\|line\.location_report_open\}/);
  assert.match(server,/line\['deferred_reason'\]='reported'/);
  assert.match(server,/picking_check\(c,task,allow_deferred=True\)/);
  assert.match(server,/This location has an open report\. Owner verification is required before picking/);
