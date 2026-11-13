@@ -22,8 +22,8 @@ test('spoken clarification does not save a pick or select a guessed SKU',async()
  assert.match(src,/Manual\(true\)/);
 });
 
-test('recorded speech finishes after 850ms of silence for quicker interaction',async()=>{
+test('recorded speech allows 1350ms pauses to capture full phrases',async()=>{
  const src=await readFile(new URL('../src/recording.js',import.meta.url),'utf8');
- assert.match(src,/heardSpeech&&now-lastSpeech>850&&now-startedAt>800/);
+ assert.match(src,/heardSpeech&&now-lastSpeech>1350&&now-startedAt>800/);
  assert.match(src,/if\(speechFrames>=3\)heardSpeech=true/);
 });
