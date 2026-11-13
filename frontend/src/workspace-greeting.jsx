@@ -1,5 +1,4 @@
 import React,{useEffect,useRef} from 'react';
-import './workspace-greeting.css';
 import {playWelcomeOnce,stopWelcome} from './welcome-audio.js';
 import {APP_GREETING_VOICE,greetingForApp} from './greeting-language.js';
 const APP_LANGUAGE_BY_VOICE=Object.fromEntries(Object.entries(APP_GREETING_VOICE).map(([app,voice])=>[voice,app]));
@@ -52,7 +51,6 @@ export default function WorkspaceGreeting({user,appLanguage='en',interrupt=false
   };
  },[]);
  useEffect(()=>()=>stopGreeting(),[]);
- return <section className="sf-workspace-greeting" aria-label="Workspace greeting">
-  <p>{message}</p>
- </section>;
+ // The greeting is audio-only; no banner competes with the search workspace.
+ return null;
 }
