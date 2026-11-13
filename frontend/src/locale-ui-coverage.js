@@ -622,3 +622,18 @@ const compactPickingLabels={
 for(const [language,entries] of Object.entries(compactPickingLabels)){
  if(uiLanguageCoverage[language])Object.assign(uiLanguageCoverage[language],entries);
 }
+
+const compactSearchLabels={
+ hi:{"Clear search":"खोज साफ़ करें","Search details":"खोज की जानकारी","Requested items":"माँगे गए सामान","Open Search details to review what was heard.":"सुनी गई बात देखने के लिए खोज की जानकारी खोलें।"},
+ te:{"Clear search":"వెతుకులాటను తొలగించండి","Search details":"వెతుకులాట వివరాలు","Requested items":"అడిగిన వస్తువులు","Open Search details to review what was heard.":"విన్న మాటలను చూడటానికి వెతుకులాట వివరాలు తెరవండి."},
+ kn:{"Clear search":"ಹುಡುಕಾಟ ತೆರವುಗೊಳಿಸಿ","Search details":"ಹುಡುಕಾಟ ವಿವರಗಳು","Requested items":"ಕೋರಿದ ವಸ್ತುಗಳು","Open Search details to review what was heard.":"ಕೇಳಿದ ಮಾತನ್ನು ನೋಡಲು ಹುಡುಕಾಟ ವಿವರಗಳನ್ನು ತೆರೆಯಿರಿ."},
+ ta:{"Clear search":"தேடலை அழி","Search details":"தேடல் விவரங்கள்","Requested items":"கேட்ட பொருட்கள்","Open Search details to review what was heard.":"கேட்கப்பட்டதைப் பார்க்க தேடல் விவரங்களைத் திறக்கவும்."},
+ ml:{"Clear search":"തിരയൽ മായ്ക്കുക","Search details":"തിരയൽ വിശദാംശങ്ങൾ","Requested items":"ആവശ്യപ്പെട്ട സാധനങ്ങൾ","Open Search details to review what was heard.":"കേട്ടത് പരിശോധിക്കാൻ തിരയൽ വിശദാംശങ്ങൾ തുറക്കുക."},
+ mr:{"Clear search":"शोध साफ करा","Search details":"शोध तपशील","Requested items":"मागितलेल्या वस्तू","Open Search details to review what was heard.":"ऐकलेले तपासण्यासाठी शोध तपशील उघडा."},
+ bn:{"Clear search":"অনুসন্ধান মুছুন","Search details":"অনুসন্ধানের বিবরণ","Requested items":"চাওয়া পণ্য","Open Search details to review what was heard.":"কী শোনা হয়েছে দেখতে অনুসন্ধানের বিবরণ খুলুন।"},
+ gu:{"Clear search":"શોધ સાફ કરો","Search details":"શોધની વિગતો","Requested items":"માંગેલી વસ્તુઓ","Open Search details to review what was heard.":"શું સાંભળ્યું તે જોવા શોધની વિગતો ખોલો."},
+ pa:{"Clear search":"ਖੋਜ ਸਾਫ਼ ਕਰੋ","Search details":"ਖੋਜ ਵੇਰਵੇ","Requested items":"ਮੰਗੀਆਂ ਵਸਤਾਂ","Open Search details to review what was heard.":"ਕੀ ਸੁਣਿਆ ਗਿਆ ਦੇਖਣ ਲਈ ਖੋਜ ਵੇਰਵੇ ਖੋਲ੍ਹੋ।"}
+};
+for(const [language,entries] of Object.entries(compactSearchLabels)){
+ if(uiLanguageCoverage[language])Object.assign(uiLanguageCoverage[language],entries);
+}
