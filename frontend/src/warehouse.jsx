@@ -5,6 +5,7 @@ import {PICKING_VOICE_LANGUAGES,PICKING_START_VOICE_LANGUAGES,pickVoicePhrase,is
 import {startRecording,startLiveRecording} from './recording.js';
 import HandsFreePicking from './hands-free-picking.jsx';
 import VariantVoiceClarifier from './variant-voice-clarifier.jsx';
+import {readWorkResume,writeWorkResume} from './work-resume.js';
 import {modeChoiceIntent,lookupVoiceIntent,modeChoicePhrases} from './lookup-mode.js';
 import {lookupCopy} from './lookup-mode-copy.js';
 import GuidedVoiceTurn from './guided-voice-turn.jsx';
@@ -79,7 +80,9 @@ export function VoiceButton({language,enabled,onText,onError,onPartial,live=fals
 }
 export default function WarehouseApp({user,preferences,logout}){
  const t=useT(),appLanguage=useContext(Locale),owner=user.role==='owner';
- const [feedbackText,FB]=useState(''),[feedbackSent,FBS]=useState(false),[ownerFeedback,OF]=useState([]),[voiceGuideText,VGT]=useState(''),[voiceGuideCommand,VGC]=useState(''),[voiceGuidePaused,VGP]=useState(true),[meta,M]=useState(null),[items,I]=useState([]),[collection,C]=useState('all'),[page,P]=useState('find'),[brand,BR]=useState(''),[locationFilter,LF]=useState(''),[query,Q]=useState(''),[task,T]=useState(null),[recent,R]=useState([]),[busy,B]=useState(false),[error,E]=useState(''),[notice,N]=useState(''),[modal,D]=useState(null),[group,G]=useState('request'),[filter,F]=useState(''),[category,CAT]=useState(''),[language,L]=useState(()=>{const saved=localStorage.getItem('sf-voice-'+user.id);return ACTIVE_VOICE_CODES.has(saved)?saved:(VOICE_LANGUAGE_DEFAULT[user.language]||'en-IN')}),[liveMode,LM]=useState(false),[detectedSearchLanguage,DSL]=useState(null),[hintLanguages,HL]=useState([]),[auto,AUTO]=useState(true),[handsFree,HF]=useState(true),[pendingVoicePick,PV]=useState(null),[searchTranscript,ST]=useState(''),[voiceQuery,VQ]=useState(false),[tour,TOUR]=useState(user.tour_done?null:0),[theme,TH]=useState(()=>getThemePreference(localStorage)),[speaking,SP]=useState(false),[filtersOpen,FO]=useState(false),[sizeFilter,SZ]=useState(''),[activeLine,AL]=useState(0),[reviewNonce,RV]=useState(0),[lookupMode,SetLookupMode]=useState('choice'),[modeListening,SetModeListening]=useState(false),[lookupVoicePaused,SetLookupVoicePaused]=useState(false),[lookupSelection,SetLookupSelection]=useState(null),[lookupPending,SetLookupPending]=useState(null),[modeSpeechResult,SetModeSpeechResult]=useState(null);
+ const savedWork=useRef(readWorkResume(sessionStorage,user.id));
+ const [workHydrated,SetWorkHydrated]=useState(false);
+ const [feedbackText,FB]=useState(''),[feedbackSent,FBS]=useState(false),[ownerFeedback,OF]=useState([]),[voiceGuideText,VGT]=useState(''),[voiceGuideCommand,VGC]=useState(''),[voiceGuidePaused,VGP]=useState(true),[meta,M]=useState(null),[items,I]=useState([]),[collection,C]=useState(()=>savedWork.current?.collection||'all'),[page,P]=useState(()=>savedWork.current?.page||'find'),[brand,BR]=useState(''),[locationFilter,LF]=useState(''),[query,Q]=useState(()=>savedWork.current?.query||''),[task,T]=useState(null),[recent,R]=useState([]),[busy,B]=useState(false),[error,E]=useState(''),[notice,N]=useState(''),[modal,D]=useState(null),[group,G]=useState(()=>savedWork.current?.group||'request'),[filter,F]=useState(''),[category,CAT]=useState(''),[language,L]=useState(()=>{const saved=localStorage.getItem('sf-voice-'+user.id);return ACTIVE_VOICE_CODES.has(saved)?saved:(VOICE_LANGUAGE_DEFAULT[user.language]||'en-IN')}),[liveMode,LM]=useState(false),[detectedSearchLanguage,DSL]=useState(null),[hintLanguages,HL]=useState([]),[auto,AUTO]=useState(true),[handsFree,HF]=useState(true),[pendingVoicePick,PV]=useState(null),[searchTranscript,ST]=useState(''),[voiceQuery,VQ]=useState(false),[tour,TOUR]=useState(user.tour_done?null:0),[theme,TH]=useState(()=>getThemePreference(localStorage)),[speaking,SP]=useState(false),[filtersOpen,FO]=useState(false),[sizeFilter,SZ]=useState(''),[activeLine,AL]=useState(()=>savedWork.current?.activeLine||0),[reviewNonce,RV]=useState(0),[lookupMode,SetLookupMode]=useState(()=>savedWork.current?.lookupMode||'choice'),[modeListening,SetModeListening]=useState(false),[lookupVoicePaused,SetLookupVoicePaused]=useState(false),[lookupSelection,SetLookupSelection]=useState(null),[lookupPending,SetLookupPending]=useState(null),[modeSpeechResult,SetModeSpeechResult]=useState(null);
  const audio=useRef(),audioURL=useRef(),audioRequest=useRef(null),playbackSerial=useRef(0),voiceFlowStopped=useRef(false),reportResumeRef=useRef(false),generation=useRef(0),main=useRef(),taskVoice=useRef(false),pendingResume=useRef(null),audioEndResolve=useRef(null),modeChoiceSerial=useRef(0);
  const pack=collection==='all'?{id:'all',name:'Whole store',fields:[...new Set(meta?.collections.flatMap(c=>[...c.fields,...(meta.settings.custom_fields[c.id]||[])])||[])]}:meta?.collections.find(c=>c.id===collection),labels=meta?.field_labels||{},voice=!!meta?.voice,prismaV3=meta?.stt_model!=='prisma-v2.5';
  const invalidHints=false;
@@ -92,7 +95,52 @@ export default function WarehouseApp({user,preferences,logout}){
  // This is a bounded fixed prompt, never an item-specific or private readback.
  useEffect(()=>{if(voice&&PICKING_VOICE_LANGUAGES.includes(language))void fixedVoicePrompt('choose_mode',language).catch(()=>{});},[voice,language]);
  useEffect(()=>{let active=true;request('/warehouse/meta').then(x=>{if(active){M(x);if(owner&&!x.settings.configured&&!user.is_challenge){P('business');TOUR(null)}}}).catch(e=>E(e.message));return()=>{active=false;audioRequest.current?.abort();audio.current?.pause();if(audioURL.current)URL.revokeObjectURL(audioURL.current)}},[]);
- useEffect(()=>{const n=++generation.current;const restoring=pendingResume.current;if(restoring&&restoring.collection===collection){T(restoring);Q(restoring.query);G('location');AL(Math.max(0,restoring.lines.findIndex(l=>!l.complete)));pendingResume.current=null}else{T(null);Q('')}E('');F('');CAT('');BR('');LF('');SZ('');FO(false);D(null);audio.current?.pause();SP(false);localStorage.setItem('sf-collection',collection);request('/warehouse/items?collection='+collection).then(x=>{if(n===generation.current)I(x)}).catch(e=>E(e.message));request('/warehouse/tasks').then(R).catch(e=>E(e.message))},[collection]);
+ // Resolve the saved server task after a refresh, rather than replaying a search.
+ // Audio/microphone are intentionally paused until the user resumes guidance.
+ useEffect(()=>{
+  let cancelled=false;
+  const saved=savedWork.current;
+  const restore=async()=>{
+   if(!saved){if(!cancelled)SetWorkHydrated(true);return;}
+   try{
+    if(saved.taskId){
+     const restored=await request('/warehouse/tasks/'+encodeURIComponent(saved.taskId));
+     if(cancelled)return;
+     if(restored?.id!==saved.taskId||!Array.isArray(restored.lines))throw Error('Saved work could not be restored.');
+     if(restored.collection!==collection){pendingResume.current=restored;C(restored.collection)}
+     else T(restored);
+     Q(saved.query||restored.query);
+     AL(Math.min(saved.activeLine,Math.max(0,restored.lines.length-1)));
+     G(saved.group);
+     SetLookupMode(restored.picking?.status==='active'||restored.picking?.status==='completed'?'guided':saved.lookupMode);
+     SetModeListening(false);SetLookupVoicePaused(true);VGP(true);
+     // A report draft is already stored separately; restore its editor but never submit.
+     const reportLine=restored.lines[saved.reportIndex];
+     if(saved.reportIndex!==null&&reportLine?.selected&&reportLine?.location)
+      D({type:'report',item:reportLine.selected,location:reportLine.location,index:saved.reportIndex});
+     N(t('Previous work restored. Continue where you left off.'));
+    }else{
+     Q(saved.query);
+    }
+   }catch(e){
+    if(!cancelled){
+     // Retire invalid pointers so a deleted or unauthorized task isn't requested forever.
+     savedWork.current=null;
+     N(t('Saved work is no longer available. Start a new search.'));
+    }
+   }finally{if(!cancelled)SetWorkHydrated(true)}
+  };
+  void restore();
+  return()=>{cancelled=true};
+ },[user.id]);
+ useEffect(()=>{
+  if(!workHydrated)return;
+  writeWorkResume(sessionStorage,user.id,{
+   taskId:task?.id||null,collection,page,query,lookupMode,activeLine,group,
+   reportIndex:modal?.type==='report'?modal.index:null
+  });
+ },[workHydrated,user.id,task?.id,collection,page,query,lookupMode,activeLine,group,modal?.type,modal?.index]);
+ useEffect(()=>{const n=++generation.current;const restoring=pendingResume.current;if(restoring&&restoring.collection===collection){T(restoring);Q(restoring.query);G('location');AL(Math.max(0,restoring.lines.findIndex(l=>!l.complete)));pendingResume.current=null}else{T(null);if(!savedWork.current?.taskId)Q('')}E('');F('');CAT('');BR('');LF('');SZ('');FO(false);D(null);audio.current?.pause();SP(false);localStorage.setItem('sf-collection',collection);request('/warehouse/items?collection='+collection).then(x=>{if(n===generation.current)I(x)}).catch(e=>E(e.message));request('/warehouse/tasks').then(R).catch(e=>E(e.message))},[collection]);
  async function run(fn){B(true);E('');N('');try{return await fn()}catch(e){E(e.message)}finally{B(false)}}
  async function reload(){I(await request('/warehouse/items?collection='+collection));M(await request('/warehouse/meta'));R(await request('/warehouse/tasks'))}
  function stopSpeech(){
