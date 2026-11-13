@@ -499,7 +499,16 @@ export default function WarehouseApp({user,preferences,logout}){
   }
   if(pendingNextPick&&pendingNextPick.taskId===source.id){
    if(control==='stop'){PN(null);stopVoiceFlow();return false}
-   if(control==='repeat'){if(voice)await playFixedVoice(pendingNextPick.phase==='cancel'?'pick_cancel_confirm':'pick_defer_choice',source.language,false,true);return}
+   if(control==='back'){
+    if(pendingNextPick.phase==='cancel'){PN({...pendingNextPick,phase:'choose'});VGT(nextItemUi(appLanguage,'question'))}
+    else PN(null);
+    return;
+   }
+   if(control==='help'||control==='repeat'){
+    VGT(nextItemUi(appLanguage,pendingNextPick.phase==='cancel'?'confirmCancel':'question'));
+    if(voice)await playFixedVoice(pendingNextPick.phase==='cancel'?'pick_cancel_confirm':'pick_defer_choice',source.language,false,true);
+    return;
+   }
    const answer=pendingNextPick.phase==='cancel'?pickConfirmationIntent(source.language,transcript):nextItemChoice(source.language,transcript);
    if(pendingNextPick.phase==='cancel'){
     if(answer==='yes')return applyNextChoice(source,pendingNextPick.line,'cancelled');
