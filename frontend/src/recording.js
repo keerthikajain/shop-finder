@@ -28,7 +28,9 @@ export async function startRecording(onComplete,onError,{stopOnSilence=false}={}
     for(let i=0;i<values.length;i++)power+=values[i]*values[i];
     const rms=Math.sqrt(power/values.length),now=Date.now();
     if(rms>0.018){speechFrames++;lastSpeech=now;if(speechFrames>=3)heardSpeech=true;}
-    if(heardSpeech&&now-lastSpeech>1100&&now-startedAt>800)stop();
+    // Give speakers room for a natural pause within a size/model or Telugu phrase.
+    // This is listening end-of-turn detection, not a delay after transcription.
+    if(heardSpeech&&now-lastSpeech>1350&&now-startedAt>800)stop();
   };source.connect(processor);processor.connect(context.destination);timer=setTimeout(()=>stop(),28000);return {stop};}
   catch(e){release();throw Error(e.name==='NotAllowedError'?'Microphone permission denied. Allow it in the browser or type your question.':e.message)}
 }

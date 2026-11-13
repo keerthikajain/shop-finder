@@ -2124,3 +2124,44 @@ def test_telugu_report_and_repeat_voice_intents_are_safe_read_only(setup):
   assert r.json()['action']==action
  after=c.get('/api/warehouse/tasks/'+t['id'],headers=H).json()
  assert before==after
+
+
+def test_spoken_variant_clarification_lists_only_catalogue_options_without_mutation(setup,monkeypatch):
+ c,_=setup
+ task=search(c,'blue T-shirt')
+ assert len(task['lines'][0]['candidates'])==2 and task['lines'][0]['selected'] is None
+ voice_calls=[]
+ async def gnani_speak(text,language,**kwargs):
+  voice_calls.append((text,language))
+  return b'RIFF-short-test'
+ monkeypatch.setattr('app.warehouse.voice.speak',gnani_speak)
+ route=f"/tasks/{task['id']}/clarification-audio/"
+ assert post(c,route+'0').status_code==200
+ text,language=voice_calls[-1]
+ assert 'Blue' in text or 'blue' in text
+ assert 'size' in text.lower() or 'model' in text.lower()
+ assert language=='en-IN'
+ assert post(c,route+'-1').status_code==422
+ assert post(c,route+'99').status_code==422
+ assert c.get('/api/warehouse/tasks/'+task['id'],headers=H).json()==task
+ resolved=post(c,f"/tasks/{task['id']}/clarify",{'line':0,'reply':'size M'})
+ assert resolved.status_code==200
+ assert resolved.json()['lines'][0]['selected']['sku']=='CLO-001'
+ assert post(c,route+'0').status_code==409
+
+
+def test_telugu_clarification_speech_uses_selected_task_locale(setup,monkeypatch):
+ c,_=setup
+ response=post(c,'/search',{'collection':'clothing','query':'blue T-shirt','language':'te-IN'})
+ assert response.status_code==200
+ task=response.json()
+ texts=[]
+ async def speak(text,language,**kwargs):
+  texts.append((text,language))
+  return b'RIFF-telugu-test'
+ monkeypatch.setattr('app.warehouse.voice.speak',speak)
+ result=post(c,f"/tasks/{task['id']}/clarification-audio/0")
+ assert result.status_code==200,result.text
+ assert texts[-1][1]=='te-IN'
+ assert 'సైజు' in texts[-1][0]
+ assert task['lines'][0]['selected'] is None

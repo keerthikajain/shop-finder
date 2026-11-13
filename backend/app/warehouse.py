@@ -788,6 +788,45 @@ def install_warehouse(app,path):
   audio=await voice.speak(speech_text,task['language'])
   return Response(audio,media_type='audio/wav',headers={'Cache-Control':'no-store'})
 
+ @app.post('/api/warehouse/tasks/{tid}/clarification-audio/{index}')
+ async def clarification_audio(tid:str,index:int,request:Request):
+  """Ask only about recorded candidate variants; do not guess or change a task."""
+  u=identity(request)
+  with connect(path) as c:
+   task=task_get(c,tid,u)
+   if not 0<=index<len(task['lines']):raise HTTPException(422,'Invalid task line.')
+   line=task['lines'][index]
+   choices=line.get('candidates',[])
+   if line.get('selected') or len(choices)<2:
+    raise HTTPException(409,'This line does not need variant clarification.')
+   # Read a short, bounded list; the full catalogue choices remain visible.
+   names=[]
+   for item in choices[:3]:
+    specs=item.get('specs') or {}
+    detail=', '.join(str(v) for k,v in specs.items() if k in ('size','size_uk','power_w','capacity_l','model','part_number'))[:60]
+    title=f"{item.get('brand','')} {item['name']}".strip()
+    names.append(f"{title}, {detail}" if detail else title)
+   more=len(choices)>3
+   lang=task['language']
+   opening={
+    'en-IN':'Several versions match. ',
+    'hi-IN':'कई प्रकार मिले हैं। ',
+    'hi-en':'Kai versions mile hain. ',
+    'te-IN':'ఒకటి కంటే ఎక్కువ రకాలు దొరికాయి. '
+   }.get(lang,'Several versions match. ')
+   ending={
+    'en-IN':'Say the exact size, model, or SKU, or select a product on screen.',
+    'hi-IN':'सही साइज़, मॉडल या एस के यू बोलें या स्क्रीन पर चुनें।',
+    'hi-en':'Exact size, model ya SKU bolo, ya screen par select karo.',
+    'te-IN':'సరైన సైజు, మోడల్ లేదా ఎస్ కే యూ చెప్పండి. లేదా స్క్రీన్ పై ఎంచుకోండి.'
+   }.get(lang,'Say the exact size, model, or SKU, or select a product on screen.')
+   options='; '.join(names)
+   extra={'en-IN':' Other options are on screen.','hi-IN':' बाकी विकल्प स्क्रीन पर हैं।',
+          'hi-en':' Baaki options screen par hain.','te-IN':' మిగిలిన ఎంపికలు స్క్రీన్ పై ఉన్నాయి.'}.get(lang,' Other options are on screen.') if more else ''
+   prompt=(opening+options+'. '+ending+extra)[:850]
+  audio=await voice.speak(prompt,lang)
+  return Response(audio,media_type='audio/wav',headers={'Cache-Control':'no-store'})
+
  @app.post('/api/warehouse/tasks/{tid}/speak')
  async def speech(tid:str,request:Request):
   u=identity(request)

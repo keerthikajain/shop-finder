@@ -528,7 +528,7 @@ test('hands-free picking is bounded and pauses while sound, modals or work is ac
  assert.match(listener,/\.stop\(true\)/);
  assert.match(listener,/request\('\/voice\/transcribe\?'/);
  assert.match(recording,/if\(stopOnSilence\&\&!heardSpeech\)/);
- assert.match(recording,/now-lastSpeech>1100/);
+ assert.match(recording,/now-lastSpeech>1350/);
 });
 
 
