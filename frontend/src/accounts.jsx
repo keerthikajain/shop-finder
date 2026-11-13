@@ -26,8 +26,8 @@ export function Login({ready,configured,language,L,error,busy,notice='',demoEnab
  const welcomeAttempted=useRef(false),welcomePlayback=useRef(null);
  const greeting=PUBLIC_GREETING[language]||PUBLIC_GREETING.en;
  useEffect(()=>{
-  if(!ready||!configured||welcomeAttempted.current)return;
-  welcomeAttempted.current=true;
+  if(!ready||!configured||welcomeAttempted.current===language)return;
+  welcomeAttempted.current=language;
   const controller=new AbortController();
   const playback={controller,audio:null,url:null};
   welcomePlayback.current=playback;
@@ -37,7 +37,7 @@ export function Login({ready,configured,language,L,error,busy,notice='',demoEnab
    language:locale,text:greeting,controller,playback,gnaniOnly:true
   });
   return ()=>stopWelcome(playback);
- },[ready,configured]);
+ },[ready,configured,language]);
  useEffect(()=>()=>stopWelcome(welcomePlayback.current),[]);
 
  const joining=screen==='join';
