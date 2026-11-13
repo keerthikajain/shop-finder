@@ -454,7 +454,9 @@ test('public challenge preview has an explicit guest entry and feedback screen',
 test('a fully unmatched request does not show unusable picking commands and search stays responsive',async()=>{
  const jsx=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
- assert.match(jsx,/hasSearchCandidates\?<section className="wh-panel sf-guided-picking"/);
+ assert.match(jsx,/hasSearchCandidates\?<>/);
+  assert.match(jsx,/picking\.status==='ready'&&lookupMode==='choice'/);
+  assert.match(jsx,/\(picking\.status!=='ready'\|\|lookupMode==='guided'\)&&<section className="wh-panel sf-guided-picking"/);
  assert.match(jsx,/No items ready to pick/);
  assert.match(css,/\.sf-find-page \.wh-work-grid\{grid-template-columns:minmax\(0,1fr\) minmax\(0,280px\)\}/);
  assert.match(css,/@media\(max-width:900px\)/);
@@ -665,7 +667,7 @@ test('report mic waits until spoken guidance stops to avoid transcribing itself'
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/function Report\(\{item,location,collection,userId,run,busy,speaking=false/);
  assert.ok(src.includes("VoiceButton small autoStop enabled={!busy&&!speaking&&!guidedActive}"));
- assert.match(src,/collection=\{modal\.item\.collection\} userId=\{user\.id\} \{\.\.\.\{run,busy,voice,language,speaking\}\}/);
+ assert.match(src,/collection=\{modal\.item\.collection\} userId=\{user\.id\} autoGuide=\{!!modal\.autoGuide\} \{\.\.\.\{run,busy,voice,language,speaking\}\}/);
 });
 
 test('activity report card groups issue, shelf locations and resolution instead of wide scattered flex rows',async()=>{
