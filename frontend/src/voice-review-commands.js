@@ -63,6 +63,25 @@ const PHRASES={
   cancel:['రద్దు','ఆపు','వద్దు']
  }
 };
+// Short, safe navigation variants observed in real mixed-script Prisma
+// transcripts. Keep owner approval, saving, and item confirmation exact.
+const NAVIGATION_VARIANTS={
+ 'te-IN':{
+  repeat:['location दोबारा बताओ','लोकेशन दोबारा बताओ','location dobara batao','location మళ్లీ చెప్పండి','లొకేషన్ మళ్ళీ చెప్పండి'],
+  help:['హెల్ప్','help'],
+  stop:['స్టాప్','stop','voice stop']
+ },
+ 'hi-en':{
+  repeat:['location दोबारा बताओ','लोकेशन दोबारा बताओ','जगह फिर से बताओ'],
+  help:['हेल्प','help करो'],
+  stop:['स्टॉप','voice बंद करो']
+ },
+ 'hi-IN':{
+  repeat:['location दोबारा बताओ','लोकेशन दोबारा बताओ'],
+  help:['हेल्प'],
+  stop:['स्टॉप']
+ }
+};
 const normalize=text=>String(text||'').toLocaleLowerCase().normalize('NFC')
  .replace(/[.,!?।॥;:]/g,' ').trim().replace(/\s+/g,' ');
 export const actionPhrases=(language,action)=>(PHRASES[language]||PHRASES['en-IN'])[action]||[];
@@ -81,7 +100,8 @@ export function dialogueControl(language,transcript){
  for(const action of ['stop','help','repeat','back']){
   // English fallback is intentional: a worker can say "stop" or "back to edit"
   // even if the speech recognizer code-switches to English mid-conversation.
-  if(voiceAction(language,action,transcript)||voiceAction('en-IN',action,transcript))return action;
+  if(voiceAction(language,action,transcript)||voiceAction('en-IN',action,transcript)||
+     (NAVIGATION_VARIANTS[language]?.[action]||[]).some(phrase=>normalize(phrase)===normalize(transcript)))return action;
  }
  return null;
 }
