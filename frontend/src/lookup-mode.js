@@ -37,7 +37,7 @@ export function modeChoiceIntent(language,text){
  const choices=CHOICES[language]||CHOICES['en-IN'];
  // Restrict recovery to a whole recognized answer. Never interpret a negated,
  // mixed, or conversational phrase as approval to start a picking session.
- if(/\\b(?:not|no|don't|dont|cancel|never|without|nahi|mat)\\b|(?:కాదు|వద్దు|లేదు|नहीं|मत)/iu.test(phrase))return null;
+ if(/\b(?:not|no|don't|dont|cancel|never|without|nahi|mat)\b|(?:కాదు|వద్దు|లేదు|नहीं|मत)/iu.test(phrase))return null;
  for(const [action,variants] of Object.entries(choices))
   if(variants.some(x=>norm(x)===phrase))return action;
  // Only Telugu choice prompts need tolerance for small Prisma spelling variants.
