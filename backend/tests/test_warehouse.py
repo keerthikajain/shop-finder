@@ -2084,3 +2084,43 @@ def test_lookup_only_pick_can_be_undone_with_audit_while_ready(setup):
              {'line':0,'kind':'manual','value':'confirmed'}).status_code==200
  with connect(path) as db:
   assert db.execute('SELECT count(*) FROM wh_items WHERE sku=?',('CLO-001',)).fetchone()[0]==1
+
+
+@pytest.mark.parametrize('transcript,action',[
+ ('तप्पु स्थानम','report'),
+ ('तप्पू स्थानम','report'),
+ ('తప్పు స్థానమ','report'),
+ ('తప్పు స్థానము','report'),
+ ('తప్పు స్థానము.','report'),
+ ('స్థానాన్ని మళ్లీ చెప్పండి','repeat'),
+ ('స్థానాన్ని మళ్ళీ చెప్పండి','repeat'),
+ ('స్థానాన్ని మల్లీ చెప్పండి','repeat'),
+ ('स्थानాన్ని మళ్ళీ చెప్పండి','unknown'),
+])
+def test_telugu_stt_script_and_minimal_letter_variants(transcript,action):
+ from app.warehouse_voice_guide import intent
+ assert intent(transcript,'te-IN')==action
+
+
+@pytest.mark.parametrize('transcript',[
+ 'తప్పు స్థానం కాదు','తప్పు స్థానమ వద్దు','तप्पु स्थानम नहीं',
+ 'not wrong location','do not repeat location','స్థానాన్ని మళ్లీ చెప్పండి వద్దు',
+ 'తప్పు స్థానము దొరికింది','తప్పు స్థానము confirm',
+ 'స్థానాన్ని మళ్లీ చెప్పండి and confirm','దొరికిందీ','అవునూ'
+])
+def test_telugu_stt_typo_recovery_never_executed_on_negation_or_confirmation(transcript):
+ from app.warehouse_voice_guide import intent
+ assert intent(transcript,'te-IN')=='unknown'
+
+
+def test_telugu_report_and_repeat_voice_intents_are_safe_read_only(setup):
+ c,_=setup
+ t=search(c,'APP-003',collection='appliances')
+ assert post(c,f"/tasks/{t['id']}/picking/start").status_code==200
+ before=c.get('/api/warehouse/tasks/'+t['id'],headers=H).json()
+ for transcript,action in [('तप्पू स्थानम','report'),('స్థానాన్ని మళ్ళీ చెప్పండి','repeat')]:
+  r=post(c,f"/tasks/{t['id']}/picking/command",{'transcript':transcript,'line':0})
+  assert r.status_code==200,r.text
+  assert r.json()['action']==action
+ after=c.get('/api/warehouse/tasks/'+t['id'],headers=H).json()
+ assert before==after
