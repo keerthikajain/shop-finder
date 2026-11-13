@@ -31,8 +31,8 @@ COMMANDS = {
 VARIANTS={
  'te-IN':{
   'report':('తప్పు స్థానము','తప్పు స్థానమ్','తప్పు లొకేషన్','తప్పు లొకేషను','తప్పు స్థలము',
-            'तप्पु स्थानम्','तप्पु स्थानम','तप्पु स्थानं','తప్పు స్థానము.','wrong location'),
-  'repeat':('స్థానం మళ్ళీ చెప్పండి','లొకేషన్ మళ్ళీ చెప్పండి','లొకేషన్ మళ్లీ చెప్పండి',
+            'तप्पु स्थानम्','तप्पु स्थानम','तप्पु स्थानं','तप्पू स्थानम','తప్పు స్థానమ','తప్పు స్థానము.','wrong location'),
+  'repeat':('స్థానం మళ్ళీ చెప్పండి','స్థానాన్ని మళ్ళీ చెప్పండి','స్థానాన్ని మళ్లీ చెప్పండి','లొకేషన్ మళ్ళీ చెప్పండి','లొకేషన్ మళ్లీ చెప్పండి',
             'location మళ్లీ చెప్పండి','location malli cheppu','location dobara batao',
             'location दोबारा बताओ','लोकेशन दोबारा बताओ'),
   'help':('హెల్ప్','help','నాకు సహాయం చేయండి'),
@@ -61,6 +61,35 @@ def normalized_command(value):
  value=re.sub(r'[.,!?।॥;:؟]+',' ',value)
  return ' '.join(value.split())
 
+def _within_edits(a,b,limit):
+ if abs(len(a)-len(b))>limit:return False
+ previous=list(range(len(b)+1))
+ for i,char in enumerate(a,1):
+  current=[i]
+  for j,other in enumerate(b,1):
+   current.append(min(previous[j]+1,current[-1]+1,previous[j-1]+(char!=other)))
+  if min(current)>limit:return False
+  previous=current
+ return previous[-1]<=limit
+
+def _safe_lookup_variant(value,phrases):
+ """A whole-phrase near match may repeat or OPEN a report, never confirm a pick."""
+ if not value or re.search(r'\b(?:not|no|dont|never|without|nahi|mat|cancel)\b',value):
+  return False
+ if any(word in value for word in ('नहीं','नही','मत','వద్దు','కాదు','లేదు')):
+  return False
+ words=value.split(' ')
+ for phrase in phrases:
+  expected=normalized_command(phrase)
+  target=expected.split(' ')
+  if len(words)!=len(target) or len(value)<9 or len(expected)<9:
+   continue
+  if not _within_edits(words[0],target[0],1):
+   continue
+  limit=2 if max(len(value),len(expected))>=18 else 1
+  if _within_edits(value,expected,limit):return True
+ return False
+
 def intent(transcript,language='en-IN'):
  value=normalized_command(transcript)
  # Allow harmless courtesy words around a SHORT command, never free-form actions.
@@ -70,6 +99,12 @@ def intent(transcript,language='en-IN'):
   if value.endswith(suffix): value=value[:-len(suffix)]
  for kind,phrases in VARIANTS.get(language,{}).items():
   if value in (normalized_command(p) for p in phrases):return kind
+ # Only non-committing commands can use minor spelling recovery.
+ # Item verification, owner approvals, and location saves remain exact.
+ if language=='te-IN':
+  for action in ('repeat','report'):
+   candidates=(*VARIANTS[language][action],*REGIONAL[language]['commands'][action])
+   if _safe_lookup_variant(value,candidates):return action
  if language in REGIONAL:
   return next((kind for kind,phrases in REGIONAL[language]['commands'].items() if value in (normalized_command(p) for p in phrases)),'unknown')
  return next((kind for kind,phrases in COMMANDS.items() if value in (normalized_command(p) for p in phrases)),'unknown')
