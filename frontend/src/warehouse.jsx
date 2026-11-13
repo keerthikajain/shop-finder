@@ -300,12 +300,12 @@ export default function WarehouseApp({user,preferences,logout}){
    // During confirmation, Repeat replays the question rather than losing the pending item.
    const responseCommand=await api('/tasks/'+source.id+'/picking/command',{transcript,line:pendingVoicePick.line});
    if(responseCommand.action==='repeat'){
-    VGT(pickingUiCopy(appLanguage,'verify'));
+    VGT(pickingUiTip(appLanguage,'confirm'));
     if(voice)await playPickGuidance('repeat',source,pendingVoicePick.line);
     return;
    }
    if(responseCommand.action==='verify'){
-    VGT(pickingUiCopy(appLanguage,'verify'));
+    VGT(pickingUiTip(appLanguage,'confirm'));
     if(voice)await playPickGuidance('verify',source,pendingVoicePick.line);
     return;
    }
@@ -324,15 +324,15 @@ export default function WarehouseApp({user,preferences,logout}){
     }
     return false;
    }
-   VGT(pickingUiCopy(appLanguage,'verify'));
+   VGT(pickingUiTip(appLanguage,'confirm'));
    if(voice)await playPickGuidance('verify',source,pendingVoicePick.line);
    return;
   }
   return await run(async()=>{
    const answer=await api('/tasks/'+source.id+'/picking/command',{transcript,line:activeLine});
-   VGT(answer.action==='unknown'?pickingUiCopy(appLanguage,'unknown'):pickingUiCopy(appLanguage,'active'));
+   VGT(answer.action==='unknown'?pickingUiTip(appLanguage,'available'):pickingUiCopy(appLanguage,'active'));
    if(answer.line!=null)AL(answer.line);
-   if(answer.action==='verify'&&answer.line!=null){PV({taskId:source.id,line:answer.line,sku:source.lines[answer.line]?.selected?.sku});VGT(pickingUiCopy(appLanguage,'verify'));}
+   if(answer.action==='verify'&&answer.line!=null){PV({taskId:source.id,line:answer.line,sku:source.lines[answer.line]?.selected?.sku});VGT(pickingUiTip(appLanguage,'confirm'));}
    if(answer.action==='report'&&answer.line!=null){
     reportResumeRef.current=handsFree&&!voiceGuidePaused;
     PV(null);VGP(true); // Stop the pick microphone before changing to the report step.
