@@ -631,8 +631,12 @@ def install_warehouse(app,path):
   with connect(path) as c:
    c.execute('BEGIN IMMEDIATE');task=task_get(c,tid,u)
    state=picking_state(task)
-   if state['status'] not in ('active','completed'):
-    raise HTTPException(409,'Only a started picking session can undo a confirmation.')
+   if state['status'] not in ('ready','active','completed'):
+    raise HTTPException(409,'Cannot undo a confirmation for this task.')
+   # Locations Only can record a manual pick before guided picking starts.
+   # Undo only that explicit confirmation; never reopen a ready barcode task.
+   if state['status']=='ready' and (body.line<0 or body.line>=len(task['lines']) or task['lines'][body.line].get('confirmation')!='manual'):
+    raise HTTPException(409,'Only a manually confirmed lookup pick can be undone.')
    if state.get('paused'):raise HTTPException(409,'Resume picking before undoing a confirmation.')
    if body.line>=len(task['lines']):raise HTTPException(422,'Invalid task line.')
    line=task['lines'][body.line]
