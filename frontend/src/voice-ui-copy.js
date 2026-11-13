@@ -42,3 +42,10 @@ export const pickingUiTip=(appLanguage,key)=>{
 export const spokenYesNo=language=>language==='te-IN'?['అవును','కాదు']:
  language==='hi-IN'?['हाँ','नहीं']:language==='hi-en'?['haan','nahi']:
  language==='kn-IN'?['ಹೌದು','ಇಲ್ಲ']:['yes','no'];
+
+const reportTips={
+ en:{confirm:'To answer by voice, use the words shown in your selected speech language.',submit:'To submit by voice, say the phrase shown in your selected speech language.'},
+ hi:{confirm:'आवाज़ से उत्तर देने के लिए नीचे अपनी चुनी हुई आवाज़ की भाषा में लिखे शब्द बोलें।',submit:'रिपोर्ट भेजने के लिए अपनी चुनी हुई आवाज़ की भाषा में नीचे लिखा आदेश बोलें।'},
+ te:{confirm:'వాయిస్‌తో సమాధానం ఇవ్వాలంటే ఎంచుకున్న వాయిస్ భాషలో కింద చూపిన పదాలు చెప్పండి.',submit:'నివేదికను పంపడానికి ఎంచుకున్న వాయిస్ భాషలో కింద చూపిన మాట చెప్పండి.'}
+};
+export const reportUiTip=(appLanguage,key)=>reportTips[appLanguage]?.[key]||translate(appLanguage,reportTips.en[key])||reportTips.en[key];
