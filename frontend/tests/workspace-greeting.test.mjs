@@ -27,10 +27,10 @@ test('greeting safely uses a real account display first name or username',()=>{
 
 test('time-based welcome uses current local hour and only once per workspace mount',async()=>{
  const user={id:'1',username:'keerthi',display_name:'Keerthi Jain'};
- assert.match(greetingMessage(user,'en-IN',8),/^Good morning, Keerthi,/);
- assert.match(greetingMessage(user,'en-IN',14),/^Good afternoon, Keerthi,/);
- assert.match(greetingMessage(user,'en-IN',20),/^Good evening, Keerthi,/);
- assert.match(greetingMessage(user,'en-IN',0),/^Good morning, Keerthi,/);
+ assert.match(greetingMessage(user,'en-IN',8),/^Good morning, Keerthi\./);
+ assert.match(greetingMessage(user,'en-IN',14),/^Good afternoon, Keerthi\./);
+ assert.match(greetingMessage(user,'en-IN',20),/^Good evening, Keerthi\./);
+ assert.match(greetingMessage(user,'en-IN',0),/^Good morning, Keerthi\./);
  const src=await readFile(new URL('../src/workspace-greeting.jsx',import.meta.url),'utf8');
  assert.match(src,/if\(attempted\.current\)return/);
  assert.match(src,/attempted\.current=true/);
