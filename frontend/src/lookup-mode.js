@@ -1,6 +1,7 @@
 import {pickVoicePhrase} from './picking-voice-phrases.js';
 import {dialogueControl,voiceAction} from './voice-review-commands.js';
 import {pickConfirmationIntent} from './picking-confirmations.js';
+import {safeNavigationVariant} from './safe-navigation-variants.js';
 
 // Explicit whole-phrase commands. Do not interpret unclear speech as permission
 // to start a session, confirm a pick, or change an inventory record.
@@ -15,7 +16,7 @@ const EXTRA={
  'en-IN':{report:['wrong location'],verify:['found it','i picked it'],repeat:['repeat location','repeat locations'],help:['help'],stop:['stop']},
  'hi-IN':{report:['गलत जगह'],verify:['मिल गया'],repeat:['जगह दोहराओ','लोकेशन दोबारा बताओ'],help:['मदद'],stop:['रुको']},
  'hi-en':{report:['galat jagah','wrong location'],verify:['mil gaya','found it'],repeat:['location dobara batao','location दोबारा बताओ'],help:['help','मदद'],stop:['ruko','stop']},
- 'te-IN':{report:['తప్పు స్థానం','తప్పు స్థానము','తప్పు లొకేషన్','तप्पु स्थानम','wrong location'],verify:['దొరికింది','found it'],repeat:['స్థానాన్ని మళ్లీ చెప్పండి','location दोबारा बताओ','repeat location'],help:['సహాయం','help'],stop:['ఆపు','stop']}
+ 'te-IN':{report:['తప్పు స్థానం','తప్పు స్థానమ','తప్పు స్థానము','తప్పు లొకేషన్','तप्पु स्थानम','तप्पु स्थानम्','wrong location'],verify:['దొరికింది','found it'],repeat:['స్థానాన్ని మళ్లీ చెప్పండి','స్థానాన్ని మళ్ళీ చెప్పండి','location दोबारा बताओ','repeat location'],help:['సహాయం','help'],stop:['ఆపు','stop']}
 };
 const ITEM_WORDS={
  'en-IN':[/^(?:item|number)\s+(\d{1,2}|one|two|three|four|five)$/,/^(first|second|third|fourth|fifth)\s+item$/],
@@ -47,7 +48,9 @@ export function lookupVoiceIntent(language,text,lines=[]){
  const control=dialogueControl(language,text);
  if(['stop','help','repeat'].includes(control))return {action:control};
  for(const [action,variants] of Object.entries(EXTRA[language]||EXTRA['en-IN'])){
-  if(variants.some(x=>norm(x)===phrase)||norm(pickVoicePhrase(language,action))===phrase)return {action};
+  const candidates=[...variants,pickVoicePhrase(language,action)];
+  if(candidates.some(x=>norm(x)===phrase)||
+   (['repeat','report'].includes(action)&&safeNavigationVariant(text,candidates)))return {action};
  }
  // An exact SKU or a numbered line is an unambiguous choice. No fuzzy names.
  const skuMatches=lines.map((line,index)=>({line,index})).filter(({line})=>line.selected?.sku&&norm(line.selected.sku)===phrase);
