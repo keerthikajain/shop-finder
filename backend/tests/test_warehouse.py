@@ -2197,10 +2197,10 @@ def test_next_item_voice_choice_audio_is_localized_and_read_only(setup,monkeypat
  task=search(c,'CLO-001 and CLO-004')
  async def fake_speak(message,language):
   return b'RIFF-test'
- monkeypatch.setattr('backend.app.warehouse.voice.speak',fake_speak)
+ monkeypatch.setattr('app.warehouse.voice.speak',fake_speak)
  for code in ('en-IN','hi-IN','hi-en','te-IN'):
   for step in ('pick_defer_choice','pick_cancel_confirm','pick_later_ready'):
-   response=post(c,'/voice/step-audio/'+step,{'language':code})
+   response=post(c,'/voice/step-audio?step='+step,{'language':code})
    assert response.status_code==200,response.text
    assert response.content==b'RIFF-test'
- assert items(c)==items(c)
+ assert task['lines'][0]['complete'] is False
