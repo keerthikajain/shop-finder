@@ -224,7 +224,9 @@ export default function WarehouseApp({user,preferences,logout}){
  }
  async function requestLookupPick(source=task,index=lookupSelection){
   if(!source||index==null||index<0||index>=source.lines.length){
-   N(lookupCopy(appLanguage,'selectFirst'));return false;
+   N(lookupCopy(appLanguage,'selectFirst'));
+   if(voice)await playFixedVoice('lookup_select',source?.language||language,true,true);
+   return true;
   }
   const line=source.lines[index];
   if(!line.selected||!line.location||line.location_report_open||line.complete){
@@ -237,7 +239,9 @@ export default function WarehouseApp({user,preferences,logout}){
  }
  async function reportLookupLocation(source=task,index=lookupSelection){
   if(!source||index==null||index<0||index>=source.lines.length){
-   N(lookupCopy(appLanguage,'selectFirst'));return false;
+   N(lookupCopy(appLanguage,'selectFirst'));
+   if(voice)await playFixedVoice('lookup_select',source?.language||language,true,true);
+   return true;
   }
   const line=source.lines[index];
   if(!line.selected||!line.location){N(lookupCopy(appLanguage,'resolve'));return false}
@@ -251,6 +255,7 @@ export default function WarehouseApp({user,preferences,logout}){
   VGC(transcript);
   if(choice)return chooseSearchMode(choice,source);
   N(lookupCopy(appLanguage,'unknown'));
+  if(voice)await playFixedVoice('choose_mode',source.language,true,true);
   return true;
  }
  async function handleLookupSpeech(transcript,source=task){
@@ -287,7 +292,9 @@ export default function WarehouseApp({user,preferences,logout}){
   }
   if(intent.action==='verify')return requestLookupPick(source,lookupSelection);
   if(intent.action==='report')return reportLookupLocation(source,lookupSelection);
-  N(lookupCopy(appLanguage,'unknown'));return true;
+  N(lookupCopy(appLanguage,'unknown'));
+  if(voice)await playFixedVoice('lookup_unknown',source.language,true,true);
+  return true;
  }
  async function search(text=query,fromVoice=voiceQuery,global=false,spokenLanguage=null){
   PV(null);VGC('');VGT('');stopVoiceFlow();
