@@ -2763,3 +2763,16 @@ html,body,#root{max-width:100%;overflow-x:clip}
 }
 /* On smaller screens use the ordinary single-column card, never a horizontal
    overflow merely to fill unused desktop space. */
+
+/* Compact guided picking controls: three primary actions with accessible manual fallback. */
+.sf-guided-picking .sf-voice-guide{gap:10px;padding:12px;background:var(--wh-surface)}
+.sf-guided-picking .sf-voice-current-status{font-size:13px;color:var(--wh-muted);padding:8px 10px;border-radius:8px;background:var(--wh-soft)}
+.sf-guided-picking .sf-voice-guide-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.sf-guided-picking .sf-voice-guide-choices button{display:flex;align-items:center;justify-content:center;font-weight:600;min-height:44px;padding:10px 8px}
+.sf-guided-picking .sf-voice-guide-secondary{display:flex;flex-wrap:wrap;gap:8px}
+.sf-guided-picking .sf-voice-guide-secondary button{min-height:38px;padding:7px 12px;border-radius:8px}
+.sf-guided-picking .sf-voice-guide-actions{gap:8px}
+.sf-guided-picking .sf-voice-details{font-size:12px;color:var(--wh-muted)}
+.sf-guided-picking .sf-voice-details summary{cursor:pointer;max-width:max-content}
+.sf-guided-picking .sf-voice-details .sf-guide-transcript{margin-top:8px;padding:8px;border-radius:8px;background:var(--wh-soft)}
+@media(max-width:540px){.sf-guided-picking .sf-voice-guide-choices{grid-template-columns:repeat(3,minmax(0,1fr))}.sf-guided-picking .sf-voice-guide-choices button{font-size:12px;padding:9px 3px}}
