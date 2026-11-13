@@ -309,7 +309,7 @@ export default function WarehouseApp({user,preferences,logout}){
    taskVoice.current=fromVoice;
    P('find');VQ(false);AL(0);
    T(result);
-   N(t('Review the matched items. Confirm the search once to hear the first location and start voice-guided picking.'));
+   N(result.lines.every(line=>line.selected&&line.location)?lookupCopy(appLanguage,'question'):lookupCopy(appLanguage,'resolve'));
    if(global)N(t('Label lookup searched across all product types, brands and locations.'));
    R(await request('/warehouse/tasks'));
    // Ask for a workflow only when every product variant is identified.
@@ -319,7 +319,7 @@ export default function WarehouseApp({user,preferences,logout}){
  }
  function navigate(p){if(p===page)return;PV(null);modeChoiceSerial.current++;SetModeListening(false);SetLookupVoicePaused(true);stopVoiceFlow();P(p);E('');N('');D(null);if(p!=='find')TOUR(null);main.current?.focus();window.scrollTo(0,0)}
  function goBack(){navigate('more')}
- async function choose(line,p,l){await run(async()=>{const next=await api('/tasks/'+task.id+'/choose',{line,collection:p.collection,sku:p.sku,location:l.code});T(next);AL(line);N(t('Item choice saved. Review the full list before starting picking.'));if(next.lines.every(x=>x.selected&&x.location))void offerSearchMode(next)})}
+ async function choose(line,p,l){await run(async()=>{const next=await api('/tasks/'+task.id+'/choose',{line,collection:p.collection,sku:p.sku,location:l.code});T(next);AL(line);N(lookupCopy(appLanguage,'modeSaved'));if(next.lines.every(x=>x.selected&&x.location))void offerSearchMode(next)})}
  async function progressAfterPick(next,completed){
   T(next);
   // A product barcode alone does not finish the pick: wait for shelf verification.
