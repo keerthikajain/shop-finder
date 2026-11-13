@@ -607,7 +607,11 @@ test('completed picks do not show redundant shelf-check or pick verification act
   assert.match(src,/sf-item-report-link/);
   assert.doesNotMatch(src,/className="sf-guide-jump"/);
   assert.doesNotMatch(src,/line\.location\.quantity==null\?t\('Quantity not added yet'\)/);
-  assert.match(src,/sf-shelf-all-locations/);
+  assert.match(src,/sf-location-navigator/);
+  assert.match(src,/sf-location-navigator-levels/);
+  assert.match(src,/sf-route-details/);
+  assert.doesNotMatch(src,/<ShelfGuide/);
+  assert.match(src,/task\.lines\.indexOf\(line\)/);
  assert.match(src,/disabled=\{busy\|\|pickPaused\|\|picking\.status==='completed'\|\|line\.complete\|\|!!line\.deferred_reason\|\|line\.location_report_open\}/);
  assert.match(src,/line\.complete\?\(line\.confirmation==='barcode'\?'Scan confirmed':'Manually confirmed'\):line\.location_feedback/);
 });
