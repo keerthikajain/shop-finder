@@ -37,7 +37,7 @@ test('refresh reloads real server work and safely pauses voice instead of restar
  assert.match(ui,/if\(restored\?\.id!==saved\.taskId/);
  assert.match(ui,/T\(restored\)/);
  assert.match(ui,/SetModeListening\(false\);SetLookupVoicePaused\(true\);VGP\(true\)/);
- assert.match(ui,/if\(saved\.reportIndex!==null&&reportLine\?\.selected&&reportLine\?\.location\)/);
+ assert.match(ui,/if\(saved\.reportIndex!==null&&reportLine\?\.selected&&reportLine\?\.location&&!reportLine\.complete&&!reportLine\.location_report_open\)/);
  assert.match(ui,/workHydrated/);
  assert.match(ui,/writeWorkResume\(sessionStorage,user\.id/);
  assert.doesNotMatch(ui,/void restore\(\);[\s\S]{0,80}pickAction\('start'\)/);
