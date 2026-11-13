@@ -98,7 +98,7 @@ test('location feedback is explicit and keeps no-answer searches out of review',
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(source,/\/tasks\/'\+task.id\+'\/location-check'/);
  assert.match(source,/className="sf-location-yes"/);
- assert.match(source,/className="sf-location-wrong"/);
+ assert.match(source,/className="sf-item-report-link"/);
  assert.match(source,/location_report_open/);
  assert.match(source,/kind:location\?'wrong_location':'general'/);
 });
@@ -366,10 +366,12 @@ test('native voice picking commands are wired for every supported input language
  const server=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
  assert.match(src,/PICKING_VOICE_LANGUAGES\.includes\(task\.language\)/);
  assert.match(src,/PICKING_VOICE_LANGUAGES\.includes\(next\.language\)/);
- assert.match(src,/\['verify','report','repeat','next','stop','help'\]\.map\(action/);
+ assert.match(src,/\['verify','report','next'\]\.map\(action/);
  assert.match(src,/pickVoicePhrase\(task\.language,action\)/);
  assert.match(src,/pickingCommandLabel\(appLanguage,action\)/);
- assert.match(src,/sf-voice-command-phrase/);
+ assert.match(src,/sf-voice-guide-secondary/);
+  assert.match(src,/sf-voice-details/);
+  assert.doesNotMatch(src,/sayUndo/);
  assert.match(src,/voicePickCommand\(pickVoicePhrase\(task\.language,action\)\)/);
  for(const code of ['kn-IN','ta-IN','te-IN','ml-IN','mr-IN','bn-IN','gu-IN','pa-IN'])assert.ok(terms.includes('"'+code+'"'),code);
  assert.match(server,/voice_guide\.intent\(body\.transcript,task\['language'\]\)/);
@@ -477,7 +479,10 @@ test('voice-first search requires transcript review before matching products',as
  assert.doesNotMatch(source,/\[voiceAutoSearch,VAS\]=useState\(true\)/);
  assert.doesNotMatch(source,/Search automatically after speaking/);
  assert.match(source,/Check or edit the transcript, then press Find items/);
- assert.match(source,/className="sf-request-review"/);
+ assert.match(source,/className="sf-search-details"/);
+  assert.match(source,/className="sf-clear-query"/);
+  assert.match(source,/aria-label=\{t\('Clear search'\)\}/);
+  assert.match(source,/className="sf-unrecognized-voice"/);
  assert.match(source,/task\.query/);
  assert.match(source,/language,\s*brand:/);
  assert.doesNotMatch(source,/language:language==='auto'/);
@@ -597,8 +602,12 @@ test('spoken search waits for the worker to approve the proposed picking list',a
 
 test('completed picks do not show redundant shelf-check or pick verification actions',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(src,/\{<div className="sf-location-check"/);
- assert.match(src,/line\.complete\?t\('Picked and verified\. This item is complete\.'\)/);
+  assert.match(src,/<details className="sf-location-check"><summary>/);
+  assert.match(src,/Verify location \(optional\)/);
+  assert.match(src,/sf-item-report-link/);
+  assert.doesNotMatch(src,/className="sf-guide-jump"/);
+  assert.doesNotMatch(src,/line\.location\.quantity==null\?t\('Quantity not added yet'\)/);
+  assert.match(src,/sf-shelf-all-locations/);
  assert.match(src,/disabled=\{busy\|\|pickPaused\|\|picking\.status==='completed'\|\|line\.complete\|\|!!line\.deferred_reason\|\|line\.location_report_open\}/);
  assert.match(src,/line\.complete\?\(line\.confirmation==='barcode'\?'Scan confirmed':'Manually confirmed'\):line\.location_feedback/);
 });
@@ -747,7 +756,7 @@ test('sample shelf labels remain bounded, and the unnecessary Recent requests pa
  assert.doesNotMatch(backend,/Sample catalogue locations, not verified for your store/);
  assert.doesNotMatch(backend,/\{'Example shelf/);
  assert.match(ui,/example=\{!!line.selected\?\.synthetic\}/);
- assert.match(ui,/Confirm your request/);
+ assert.match(ui,/Search details/);
  assert.match(ui,/Confirm search and begin picking/);
 });
 
@@ -784,7 +793,8 @@ test('spoken answers guidance welcome and reports expose explicit stop buttons',
  assert.match(src,/playbackSerial\.current\+\+/);
  assert.match(src,/audioRequest\.current\?\.abort\(\)/);
  assert.match(src,/onClick=\{\(\)=>speaking\?stopSpeech\(\):speak\(task\)\}/);
- assert.ok(src.includes("pickingUiCopy(appLanguage,speaking?'stopAudio':'read')"));
+ assert.ok(src.includes("className=\"sf-voice-stop-audio\""));
+  assert.ok(src.includes("onClick={stopVoiceFlow}"));
  assert.match(src,/className="sf-report-stop-audio" onClick=\{onStopSpeaking\}/);
  assert.doesNotMatch(account,/welcomeStatus==='speaking'\|\|welcomeStatus==='starting'/);
  assert.doesNotMatch(account,/\?'Stop welcome':'Hear welcome'/);

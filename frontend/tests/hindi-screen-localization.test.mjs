@@ -40,7 +40,8 @@ test('shelf diagram and quantity status use translated labels, preserving stored
  assert.match(shelf,/<Glyph name="pin"\/>\{t\('At a glance'\)\}/);
  assert.match(shelf,/\{t\('Shelf '\)\}\{s\}/);
  assert.match(shelf,/\{t\('Schematic based on saved locations\.'\)\}/);
- assert.match(workspace,/line\.location\.quantity==null\?t\('Quantity not added yet'\)/);
+ assert.match(workspace,/className="sf-location-check"/);
+  assert.match(workspace,/Verify location \(optional\)/);
  assert.match(workspace,/line\.selected\.name/);
  assert.doesNotMatch(workspace,/<summary>\{t\('Recent requests'\)\}<\/summary>/);
 });

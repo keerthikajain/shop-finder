@@ -607,3 +607,40 @@ const finderFilterTranslations={
  ml:{'Product type':'ഉൽപ്പന്ന തരം','Brand':'ബ്രാൻഡ്','Recent requests':'സമീപകാല അഭ്യർത്ഥനകൾ','Size filter':'വലുപ്പ ഫിൽട്ടർ','Location filter':'സ്ഥല ഫിൽട്ടർ'}
 };
 for(const [language,entries] of Object.entries(finderFilterTranslations))Object.assign(uiLanguageCoverage[language],entries);
+
+const compactPickingLabels={
+ hi:{"Report issue":"समस्या रिपोर्ट करें","Verify location (optional)":"स्थान जाँचें (वैकल्पिक)","All item locations":"सभी सामान की जगहें","Shelf location checked":"शेल्फ़ की जगह जाँची गई"},
+ te:{"Report issue":"సమస్యను నివేదించండి","Verify location (optional)":"స్థానాన్ని ధృవీకరించండి (ఐచ్ఛికం)","All item locations":"అన్ని వస్తువుల స్థానాలు","Shelf location checked":"షెల్ఫ్ స్థానం తనిఖీ చేయబడింది"},
+ kn:{"Report issue":"ಸಮಸ್ಯೆ ವರದಿ ಮಾಡಿ","Verify location (optional)":"ಸ್ಥಳ ಪರಿಶೀಲಿಸಿ (ಐಚ್ಛಿಕ)","All item locations":"ಎಲ್ಲ ವಸ್ತುಗಳ ಸ್ಥಳಗಳು","Shelf location checked":"ಶೆಲ್ಫ್ ಸ್ಥಳ ಪರಿಶೀಲಿಸಲಾಗಿದೆ"},
+ ta:{"Report issue":"சிக்கலைப் புகாரளி","Verify location (optional)":"இடத்தைச் சரிபார் (விருப்பம்)","All item locations":"அனைத்து பொருட்களின் இடங்கள்","Shelf location checked":"அலமாரி இடம் சரிபார்க்கப்பட்டது"},
+ ml:{"Report issue":"പ്രശ്നം റിപ്പോർട്ട് ചെയ്യുക","Verify location (optional)":"സ്ഥലം പരിശോധിക്കുക (ഐച്ഛികം)","All item locations":"എല്ലാ സാധനങ്ങളുടെയും സ്ഥലങ്ങൾ","Shelf location checked":"ഷെൽഫ് സ്ഥാനം പരിശോധിച്ചു"},
+ mr:{"Report issue":"समस्या नोंदवा","Verify location (optional)":"ठिकाण तपासा (ऐच्छिक)","All item locations":"सर्व वस्तूंची ठिकाणे","Shelf location checked":"शेल्फचे ठिकाण तपासले"},
+ bn:{"Report issue":"সমস্যা জানান","Verify location (optional)":"অবস্থান যাচাই করুন (ঐচ্ছিক)","All item locations":"সব পণ্যের অবস্থান","Shelf location checked":"তাকের অবস্থান যাচাই করা হয়েছে"},
+ gu:{"Report issue":"સમસ્યાની જાણ કરો","Verify location (optional)":"સ્થળ તપાસો (વૈકલ્પિક)","All item locations":"બધી વસ્તુઓનાં સ્થળો","Shelf location checked":"શેલ્ફનું સ્થળ તપાસાયું"},
+ pa:{"Report issue":"ਸਮੱਸਿਆ ਦੀ ਰਿਪੋਰਟ ਕਰੋ","Verify location (optional)":"ਥਾਂ ਦੀ ਜਾਂਚ ਕਰੋ (ਵਿਕਲਪਿਕ)","All item locations":"ਸਾਰੀਆਂ ਵਸਤਾਂ ਦੀਆਂ ਥਾਵਾਂ","Shelf location checked":"ਸ਼ੈਲਫ ਦੀ ਥਾਂ ਚੈੱਕ ਕੀਤੀ"}
+};
+for(const [language,entries] of Object.entries(compactPickingLabels)){
+ if(uiLanguageCoverage[language])Object.assign(uiLanguageCoverage[language],entries);
+}
+
+const compactSearchLabels={
+ hi:{"Clear search":"खोज साफ़ करें","Search details":"खोज की जानकारी","Requested items":"माँगे गए सामान","Open Search details to review what was heard.":"सुनी गई बात देखने के लिए खोज की जानकारी खोलें।"},
+ te:{"Clear search":"వెతుకులాటను తొలగించండి","Search details":"వెతుకులాట వివరాలు","Requested items":"అడిగిన వస్తువులు","Open Search details to review what was heard.":"విన్న మాటలను చూడటానికి వెతుకులాట వివరాలు తెరవండి."},
+ kn:{"Clear search":"ಹುಡುಕಾಟ ತೆರವುಗೊಳಿಸಿ","Search details":"ಹುಡುಕಾಟ ವಿವರಗಳು","Requested items":"ಕೋರಿದ ವಸ್ತುಗಳು","Open Search details to review what was heard.":"ಕೇಳಿದ ಮಾತನ್ನು ನೋಡಲು ಹುಡುಕಾಟ ವಿವರಗಳನ್ನು ತೆರೆಯಿರಿ."},
+ ta:{"Clear search":"தேடலை அழி","Search details":"தேடல் விவரங்கள்","Requested items":"கேட்ட பொருட்கள்","Open Search details to review what was heard.":"கேட்கப்பட்டதைப் பார்க்க தேடல் விவரங்களைத் திறக்கவும்."},
+ ml:{"Clear search":"തിരയൽ മായ്ക്കുക","Search details":"തിരയൽ വിശദാംശങ്ങൾ","Requested items":"ആവശ്യപ്പെട്ട സാധനങ്ങൾ","Open Search details to review what was heard.":"കേട്ടത് പരിശോധിക്കാൻ തിരയൽ വിശദാംശങ്ങൾ തുറക്കുക."},
+ mr:{"Clear search":"शोध साफ करा","Search details":"शोध तपशील","Requested items":"मागितलेल्या वस्तू","Open Search details to review what was heard.":"ऐकलेले तपासण्यासाठी शोध तपशील उघडा."},
+ bn:{"Clear search":"অনুসন্ধান মুছুন","Search details":"অনুসন্ধানের বিবরণ","Requested items":"চাওয়া পণ্য","Open Search details to review what was heard.":"কী শোনা হয়েছে দেখতে অনুসন্ধানের বিবরণ খুলুন।"},
+ gu:{"Clear search":"શોધ સાફ કરો","Search details":"શોધની વિગતો","Requested items":"માંગેલી વસ્તુઓ","Open Search details to review what was heard.":"શું સાંભળ્યું તે જોવા શોધની વિગતો ખોલો."},
+ pa:{"Clear search":"ਖੋਜ ਸਾਫ਼ ਕਰੋ","Search details":"ਖੋਜ ਵੇਰਵੇ","Requested items":"ਮੰਗੀਆਂ ਵਸਤਾਂ","Open Search details to review what was heard.":"ਕੀ ਸੁਣਿਆ ਗਿਆ ਦੇਖਣ ਲਈ ਖੋਜ ਵੇਰਵੇ ਖੋਲ੍ਹੋ।"}
+};
+for(const [language,entries] of Object.entries(compactSearchLabels)){
+ if(uiLanguageCoverage[language])Object.assign(uiLanguageCoverage[language],entries);
+}
+
+// Labels for optional voice diagnostics; preserve the ability to inspect Gnani's transcript.
+for(const [language,value] of Object.entries({
+ hi:"वॉइस विवरण",te:"వాయిస్ వివరాలు",kn:"ಧ್ವನಿ ವಿವರಗಳು",
+ ta:"குரல் விவரங்கள்",ml:"ശബ്ദ വിവരങ്ങൾ",mr:"आवाज तपशील",
+ bn:"ভয়েস বিবরণ",gu:"વૉઇસ વિગતો",pa:"ਆਵਾਜ਼ ਵੇਰਵੇ"
+}))if(uiLanguageCoverage[language])uiLanguageCoverage[language]["Voice details"]=value;
