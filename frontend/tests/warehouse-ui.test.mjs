@@ -479,7 +479,10 @@ test('voice-first search requires transcript review before matching products',as
  assert.doesNotMatch(source,/\[voiceAutoSearch,VAS\]=useState\(true\)/);
  assert.doesNotMatch(source,/Search automatically after speaking/);
  assert.match(source,/Check or edit the transcript, then press Find items/);
- assert.match(source,/className="sf-request-review"/);
+ assert.match(source,/className="sf-search-details"/);
+  assert.match(source,/className="sf-clear-query"/);
+  assert.match(source,/aria-label=\{t\('Clear search'\)\}/);
+  assert.match(source,/className="sf-unrecognized-voice"/);
  assert.match(source,/task\.query/);
  assert.match(source,/language,\s*brand:/);
  assert.doesNotMatch(source,/language:language==='auto'/);
@@ -753,7 +756,7 @@ test('sample shelf labels remain bounded, and the unnecessary Recent requests pa
  assert.doesNotMatch(backend,/Sample catalogue locations, not verified for your store/);
  assert.doesNotMatch(backend,/\{'Example shelf/);
  assert.match(ui,/example=\{!!line.selected\?\.synthetic\}/);
- assert.match(ui,/Confirm your request/);
+ assert.match(ui,/Search details/);
  assert.match(ui,/Confirm search and begin picking/);
 });
 
