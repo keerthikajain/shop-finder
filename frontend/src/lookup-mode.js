@@ -10,7 +10,7 @@ const CHOICES={
  'en-IN':{guided:['guided picking','help me pick','help with picking','start picking','begin picking','picking help'],locations:['just locations','locations only','just the locations','only locations','show locations','tell me the locations']},
  'hi-IN':{guided:['पिकिंग में मदद','सामान उठाने में मदद','पिकिंग शुरू करो','मदद से सामान उठाना'],locations:['सिर्फ जगह','केवल जगह','बस जगह बताओ','सिर्फ लोकेशन','जगह बताओ']},
  'hi-en':{guided:['guided picking','help me pick','picking shuru karo','picking mein help','पिकिंग शुरू करो'],locations:['just locations','only location','sirf location','sirf jagah','बस जगह बताओ','लोकेशन बताओ']},
- 'te-IN':{guided:['పికింగ్ సహాయం','వస్తువులు తీసుకోవడానికి సహాయం','పికింగ్ ప్రారంభించండి','guided picking','start picking'],locations:['స్థానాలు మాత్రమే','స్థానాలు చెప్పండి','లొకేషన్లు మాత్రమే','just locations','locations only']}
+ 'te-IN':{guided:['పికింగ్ సహాయం','వస్తువులు తీసుకోవడానికి సహాయం','పికింగ్ ప్రారంభించండి','సహాయం కావాలి','పికింగ్ లో సహాయం కావాలి','పికింగ్ చేయడానికి సహాయం కావాలి','వస్తువులు తీసుకోవడానికి సహాయం కావాలి','నాకు సహాయం కావాలి','పికింగ్ సహాయం కావాలి','picking sahayam kavali','picking lo help kavali','naaku picking help kavali','గైడెడ్ పికింగ్','గైడెడ్ పికింగ్ కావాలి','హెల్ప్ కావాలి','guided picking','start picking','help me pick','picking help','पिकिंग सहायता','पिकिंग में मदद चाहिए'],locations:['స్థానాలు మాత్రమే','స్థానాలు చెప్పండి','లొకేషన్లు మాత్రమే','లొకేషన్ మాత్రమే','లొకేషన్ చెప్పండి','లొకేషన్ మాత్రమే చెప్పండి','location matrame','locations matrame','location matrame cheppandi','naaku locations matrame kavali','లొకేషన్స్ మాత్రమే','నాకు లొకేషన్ మాత్రమే కావాలి','స్థానం మాత్రమే చెప్పండి','స్థానాలు మాత్రమే చెప్పండి','కేవలం స్థానాలు','కేవలం లొకేషన్','జస్ట్ లొకేషన్','జస్ట్ లొకేషన్స్','just locations','locations only','only location','just location','लोकेशन मात्र','सिर्फ लोकेशन']}
 };
 const EXTRA={
  'en-IN':{report:['wrong location'],verify:['found it','i picked it'],repeat:['repeat location','repeat locations'],help:['help'],stop:['stop']},
@@ -34,8 +34,18 @@ const INDEX_WORDS={
 export function modeChoiceIntent(language,text){
  const phrase=norm(text);
  if(!phrase)return null;
- for(const [action,variants] of Object.entries(CHOICES[language]||CHOICES['en-IN']))
+ const choices=CHOICES[language]||CHOICES['en-IN'];
+ // Restrict recovery to a whole recognized answer. Never interpret a negated,
+ // mixed, or conversational phrase as approval to start a picking session.
+ if(/\b(?:not|no|don't|dont|cancel|never|without|nahi|mat)\b|(?:కాదు|వద్దు|లేదు|नहीं|मत)/iu.test(phrase))return null;
+ for(const [action,variants] of Object.entries(choices))
   if(variants.some(x=>norm(x)===phrase))return action;
+ // Only Telugu choice prompts need tolerance for small Prisma spelling variants.
+ // No fuzzy matching of action/approval commands elsewhere in the application.
+ if(language==='te-IN'){
+  const matches=Object.entries(choices).filter(([,variants])=>safeNavigationVariant(phrase,variants));
+  if(matches.length===1)return matches[0][0];
+ }
  return null;
 }
 export function lookupVoiceIntent(language,text,lines=[]){
