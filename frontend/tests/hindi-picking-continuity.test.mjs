@@ -41,12 +41,13 @@ test('Picking controls remain manual and more readable without hiding Hindi comm
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const css=await readFile(new URL('../src/product-polish.css',import.meta.url),'utf8');
  assert.ok(ui.includes('className="sf-voice-guide-choices"'));
- assert.ok(ui.includes("['verify','report','repeat','next','stop','help'].map(action"));
+ assert.ok(ui.includes("['verify','report','next'].map(action"));
+  assert.ok(ui.includes('className="sf-voice-guide-secondary"'));
  assert.ok(ui.includes('pickingUiCopy(appLanguage,\'recognized\')'));
- assert.ok(ui.includes('pickingUiCopy(appLanguage,voiceGuidePaused?\'paused\':speaking?\'speaking\':\'listening\')'));
+ assert.ok(ui.includes("pickPaused||voiceGuidePaused?'paused':speaking?'speaking':'listening'"));
  assert.ok(ui.includes('pickVoicePhrase(task.language,action)'));
  assert.ok(ui.includes('pickingCommandLabel(appLanguage,action)'));
- assert.ok(ui.includes('sf-voice-command-phrase'));
+ assert.ok(ui.includes('sf-voice-command-label'));
  assert.ok(css.includes('.sf-compact-app .sf-voice-guide-choices button'));
  assert.ok(css.includes('min-height:42px'));
  assert.ok(css.includes('button:focus-visible'));
