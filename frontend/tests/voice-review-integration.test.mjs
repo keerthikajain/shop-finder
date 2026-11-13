@@ -7,7 +7,8 @@ test('voice and manual actions coexist for picking undo',async()=>{
  assert.ok(source.includes("'/picking/undo'")||source.includes("'/picking/undo'")); // endpoint path
  assert.ok(source.includes("voiceAction(source.language,'undo',transcript)"));
  assert.ok(source.includes("onClick={()=>undoPick(lastConfirmedIndex)}"));
- assert.ok(source.includes("label={pickingUiCopy(appLanguage,'sayUndo')}"));
+ assert.ok(source.includes('className="sf-picking-undo"'));
+  assert.ok(source.includes('className="sf-voice-guide-secondary"'));
  assert.ok(source.includes("if(voice&&auto&&!voiceFlowStopped.current)await playPickGuidance('repeat',next,line)"));
 });
 
