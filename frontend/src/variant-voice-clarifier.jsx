@@ -5,10 +5,10 @@ import {Locale} from './locale.js';
 
 // This component asks about an unresolved catalogue choice. Speech alone never
 // selects a product: the existing server-side /clarify endpoint validates it.
-export default function VariantVoiceClarifier({taskId,index,language,enabled,onReply,onError=()=>{}}){
+export default function VariantVoiceClarifier({taskId,index,language,enabled,startPaused=false,onReply,onError=()=>{}}){
  const appLanguage=useContext(Locale);
  const copy={en:{heading:'Choose a size or model',speaking:'Finder is explaining the available choices…',listening:'Listening for size, model or SKU…',transcribing:'Recognizing your answer…',checking:'Checking the exact catalogue variant…',review:'Check the available variants below.',default:'Say the size or SKU, or tap the matching option below.',heard:'Gnani heard',again:'Ask again by voice',manual:'Choose manually'},hi:{heading:'साइज़ या मॉडल चुनें',speaking:'फ़ाइंडर उपलब्ध विकल्प बता रहा है…',listening:'साइज़, मॉडल या एसकेयू सुन रहा है…',transcribing:'आपकी आवाज़ समझ रहा है…',checking:'कैटलॉग में सही विकल्प जाँच रहा है…',review:'नीचे दिए गए विकल्प जाँचें।',default:'साइज़ या एसकेयू बोलें या नीचे चुनें।',heard:'ग्नानी ने सुना',again:'फिर पूछें',manual:'खुद चुनें'},te:{heading:'సైజు లేదా మోడల్ ఎంచుకోండి',speaking:'ఫైండర్ అందుబాటులో ఉన్న ఎంపికలను చెబుతోంది…',listening:'సైజు, మోడల్ లేదా ఎస్ కే యూ వింటోంది…',transcribing:'మీ సమాధానాన్ని గుర్తిస్తోంది…',checking:'కేటలాగ్‌లో సరైన రకాన్ని చూస్తోంది…',review:'కింద ఉన్న ఎంపికలను పరిశీలించండి.',default:'సైజు లేదా ఎస్ కే యూ చెప్పండి, లేదా కింద ఎంచుకోండి.',heard:'గ్నాని విన్నది',again:'మళ్లీ అడగండి',manual:'నేనే ఎంచుకుంటాను'}}[appLanguage]||{heading:'Choose a size or model',speaking:'Finder is explaining the available choices…',listening:'Listening for size, model or SKU…',transcribing:'Recognizing your answer…',checking:'Checking the exact catalogue variant…',review:'Check the available variants below.',default:'Say the size or SKU, or tap below.',heard:'Gnani heard',again:'Ask again by voice',manual:'Choose manually'};
- const [status,Status]=useState('idle'),[heard,Heard]=useState(''),[manual,Manual]=useState(false),[cycle,Cycle]=useState(0);
+ const [status,Status]=useState('idle'),[heard,Heard]=useState(''),[manual,Manual]=useState(startPaused),[cycle,Cycle]=useState(0);
  const callback=useRef(onReply),report=useRef(onError);
  callback.current=onReply;report.current=onError;
  useEffect(()=>{
