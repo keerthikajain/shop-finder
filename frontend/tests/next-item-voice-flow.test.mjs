@@ -23,6 +23,9 @@ test('Next only queues user choice; no pick confirmation or inventory mutation',
  assert.match(ui,/async function applyNextChoice\(source,line,choice\)/);
  assert.match(ui,/PN\(\{taskId:source\.id,line,phase:'choose',sku:current\.selected\.sku\}\)/);
  assert.match(ui,/nextItemChoice\(source\.language,transcript\)==='next'/);
+ assert.match(ui,/function currentNextLine\(source\)/);
+ assert.match(ui,/if\(current&&current\.selected&&current\.location&&!current\.complete&&!current\.deferred_reason&&!current\.location_report_open\)/);
+ assert.match(ui,/askNextChoice\(source,currentNextLine\(source\)\)/);
  assert.match(ui,/pickConfirmationIntent\(source\.language,transcript\):nextItemChoice/);
  assert.match(ui,/nextItemUi\(appLanguage,pendingNextPick\.phase==='cancel'\?'confirmCancel':'question'\)/);
  assert.match(ui,/\['later','skip','cancel','back'\]\.map/);
