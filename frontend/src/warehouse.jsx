@@ -10,7 +10,6 @@ import {pickConfirmationIntent} from './picking-confirmations.js';
 import {voiceAction,actionPhrases,dialogueControl,plausibleShelfSuggestion,reportSubmitCommand,unclearReportSubmit} from './voice-review-commands.js';
 import {reportVoiceCopy} from './report-voice-copy.js';
 import {fixedVoicePrompt} from './fixed-voice-prompt.js';
-import {pickingCopy} from './picking-copy.js';
 import {pickingUiCopy,pickingCommandLabel,pickingUiTip,reportUiCopy,spokenYesNo} from './voice-ui-copy.js';
 import {getThemePreference,resolveTheme} from './theme.js';
 import {Mark,Glyph,Modal,Place,Specs,ItemArt,ScanBox,Label,Feedback} from './warehouse-ui.jsx';
