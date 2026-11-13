@@ -80,7 +80,7 @@ test('search choice does not start picking; locations mode offers explicit confi
  assert.match(ui,/if\(choice==='guided'\)/);
  assert.match(ui,/await pickAction\('start'\)/);
  assert.match(ui,/SetLookupMode\('locations'\)/);
- assert.match(ui,/const next=await api\('\/tasks\/'.*?'scan'/s);
+ assert.match(ui,/next=await api\('\/tasks\/'\+source\.id\+'\/scan',\{line:pending\.line,kind:'manual',value:'confirmed'\}\)/);
  assert.match(ui,/value:'confirmed'/);
  assert.match(ui,/SetLookupPendingSafe\(\{taskId:source\.id,line:index,sku:line\.selected\.sku\}\)/);
  assert.match(ui,/task\.lines\[lookupPending\.line\]/);
