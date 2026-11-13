@@ -21,7 +21,7 @@ test('Hindi confirmation resumes the next guided item except after an explicit S
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.ok(source.includes("if(voice&&handsFree&&auto&&!voiceFlowStopped.current&&!next.picking?.paused)VGP(false)"));
  assert.ok(source.includes("if(voice&&auto&&!voiceFlowStopped.current)await playPickGuidance('next',next,index)"));
- assert.ok(source.includes("VGT(pickingCopy(source.language,'confirmed'))"));
+ assert.ok(source.includes("VGT(pickingUiCopy(appLanguage,'confirmed'))"));
  assert.ok(source.includes("onError={message=>{E(message)}} onCommand={transcript=>voicePickCommand(transcript)}"));
  assert.ok(source.includes("if(control==='stop'){PV(null);stopVoiceFlow()"));
  assert.ok(source.includes("VGP(true);PV(null);AL(0)"));
@@ -41,11 +41,12 @@ test('Picking controls remain manual and more readable without hiding Hindi comm
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const css=await readFile(new URL('../src/product-polish.css',import.meta.url),'utf8');
  assert.ok(ui.includes('className="sf-voice-guide-choices"'));
- assert.ok(ui.includes('pickingCopy(task.language,\'recognized\')'));
- assert.ok(ui.includes('pickingCopy(task.language,voiceGuidePaused?\'paused\':speaking?\'speaking\':\'listening\')'));
- assert.ok(ui.includes('pickVoicePhrase(task.language,\'help\')'));
- assert.ok(ui.includes('pickVoicePhrase(task.language,\'verify\')'));
- assert.ok(ui.includes('pickVoicePhrase(task.language,\'report\')'));
+ assert.ok(ui.includes("['verify','report','repeat','next','stop','help'].map(action"));
+ assert.ok(ui.includes('pickingUiCopy(appLanguage,\'recognized\')'));
+ assert.ok(ui.includes('pickingUiCopy(appLanguage,voiceGuidePaused?\'paused\':speaking?\'speaking\':\'listening\')'));
+ assert.ok(ui.includes('pickVoicePhrase(task.language,action)'));
+ assert.ok(ui.includes('pickingCommandLabel(appLanguage,action)'));
+ assert.ok(ui.includes('sf-voice-command-phrase'));
  assert.ok(css.includes('.sf-compact-app .sf-voice-guide-choices button'));
  assert.ok(css.includes('min-height:42px'));
  assert.ok(css.includes('button:focus-visible'));
