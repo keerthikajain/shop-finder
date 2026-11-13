@@ -8,7 +8,6 @@ import GuidedVoiceTurn from './guided-voice-turn.jsx';
 import WorkspaceGreeting from './workspace-greeting.jsx';
 import {pickConfirmationIntent} from './picking-confirmations.js';
 import {voiceAction,actionPhrases,dialogueControl,plausibleShelfSuggestion,reportSubmitCommand,unclearReportSubmit} from './voice-review-commands.js';
-import {reportVoiceCopy} from './report-voice-copy.js';
 import {fixedVoicePrompt} from './fixed-voice-prompt.js';
 import {pickingUiCopy,pickingCommandLabel,pickingUiTip,reportUiCopy,reportUiTip,spokenYesNo} from './voice-ui-copy.js';
 import {getThemePreference,resolveTheme} from './theme.js';
@@ -513,7 +512,7 @@ function Report({item,location,collection,userId,run,busy,speaking=false,voice,l
  }catch{return null}};
  const [draft]=useState(readDraft);
  const [requestId]=useState(()=>draft?.request_id||('report-'+(typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2))));
- const [reason,R]=useState(()=>draft?.reason??(location?reportVoiceCopy(language,'defaultReason'):''));
+ const [reason,R]=useState(()=>draft?.reason??(location?reportUiCopy(appLanguage,'defaultReason'):''));
  const [suggested,S]=useState(draft?.suggested||''),[heard,H]=useState(''),[heardField,HF]=useState('');
  useEffect(()=>{try{sessionStorage.setItem(draftKey,JSON.stringify({reason,suggested,request_id:requestId,at:Date.now()}))}catch{}},[draftKey,reason,suggested,requestId]);
  const [pendingSubmit,PS]=useState(false),[guideStage,SetGuideStage]=useState('report_reason');
