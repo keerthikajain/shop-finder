@@ -25,8 +25,8 @@ test('scanner ignores unrelated worklist notices and keeps focused manual and ca
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const modal=await readFile(new URL('../src/warehouse-ui.jsx',import.meta.url),'utf8');
  const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
- assert.match(ui,/type==='lookup'&&<Modal[^>]*showNotice=\{false\}/);
- assert.match(ui,/type==='scan'&&task&&<Modal[^>]*showNotice=\{false\}/);
+ assert.match(ui,/type==='lookup'&&<Modal title=\{t\('Scan a label'\)\} onClose=\{\(\)=>D\(null\)\} showNotice=\{false\}/);
+ assert.match(ui,/type==='scan'&&task&&<Modal title=\{t\('Confirm picked item'\)\} onClose=\{\(\)=>D\(null\)\} showNotice=\{false\}/);
  assert.match(modal,/showNotice&&feedback\.notice/);
  assert.match(modal,/t\(camera\?'Stop camera':'Use camera'\)/); // Verify scanner still has camera/manual access
  assert.match(css,/\.wh-modal \.wh-scan form\{/);
