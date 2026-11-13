@@ -57,10 +57,10 @@ test('Picking workflow uses same next-item handoff in Hinglish and Telugu',async
  const recorder=await readFile(new URL('../src/hands-free-picking.jsx',import.meta.url),'utf8');
  assert.ok(src.includes("if(voice&&handsFree&&auto&&!voiceFlowStopped.current&&!next.picking?.paused)VGP(false)"));
  assert.ok(src.includes("if(voice&&auto&&!voiceFlowStopped.current)await playPickGuidance('next',next,index)"));
- assert.ok(src.includes("VGT(pickingCopy(source.language,'confirmed'))"));
- assert.ok(src.includes("pickingCopy(task.language,'yesPicked')"));
- assert.ok(src.includes("pickingCopy(task.language,'noNext')"));
- assert.ok(src.includes("pickingCopy(source.language,'reportHandoff')"));
+ assert.ok(src.includes("VGT(pickingUiCopy(appLanguage,'confirmed'))"));
+ assert.ok(src.includes("pickingUiCopy(appLanguage,'yesPicked')"));
+ assert.ok(src.includes("pickingUiCopy(appLanguage,'noNext')"));
+ assert.ok(src.includes("pickingUiCopy(appLanguage,'reportHandoff')"));
  assert.ok(recorder.includes("status==='transcribing'?pickingCopy(language,'transcribing')"));
  assert.ok(recorder.includes(">{pickingCopy(language,'retry')}</button>"));
 });
