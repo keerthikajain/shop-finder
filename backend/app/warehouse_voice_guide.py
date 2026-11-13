@@ -48,8 +48,8 @@ VARIANTS={
  },
  'hi-IN':{
   'repeat':('location दोबारा बताओ','लोकेशन दोबारा बताओ','जगह फिर से बताओ'),
-  'help':('हेल्प'),
-  'stop':('स्टॉप')
+  'help':('हेल्प',),
+  'stop':('स्टॉप',)
  },
  'en-IN':{
   'repeat':('location dobara batao','location दोबारा बताओ'),
