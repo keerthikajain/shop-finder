@@ -738,12 +738,12 @@ test('login illustration and form share one background across desktop and phone'
  assert.match(css,/\.login-shell \.login-card\{\s*display:block;\s*position:relative/);
 });
 
-test('sample shelf labels do not repeat on every item and recent requests are stored tasks',async()=>{
+test('sample shelf labels remain bounded, and the unnecessary Recent requests panel is removed',async()=>{
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const backend=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
- assert.match(ui,/<summary>\{t\('Recent requests'\)\}<\/summary>/);
+ assert.doesNotMatch(ui,/<summary>\{t\('Recent requests'\)\}<\/summary>/);
+ assert.doesNotMatch(ui,/className="wh-panel wh-session-card"/);
  assert.match(ui,/request\('\/warehouse\/tasks'\)/);
- assert.match(ui,/recent\.filter\(r=>collection/);
  assert.doesNotMatch(backend,/Sample catalogue locations, not verified for your store/);
  assert.doesNotMatch(backend,/\{'Example shelf/);
  assert.match(ui,/example=\{!!line.selected\?\.synthetic\}/);
