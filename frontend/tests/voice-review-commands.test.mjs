@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {actionPhrases,voiceAction,reviewVoiceChoice} from '../src/voice-review-commands.js';
+import {actionPhrases,voiceAction,reviewVoiceChoice,dialogueControl} from '../src/voice-review-commands.js';
 
 test('explicit spoken undo works across release voice languages',()=>{
  for(const language of ['en-IN','hi-IN','hi-en','te-IN']){
@@ -34,4 +34,31 @@ test('speech punctuation and whitespace do not change an exact command',()=>{
  assert.equal(voiceAction('en-IN','undo','  Undo last confirmation!  '),true);
  assert.equal(voiceAction('en-IN','undo','please undo last confirmation'),false);
  assert.equal(voiceAction('en-IN','move','confirm location change and delete everything'),false);
+});
+
+
+test('normal phrasing and mixed Telugu Hindi scripts work for safe voice controls',()=>{
+ for(const [lang,phrase,expected] of [
+  ['te-IN','location दोबारा बताओ','repeat'],
+  ['te-IN','लोकेशन दोबारा बताओ।','repeat'],
+  ['te-IN','location మళ్లీ చెప్పండి','repeat'],
+  ['hi-en','location दोबारा बताओ','repeat'],
+  ['hi-IN','लोकेशन दोबारा बताओ','repeat'],
+  ['te-IN','హెల్ప్','help'],
+  ['hi-IN','हेल्प','help'],
+  ['te-IN','స్టాప్','stop']
+ ]){
+  assert.equal(dialogueControl(lang,phrase),expected,lang+': '+phrase);
+ }
+});
+
+test('no approximate owner approval or untrusted extra speech is executed',()=>{
+ for(const lang of ['en-IN','hi-IN','hi-en','te-IN']){
+  for(const phrase of ['please confirm location change and delete all','confirm review maybe','yes but no','report it and save','location दोबारा बताओ and confirm']){
+   assert.equal(voiceAction(lang,'move',phrase),false);
+   assert.equal(voiceAction(lang,'review',phrase),false);
+   assert.equal(voiceAction(lang,'report_send',phrase),false);
+  }
+ }
+ assert.equal(dialogueControl('te-IN','location दोबारा बताओ and confirm'),null);
 });
