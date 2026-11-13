@@ -637,3 +637,10 @@ const compactSearchLabels={
 for(const [language,entries] of Object.entries(compactSearchLabels)){
  if(uiLanguageCoverage[language])Object.assign(uiLanguageCoverage[language],entries);
 }
+
+// Labels for optional voice diagnostics; preserve the ability to inspect Gnani's transcript.
+for(const [language,value] of Object.entries({
+ hi:"वॉइस विवरण",te:"వాయిస్ వివరాలు",kn:"ಧ್ವನಿ ವಿವರಗಳು",
+ ta:"குரல் விவரங்கள்",ml:"ശബ്ദ വിവരങ്ങൾ",mr:"आवाज तपशील",
+ bn:"ভয়েস বিবরণ",gu:"વૉઇસ વિગતો",pa:"ਆਵਾਜ਼ ਵੇਰਵੇ"
+}))if(uiLanguageCoverage[language])uiLanguageCoverage[language]["Voice details"]=value;
