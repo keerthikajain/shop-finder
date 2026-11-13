@@ -48,6 +48,7 @@ test('Picking controls remain manual and more readable without hiding Hindi comm
  assert.ok(ui.includes('pickVoicePhrase(task.language,action)'));
  assert.ok(ui.includes('pickingCommandLabel(appLanguage,action)'));
  assert.ok(ui.includes('sf-voice-command-label'));
+ assert.ok(!ui.includes("action==='report'?t('Report issue')"));
  assert.ok(css.includes('.sf-compact-app .sf-voice-guide-choices button'));
  assert.ok(css.includes('min-height:42px'));
  assert.ok(css.includes('button:focus-visible'));
