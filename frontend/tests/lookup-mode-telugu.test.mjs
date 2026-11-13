@@ -4,10 +4,10 @@ import {readFile} from 'node:fs/promises';
 import {modeChoiceIntent,modeChoicePhrases} from '../src/lookup-mode.js';
 
 test('Telugu mode choice recognizes natural spoken replies and bounded STT variants',()=>{
- for(const phrase of ['పికింగ్ సహాయం','సహాయం కావాలి','పికింగ్ సహాయం కావాలి','వస్తువులు తీసుకోవడానికి సహాయం కావాలి','గైడెడ్ పికింగ్','పికింగ్ సహాయం కావాలీ','पिकिंग में मदद चाहिए']){
+ for(const phrase of ['పికింగ్ సహాయం','సహాయం కావాలి','పికింగ్ సహాయం కావాలి','వస్తువులు తీసుకోవడానికి సహాయం కావాలి','గైడెడ్ పికింగ్','పికింగ్ సహాయం కావాలీ','picking sahayam kavali','picking lo help kavali','पिकिंग में मदद चाहिए']){
   assert.equal(modeChoiceIntent('te-IN',phrase),'guided',phrase);
  }
- for(const phrase of ['స్థానాలు మాత్రమే','స్థానాలు మాత్రమే చెప్పండి','లొకేషన్ మాత్రమే','లొకేషన్ మాత్రమే చెప్పండి','స్థానాలు మాత్రమె','జస్ట్ లొకేషన్స్','just locations','सिर्फ लोकेशन']){
+ for(const phrase of ['స్థానాలు మాత్రమే','స్థానాలు మాత్రమే చెప్పండి','లొకేషన్ మాత్రమే','లొకేషన్ మాత్రమే చెప్పండి','స్థానాలు మాత్రమె','జస్ట్ లొకేషన్స్','just locations','locations matrame','location matrame cheppandi','सिर्फ लोकेशन']){
   assert.equal(modeChoiceIntent('te-IN',phrase),'locations',phrase);
  }
 });
