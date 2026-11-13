@@ -11,7 +11,7 @@ test('the mode-choice transcript and interpreted result remain visible after sel
  assert.match(src,/modeSpeechResult\.transcript/);
  assert.match(src,/modeSpeechResult\.choice\?lookupCopy\(appLanguage,modeSpeechResult\.choice\):lookupCopy\(appLanguage,'notRecognizedChoice'\)/);
  assert.match(src,/data-voice-language=\{modeSpeechResult\.language\}/);
- assert.match(src,/SetModeSpeechResult\(null\);PV\(null\);VGC\(''\)/);
+ assert.match(src,/SetModeSpeechResult\(null\);PV\(null\);PN\(null\);VGC\(''\)/);
  assert.match(src,/modeChoiceIntent\(source\.language,transcript\)/);
 });
 
