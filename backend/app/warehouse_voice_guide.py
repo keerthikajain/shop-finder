@@ -4,6 +4,7 @@ The Gnani Prisma transcript is interpreted only as a navigation/verification
 REQUEST. Commands NEVER mark items picked, change stock or file reports.
 """
 import re
+import unicodedata
 from fastapi import HTTPException
 from .warehouse_voice_languages import REGIONAL, regional_messages
 
@@ -24,17 +25,54 @@ COMMANDS = {
  'help': ('kya bol sakte hain','kya bolu','help karo','help','commands','voice commands','what can i say','madad','मदद','क्या बोलूं','कमांड बताओ')
 }
 
+# Known short STT variations are enumerated rather than fuzzy-matched.
+# Navigation and reporting requests do not commit a pick or change stock.
+# Verified items still require a separate explicit yes/no confirmation.
+VARIANTS={
+ 'te-IN':{
+  'report':('తప్పు స్థానము','తప్పు స్థానమ్','తప్పు లొకేషన్','తప్పు లొకేషను','తప్పు స్థలము',
+            'तप्पु स्थानम्','तप्पु स्थानम','तप्पु स्थानं','తప్పు స్థానము.','wrong location'),
+  'repeat':('స్థానం మళ్ళీ చెప్పండి','లొకేషన్ మళ్ళీ చెప్పండి','లొకేషన్ మళ్లీ చెప్పండి',
+            'location మళ్లీ చెప్పండి','location malli cheppu','location dobara batao',
+            'location दोबारा बताओ','लोकेशन दोबारा बताओ'),
+  'help':('హెల్ప్','help','నాకు సహాయం చేయండి'),
+  'stop':('స్టాప్','stop','voice stop'),
+  'next':('next item','తరవాతి వస్తువు')
+ },
+ 'hi-en':{
+  'repeat':('location दोबारा बताओ','लोकेशन दोबारा बताओ',
+            'location फिर से बताओ','जगह फिर से बताओ','लोकेशन फिर बताओ'),
+  'report':('wrong लोकेशन','गलत location','तप्पु स्थानम्'),
+  'help':('हेल्प','help करो'),
+  'stop':('स्टॉप','voice बंद करो')
+ },
+ 'hi-IN':{
+  'repeat':('location दोबारा बताओ','लोकेशन दोबारा बताओ','जगह फिर से बताओ'),
+  'help':('हेल्प'),
+  'stop':('स्टॉप')
+ },
+ 'en-IN':{
+  'repeat':('location dobara batao','location दोबारा बताओ'),
+  'help':('मदद'),
+ }
+}
+def normalized_command(value):
+ value=unicodedata.normalize('NFC',str(value or '').casefold())
+ value=re.sub(r'[.,!?।॥;:؟]+',' ',value)
+ return ' '.join(value.split())
+
 def intent(transcript,language='en-IN'):
- value=re.sub(r'[.,!?।॥]+',' ',str(transcript).casefold())
- value=' '.join(value.split())
+ value=normalized_command(transcript)
  # Allow harmless courtesy words around a SHORT command, never free-form actions.
  for prefix in ('please ','okay ','ok ','कृपया ','प्लीज ','ठीक है ','जी '):
   if value.startswith(prefix): value=value[len(prefix):]
  for suffix in (' please',' जी',' करो'):
   if value.endswith(suffix): value=value[:-len(suffix)]
+ for kind,phrases in VARIANTS.get(language,{}).items():
+  if value in (normalized_command(p) for p in phrases):return kind
  if language in REGIONAL:
-  return next((kind for kind,phrases in REGIONAL[language]['commands'].items() if value in phrases),'unknown')
- return next((kind for kind,phrases in COMMANDS.items() if value in phrases),'unknown')
+  return next((kind for kind,phrases in REGIONAL[language]['commands'].items() if value in (normalized_command(p) for p in phrases)),'unknown')
+ return next((kind for kind,phrases in COMMANDS.items() if value in (normalized_command(p) for p in phrases)),'unknown')
 
 def pending_line(task):
  # Stable ordered list; no routing-distance claim and no skipped verification.
