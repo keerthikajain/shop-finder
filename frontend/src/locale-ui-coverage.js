@@ -607,3 +607,18 @@ const finderFilterTranslations={
  ml:{'Product type':'ഉൽപ്പന്ന തരം','Brand':'ബ്രാൻഡ്','Recent requests':'സമീപകാല അഭ്യർത്ഥനകൾ','Size filter':'വലുപ്പ ഫിൽട്ടർ','Location filter':'സ്ഥല ഫിൽട്ടർ'}
 };
 for(const [language,entries] of Object.entries(finderFilterTranslations))Object.assign(uiLanguageCoverage[language],entries);
+
+const compactPickingLabels={
+ hi:{"Report issue":"समस्या रिपोर्ट करें","Verify location (optional)":"स्थान जाँचें (वैकल्पिक)","All item locations":"सभी सामान की जगहें","Shelf location checked":"शेल्फ़ की जगह जाँची गई"},
+ te:{"Report issue":"సమస్యను నివేదించండి","Verify location (optional)":"స్థానాన్ని ధృవీకరించండి (ఐచ్ఛికం)","All item locations":"అన్ని వస్తువుల స్థానాలు","Shelf location checked":"షెల్ఫ్ స్థానం తనిఖీ చేయబడింది"},
+ kn:{"Report issue":"ಸಮಸ್ಯೆ ವರದಿ ಮಾಡಿ","Verify location (optional)":"ಸ್ಥಳ ಪರಿಶೀಲಿಸಿ (ಐಚ್ಛಿಕ)","All item locations":"ಎಲ್ಲ ವಸ್ತುಗಳ ಸ್ಥಳಗಳು","Shelf location checked":"ಶೆಲ್ಫ್ ಸ್ಥಳ ಪರಿಶೀಲಿಸಲಾಗಿದೆ"},
+ ta:{"Report issue":"சிக்கலைப் புகாரளி","Verify location (optional)":"இடத்தைச் சரிபார் (விருப்பம்)","All item locations":"அனைத்து பொருட்களின் இடங்கள்","Shelf location checked":"அலமாரி இடம் சரிபார்க்கப்பட்டது"},
+ ml:{"Report issue":"പ്രശ്നം റിപ്പോർട്ട് ചെയ്യുക","Verify location (optional)":"സ്ഥലം പരിശോധിക്കുക (ഐച്ഛികം)","All item locations":"എല്ലാ സാധനങ്ങളുടെയും സ്ഥലങ്ങൾ","Shelf location checked":"ഷെൽഫ് സ്ഥാനം പരിശോധിച്ചു"},
+ mr:{"Report issue":"समस्या नोंदवा","Verify location (optional)":"ठिकाण तपासा (ऐच्छिक)","All item locations":"सर्व वस्तूंची ठिकाणे","Shelf location checked":"शेल्फचे ठिकाण तपासले"},
+ bn:{"Report issue":"সমস্যা জানান","Verify location (optional)":"অবস্থান যাচাই করুন (ঐচ্ছিক)","All item locations":"সব পণ্যের অবস্থান","Shelf location checked":"তাকের অবস্থান যাচাই করা হয়েছে"},
+ gu:{"Report issue":"સમસ્યાની જાણ કરો","Verify location (optional)":"સ્થળ તપાસો (વૈકલ્પિક)","All item locations":"બધી વસ્તુઓનાં સ્થળો","Shelf location checked":"શેલ્ફનું સ્થળ તપાસાયું"},
+ pa:{"Report issue":"ਸਮੱਸਿਆ ਦੀ ਰਿਪੋਰਟ ਕਰੋ","Verify location (optional)":"ਥਾਂ ਦੀ ਜਾਂਚ ਕਰੋ (ਵਿਕਲਪਿਕ)","All item locations":"ਸਾਰੀਆਂ ਵਸਤਾਂ ਦੀਆਂ ਥਾਵਾਂ","Shelf location checked":"ਸ਼ੈਲਫ ਦੀ ਥਾਂ ਚੈੱਕ ਕੀਤੀ"}
+};
+for(const [language,entries] of Object.entries(compactPickingLabels)){
+ if(uiLanguageCoverage[language])Object.assign(uiLanguageCoverage[language],entries);
+}
