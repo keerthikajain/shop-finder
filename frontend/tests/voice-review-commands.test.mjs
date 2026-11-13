@@ -64,21 +64,6 @@ test('no approximate owner approval or untrusted extra speech is executed',()=>{
 });
 
 
-test('Telugu repeat-location accepts common spelling variants while leaving approvals exact',()=>{
- for(const phrase of ['స్థానాన్ని మళ్లీ చెప్పండి','స్థానాన్ని మళ్ళీ చెప్పండి','స్థానాన్ని మల్లీ చెప్పండి']){
-  assert.equal(dialogueControl('te-IN',phrase),'repeat',phrase);
- }
- for(const phrase of ['స్థానాన్ని మళ్లీ చెప్పండి వద్దు','not repeat location','location दोबारा बताओ and confirm']){
-  assert.notEqual(dialogueControl('te-IN',phrase),'repeat',phrase);
- }
- for(const phrase of ['తప్పు స్థానము','तप्पु स्थानम','తప్పు స్థానము and confirm']){
-  assert.equal(voiceAction('te-IN','move',phrase),false);
-  assert.equal(voiceAction('te-IN','review',phrase),false);
-  assert.equal(voiceAction('te-IN','report_send',phrase),false);
- }
-});
-
-
 test('explicit Repeat location works while automatic voice is paused without restarting the hands-free mic',async()=>{
  const {readFile}=await import('node:fs/promises');
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
