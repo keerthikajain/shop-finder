@@ -10,7 +10,7 @@ import {pickConfirmationIntent} from './picking-confirmations.js';
 import {voiceAction,actionPhrases,dialogueControl,plausibleShelfSuggestion,reportSubmitCommand,unclearReportSubmit} from './voice-review-commands.js';
 import {reportVoiceCopy} from './report-voice-copy.js';
 import {fixedVoicePrompt} from './fixed-voice-prompt.js';
-import {pickingUiCopy,pickingCommandLabel,pickingUiTip,reportUiCopy,spokenYesNo} from './voice-ui-copy.js';
+import {pickingUiCopy,pickingCommandLabel,pickingUiTip,reportUiCopy,reportUiTip,spokenYesNo} from './voice-ui-copy.js';
 import {getThemePreference,resolveTheme} from './theme.js';
 import {Mark,Glyph,Modal,Place,Specs,ItemArt,ScanBox,Label,Feedback} from './warehouse-ui.jsx';
 import {ImportPanel,ItemEditor,MoveEditor,ReviewPanel} from './warehouse-manage.jsx';
@@ -554,7 +554,7 @@ function Report({item,location,collection,userId,run,busy,speaking=false,voice,l
   }
   if(step==='report_confirm'){
    if(!reportSubmitCommand(language,recognized)){
-    onError(copy('retryConfirm'));return 'retry';
+    onError(reportUiTip(appLanguage,'submit')+' '+(actionPhrases(language,'report_send')[0]||''));return 'retry';
    }
    onError('');
    const saved=await submitReport();
@@ -616,7 +616,7 @@ function Report({item,location,collection,userId,run,busy,speaking=false,voice,l
    </div>
    {pendingSubmit&&<div className="sf-report-send-approval" role="status">
     <strong>{copy('sendQuestion')}</strong>
-    <p>{copy('sayYesNo')}</p>
+    <p>{reportUiTip(appLanguage,'confirm')} <span lang={language==='hi-en'?'hi-Latn':language}>{spokenYesNo(language).join(' / ')}</span></p>
     <button type="button" disabled={busy||submittingRef.current} onClick={submitReport}>{copy('send')}</button>
     <button type="button" onClick={()=>PS(false)}>{copy('notYet')}</button>
    </div>}
