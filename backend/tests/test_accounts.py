@@ -281,7 +281,7 @@ def test_gnani_private_welcome_uses_authenticated_account_name_and_local_hour(se
  morning=c.post('/api/voice/welcome',headers=H,json={'hour':8,'language':'en-IN'})
  assert morning.status_code==200,morning.text
  assert calls[-1][1:] == ('en-IN','Riyaa')
- assert calls[-1][0].startswith('Good morning, owner!')
+ assert calls[-1][0].startswith('Good morning, owner.')
  assert morning.headers['cache-control']=='no-store'
  evening=c.post('/api/voice/welcome',headers=H,json={'hour':19,'language':'te-IN'})
  assert evening.status_code==200,evening.text
@@ -289,3 +289,57 @@ def test_gnani_private_welcome_uses_authenticated_account_name_and_local_hour(se
  assert calls[-1][2]=='Riyaa'
  assert c.post('/api/voice/welcome',headers=H,json={'hour':24,'language':'en-IN'}).status_code==422
  assert c.post('/api/voice/welcome',headers=H,json={'hour':9,'language':'auto'}).status_code==422
+
+
+@pytest.mark.parametrize('language,phrase',[
+ ('en-IN','Hi, welcome to Finder.'),
+ ('hi-IN','नमस्ते, फाइंडर में आपका स्वागत है।'),
+ ('bn-IN','নমস্কার, ফাইন্ডারে স্বাগতম।'),
+ ('mr-IN','नमस्कार, फाइंडरमध्ये आपले स्वागत आहे.'),
+ ('gu-IN','નમસ્તે, ફાઇન્ડરમાં આપનું સ્વાગત છે.'),
+ ('pa-IN','ਸਤ ਸ੍ਰੀ ਅਕਾਲ, ਫਾਈਂਡਰ ਵਿੱਚ ਤੁਹਾਡਾ ਸੁਆਗਤ ਹੈ।'),
+ ('kn-IN','ನಮಸ್ಕಾರ, ಫೈಂಡರ್‌ಗೆ ಸ್ವಾಗತ.'),
+ ('te-IN','నమస్కారం, ఫైండర్‌కు స్వాగతం.'),
+ ('ta-IN','வணக்கம், ஃபைண்டருக்கு வரவேற்கிறோம்.'),
+ ('ml-IN','നമസ്കാരം, ഫൈൻഡറിലേക്ക് സ്വാഗതം.')
+])
+def test_public_greeting_uses_short_gnani_message_for_every_app_language(tmp_path,monkeypatch,language,phrase):
+ calls=[]
+ monkeypatch.setattr('app.main.voice.ready',lambda:True)
+ async def provider(text,language,*,voice_override=None):
+  calls.append((text,language,voice_override))
+  return b'RIFF-greeting-wav'
+ monkeypatch.setattr('app.main.voice.speak',provider)
+ with TestClient(create_app(tmp_path/'greeting.sqlite3',seed_demo=False)) as c:
+  response=c.get('/api/welcome/audio?language='+language)
+  assert response.status_code==200,response.text
+  assert calls==[(phrase,language,'Riyaa')]
+  assert c.get('/api/welcome/audio?language='+language).status_code==200
+  assert len(calls)==1
+
+
+@pytest.mark.parametrize('language,hour,expected',[
+ ('en-IN',8,'Good morning'),
+ ('hi-IN',15,'नमस्कार'),
+ ('bn-IN',20,'শুভ সন্ধ্যা'),
+ ('mr-IN',8,'सुप्रभात'),
+ ('gu-IN',20,'શુભ સાંજ'),
+ ('pa-IN',14,'ਸਤ ਸ੍ਰੀ ਅਕਾਲ'),
+ ('kn-IN',19,'ಶುಭ ಸಂಜೆ'),
+ ('te-IN',19,'శుభ సాయంత్రం'),
+ ('ta-IN',9,'காலை வணக்கம்'),
+ ('ml-IN',12,'നമസ്കാരം')
+])
+def test_workspace_greeting_uses_authenticated_name_and_requested_app_locale(setup,monkeypatch,language,hour,expected):
+ c,_=setup
+ calls=[]
+ monkeypatch.setattr('app.main.voice.ready',lambda:True)
+ async def provider(text,language,*,voice_override=None):
+  calls.append((text,language,voice_override))
+  return b'RIFF-greeting'
+ monkeypatch.setattr('app.main.voice.speak',provider)
+ login(c)
+ response=c.post('/api/voice/welcome',headers=H,json={'language':language,'hour':hour})
+ assert response.status_code==200,response.text
+ assert calls[-1][0].startswith(expected+', owner.')
+ assert calls[-1][1:]==(language,'Riyaa')

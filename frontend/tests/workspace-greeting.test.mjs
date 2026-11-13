@@ -27,10 +27,10 @@ test('greeting safely uses a real account display first name or username',()=>{
 
 test('time-based welcome uses current local hour and only once per workspace mount',async()=>{
  const user={id:'1',username:'keerthi',display_name:'Keerthi Jain'};
- assert.match(greetingMessage(user,'en-IN',8),/^Good morning, Keerthi,/);
- assert.match(greetingMessage(user,'en-IN',14),/^Good afternoon, Keerthi,/);
- assert.match(greetingMessage(user,'en-IN',20),/^Good evening, Keerthi,/);
- assert.match(greetingMessage(user,'en-IN',0),/^Good morning, Keerthi,/);
+ assert.match(greetingMessage(user,'en-IN',8),/^Good morning, Keerthi\./);
+ assert.match(greetingMessage(user,'en-IN',14),/^Good afternoon, Keerthi\./);
+ assert.match(greetingMessage(user,'en-IN',20),/^Good evening, Keerthi\./);
+ assert.match(greetingMessage(user,'en-IN',0),/^Good morning, Keerthi\./);
  const src=await readFile(new URL('../src/workspace-greeting.jsx',import.meta.url),'utf8');
  assert.match(src,/if\(attempted\.current\)return/);
  assert.match(src,/attempted\.current=true/);
@@ -41,9 +41,9 @@ test('time-based welcome uses current local hour and only once per workspace mou
 test('localized spoken greetings and guest fallback never invent a name',()=>{
  const user={id:'2',username:'keerthi',display_name:'Keerthi'};
  assert.match(greetingMessage(user,'hi-IN',9),/सुप्रभात, Keerthi/);
- assert.match(greetingMessage(user,'hi-en',9),/Good morning, Keerthi/);
+ assert.match(greetingMessage(user,'bn-IN',9),/সুপ্রভাত, Keerthi/);
  assert.match(greetingMessage(user,'te-IN',19),/శుభ సాయంత్రం, Keerthi/);
- for(const language of ['en-IN','hi-IN','hi-en','te-IN']){
+ for(const language of ['en-IN','hi-IN','bn-IN','mr-IN','gu-IN','pa-IN','kn-IN','te-IN','ta-IN','ml-IN']){
   const guest=greetingMessage({id:'guest',is_demo:true,username:'temporary81'},language,9);
   assert.ok(guest.length>0);
   assert.doesNotMatch(guest,/temporary81|Good morning, temporary/i);
@@ -53,9 +53,8 @@ test('localized spoken greetings and guest fallback never invent a name',()=>{
 test('workspace requests authenticated Gnani female welcome once with no replay button',async()=>{
  const src=await readFile(new URL('../src/workspace-greeting.jsx',import.meta.url),'utf8');
  const app=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- const css=await readFile(new URL('../src/workspace-greeting.css',import.meta.url),'utf8');
  assert.match(app,/import WorkspaceGreeting from '\.\/workspace-greeting\.jsx'/);
- assert.match(app,/<WorkspaceGreeting user=\{user\} voiceLanguage=\{language\} interrupt=/);
+ assert.match(app,/<WorkspaceGreeting user=\{user\} appLanguage=\{appLanguage\} interrupt=/);
  assert.match(src,/playWelcomeOnce\(/);
  assert.match(src,/url:'\/api\/voice\/welcome'/);
  assert.match(src,/body:\{language,hour:entryHour\.current\}/);
@@ -65,6 +64,7 @@ test('workspace requests authenticated Gnani female welcome once with no replay 
  assert.match(src,/if\(interrupt\)stopGreeting\(\)/);
  assert.match(src,/stopWelcome\(activeSpeech\.current\)/);
  assert.doesNotMatch(src,/Hear greeting|Stop greeting|Mute automatic greeting/);
- assert.match(css,/@media\(max-width:480px\)/);
+ assert.match(src,/return null;/);
+ assert.doesNotMatch(src,/<section className="sf-workspace-greeting"|<p>\{message\}<\/p>/);
  assert.doesNotMatch(src,/GNANI_API_KEY|apiKey=/);
 });

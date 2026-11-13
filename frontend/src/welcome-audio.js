@@ -28,7 +28,7 @@ function localVoice(text,language,controller){
  }catch{/* Browser speech can be blocked by autoplay policies. */}
 }
 
-export async function playWelcomeOnce({url,language,text,controller,playback,body}){
+export async function playWelcomeOnce({url,language,text,controller,playback,body,gnaniOnly=false}){
  try{
   const request={signal:controller.signal};
   if(body){
@@ -56,6 +56,7 @@ export async function playWelcomeOnce({url,language,text,controller,playback,bod
   try{playback.audio?.pause()}catch{}
   if(playback.url){URL.revokeObjectURL(playback.url);playback.url=null;}
   playback.audio=null;
-  localVoice(text,language,controller);
+  // Finder greetings must use Gnani's voice rather than a different browser voice.
+  if(!gnaniOnly)localVoice(text,language,controller);
  }
 }

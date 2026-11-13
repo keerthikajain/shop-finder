@@ -50,19 +50,36 @@ def create_app(db_path=None, seed_demo=None, *, auth_required=True, challenge_ro
         from .challenge_workspaces import install_challenge_routes
         install_challenge_routes(app,path)
 
-    # Public sign-in can request only four fixed welcome clips. Cache provider audio
-    # by language to avoid anonymous users triggering arbitrary paid synthesis.
+    # The anonymous endpoint has only a finite, preapproved greeting in each app language.
+    # No user-provided synthesis text or API keys are exposed to the browser.
     public_welcome_cache={}
     public_welcome_lock=asyncio.Lock()
     PUBLIC_GREETING={
-        'en-IN':"Hi there! Welcome to Finder. Let's make finding things easier!",
-        'hi-IN':'नमस्ते! फाइंडर में आपका स्वागत है। चलिए, आज का काम आसान बनाते हैं!',
-        'hi-en':"Hi there! Finder mein aapka welcome hai. Chaliye, aaj ka kaam aasan banate hain!",
-        'kn-IN':'ನಮಸ್ಕಾರ! ಫೈಂಡರ್‌ಗೆ ಸ್ವಾಗತ. ಇಂದಿನ ಕೆಲಸವನ್ನು ಸುಲಭವಾಗಿ ಮಾಡೋಣ!',
-        'te-IN':'నమస్కారం! ఫైండర్‌కు స్వాగతం. ఈ రోజు పని మరింత సులభంగా చేద్దాం!'
+        "en-IN":"Hi, welcome to Finder.",
+        "hi-IN":"नमस्ते, फाइंडर में आपका स्वागत है।",
+        "bn-IN":"নমস্কার, ফাইন্ডারে স্বাগতম।",
+        "mr-IN":"नमस्कार, फाइंडरमध्ये आपले स्वागत आहे.",
+        "gu-IN":"નમસ્તે, ફાઇન્ડરમાં આપનું સ્વાગત છે.",
+        "pa-IN":"ਸਤ ਸ੍ਰੀ ਅਕਾਲ, ਫਾਈਂਡਰ ਵਿੱਚ ਤੁਹਾਡਾ ਸੁਆਗਤ ਹੈ।",
+        "kn-IN":"ನಮಸ್ಕಾರ, ಫೈಂಡರ್‌ಗೆ ಸ್ವಾಗತ.",
+        "te-IN":"నమస్కారం, ఫైండర్‌కు స్వాగతం.",
+        "ta-IN":"வணக்கம், ஃபைண்டருக்கு வரவேற்கிறோம்.",
+        "ml-IN":"നമസ്കാരം, ഫൈൻഡറിലേക്ക് സ്വാഗതം.",
+    }
+    APP_GREETING_PERIODS={
+        "en-IN":{"morning":"Good morning","afternoon":"Good afternoon","evening":"Good evening","back":"Welcome back to Finder."},
+        "hi-IN":{"morning":"सुप्रभात","afternoon":"नमस्कार","evening":"शुभ संध्या","back":"फाइंडर में फिर से स्वागत है।"},
+        "bn-IN":{"morning":"সুপ্রভাত","afternoon":"নমস্কার","evening":"শুভ সন্ধ্যা","back":"ফাইন্ডারে আবার স্বাগতম।"},
+        "mr-IN":{"morning":"सुप्रभात","afternoon":"नमस्कार","evening":"शुभ संध्याकाळ","back":"फाइंडरमध्ये पुन्हा स्वागत आहे."},
+        "gu-IN":{"morning":"સુપ્રભાત","afternoon":"નમસ્તે","evening":"શુભ સાંજ","back":"ફાઇન્ડરમાં ફરી સ્વાગત છે."},
+        "pa-IN":{"morning":"ਸ਼ੁਭ ਸਵੇਰ","afternoon":"ਸਤ ਸ੍ਰੀ ਅਕਾਲ","evening":"ਸ਼ੁਭ ਸ਼ਾਮ","back":"ਫਾਈਂਡਰ ਵਿੱਚ ਮੁੜ ਸੁਆਗਤ ਹੈ।"},
+        "kn-IN":{"morning":"ಶುಭೋದಯ","afternoon":"ನಮಸ್ಕಾರ","evening":"ಶುಭ ಸಂಜೆ","back":"ಫೈಂಡರ್‌ಗೆ ಮತ್ತೆ ಸ್ವಾಗತ."},
+        "te-IN":{"morning":"శుభోదయం","afternoon":"నమస్కారం","evening":"శుభ సాయంత్రం","back":"ఫైండర్‌కు మళ్లీ స్వాగతం."},
+        "ta-IN":{"morning":"காலை வணக்கம்","afternoon":"வணக்கம்","evening":"மாலை வணக்கம்","back":"ஃபைண்டருக்கு மீண்டும் வரவேற்கிறோம்."},
+        "ml-IN":{"morning":"സുപ്രഭാതം","afternoon":"നമസ്കാരം","evening":"ശുഭ സായാഹ്നം","back":"ഫൈൻഡറിലേക്ക് വീണ്ടും സ്വാഗതം."},
     }
     @app.get('/api/welcome/audio')
-    async def public_greeting_audio(request:Request,language:Literal['en-IN','hi-IN','hi-en','kn-IN','te-IN']='en-IN'):
+    async def public_greeting_audio(request:Request,language:Literal["en-IN","hi-IN","bn-IN","mr-IN","gu-IN","pa-IN","kn-IN","te-IN","ta-IN","ml-IN"]='en-IN'):
         enforce_rate(path,'anonymous-welcome:'+str(request.client.host if request.client else 'unknown'),'/api/welcome/audio')
         if not voice.ready():raise HTTPException(503,'Voice greeting is unavailable.')
         if language not in public_welcome_cache:
@@ -73,7 +90,7 @@ def create_app(db_path=None, seed_demo=None, *, auth_required=True, challenge_ro
 
     class WelcomeSpeechRequest(BaseModel):
         model_config=ConfigDict(extra='forbid')
-        language:Literal['en-IN','hi-IN','hi-en','kn-IN','te-IN']='en-IN'
+        language:Literal["en-IN","hi-IN","bn-IN","mr-IN","gu-IN","pa-IN","kn-IN","te-IN","ta-IN","ml-IN"]='en-IN'
         hour:int=Field(ge=0,le=23)
 
     @app.post('/api/voice/welcome')
@@ -81,28 +98,14 @@ def create_app(db_path=None, seed_demo=None, *, auth_required=True, challenge_ro
         user=getattr(request.state,'user',None)
         if not user:raise HTTPException(401,'Please log in.')
         if not voice.ready():raise HTTPException(503,'Voice greeting is unavailable.')
-        # Never trust a name supplied by the browser. Use the stored account.
+        # Personalization comes only from the authenticated account, never browser input.
         name='' if user.get('is_demo') else re.sub(r"[^\w-]",'',str(user.get('display_name') or user.get('username') or '').split(' ')[0],flags=re.UNICODE)[:32]
         greeting_time='morning' if body.hour<12 else 'afternoon' if body.hour<17 else 'evening'
-        salutation={
-            'en-IN':{'morning':'Good morning','afternoon':'Good afternoon','evening':'Good evening'},
-            'hi-IN':{'morning':'सुप्रभात','afternoon':'नमस्कार','evening':'शुभ संध्या'},
-            'hi-en':{'morning':'Good morning','afternoon':'Good afternoon','evening':'Good evening'},
-            'kn-IN':{'morning':'ಶುಭೋದಯ','afternoon':'ನಮಸ್ಕಾರ','evening':'ಶುಭ ಸಂಜೆ'},
-            'te-IN':{'morning':'శుభోదయం','afternoon':'శుభ మధ్యాహ్నం','evening':'శుభ సాయంత్రం'}
-        }
         if not name:
             speech=PUBLIC_GREETING[body.language]
         else:
-            prefix=salutation[body.language][greeting_time]+', '+name+'! '
-            remainder={
-                'en-IN':"Welcome back to Finder. Let's make finding things easier!",
-                'hi-IN':'फाइंडर में फिर से स्वागत है। चलिए, आज का काम आसान बनाते हैं!',
-                'hi-en':"Finder mein welcome back! Chaliye, aaj ka kaam aasan banate hain!",
-                'kn-IN':'ಫೈಂಡರ್‌ಗೆ ಮತ್ತೆ ಸ್ವಾಗತ! ಇಂದಿನ ಕೆಲಸವನ್ನು ಸುಲಭವಾಗಿ ಮಾಡೋಣ!',
-                'te-IN':'ఫైండర్‌కు మళ్లీ స్వాగతం! ఈ రోజు పని మరింత సులభంగా చేద్దాం!'
-            }
-            speech=prefix+remainder[body.language]
+            phrases=APP_GREETING_PERIODS[body.language]
+            speech=phrases[greeting_time]+', '+name+'. '+phrases['back']
         audio=await voice.speak(speech,body.language,voice_override='Riyaa')
         return Response(audio,media_type='audio/wav',headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'})
 
