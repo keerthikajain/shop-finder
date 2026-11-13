@@ -350,7 +350,7 @@ test('voice-guided picking uses real Prisma transcript and Timbre audio with saf
  assert.match(src,/answer\.action==='verify'&&answer\.line!=null/);
  assert.match(src,/PV\(\{taskId:source\.id,line:answer\.line,sku:source\.lines\[answer\.line\]\?\.selected\?\.sku\}\)/);
  assert.match(src,/answer\.action==='report'&&answer\.line!=null/);
- assert.match(src,/D\(\{type:'report',item:selected\.selected,location:selected\.location,index:answer\.line\}\)/);
+ assert.match(src,/D\(\{type:'report',item:selected\.selected,location:selected\.location,index:answer\.line,autoGuide:true\}\)/);
  assert.match(src,/answer\.action==='stop'/);
  assert.match(src,/if\(pendingVoicePick\)/);
   assert.match(src,/if\(response==='yes'\)/);
@@ -618,7 +618,7 @@ test('recording button stays readable in contrast and no repeated actions on com
 
 test('review stage has a single microphone path and clears stale voice reply on a new search',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
- assert.match(src,/PV\(null\);VGC\(''\);VGT\(''\);stopVoiceFlow\(\)/);
+ assert.match(src,/PV\(null\);PN\(null\);VGC\(''\);VGT\(''\);stopVoiceFlow\(\)/);
  assert.match(src,/enabled=\{!busy&&canStartPick\} language=\{task.language\} label=\{t\('Confirm search by voice'\)\}/);
  assert.match(src,/onText=\{voiceStartPicking\}/);
  assert.doesNotMatch(src,/picking\.status==='ready'&&voice&&handsFree&&taskVoice\.current&&canStartPick/);
@@ -635,9 +635,9 @@ test('wrong-location handoff pauses pick capture and opens an editable report st
  const listener=await readFile(new URL('../src/hands-free-picking.jsx',import.meta.url),'utf8');
  assert.match(source,/if\(answer\.action==='report'&&answer\.line!=null\)\{/);
  assert.match(source,/PV\(null\);VGP\(true\)/);
- assert.match(source,/D\(\{type:'report',item:selected\.selected,location:selected\.location,index:answer\.line\}\)/);
+ assert.match(source,/D\(\{type:'report',item:selected\.selected,location:selected\.location,index:answer\.line,autoGuide:true\}\)/);
  assert.match(source,/return false; \/\/ The voice loop must not restart/);
- assert.match(source,/playPickGuidance\('report',source,answer\.line\)/);
+ assert.doesNotMatch(source,/playPickGuidance\('report',source,answer\.line\)/);
  assert.match(listener,/if\(outcome===false\)\{shouldContinue=false;Status\('paused'\);\}/);
  assert.match(listener,/if\(!cancelled&&shouldContinue\)Next\(/);
  assert.ok(source.includes("{copy('paused')}"));
@@ -846,7 +846,7 @@ test('denying or reporting leaves item unconfirmed and automatically chooses ano
  assert.match(ui,/await deferPick\(task,index,'reported'\)/);
  assert.match(ui,/await onSave\(report\)/);
  assert.match(ui,/async function retryPick\(line\)/);
- assert.match(ui,/Retry this item/);
+ assert.match(ui,/nextItemUi\(appLanguage,'retry'\)/);
  assert.match(ui,/!x\.line\.complete&&!x\.line\.deferred_reason/);
  assert.match(server,/def defer_picking\(tid:str,body:PickDefer,request:Request\)/);
  assert.match(server,/def retry_picking\(tid:str,body:PickRetry,request:Request\)/);
@@ -873,7 +873,7 @@ test('voice picking keeps speaker and microphone turn-taking automatic but respe
  assert.match(ui,/if\(!voiceGuidePaused\)\{PV\(null\);stopVoiceFlow\(\);return\}/);
  assert.match(ui,/voiceFlowStopped\.current=false;VGP\(false\)/);
  assert.match(ui,/playPickGuidance\('repeat',task,activeLine,true\)/);
- assert.match(ui,/if\(voice&&auto&&!voiceFlowStopped\.current\)await playPickGuidance\('next',next,0\)/);
+ assert.match(ui,/if\(voice&&auto&&!voiceFlowStopped\.current\)await playFixedVoice\('pick_later_ready',next\.language,false,true\)/);
  assert.match(listener,/if\(!enabled\)\{Status\('paused'\);return;/);
  assert.match(listener,/if\(cancelled\)return/);
  assert.match(listener,/recorder\?\.stop\(true\)/);
