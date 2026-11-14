@@ -2280,3 +2280,18 @@ def test_speech_language_switch_preserves_paused_worklist_and_task_ownership(set
  assert post(c,f'/tasks/{tid}/speech-language',{'language':'hi-IN'}).status_code==404
  login(c)
  assert c.get(f'/api/warehouse/tasks/{tid}',headers=H).json()['language']=='te-IN'
+
+
+@pytest.mark.parametrize('language,report,repeat',[
+ ('hi-IN','गलत लोकेशन','लोकेशन दोबारा बताओ'),
+ ('hi-en','galat jagah','location dobara batao'),
+ ('en-IN','wrong loaction','repeat location'),
+ ('te-IN','తప్పు లొకేషన్','స్థానాన్ని మళ్లీ చెప్పండి')
+])
+def test_safe_spoken_navigation_variants_never_verify_or_save(setup,language,report,repeat):
+ from app.warehouse_voice_guide import intent
+ assert intent(report,language)=='report',(language,report)
+ assert intent(repeat,language)=='repeat',(language,repeat)
+ for unsafe in ['not wrong location','no repeat','मिल गय','not found it',
+                'नहीं मिला यह गलत नहीं है','confirm item','save location']:
+  assert intent(unsafe,language) not in ('verify',),(language,unsafe)
