@@ -801,13 +801,13 @@ export default function WarehouseApp({user,preferences,logout}){
     {picking.status==='ready'&&<p className="sf-voice-guide-preview" role="status">{unresolvedLines.length>0?t('Choose or remove the unresolved variants below before starting. Finder will not guess a size or version.'):reportedLines.length>0?t('Reported shelf locations are skipped until verified. Confirm to guide the remaining items automatically.'):t('All items are ready. Confirm search once; Finder will speak the first location and then listen automatically.')}</p>}
    {PICKING_VOICE_LANGUAGES.includes(task.language)?<>
    <div className="sf-guided-toolbar">
-   {picking.status==='active'&&voice&&handsFree&&<div className="sf-voice-current-status" role="status" aria-live="polite">{pickingUiCopy(appLanguage,pickPaused||voiceGuidePaused?'paused':speaking?'speaking':'listening')}</div>}
+   {picking.status==='active'&&voice&&handsFree&&<div className="sf-voice-current-status" role="status" aria-live="polite">{pickingUiCopy(appLanguage,speaking?'speaking':pickPaused||voiceGuidePaused?'paused':'listening')}</div>}
     <label className="sf-picking-language"><span>{t('Speech language')}</span><select aria-label={t('Speech language')} value={task.language} disabled={speechSwitching||busy} onChange={e=>void changeSpeechLanguage(e.target.value)}>{VOICE_INPUT_LANGUAGES.map(([code,name])=><option key={code} value={code}>{name}</option>)}</select></label>
     <div className="sf-voice-guide-actions">
       {speaking&&<button type="button" className="sf-voice-stop-audio" onClick={stopVoiceFlow}>{pickingUiCopy(appLanguage,'stopAudio')}</button>}
       {picking.status==='active'&&voice&&(!handsFree||voiceGuidePaused)&&<VoiceButton key={task.language+'-'+(speechSwitching?'switching':'ready')} small autoStop enabled={!speechSwitching&&!busy&&!speaking&&!pickPaused} language={task.language} onError={E} onText={transcript=>voicePickCommand(transcript,task,true)} label={pickingUiCopy(appLanguage,'listen')}/>}
-      {picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused&&<HandsFreePicking appLanguage={appLanguage} enabled={!speechSwitching&&!busy&&!speaking&&!modal&&page==='find'} language={task.language} collection={collection} onError={message=>{E(message)}} onCommand={transcript=>voicePickCommand(transcript)}/>}
-      {picking.status==='active'&&voice&&handsFree&&<button type="button" className="sf-voice-listen-toggle" aria-pressed={!voiceGuidePaused} disabled={voiceGuidePaused&&(busy||speaking||pickPaused)} onClick={()=>{if(!voiceGuidePaused){PV(null);stopVoiceFlow();return}voiceFlowStopped.current=false;VGP(false);if(task&&nextPickIndex>=0&&auto)playPickGuidance('repeat',task,nextPickIndex)}}>{pickingUiCopy(appLanguage,voiceGuidePaused?'resume':'stop')}</button>}
+      {picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused&&!speaking&&<HandsFreePicking appLanguage={appLanguage} enabled={!speechSwitching&&!busy&&!speaking&&!modal&&page==='find'} language={task.language} collection={collection} onError={message=>{E(message)}} onCommand={transcript=>voicePickCommand(transcript)}/>}
+      {picking.status==='active'&&voice&&handsFree&&!speaking&&<button type="button" className="sf-voice-listen-toggle" aria-pressed={!voiceGuidePaused} disabled={voiceGuidePaused&&(busy||speaking||pickPaused)} onClick={()=>{if(!voiceGuidePaused){PV(null);stopVoiceFlow();return}voiceFlowStopped.current=false;VGP(false);if(task&&nextPickIndex>=0&&auto)playPickGuidance('repeat',task,nextPickIndex)}}>{pickingUiCopy(appLanguage,voiceGuidePaused?'resume':'stop')}</button>}
     </div>
    </div>
     <div className="sf-guided-commands">
@@ -1016,7 +1016,7 @@ function Report({item,location,collection,userId,run,busy,speaking=false,voice,l
   promptEndpoint={guideStage==='report_confirm'?'voice/report-preview-audio':null}
   promptBody={guideStage==='report_confirm'?{collection,sku:item.sku,reason,suggested_location:suggested,location_code:location?.code||''}:null}
   onTranscript={guidedReportAnswer} onBack={guidedReportBack} onActiveChange={SetGuidedActive} onError={onError}/>}
- {voice&&<div className="sf-report-voice-panel" aria-label={copy('reportTitle')}>
+ {voice&&!guidedActive&&<div className="sf-report-voice-panel" aria-label={copy('reportTitle')}>
    <strong>{copy('tell')}</strong>
    <small>{copy('hint')}</small>
    {speaking&&<button type="button" className="sf-report-stop-audio" onClick={onStopSpeaking}>{copy('guideStop')}</button>}

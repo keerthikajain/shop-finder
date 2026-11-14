@@ -176,27 +176,27 @@ def guide(task,action,requested_line,check_line):
    'kn-IN':{
     'verify':f'{name} ತೆಗೆದುಕೊಂಡಿದ್ದೀರಾ? ಖಚಿತಪಡಿಸಲು ಹೌದು ಎಂದು ಹೇಳಿ. ಇಲ್ಲದಿದ್ದರೆ ಇಲ್ಲ ಎಂದು ಹೇಳಿ.',
     'report':'ತಿಳಿಸಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ ಮ್ಯಾನೇಜರ್‌ಗೆ ತಿಳಿಸಲು ಸ್ಥಳದ ವಿವರಗಳನ್ನು ನೀಡಿ.',
-    'next':f'ಮುಂದಿನ ವಸ್ತು: {name}. {place}. ಸಿಕ್ಕಿದ ನಂತರ ತಿಳಿಸಿ.',
-    'start':f'ಮೊದಲ ವಸ್ತು: {name}. {place}. ಸಿಕ್ಕಿದ ನಂತರ ತಿಳಿಸಿ.',
+    'next':f'ಮುಂದಿನ ವಸ್ತು: {name}. {place}.',
+    'start':f'ಮೊದಲ ವಸ್ತು: {name}. {place}.',
     'repeat':f'ಖಂಡಿತ. {name}. {place}.'
    },
    'te-IN':{
     'verify':f'{name} తీసుకున్నారా? నిర్ధారించడానికి అవును అనండి, లేదా కాదు అనండి.',
     'report':'తెలియజేసినందుకు ధన్యవాదాలు. మీ మేనేజర్‌కు పంపేందుకు స్థాన వివరాలను ఇవ్వండి.',
-    'next':f'తదుపరి వస్తువు: {name}. {place}. దొరికిన తర్వాత చెప్పండి.',
-    'start':f'మొదటి వస్తువు: {name}. {place}. దొరికిన తర్వాత చెప్పండి.',
+    'next':f'తదుపరి వస్తువు: {name}. {place}.',
+    'start':f'మొదటి వస్తువు: {name}. {place}.',
     'repeat':f'తప్పకుండా. {name}. {place}.'
    }
   }
   text=friendly.get(language,{}).get(action) or messages['next' if action in ('start','next') else action].format(name=name,place=place)
  elif action=='start':
-  text=(f"Pehla item: {name}. {place}. Milne par bolo mil gaya." if language=='hi-en' else
-        f"पहला सामान {name}। {place}। मिलने पर बताइए।" if hi else
-        f"First item: {name}. {place}. Tell me when you have it.")
+  text=(f"Pehla item: {name}. {place}." if language=='hi-en' else
+        f"पहला सामान {name}। {place}।" if hi else
+        f"First item: {name}. {place}.")
  elif action in ('next','repeat'):
-  text=(f"{'Location dobara:' if action=='repeat' else 'Next item:'} {name}. {place}. Milne par bolo mil gaya." if language=='hi-en' else
-        f"अगला सामान {name}। {place}। मिलने पर बताइए।" if hi else
-        f"Next up: {name}. {place}. Tell me when you have it.")
+  text=(f"{'Location dobara:' if action=='repeat' else 'Next item:'} {name}. {place}." if language=='hi-en' else
+        f"अगला सामान {name}। {place}।" if hi else
+        f"Next up: {name}. {place}.")
  elif action=='verify':
   text=(f'Kya aapne {name} pick kiya? Confirm karne ke liye haan bolo, warna nahi.' if language=='hi-en' else
         f'क्या आपने {name} उठा लिया? पुष्टि के लिए हाँ कहें, या नहीं कहें।' if hi else
