@@ -683,3 +683,18 @@ const speechLanguageSwitchLabels={
 for(const [language,entries] of Object.entries(speechLanguageSwitchLabels)){
  if(uiLanguageCoverage[language])Object.assign(uiLanguageCoverage[language],entries);
 }
+
+const resilientSpeechErrorLabels={
+ hi:{"Speech service did not return usable words. Try again or use the buttons.":"आवाज़ सेवा से सही शब्द नहीं मिले। फिर बोलें या बटन चुनें।","Speech recognition failed. Try again or use the buttons.":"आवाज़ पहचान नहीं हो सकी। फिर बोलें या बटन चुनें।"},
+ te:{"Speech service did not return usable words. Try again or use the buttons.":"వాయిస్ సేవకు స్పష్టమైన మాటలు అందలేదు. మళ్లీ చెప్పండి లేదా బటన్లు ఉపయోగించండి.","Speech recognition failed. Try again or use the buttons.":"మాటలను గుర్తించలేకపోయింది. మళ్లీ చెప్పండి లేదా బటన్లు ఉపయోగించండి."},
+ kn:{"Speech service did not return usable words. Try again or use the buttons.":"ಧ್ವನಿ ಸೇವೆಗೆ ಸ್ಪಷ್ಟವಾದ ಮಾತುಗಳು ಸಿಗಲಿಲ್ಲ. ಮತ್ತೆ ಹೇಳಿ ಅಥವಾ ಬಟನ್ ಬಳಸಿ.","Speech recognition failed. Try again or use the buttons.":"ಮಾತುಗಳನ್ನು ಗುರುತಿಸಲಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಹೇಳಿ ಅಥವಾ ಬಟನ್ ಬಳಸಿ."},
+ ta:{"Speech service did not return usable words. Try again or use the buttons.":"குரல் சேவையில் தெளிவான சொற்கள் கிடைக்கவில்லை. மீண்டும் பேசவும் அல்லது பொத்தானைப் பயன்படுத்தவும்.","Speech recognition failed. Try again or use the buttons.":"பேச்சை அடையாளம் காண முடியவில்லை. மீண்டும் பேசவும் அல்லது பொத்தானைப் பயன்படுத்தவும்."},
+ ml:{"Speech service did not return usable words. Try again or use the buttons.":"ശബ്ദ സേവനത്തിൽ വ്യക്തമായ വാക്കുകൾ ലഭിച്ചില്ല. വീണ്ടും പറയുക അല്ലെങ്കിൽ ബട്ടണുകൾ ഉപയോഗിക്കുക.","Speech recognition failed. Try again or use the buttons.":"സംസാരം തിരിച്ചറിയാനായില്ല. വീണ്ടും പറയുക അല്ലെങ്കിൽ ബട്ടണുകൾ ഉപയോഗിക്കുക."},
+ mr:{"Speech service did not return usable words. Try again or use the buttons.":"आवाज सेवेत स्पष्ट शब्द मिळाले नाहीत. पुन्हा बोला किंवा बटणे वापरा.","Speech recognition failed. Try again or use the buttons.":"बोलणे ओळखता आले नाही. पुन्हा बोला किंवा बटणे वापरा."},
+ bn:{"Speech service did not return usable words. Try again or use the buttons.":"ভয়েস পরিষেবায় স্পষ্ট কথা পাওয়া যায়নি। আবার বলুন বা বোতাম ব্যবহার করুন।","Speech recognition failed. Try again or use the buttons.":"কথা শনাক্ত করা যায়নি। আবার বলুন বা বোতাম ব্যবহার করুন।"},
+ gu:{"Speech service did not return usable words. Try again or use the buttons.":"વોઇસ સેવામાં સ્પષ્ટ શબ્દો મળ્યા નથી. ફરી બોલો અથવા બટન વાપરો.","Speech recognition failed. Try again or use the buttons.":"બોલેલા શબ્દો ઓળખી શકાયા નથી. ફરી બોલો અથવા બટન વાપરો."},
+ pa:{"Speech service did not return usable words. Try again or use the buttons.":"ਆਵਾਜ਼ ਸੇਵਾ ਨੂੰ ਸਪਸ਼ਟ ਸ਼ਬਦ ਨਹੀਂ ਮਿਲੇ। ਦੁਬਾਰਾ ਬੋਲੋ ਜਾਂ ਬਟਨ ਵਰਤੋ।","Speech recognition failed. Try again or use the buttons.":"ਬੋਲਣ ਦੀ ਪਛਾਣ ਨਹੀਂ ਹੋ ਸਕੀ। ਦੁਬਾਰਾ ਬੋਲੋ ਜਾਂ ਬਟਨ ਵਰਤੋ।"}
+};
+for(const [language,entries] of Object.entries(resilientSpeechErrorLabels)){
+ if(uiLanguageCoverage[language])Object.assign(uiLanguageCoverage[language],entries);
+}
