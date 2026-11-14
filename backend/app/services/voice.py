@@ -95,7 +95,7 @@ async def transcribe_details(data,language,*,output_style='transcribe',enhanced=
         return {'transcript':transcript.strip(),'model':model,'detected_language_code':detected,
                 'search_language':search_language,'output_style':output_style}
     except (ValueError,TypeError,KeyError):
-        raise HTTPException(502,'Invalid transcription response.')
+        raise HTTPException(502,'Gnani returned no usable transcript. Please retry or use the manual buttons.')
 
 async def transcribe(data,language,*,output_style='transcribe',enhanced=True,keywords=None,language_candidates=None):
     return (await transcribe_details(data,language,output_style=output_style,
