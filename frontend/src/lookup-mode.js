@@ -14,7 +14,7 @@ const CHOICES={
 };
 const EXTRA={
  'en-IN':{report:['wrong location'],verify:['found it','i picked it'],repeat:['repeat location','repeat locations'],help:['help'],stop:['stop']},
- 'hi-IN':{report:['गलत जगह'],verify:['मिल गया'],repeat:['जगह दोहराओ','लोकेशन दोबारा बताओ'],help:['मदद'],stop:['रुको']},
+ 'hi-IN':{report:['गलत जगह','गलत लोकेशन','लोकेशन गलत है','यह जगह गलत है'],verify:['मिल गया'],repeat:['जगह दोहराओ','लोकेशन दोबारा बताओ'],help:['मदद'],stop:['रुको']},
  'hi-en':{report:['galat jagah','wrong location'],verify:['mil gaya','found it'],repeat:['location dobara batao','location दोबारा बताओ'],help:['help','मदद'],stop:['ruko','stop']},
  'te-IN':{report:['తప్పు స్థానం','తప్పు స్థానమ','తప్పు స్థానము','తప్పు లొకేషన్','तप्पु स्थानम','तप्पु स्थानम्','wrong location'],verify:['దొరికింది','found it'],repeat:['స్థానాన్ని మళ్లీ చెప్పండి','స్థానాన్ని మళ్ళీ చెప్పండి','location दोबारा बताओ','repeat location'],help:['సహాయం','help'],stop:['ఆపు','stop']}
 };
