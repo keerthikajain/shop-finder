@@ -309,3 +309,147 @@
     min-width:0;
   }
 }
+
+
+/* Compact picking actions: avoid five tall, full-width buttons on phones. */
+@media (max-width:700px) {
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-commands {
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    gap:8px;
+    align-items:start;
+    padding-top:10px;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-commands > .sf-voice-guide-choices {
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    flex:none;
+    width:100%;
+    min-width:0;
+    gap:6px;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-commands > .sf-voice-guide-secondary {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    flex:none;
+    width:100%;
+    min-width:0;
+    gap:6px;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-commands :is(.sf-voice-guide-choices,.sf-voice-guide-secondary) > button {
+    box-sizing:border-box;
+    display:inline-flex;
+    flex:none;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    height:auto;
+    min-height:44px;
+    max-height:none;
+    padding:7px 5px;
+    margin:0;
+    line-height:1.2;
+    font-size:11px;
+    text-align:center;
+    overflow-wrap:anywhere;
+    white-space:normal;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-voice-guide {
+    padding:12px;
+    gap:8px;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-toolbar {
+    gap:8px;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-toolbar > .sf-picking-language {
+    flex:0 1 auto;
+    max-width:100%;
+    gap:7px;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-picking-language select {
+    box-sizing:border-box;
+    min-width:0;
+    width:auto;
+    max-width:100%;
+    min-height:44px;
+    height:44px;
+    font-size:13px;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-toolbar > .sf-voice-guide-actions {
+    flex:1 1 100%;
+    width:100%;
+    max-width:100%;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:7px;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-toolbar > .sf-voice-guide-actions > button {
+    flex:0 1 auto;
+    width:auto;
+    max-width:100%;
+    min-width:128px;
+    min-height:44px;
+    padding:8px 13px;
+    font-size:12px;
+    white-space:normal;
+  }
+  /* Do not force task-related buttons into huge blocks. */
+  .sf-compact-app.sf-find-page .wh-task .wh-task-footer {
+    align-items:start;
+    gap:7px;
+  }
+  .sf-compact-app.sf-find-page .wh-task .wh-task-footer > div > button {
+    min-height:44px;
+    padding:9px 11px;
+  }
+  .sf-compact-app.sf-find-page .wh-ask form {
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  }
+  .sf-compact-app.sf-find-page .wh-ask form > .sf-search-input-wrap {
+    box-sizing:border-box;
+    min-width:0;
+    max-width:100%;
+  }
+  .sf-compact-app.sf-find-page .wh-composer-actions > :is(.wh-voice-lang,.wh-search-submit) {
+    min-width:0;
+    max-width:100%;
+  }
+  .sf-compact-app .wh-topbar,
+  .sf-compact-app .wh-mobile-brand,
+  .sf-compact-app .wh-main-wrap {
+    box-sizing:border-box;
+    min-width:0;
+    max-width:100%;
+  }
+  .sf-compact-app .wh-sidebar nav {
+    box-sizing:border-box;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    min-width:0;
+    max-width:100%;
+  }
+  .sf-compact-app .wh-sidebar nav > button {
+    box-sizing:border-box;
+    min-width:0;
+    max-width:100%;
+  }
+}
+@media (max-width:370px) {
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-commands > .sf-voice-guide-choices {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-commands > .sf-voice-guide-choices > button {
+    flex:none;
+    min-height:48px;
+    font-size:10px;
+    padding:6px 3px;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-toolbar > .sf-voice-guide-actions > button {
+    flex:0 1 auto;
+  }
+}
