@@ -577,6 +577,121 @@
 }
 
 
+/* Consistent product-card endings on mobile.
+   All picking states (pending, verified, reported) use the same natural-height
+   action region; never stretch links apart to fill a taller card. */
+@media (max-width:700px) {
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list {
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    align-content:start;
+    align-items:start;
+    gap:12px;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > .wh-task,
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > .wh-task:last-child:nth-child(odd):not(:first-child) {
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    justify-content:flex-start;
+    align-content:start;
+    gap:0;
+    height:auto;
+    min-height:0;
+    align-self:start;
+    width:100%;
+    box-sizing:border-box;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > .wh-task > .sf-location-check {
+    flex:0 0 auto;
+    width:100%;
+    height:auto;
+    margin:10px 0 0;
+    align-self:stretch;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > .wh-task > .sf-location-check summary {
+    padding:8px 0;
+    min-height:36px;
+    line-height:1.4;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > .wh-task > .wh-task-footer {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    grid-auto-flow:row;
+    align-items:center;
+    align-content:start;
+    justify-content:stretch;
+    gap:7px 8px;
+    width:100%;
+    margin:8px 0 0;
+    padding:0;
+    height:auto;
+    min-height:0;
+    flex:0 0 auto;
+    align-self:stretch;
+    grid-column:auto;
+    grid-row:auto;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > .wh-task > .wh-task-footer > button {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    align-self:center;
+    box-sizing:border-box;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    height:auto;
+    min-height:44px;
+    margin:0;
+    padding:8px 6px;
+    line-height:1.25;
+    font-size:12px;
+    text-align:center;
+    white-space:normal;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > .wh-task > .wh-task-footer > div {
+    display:block;
+    grid-column:1 / -1;
+    grid-row:auto;
+    align-self:start;
+    justify-self:stretch;
+    width:100%;
+    min-width:0;
+    height:auto;
+    min-height:0;
+    margin:0;
+    padding:0;
+    flex:none;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > .wh-task > .wh-task-footer > div > button {
+    display:inline-flex;
+    justify-content:center;
+    align-items:center;
+    box-sizing:border-box;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    height:auto;
+    min-height:44px;
+    margin:0;
+    padding:9px 12px;
+    border-radius:10px;
+    line-height:1.3;
+    font-size:13px;
+    text-align:center;
+    white-space:normal;
+    aspect-ratio:auto;
+  }
+  /* The last card needs breathing space, not a forced empty card height. */
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > .wh-task:last-child {
+    margin-bottom:0;
+    padding-bottom:14px;
+  }
+}
+
+
+
 /* Mobile picking: keep all states and actions together, without a tall empty
    lavender panel. Never change desktop, picking data, or audio lifecycle. */
 @media(max-width:700px){
