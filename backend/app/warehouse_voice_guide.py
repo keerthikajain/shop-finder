@@ -19,7 +19,7 @@ COMMANDS = {
             'मिल गया','मिल गई','सामान मिल गया','मुझे मिल गया'),
  'report': ('item galat jagah hai','wrong location hai','yeh jagah galat hai','wrong location','wrong shelf','not here','not on this shelf','item missing',
             'wrong rack','galat jagah','yahan nahi hai','nahi mila',
-            'गलत जगह','गलत शेल्फ','यहाँ नहीं है','नहीं मिला','गलत रैक'),
+            'गलत जगह','गलत लोकेशन','लोकेशन गलत है','यह जगह गलत है','गलत शेल्फ','यहाँ नहीं है','नहीं मिला','गलत रैक'),
  'stop': ('ruk jao','voice band karo','stop','stop guide','pause','pause guide','stop speaking','ruko','band karo',
           'रुको','रुकिए','बंद करो','आवाज बंद करो'),
  'help': ('kya bol sakte hain','kya bolu','help karo','help','commands','voice commands','what can i say','madad','मदद','क्या बोलूं','कमांड बताओ')
@@ -42,11 +42,12 @@ VARIANTS={
  'hi-en':{
   'repeat':('location दोबारा बताओ','लोकेशन दोबारा बताओ',
             'location फिर से बताओ','जगह फिर से बताओ','लोकेशन फिर बताओ'),
-  'report':('wrong लोकेशन','गलत location','तप्पु स्थानम्'),
+  'report':('wrong लोकेशन','गलत location','तप्पु स्थानम्','गलत लोकेशन','लोकेशन गलत है'),
   'help':('हेल्प','help करो'),
   'stop':('स्टॉप','voice बंद करो')
  },
  'hi-IN':{
+  'report':('गलत लोकेशन','लोकेशन गलत है','जगह गलत है'),
   'repeat':('location दोबारा बताओ','लोकेशन दोबारा बताओ','जगह फिर से बताओ'),
   'help':('हेल्प',),
   'stop':('स्टॉप',)
@@ -101,9 +102,9 @@ def intent(transcript,language='en-IN'):
   if value in (normalized_command(p) for p in phrases):return kind
  # Only non-committing commands can use minor spelling recovery.
  # Item verification, owner approvals, and location saves remain exact.
- if language=='te-IN':
+ if language in ('en-IN','hi-IN','hi-en','te-IN'):
   for action in ('repeat','report'):
-   candidates=(*VARIANTS[language][action],*REGIONAL[language]['commands'][action])
+   candidates=(*VARIANTS.get(language,{}).get(action,()),*(REGIONAL[language]['commands'][action] if language in REGIONAL else COMMANDS[action]))
    if _safe_lookup_variant(value,candidates):return action
  if language in REGIONAL:
   return next((kind for kind,phrases in REGIONAL[language]['commands'].items() if value in (normalized_command(p) for p in phrases)),'unknown')
