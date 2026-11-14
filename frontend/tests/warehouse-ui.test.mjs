@@ -640,7 +640,9 @@ test('review stage has a single microphone path and clears stale voice reply on 
  assert.match(src,/enabled=\{!busy&&canStartPick\} language=\{task.language\} label=\{t\('Confirm search by voice'\)\}/);
  assert.match(src,/onText=\{voiceStartPicking\}/);
  assert.doesNotMatch(src,/picking\.status==='ready'&&voice&&handsFree&&taskVoice\.current&&canStartPick/);
- assert.match(src,/picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused&&<HandsFreePicking/);
+ assert.match(src,/picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused&&!speaking&&<HandsFreePicking/);
+  // The microphone component must not mount while Finder audio is playing.
+  assert.doesNotMatch(src,/picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused&&<HandsFreePicking/);
  const {isStartPickingCommand}=await import('../src/picking-voice-phrases.js');
  assert.equal(isStartPickingCommand('en-IN','Confirm.'),true);
  assert.equal(isStartPickingCommand('hi-en','confirm'),true);
