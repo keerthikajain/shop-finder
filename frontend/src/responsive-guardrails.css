@@ -453,3 +453,62 @@
     flex:0 1 auto;
   }
 }
+
+
+/* Compact paused-voice controls: speaking and resuming belong on the same row.
+   Scope to the exact two-action state, not playback or hands-free states. */
+@media (max-width:700px) {
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-toolbar >
+  .sf-voice-guide-actions:has(> .wh-voice):has(> .sf-voice-listen-toggle) {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    align-items:stretch;
+    gap:8px;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    flex:1 1 100%;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-toolbar >
+  .sf-voice-guide-actions:has(> .wh-voice):has(> .sf-voice-listen-toggle) > :is(.wh-voice,.sf-voice-listen-toggle) {
+    display:inline-flex;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    min-height:44px;
+    height:44px;
+    padding:7px 8px;
+    margin:0;
+    align-self:stretch;
+    justify-self:stretch;
+    font-size:12px;
+    line-height:1.2;
+    white-space:normal;
+    overflow-wrap:anywhere;
+    text-align:center;
+    flex:none;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-toolbar >
+  .sf-voice-guide-actions:has(> .wh-voice):has(> .sf-voice-listen-toggle) .wh-wave {
+    display:none;
+  }
+  /* The brand already appears in the fixed mobile navigation.
+     Removing this duplicate avoids an isolated logo after the last card. */
+  .sf-compact-app.sf-find-page .wh-main-wrap main > .wh-footer {
+    display:none;
+  }
+  /* Avoid stacking main padding on top of the navigation-safe wrapper gap. */
+  .sf-compact-app.sf-find-page .wh-main-wrap main {
+    padding-bottom:12px;
+  }
+  .sf-compact-app.sf-find-page .wh-main-wrap {
+    padding-bottom:calc(86px + env(safe-area-inset-bottom,0px));
+  }
+}
+@media (max-width:370px) {
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-toolbar >
+  .sf-voice-guide-actions:has(> .wh-voice):has(> .sf-voice-listen-toggle) > :is(.wh-voice,.sf-voice-listen-toggle) {
+    font-size:11px;
+    padding-inline:5px;
+  }
+}
