@@ -159,6 +159,7 @@ test('natural voice mode choices tolerate bounded Hindi and Hinglish wording wit
  const cases=[
   ['hi-IN','पिकिंग में मदद चाहिए','सिर्फ लोकेशन बताओ'],
   ['hi-IN','पिकिंग में हेल्प चाहिए','सिर्फ जगह बताओ'],
+  ['hi-IN','picking mein madad chahiye','sirf location batao'],
   ['hi-en','picking mein help chahiye','sirf location batao'],
   ['hi-en','picking mein madad','sirf jagah batao'],
   ['te-IN','పికింగ్ సహాయం','స్థానాలు మాత్రమే'],
