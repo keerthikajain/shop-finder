@@ -12,7 +12,7 @@ export function stopWelcome(playback){
  try{playback.audio?.pause()}catch{}
  playback.audio=null;
  if(playback.url){URL.revokeObjectURL(playback.url);playback.url=null}
- try{window.speechSynthesis?.cancel()}catch{}
+ try{if(typeof window!=='undefined')window.speechSynthesis?.cancel()}catch{}
 }
 
 // Call synchronously from a genuine user gesture. A mobile browser may reject
