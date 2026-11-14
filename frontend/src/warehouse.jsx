@@ -171,6 +171,7 @@ export default function WarehouseApp({user,preferences,logout}){
  }
  async function changeSpeechLanguage(nextLanguage){
   if(!ACTIVE_VOICE_CODES.has(nextLanguage)||busy||speechSwitchRef.current||nextLanguage===(task?.language||language))return;
+  const shouldResumeHandsFree=handsFree&&!voiceGuidePaused;
   speechSwitchRef.current=true;SetSpeechSwitching(true);
   modeChoiceSerial.current++;pendingModePrompt.current=null;
   SetModeListening(false);SetLookupVoicePaused(true);stopVoiceFlow();
@@ -182,7 +183,7 @@ export default function WarehouseApp({user,preferences,logout}){
    const next=await api('/tasks/'+current.id+'/speech-language',{language:nextLanguage});
    L(nextLanguage);T(next);
    N(t('Speech language changed. Picking progress is saved.'));
-   if(previous&&!modal&&page==='find'&&voice){
+   if(previous&&shouldResumeHandsFree&&!modal&&page==='find'&&voice){
     const currentLine=next.lines[activeLine];
     const index=currentLine&&!currentLine.complete&&!currentLine.deferred_reason&&!currentLine.location_report_open&&!currentLine.stale_catalogue?activeLine:nextPendingPickIndex(next.lines);
     if(index>=0){
