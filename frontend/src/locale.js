@@ -401,3 +401,15 @@ for(const [code,words] of Object.entries(uiLanguageCoverage)){
 // Clear label for the optional live voice transcription setting.
 Object.assign(hindi,{'Show words as I speak':'बोलते समय शब्द दिखाएँ'});
 if(additionalLocales.te)Object.assign(additionalLocales.te,{'Show words as I speak':'మాట్లాడుతున్నప్పుడు పదాలను చూపించు'});
+
+// Short picking notices: keep every visible status localized.
+Object.assign(hindi,{
+ 'Picking started.':'सामान चुनना शुरू हुआ।',
+ 'Picking complete.':'सामान चुनना पूरा हुआ।',
+ 'Picking resumed.':'सामान चुनना फिर शुरू हुआ।',
+ 'Picking paused.':'सामान चुनना रुका है।',
+ 'Confirmation undone.':'पिछली पुष्टि वापस ली गई।',
+ 'Item ready to pick again.':'सामान दोबारा चुनने के लिए तैयार है।',
+ 'Next item ready.':'अगला सामान तैयार है।',
+ 'Review remaining items.':'बाकी सामान जाँचें।'
+});
