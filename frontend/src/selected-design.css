@@ -3145,3 +3145,201 @@ html,body,#root{max-width:100%;overflow-x:clip}
  .sf-find-page .sf-guided-picking .sf-guided-commands button{min-height:40px}
  .sf-find-page .sf-guided-picking .sf-picking-actions>div{width:100%;justify-content:flex-end}
 }
+
+/* Mobile Finder: one clear search field, one aligned controls row, readable results.
+   Fix legacy mobile rules using display:contents and squeezed query columns. */
+@media(max-width:700px){
+ .sf-compact-app.sf-find-page .wh-ask form{
+   display:grid;
+   grid-template-columns:minmax(0,1fr);
+   grid-template-rows:auto auto;
+   gap:9px;
+   align-items:stretch;
+   width:100%;
+   min-width:0;
+ }
+ .sf-compact-app.sf-find-page .wh-ask form>.sf-search-input-wrap{
+   display:block;
+   grid-column:1;
+   grid-row:1;
+   width:100%;
+   min-width:0;
+   margin:0;
+   flex:none;
+   box-sizing:border-box;
+ }
+ .sf-compact-app.sf-find-page .wh-ask form .sf-search-input-wrap>input#wh-query{
+   display:block;
+   width:100%;
+   min-width:0;
+   max-width:100%;
+   box-sizing:border-box;
+   height:50px;
+   min-height:50px;
+   font-size:15px;
+   padding:10px 43px 10px 14px;
+ }
+ .sf-compact-app.sf-find-page .wh-ask form>.wh-composer-actions{
+   display:grid;
+   grid-column:1;
+   grid-row:2;
+   grid-template-columns:54px minmax(0,1fr) minmax(118px,0.95fr);
+   grid-template-rows:50px;
+   gap:8px;
+   width:100%;
+   min-width:0;
+   margin:0;
+   align-items:stretch;
+ }
+ .sf-compact-app.sf-find-page .wh-composer-actions>.wh-voice{
+   grid-column:1;
+   grid-row:1;
+   width:54px;
+   min-width:54px;
+   max-width:54px;
+   height:50px;
+   min-height:50px!important;
+   margin:0;
+   box-sizing:border-box;
+   display:flex;
+   justify-content:center;
+   align-items:center;
+   padding:0!important;
+   font-size:0!important;
+ }
+ .sf-compact-app.sf-find-page .wh-composer-actions>.wh-voice svg{
+   width:23px;height:23px;
+ }
+ .sf-compact-app.sf-find-page .wh-composer-actions>.wh-voice-lang{
+   display:block;
+   grid-column:2;
+   grid-row:1;
+   width:100%;
+   min-width:0;
+   max-width:100%;
+   margin:0;
+ }
+ .sf-compact-app.sf-find-page .wh-composer-actions>.wh-voice-lang select{
+   width:100%;
+   min-width:0;
+   max-width:100%;
+   height:50px;
+   min-height:50px;
+   box-sizing:border-box;
+   border-radius:10px!important;
+   padding:8px 23px 8px 9px!important;
+   font-size:12px!important;
+   text-overflow:ellipsis;
+ }
+ .sf-compact-app.sf-find-page .wh-composer-actions>.wh-search-submit{
+   grid-column:3;
+   grid-row:1;
+   width:100%;
+   min-width:0;
+   max-width:100%;
+   margin:0;
+   min-height:50px;
+   height:50px;
+   padding:8px 6px!important;
+   font-size:12px!important;
+   justify-content:center;
+   white-space:nowrap;
+   gap:5px;
+   box-sizing:border-box;
+ }
+ .sf-compact-app.sf-find-page .wh-composer-actions>.wh-search-submit svg{
+   width:16px;min-width:16px;
+ }
+ .sf-compact-app.sf-find-page .wh-ask-bottom{
+   display:grid;
+   grid-template-columns:minmax(0,1fr);
+   gap:8px;
+   margin:12px 2px 6px;
+   width:100%;
+   min-width:0;
+ }
+ .sf-compact-app.sf-find-page .wh-ask-bottom>label{
+   width:100%;
+   min-width:0;
+   display:flex;
+   align-items:center;
+   gap:8px;
+   font-size:12px;
+   line-height:1.4;
+ }
+ .sf-compact-app.sf-find-page .wh-ask-bottom .sf-prisma-options,
+ .sf-compact-app.sf-find-page .wh-ask-bottom .sf-live-mode{
+   width:100%;
+   box-sizing:border-box;
+   min-width:0;
+ }
+ .sf-compact-app.sf-find-page .wh-results .wh-section-title{
+   display:flex;
+   flex-direction:column;
+   align-items:stretch;
+   gap:9px;
+   width:100%;
+   min-width:0;
+ }
+ .sf-compact-app.sf-find-page .wh-results .wh-section-title>div:first-child{
+   width:100%;
+   flex:0 1 auto;
+   min-width:0;
+ }
+ .sf-compact-app.sf-find-page .wh-results .wh-section-title h2{
+   display:flex;
+   flex-wrap:wrap;
+   align-items:baseline;
+   gap:4px 9px;
+   font-size:21px;
+   line-height:1.3;
+   overflow-wrap:anywhere;
+ }
+ .sf-compact-app.sf-find-page .wh-results .wh-section-title h2 .sf-work-summary{
+   display:block;
+   flex-basis:100%;
+   margin:0;
+   font-size:12px;
+   line-height:1.45;
+   font-weight:400;
+   white-space:normal;
+   overflow-wrap:anywhere;
+ }
+ .sf-compact-app.sf-find-page .wh-results .wh-section-title .sf-worklist-controls{
+   display:grid;
+   grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+   gap:8px;
+   width:100%;
+   max-width:100%;
+   min-width:0;
+ }
+ .sf-compact-app.sf-find-page .wh-results .wh-section-title .sf-worklist-controls select,
+ .sf-compact-app.sf-find-page .wh-results .wh-section-title .sf-worklist-controls button{
+   width:100%;
+   max-width:100%;
+   min-width:0;
+   min-height:44px;
+   height:44px;
+   border-radius:9px;
+   box-sizing:border-box;
+   padding:8px 10px;
+   font-size:12px;
+   justify-content:center;
+   white-space:nowrap;
+ }
+ .sf-compact-app.sf-find-page .wh-main-wrap main{
+   padding-bottom:calc(112px + env(safe-area-inset-bottom));
+ }
+}
+@media(max-width:360px){
+ .sf-compact-app.sf-find-page .wh-ask form>.wh-composer-actions{
+   grid-template-columns:48px minmax(0,1fr) minmax(105px,0.95fr);
+   gap:6px;
+ }
+ .sf-compact-app.sf-find-page .wh-composer-actions>.wh-voice{
+   width:48px;min-width:48px;max-width:48px;
+ }
+ .sf-compact-app.sf-find-page .wh-composer-actions>.wh-search-submit{
+   font-size:11px!important;
+ }
+}
