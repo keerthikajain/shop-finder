@@ -188,3 +188,148 @@
     margin-bottom:10px;
   }
 }
+
+
+/* Phone-only density tuning. Do not affect tablets (481px+) or desktop.
+   Preserve the existing large blurred illustration behind the form. */
+@media (max-width:480px) {
+  .login-shell .sf-login-layout {
+    padding-top:26px;
+    padding-bottom:20px;
+    margin-top:8px;
+    margin-bottom:18px;
+  }
+  .login-shell .login-card {
+    padding:16px 14px 17px;
+  }
+  .login-shell .login-card > h1 {
+    font-size:clamp(24px,6.5vw,29px);
+    line-height:1.18;
+    margin-bottom:8px;
+  }
+  .login-shell .login-card .sf-auth-welcome-row {
+    margin-bottom:10px;
+  }
+  .login-shell .login-card .sf-auth-page-subtitle {
+    font-size:13px;
+    line-height:1.42;
+  }
+  .login-shell .login-card > .sf-login-language {
+    margin-bottom:12px;
+    gap:10px;
+  }
+  .login-shell .login-card .sf-login-language select {
+    min-height:44px;
+    height:44px;
+  }
+  .login-shell .login-card .sf-auth-fields {
+    display:grid;
+    gap:10px;
+    margin:0;
+  }
+  .login-shell .login-card .sf-auth-fields > label,
+  .login-shell .login-card .sf-auth-fields > .sf-auth-password {
+    margin:0;
+    min-width:0;
+  }
+  .login-shell .login-card .sf-auth-fields > label {
+    font-size:13px;
+    line-height:1.35;
+  }
+  .login-shell .login-card .sf-auth-fields input,
+  .login-shell .login-card .sf-auth-password .sf-password-field input {
+    box-sizing:border-box;
+    width:100%;
+    height:46px;
+    min-height:46px;
+    margin-top:5px;
+    padding-block:8px;
+    font-size:16px;
+  }
+  .login-shell .login-card .sf-auth-password .sf-password-field {
+    margin-top:5px;
+  }
+  .login-shell .login-card .sf-auth-password .sf-password-field input {
+    margin-top:0;
+    padding-right:76px;
+  }
+  .login-shell .login-card .sf-auth-password .sf-password-field button {
+    min-height:38px;
+  }
+  .login-shell .login-card .sf-auth-fields .sf-signin {
+    box-sizing:border-box;
+    min-height:46px;
+    height:auto;
+    margin:5px 0 0;
+    padding:10px 12px;
+    gap:8px;
+    font-size:14px;
+    line-height:1.3;
+  }
+  .login-shell .login-card .sf-auth-modes {
+    gap:7px;
+    margin-bottom:12px;
+  }
+  .login-shell .login-card .sf-auth-modes button {
+    min-height:44px;
+    height:auto;
+    padding:8px;
+    font-size:12px;
+  }
+  .login-shell .login-card .sf-public-invite {
+    display:grid;
+    gap:9px;
+    margin-top:14px;
+    padding:14px 13px;
+    border-radius:15px;
+  }
+  .login-shell .login-card .sf-public-invite > strong,
+  .login-shell .login-card .sf-public-invite > p > strong {
+    font-size:17px;
+    line-height:1.25;
+    font-weight:600;
+  }
+  .login-shell .login-card .sf-public-invite > p {
+    margin:0;
+    font-size:13px;
+    line-height:1.4;
+  }
+  .login-shell .login-card .sf-public-invite > .sf-demo-enter {
+    box-sizing:border-box;
+    width:100%;
+    min-height:46px;
+    height:auto;
+    padding:10px 12px;
+    font-size:14px;
+    line-height:1.25;
+    gap:8px;
+    font-weight:600;
+  }
+  .login-shell .login-card .sf-public-invite > .sf-auth-text-link {
+    min-height:44px;
+    padding:5px 8px;
+    font-size:13px;
+    line-height:1.3;
+    font-weight:500;
+    text-align:center;
+    text-wrap:balance;
+  }
+  .login-shell .login-card .sf-auth-footer {
+    margin-top:12px;
+    padding:0;
+    font-size:12px;
+    line-height:1.4;
+  }
+  .login-shell .login-card .sf-auth-footer .sf-auth-text-link {
+    min-height:44px;
+    font-size:13px;
+  }
+}
+@media (max-width:360px) {
+  .login-shell .login-card {
+    padding:15px 12px 17px;
+  }
+  .login-shell .login-card .sf-public-invite {
+    padding:13px 11px;
+  }
+}
