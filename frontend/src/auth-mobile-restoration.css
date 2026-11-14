@@ -1,0 +1,144 @@
+/* Restore Finder's original mobile sign-in composition.
+   The large illustration is background artwork, never a separate banner.
+   Desktop layout remains the two-column connected surface. */
+@media (max-width:760px) {
+  .login-shell {
+    box-sizing:border-box;
+    max-width:100%;
+    overflow-x:clip;
+  }
+  .login-shell .sf-login-layout {
+    display:block;
+    position:relative;
+    isolation:isolate;
+    box-sizing:border-box;
+    width:min(100%,510px);
+    max-width:510px;
+    min-width:0;
+    min-height:0;
+    margin:clamp(12px,3vh,24px) auto 28px;
+    padding:clamp(32px,7vw,54px) 7px 30px;
+    overflow:visible;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+  }
+  .login-shell .sf-login-art {
+    display:block;
+    position:absolute;
+    inset:-34px -12px -28px;
+    z-index:0;
+    box-sizing:border-box;
+    width:auto;
+    max-width:none;
+    min-width:0;
+    height:auto;
+    flex:none;
+    margin:0;
+    padding:0;
+    border:0;
+    border-radius:0;
+    overflow:hidden;
+    opacity:1;
+    pointer-events:none;
+    background:transparent;
+    transform:none;
+  }
+  .login-shell .sf-login-art img {
+    display:block;
+    position:absolute;
+    top:0;
+    left:50%;
+    width:clamp(390px,112%,620px);
+    max-width:none;
+    height:auto;
+    max-height:none;
+    margin:0;
+    flex:none;
+    opacity:.42;
+    object-fit:contain;
+    object-position:center top;
+    transform:translateX(-50%);
+    filter:blur(3px);
+  }
+  .login-shell .sf-login-art > div {
+    display:none;
+  }
+  .login-shell .login-card {
+    display:block;
+    position:relative;
+    z-index:1;
+    box-sizing:border-box;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    height:auto;
+    align-self:auto;
+    margin:0;
+    padding:clamp(19px,4vw,27px);
+    border:1px solid rgba(222,210,236,.88);
+    border-radius:20px;
+    background:rgba(255,255,255,.82);
+    -webkit-backdrop-filter:blur(5px);
+    backdrop-filter:blur(5px);
+    box-shadow:0 18px 40px rgba(46,29,68,.12);
+  }
+  .login-shell .login-card :is(input,select,button) {
+    max-width:100%;
+  }
+  .login-shell .login-card :is(.sf-auth-fields,.sf-auth-modes,.sf-login-language,.sf-auth-welcome-row) {
+    min-width:0;
+  }
+}
+@media (max-width:480px) {
+  .login-shell .sf-login-layout {
+    width:100%;
+    padding:36px 4px 27px;
+    margin:10px auto 24px;
+    border:0;
+    border-radius:0;
+    background:transparent;
+  }
+  .login-shell .sf-login-art {
+    display:block;
+    position:absolute;
+    inset:-28px -12px -26px;
+    width:auto;
+    height:auto;
+    padding:0;
+    margin:0;
+    border:0;
+    opacity:1;
+  }
+  .login-shell .sf-login-art img {
+    display:block;
+    width:clamp(390px,125%,540px);
+    max-width:none;
+    max-height:none;
+    opacity:.44;
+    filter:blur(3px);
+  }
+  .login-shell .sf-login-art>div {display:none}
+  .login-shell .login-card {
+    padding:20px 16px 22px;
+    border-radius:18px;
+    background:rgba(255,255,255,.82);
+    -webkit-backdrop-filter:blur(5px);
+    backdrop-filter:blur(5px);
+  }
+}
+@media (max-width:360px) {
+  .login-shell .sf-login-layout {padding-inline:3px}
+  .login-shell .login-card {padding:18px 13px 20px}
+  .login-shell .sf-login-art img {width:410px}
+}
+/* Keep the illustration present but protect form readability when the user
+   requests reduced transparency. */
+@media (max-width:760px) and (prefers-reduced-transparency:reduce) {
+  .login-shell .login-card {
+    background:rgba(255,255,255,.94);
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
+}
