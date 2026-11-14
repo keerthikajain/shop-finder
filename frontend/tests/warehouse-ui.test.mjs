@@ -984,7 +984,7 @@ test('guided picking keeps voice controls, commands and session footer in separa
  assert.match(rules,/\.sf-voice-toolbar\{/);
  assert.match(rules,/\.sf-voice-command-row\{/);
  assert.match(rules,/\.sf-picking-actions>div\{/);
- assert.match(rules,/\.wh-task:last-child:nth-child\(odd\):not\(:first-child\)\{/);
+ assert.ok(rules.includes('.wh-task:last-child:nth-child(odd):not(:first-child){'));
  assert.match(rules,/grid-column:auto;grid-row:auto/);
  assert.match(rules,/@media\(max-width:900px\)/);
  assert.match(rules,/grid-template-columns:minmax\(0,1fr\)/);
