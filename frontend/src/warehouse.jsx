@@ -482,6 +482,10 @@ export default function WarehouseApp({user,preferences,logout}){
  }
  async function scan(line,kind,value){await run(async()=>{const next=await api('/tasks/'+task.id+'/scan',{line,kind,value});D(null);PV(null);await progressAfterPick(next,kind!=='product');await reload()})}
  async function playPickGuidance(command,source=task,line=activeLine,manual=false){
+  // Reject terminal command results and out-of-range indices before sending
+  // a request that the backend will return as HTTP 422.
+  if(!['start','next','repeat','verify','report','stop','help','unknown'].includes(command)
+    ||!Number.isInteger(line)||line<0||line>=source?.lines?.length||line>9)return false;
   if(!voice||!source||(!manual&&voiceFlowStopped.current))return;
   stopSpeech();const serial=playbackSerial.current,controller=new AbortController();
   audioRequest.current=controller;SP(true);
@@ -666,7 +670,20 @@ export default function WarehouseApp({user,preferences,logout}){
     return false; // The voice loop must not restart for this command.
    }
    if(answer.action==='stop'){PV(null);stopVoiceFlow();VGT(pickingUiCopy(appLanguage,'stopSaved'));return false}
-   if(voice&&!voiceFlowStopped.current)await playPickGuidance(answer.action,source,answer.line??activeLine);
+   // The command API can return terminal states (done/unresolved); these are
+   // valid results, but NOT accepted by the guide-audio request schema.
+   // Do not send them to TTS or repeat audio requests for a finished worklist.
+   if(answer.action==='done'||answer.action==='unresolved'){
+    VGP(true);PV(null);PN(null);
+    VGT(answer.action==='done'?pickingUiCopy(appLanguage,'confirmed'):nextItemUi(appLanguage,'laterRemaining'));
+    return false;
+   }
+   const playableActions=['start','next','repeat','verify','report','stop','help','unknown'];
+   if(voice&&!voiceFlowStopped.current&&playableActions.includes(answer.action)){
+    const line=answer.line??activeLine;
+    if(Number.isInteger(line)&&line>=0&&line<source.lines.length&&line<=9)
+     await playPickGuidance(answer.action,source,line);
+   }
   })
  }
  async function removeUnresolvedLine(index){
