@@ -513,7 +513,21 @@ export default function WarehouseApp({user,preferences,logout}){
    if(audioURL.current)URL.revokeObjectURL(audioURL.current);
    audioURL.current=URL.createObjectURL(blob);
    audio.current=new Audio(audioURL.current);
-   audio.current.onended=()=>{if(serial===playbackSerial.current)SP(false)};
+   audio.current.onended=()=>{
+    if(serial!==playbackSerial.current)return;
+    SP(false);
+    // The first/next item must hand back to the microphone automatically.
+    // Never undo a deliberate Stop, a paused pick, or a confirmation dialog.
+    if(['start','next','repeat'].includes(command)&&!voiceFlowStopped.current
+      &&handsFree&&source.picking?.status==='active'&&!source.picking?.paused
+      &&!manual&&page==='find'&&!modal)VGP(false);
+   };
+   audio.current.onerror=()=>{
+    if(serial===playbackSerial.current){
+     SP(false);VGP(true);
+     E(t('Voice playback failed. Use the manual controls or retry voice.'));
+    }
+   };
    await audio.current.play();
    recordVoiceTiming('picking-audio-ready',ttsStart);
    noteVoiceResponseStarted();
