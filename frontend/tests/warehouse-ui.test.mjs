@@ -461,7 +461,9 @@ test('a fully unmatched request does not show unusable picking commands and sear
  const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
  assert.match(jsx,/hasSearchCandidates\?<>/);
   assert.match(jsx,/picking\.status==='ready'&&lookupMode==='choice'/);
-  assert.match(jsx,/\(picking\.status!=='ready'\|\|lookupMode==='guided'\)&&<section className="wh-panel sf-guided-picking"/);
+  assert.match(jsx,/picking\.status!=='completed'&&\(picking\.status!=='ready'\|\|lookupMode==='guided'\)/);
+ assert.match(jsx,/picking\.status!=='active'\|\|nextPickIndex>=0/);
+ assert.match(jsx,/picking\.status==='active'&&nextPickIndex<0&&<div className="sf-picking-remaining"/);
  assert.match(jsx,/No items ready to pick/);
  assert.match(css,/\.sf-find-page \.wh-work-grid\{grid-template-columns:minmax\(0,1fr\) minmax\(0,280px\)\}/);
  assert.match(css,/@media\(max-width:900px\)/);
@@ -660,7 +662,10 @@ test('wrong-location handoff pauses pick capture and opens an editable report st
  assert.doesNotMatch(source,/playPickGuidance\('report',source,answer\.line\)/);
  assert.match(listener,/if\(outcome===false\)\{shouldContinue=false;Status\('paused'\);\}/);
  assert.match(listener,/if\(!cancelled&&shouldContinue\)Next\(/);
- assert.ok(source.includes("{copy('paused')}"));
+ assert.ok(!source.includes('className="sf-report-step-note"'));
+ assert.ok(source.includes('className="sf-report-voice-panel"'));
+ assert.ok(source.includes('onTranscript={guidedReportAnswer}'));
+ assert.ok(source.includes('onBack={guidedReportBack}'));
  assert.ok(source.includes("{copy('edit')}"));
  assert.ok(source.includes("{copy('hint')}"));
 });
