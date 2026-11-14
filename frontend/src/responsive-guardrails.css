@@ -575,3 +575,218 @@
   margin:0;
  }
 }
+
+
+/* Mobile picking: keep all states and actions together, without a tall empty
+   lavender panel. Never change desktop, picking data, or audio lifecycle. */
+@media(max-width:700px){
+ .sf-compact-app.sf-find-page .sf-guided-picking{
+  height:auto;min-height:0;align-self:start;
+ }
+ .sf-compact-app.sf-find-page .sf-guided-picking>.sf-voice-guide{
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  align-items:stretch;
+  align-content:start;
+  flex:0 0 auto;
+  height:auto;
+  min-height:0;
+  max-height:none;
+  padding:12px;
+  gap:9px;
+ }
+ .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-toolbar{
+  align-content:start;
+  align-items:center;
+  gap:8px;
+ }
+ .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-toolbar>.sf-voice-current-status{
+  display:block;
+  width:100%;
+  flex:1 1 100%;
+  min-width:0;
+  margin:0;
+  padding:4px 0;
+  line-height:1.35;
+  background:transparent;
+ }
+ .sf-compact-app.sf-find-page .sf-guided-picking .sf-voice-guide-actions{
+  align-content:center;
+  align-items:center;
+  gap:8px;
+  padding:0;
+ }
+ .sf-compact-app.sf-find-page .sf-guided-picking .sf-voice-guide-actions .sf-voice-stop-audio,
+ .sf-compact-app.sf-find-page .sf-guided-picking .sf-voice-guide-actions .sf-voice-listen-toggle{
+  flex:0 1 auto;
+  min-width:0;
+  width:auto;
+  height:44px;
+  min-height:44px;
+  padding:8px 12px;
+ }
+ .sf-compact-app.sf-find-page .sf-guided-picking .sf-hands-free-status{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+  width:100%;
+  margin:0;
+  padding:0;
+  line-height:1.35;
+ }
+ .sf-compact-app.sf-find-page .sf-guided-picking .sf-listen-dot{
+  position:static;
+  display:inline-block;
+  flex:0 0 8px;
+  width:8px;
+  height:8px;
+  margin:0;
+  align-self:center;
+  border-radius:50%;
+  vertical-align:middle;
+ }
+ .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-commands{
+  margin:0;
+  padding-top:10px;
+  align-content:start;
+ }
+ .sf-compact-app.sf-find-page .sf-guided-picking .sf-voice-pick-confirm,
+ .sf-compact-app.sf-find-page .sf-guided-picking .sf-next-choice{
+  display:flex;
+  flex:0 0 auto;
+  flex-direction:column;
+  align-items:stretch;
+  gap:7px;
+  margin:0;
+  padding:10px;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  height:auto;
+  min-height:0;
+ }
+ .sf-compact-app.sf-find-page .sf-guided-picking .sf-voice-pick-confirm>div{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  width:100%;
+  align-items:stretch;
+ }
+ .sf-compact-app.sf-find-page .sf-guided-picking .sf-voice-pick-confirm button{
+  min-height:44px;
+  height:auto;
+  max-width:100%;
+  min-width:0;
+  padding:8px 6px;
+  white-space:normal;
+ }
+ .sf-compact-app.sf-find-page .sf-guided-picking .sf-voice-pick-confirm p{
+  margin:0;
+  font-size:12px;
+  line-height:1.4;
+ }
+ /* The wrong-location form is a dialog, not another full page. */
+ .sf-compact-app .sf-report-flow{
+  display:grid;
+  gap:9px;
+  align-content:start;
+  min-width:0;
+ }
+ .sf-compact-app .sf-report-flow>p{
+  margin:0;
+  line-height:1.4;
+  font-size:12px;
+ }
+ .sf-compact-app .sf-report-flow .sf-report-speech-language{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin:0;
+  width:100%;
+  min-width:0;
+ }
+ .sf-compact-app .sf-report-flow .sf-report-speech-language select{
+  flex:0 1 190px;
+  min-width:0;
+  max-width:100%;
+  min-height:44px;
+ }
+ .sf-compact-app .sf-report-flow .sf-report-step-note{
+  margin:0;
+  padding:10px 12px;
+  font-size:12px;
+  line-height:1.4;
+ }
+ .sf-compact-app .sf-report-flow .sf-report-step-note strong{
+  margin:0;
+ }
+ .sf-compact-app .sf-report-flow .sf-guided-owner-voice{
+  display:grid;
+  gap:8px;
+  min-width:0;
+ }
+ .sf-compact-app .sf-report-flow .sf-guided-owner-voice-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:stretch;
+  gap:8px;
+  width:100%;
+  min-width:0;
+ }
+ .sf-compact-app .sf-report-flow .sf-guided-owner-voice-actions>button{
+  box-sizing:border-box;
+  display:inline-flex;
+  width:100%;
+  min-width:0;
+  min-height:44px;
+  height:auto;
+  margin:0;
+  padding:8px 7px;
+  white-space:normal;
+  text-align:center;
+  font-size:12px;
+ }
+ .sf-compact-app .sf-report-flow .sf-guided-owner-voice-actions>button:only-child{
+  grid-column:1 / -1;
+ }
+ .sf-compact-app .sf-report-flow .sf-guided-owner-voice>small{
+  display:block;
+  font-size:12px;
+  line-height:1.4;
+ }
+ .sf-compact-app .sf-report-flow .sf-report-voice-panel{
+  display:grid;
+  gap:7px;
+  margin:0;
+  padding:12px;
+  min-width:0;
+ }
+ .sf-compact-app .sf-report-flow .sf-report-voice-panel>small{
+  line-height:1.4;
+ }
+ .sf-compact-app .sf-report-flow .sf-report-voice-panel>.wh-voice{
+  min-height:44px;
+  width:auto;
+  max-width:100%;
+  padding:8px 12px;
+  justify-self:start;
+ }
+ .sf-compact-app .sf-report-flow form{
+  display:grid;
+  gap:9px;
+  margin:0;
+ }
+ .sf-compact-app .sf-report-flow form textarea{
+  min-height:75px;
+  resize:vertical;
+  font-size:16px;
+ }
+ .sf-compact-app .sf-report-flow form button{
+  min-height:44px;
+ }
+}
