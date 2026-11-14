@@ -2225,3 +2225,58 @@ def test_only_explicit_skip_or_cancel_can_finish_with_unconfirmed_items(setup,re
   assert finish.json()['lines'][0]['complete'] is False
   assert finish.json()['lines'][0]['deferred_reason']==reason
  assert items(c)==original
+
+
+@pytest.mark.parametrize('new_language',['hi-IN','hi-en','te-IN','en-IN'])
+def test_speech_language_can_change_mid_pick_without_losing_confirmations(setup,monkeypatch,new_language):
+ c,_=setup
+ original_inventory=items(c)
+ created=post(c,'/search',{'collection':'clothing','query':'CLO-001 and CLO-004','language':'en-IN'})
+ assert created.status_code==200,created.text
+ tid=created.json()['id']
+ started=post(c,f'/tasks/{tid}/picking/start')
+ assert started.status_code==200,started.text
+ picked=post(c,f'/tasks/{tid}/scan',{'line':0,'kind':'manual','value':'confirmed'})
+ assert picked.status_code==200,picked.text
+ before=picked.json()
+ changed=post(c,f'/tasks/{tid}/speech-language',{'language':new_language})
+ assert changed.status_code==200,changed.text
+ after=changed.json()
+ assert after['id']==before['id']
+ assert after['language']==new_language
+ assert after['picking']==before['picking']
+ assert after['lines']==before['lines']
+ assert after['lines'][0]['complete'] is True
+ assert after['lines'][1]['complete'] is False
+ assert items(c)==original_inventory
+ saved=c.get(f'/api/warehouse/tasks/{tid}',headers=H)
+ assert saved.status_code==200
+ assert saved.json()['language']==new_language
+ spoken=[]
+ async def speak(text,lang):
+  spoken.append(lang)
+  return b'RIFF'+b'0'*20
+ monkeypatch.setattr('app.warehouse.voice.speak',speak)
+ guide=post(c,f'/tasks/{tid}/picking/guide-audio',{'command':'repeat','line':1})
+ assert guide.status_code==200,guide.text
+ assert spoken==[new_language]
+ invalid=post(c,f'/tasks/{tid}/speech-language',{'language':'xx-XX'})
+ assert invalid.status_code==422
+ assert c.get(f'/api/warehouse/tasks/{tid}',headers=H).json()['language']==new_language
+
+
+def test_speech_language_switch_preserves_paused_worklist_and_task_ownership(setup):
+ c,_=setup
+ created=post(c,'/search',{'collection':'clothing','query':'CLO-001','language':'en-IN'}).json()
+ tid=created['id']
+ assert post(c,f'/tasks/{tid}/picking/start').status_code==200
+ paused=post(c,f'/tasks/{tid}/picking/pause')
+ assert paused.status_code==200
+ switched=post(c,f'/tasks/{tid}/speech-language',{'language':'te-IN'})
+ assert switched.status_code==200
+ assert switched.json()['picking']==paused.json()['picking']
+ assert switched.json()['language']=='te-IN'
+ login(c,'staff')
+ assert post(c,f'/tasks/{tid}/speech-language',{'language':'hi-IN'}).status_code==404
+ login(c)
+ assert c.get(f'/api/warehouse/tasks/{tid}',headers=H).json()['language']=='te-IN'
