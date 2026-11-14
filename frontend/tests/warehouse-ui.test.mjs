@@ -483,7 +483,9 @@ test('voice-first search requires transcript review before matching products',as
  assert.match(source,/className="sf-search-details"/);
   assert.match(source,/className="sf-clear-query"/);
   assert.match(source,/aria-label=\{t\('Clear search'\)\}/);
-  assert.match(source,/className="sf-unrecognized-voice"/);
+  assert.match(source,/className="sf-search-details"/);
+  assert.match(source,/handleModeVoiceError/);
+  assert.doesNotMatch(source,/className="sf-unrecognized-voice"/);
  assert.match(source,/task\.query/);
  assert.match(source,/language,\s*brand:/);
  assert.doesNotMatch(source,/language:language==='auto'/);
@@ -609,7 +611,8 @@ test('completed picks do not show redundant shelf-check or pick verification act
   assert.doesNotMatch(src,/className="sf-guide-jump"/);
   assert.doesNotMatch(src,/line\.location\.quantity==null\?t\('Quantity not added yet'\)/);
   assert.match(src,/sf-location-navigator/);
-  assert.match(src,/sf-location-navigator-levels/);
+  assert.match(src,/sf-location-navigator-path/);
+  assert.doesNotMatch(src,/className="sf-location-navigator-levels"/);
   assert.match(src,/sf-route-details/);
   assert.doesNotMatch(src,/<ShelfGuide/);
   assert.match(src,/task\.lines\.indexOf\(line\)/);
