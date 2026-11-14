@@ -1,0 +1,93 @@
+/* Desktop-only guided picking repair.
+   Do not affect phone or tablet layouts (<=990px).
+   Grid rows must size to content; confirmation is a normal full-width flow item. */
+@media (min-width:991px) {
+  .sf-compact-app.sf-find-page .sf-guided-picking {
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:none;
+    grid-auto-rows:max-content;
+    align-content:start;
+    align-items:start;
+    height:auto;
+    min-height:0;
+    max-width:100%;
+    min-width:0;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking > .sf-voice-guide {
+    box-sizing:border-box;
+    display:flex;
+    flex-direction:column;
+    flex:0 0 auto;
+    align-self:start;
+    align-items:stretch;
+    justify-content:flex-start;
+    gap:10px;
+    height:auto;
+    min-height:0;
+    max-height:none;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    padding:12px 14px;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-toolbar,
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guided-commands {
+    box-sizing:border-box;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    flex:0 0 auto;
+    align-content:start;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-voice-details,
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guide-reply,
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-voice-pick-confirm {
+    position:static;
+    float:none;
+    inset:auto;
+    box-sizing:border-box;
+    display:block;
+    flex:0 0 auto;
+    align-self:stretch;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    height:auto;
+    min-height:0;
+    margin:0;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-voice-pick-confirm {
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+    padding:12px 14px;
+    overflow-wrap:anywhere;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-voice-pick-confirm > div {
+    display:flex;
+    width:100%;
+    min-width:0;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-voice-pick-confirm button {
+    box-sizing:border-box;
+    max-width:100%;
+    min-height:40px;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-guide-reply {
+    padding:9px 12px;
+    overflow-wrap:anywhere;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-voice-details {
+    flex-basis:auto;
+  }
+  .sf-compact-app.sf-find-page .sf-guided-picking .sf-picking-actions {
+    align-self:start;
+    min-width:0;
+    width:100%;
+  }
+}
