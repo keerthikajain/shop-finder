@@ -941,3 +941,26 @@ test('reported location is distinguished from an unresolved variant and cannot b
  assert.match(server,/picking_check\(c,task,allow_deferred=True\)/);
  assert.match(server,/This location has an open report\. Owner verification is required before picking/);
 });
+
+
+test('speech language can change mid picking without losing state or accepting stale commands',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const backend=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
+ assert.match(backend,/class TaskSpeechLanguage\(Strict\)/);
+ assert.match(backend,/\/tasks\/\{tid\}\/speech-language/);
+ assert.match(backend,/task\['language'\]=body\.language/);
+ assert.match(backend,/return task_put\(c,task\)/);
+ assert.match(src,/async function changeSpeechLanguage\(nextLanguage\)/);
+ assert.match(src,/stopVoiceFlow\(\)/);
+ assert.match(src,/SetModeListening\(false\)/);
+ assert.match(src,/speechSwitchRef\.current/);
+ assert.match(src,/source\.language!==task\?\.language/);
+ assert.match(src,/nextPendingPickIndex\(next\.lines\)/);
+ assert.match(src,/playPickGuidance\('repeat',next,index,true\)/);
+ assert.match(src,/sf-picking-language/);
+ assert.match(src,/sf-report-speech-language/);
+ assert.match(src,/sf-review-speech-language/);
+ assert.match(src,/disabled=\{speechSwitching\|\|busy\}/);
+ assert.match(src,/Speech language changed\. Picking progress is saved\./);
+ assert.doesNotMatch(src,/onChange=\{e=>\{L\(e\.target\.value\);DSL\(null\)\}\}/);
+});
