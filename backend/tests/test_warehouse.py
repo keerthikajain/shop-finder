@@ -2294,4 +2294,4 @@ def test_safe_spoken_navigation_variants_never_verify_or_save(setup,language,rep
  assert intent(repeat,language)=='repeat',(language,repeat)
  for unsafe in ['not wrong location','no repeat','मिल गय','not found it',
                 'नहीं मिला यह गलत नहीं है','confirm item','save location']:
-  assert intent(unsafe,language) not in ('verify',),(language,unsafe)
+  assert intent(unsafe,language) not in ('verify','report'),(language,unsafe)
