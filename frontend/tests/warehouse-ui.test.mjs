@@ -425,7 +425,8 @@ test('synthetic provenance stays in catalogue and not in speech or picking scree
  assert.match(ui,/className="sf-catalogue-provenance"/);
  assert.match(ui,/Locations in starter records are not physically verified/);
  assert.match(ui,/friendlyPath\(line\.location,!!line\.selected\?\.synthetic\)/);
- assert.match(ui,/guideLine\.selected\?\.synthetic&&field==='facility'/);
+ assert.match(ui,/friendlyPath\(guideLine\.location,!!guideLine\.selected\?\.synthetic\)/);
+ assert.doesNotMatch(ui,/className="sf-location-navigator-levels"/);
  assert.doesNotMatch(backend,/Sample catalogue locations, not verified for your store/);
  assert.doesNotMatch(ui,/Sample catalogue: these shelf locations are illustrative/);
  assert.doesNotMatch(ui,/className="sf-sample-info"/);
