@@ -831,7 +831,10 @@ test('one explicit search confirmation starts first shelf narration and automati
 test('repeat, found it, no, and wrong-location keep the voice loop safe and conversational',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/if\(answer\.action==='verify'&&answer\.line!=null\)/);
- assert.match(src,/if\(voice&&!voiceFlowStopped\.current\)await playPickGuidance\(answer\.action,source,answer\.line\?\?activeLine\)/);
+ assert.match(src,/if\(answer\.action==='done'\|\|answer\.action==='unresolved'\)/);
+ assert.match(src,/if\(voice&&!voiceFlowStopped\.current&&playableActions\.includes\(answer\.action\)\)/);
+ assert.match(src,/if\(Number\.isInteger\(line\)&&line>=0&&line<source\.lines\.length&&line<=9\)/);
+ assert.match(src,/await playPickGuidance\(answer\.action,source,line\)/);
  assert.match(src,/if\(response==='yes'\)/);
  assert.match(src,/if\(response==='no'\)/);
  assert.match(src,/deferPick\(source,index,'declined'\)/);
@@ -840,7 +843,7 @@ test('repeat, found it, no, and wrong-location keep the voice loop safe and conv
  assert.match(src,/if\(responseCommand\.action==='verify'\)/);
  assert.match(src,/if\(responseCommand\.action==='report'\)/);
  assert.match(src,/if\(answer\.action==='report'&&answer\.line!=null\)/);
- assert.match(src,/if\(voice&&!voiceFlowStopped\.current\)await playPickGuidance\(answer\.action,source/);
+ assert.match(src,/const playableActions=\['start','next','repeat','verify','report','stop','help','unknown'\]/);
  assert.match(src,/if\(err\.name!=='AbortError'&&serial===playbackSerial\.current\)\{VGP\(true\)/);
 });
 
@@ -889,7 +892,8 @@ test('voice picking keeps speaker and microphone turn-taking automatic but respe
  assert.match(ui,/\[auto,AUTO\]=useState\(true\)/);
  assert.match(ui,/if\(guided\)await playPickGuidance\('start',next/);
  assert.match(ui,/if\(voice&&auto&&!voiceFlowStopped\.current\)await playPickGuidance\('next',next,index\)/);
- assert.match(ui,/if\(voice&&!voiceFlowStopped\.current\)await playPickGuidance\(answer\.action/);
+ assert.match(ui,/if\(voice&&!voiceFlowStopped\.current&&playableActions\.includes\(answer\.action\)\)/);
+ assert.match(ui,/await playPickGuidance\(answer\.action,source,line\)/);
  assert.match(ui,/if\(!voice\|\|!source\|\|\(!manual&&voiceFlowStopped\.current\)\)return/);
  assert.match(ui,/serial!==playbackSerial\.current\|\|\(!manual&&voiceFlowStopped\.current\)/);
  assert.match(ui,/audio\.current\.onended=\(\)=>\{if\(serial===playbackSerial\.current\)SP\(false\)\}/);
