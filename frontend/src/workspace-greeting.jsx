@@ -1,5 +1,5 @@
 import React,{useEffect,useRef} from 'react';
-import {playWelcomeOnce,stopWelcome} from './welcome-audio.js';
+import {playWelcomeOnce,resumeWelcome,stopWelcome} from './welcome-audio.js';
 import {APP_GREETING_VOICE,greetingForApp} from './greeting-language.js';
 const APP_LANGUAGE_BY_VOICE=Object.fromEntries(Object.entries(APP_GREETING_VOICE).map(([app,voice])=>[voice,app]));
 
@@ -22,7 +22,8 @@ export default function WorkspaceGreeting({user,appLanguage='en',interrupt=false
  const language=APP_GREETING_VOICE[appLanguage]||'en-IN';
  const entryHour=useRef(new Date().getHours());
  const message=greetingForApp(appLanguage,entryHour.current,greetingName(user));
- const attempted=useRef(false),activeSpeech=useRef(null);
+ const attempted=useRef(false),activeSpeech=useRef(null),interruptRef=useRef(interrupt);
+ interruptRef.current=interrupt;
  function stopGreeting(){
   if(activeSpeech.current)stopWelcome(activeSpeech.current);
   activeSpeech.current=null;
@@ -32,7 +33,7 @@ export default function WorkspaceGreeting({user,appLanguage='en',interrupt=false
   attempted.current=true;
   if(interrupt)return;
   const controller=new AbortController();
-  const playback={controller,audio:null,url:null};
+  const playback={controller,audio:null,url:null,blocked:false,finished:false};
   activeSpeech.current=playback;
   playWelcomeOnce({
    url:'/api/voice/welcome',language,text:message,
@@ -42,7 +43,19 @@ export default function WorkspaceGreeting({user,appLanguage='en',interrupt=false
  useEffect(()=>{if(interrupt)stopGreeting()},[interrupt]);
  // Give priority to search, recording, navigation and spoken picking commands.
  useEffect(()=>{
-  const yieldToUser=()=>stopGreeting();
+  const yieldToUser=event=>{
+   if(interruptRef.current){stopGreeting();return}
+   const playback=activeSpeech.current;
+   if(!playback)return;
+   // Recording, navigation and forms take precedence over the greeting.
+   const interactive=event.target?.closest?.(
+    'button,a,input,textarea,select,[role="button"],[contenteditable="true"]'
+   );
+   if(interactive){stopGreeting();return}
+   // Resume synchronously during user activation (not after another fetch).
+   if(playback.blocked){resumeWelcome(playback);return}
+   if(playback.audio&&!playback.finished)stopGreeting();
+  };
   document.addEventListener('pointerdown',yieldToUser,true);
   document.addEventListener('keydown',yieldToUser,true);
   return ()=>{
