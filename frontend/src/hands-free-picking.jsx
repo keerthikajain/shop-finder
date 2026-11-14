@@ -3,6 +3,7 @@ import {startRecording} from './recording.js';
 import {request} from './accounts.jsx';
 import {pickingCopy} from './picking-copy.js';
 import {pickingUiCopy} from './voice-ui-copy.js';
+import {voiceClock,recordVoiceTiming,noteVoiceRecognized} from './voice-performance.js';
 
 /* One microphone turn at a time. Never capture while Finder speaks.
    Stops after repeated silence/error; manual actions are always available. */
@@ -24,15 +25,20 @@ export default function HandsFreePicking({enabled,language,appLanguage=null,coll
    if(cancelled)return;
    let shouldContinue=true;
    Status('transcribing');
+   const transcriptionStart=voiceClock();
    try{
     const params=new URLSearchParams({language,style:'transcribe',enhanced:'true',collection});
     const result=await request('/voice/transcribe?'+params.toString(),{
      method:'POST',headers:{'Content-Type':'audio/wav'},body:blob,signal:transcription.signal
     });
     if(cancelled)return;
+    recordVoiceTiming('speech-end-to-transcript',transcriptionStart);
     if(result.transcript?.trim()){
      silenceRef.current=0;
+     noteVoiceRecognized();
+     const commandStart=voiceClock();
      const outcome=await commandRef.current(result.transcript);
+     recordVoiceTiming('transcript-to-command-finished',commandStart);
      // Stop/report transitions own the handoff, not this recorder.
      if(outcome===false){shouldContinue=false;Status('paused');}
     }else if(++silenceRef.current>=2){

@@ -5,6 +5,7 @@ import {dialogueControl} from './voice-review-commands.js';
 import {Locale} from './locale.js';
 import {reportUiCopy} from './voice-ui-copy.js';
 import {fixedVoicePrompt} from './fixed-voice-prompt.js';
+import {voiceClock,recordVoiceTiming,noteVoiceRecognized,noteVoiceResponseStarted} from './voice-performance.js';
 
 /*
  * One owner voice turn at a time. Listen ONLY after Gnani finishes speaking.
@@ -55,14 +56,16 @@ export default function GuidedVoiceTurn({
     const handle=await startRecording(async blob=>{
      if(cancelled)return;
      Status('transcribing');
+     const sttStart=voiceClock();
      try{
       const params=new URLSearchParams({language,style:'transcribe',enhanced:'true',collection:'all'});
       const result=await request('/voice/transcribe?'+params,{method:'POST',
        headers:{'Content-Type':'audio/wav'},body:blob,signal:controller.signal});
       if(cancelled)return;
+      recordVoiceTiming('guided-speech-end-to-transcript',sttStart);
       const transcript=String(result.transcript||'').trim();
       if(!transcript){fail(copy('noWords'));return}
-      silence.current=0;Heard(transcript);
+      silence.current=0;Heard(transcript);noteVoiceRecognized();
       const control=dialogueControl(language,transcript);
       if(control==='stop'){SetActive(false);handlers.current.onActiveChange(false);Status('stopped');handlers.current.onStop?.();return}
       if(control==='repeat'){retryNarration.current=false;nextTurn(stage);return}
@@ -97,6 +100,7 @@ export default function GuidedVoiceTurn({
   };
   const narrate=async()=>{
    Status('speaking');ErrorMessage('');
+   const ttsStart=voiceClock();
    try{
     const short=retryNarration.current&&!!retryStep;
     retryNarration.current=false;
@@ -126,6 +130,8 @@ export default function GuidedVoiceTurn({
     audio.onended=()=>{cleanupAudio();listen()};
     audio.onerror=()=>fail(copy('audioFail'));
     await audio.play();
+    recordVoiceTiming('guided-audio-ready',ttsStart);
+    noteVoiceResponseStarted();
    }catch(e){
     if(!cancelled&&e.name!=='AbortError')
      fail(e.name==='NotAllowedError'?copy('playbackFail'):e.message);
