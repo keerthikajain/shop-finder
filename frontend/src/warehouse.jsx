@@ -806,7 +806,7 @@ export default function WarehouseApp({user,preferences,logout}){
   {guideLine?.location?<div className="sf-location-navigator-detail">
     <div className="sf-location-navigator-path"><Glyph name="pin"/><span>{friendlyPath(guideLine.location,!!guideLine.selected?.synthetic)}</span></div>
     <div className="sf-location-navigator-levels">
-      {locationFields.filter(field=>guideLine.location[field]).map(field=><div className="sf-location-level" key={field}><small>{t(field.charAt(0).toUpperCase()+field.slice(1))}</small><strong>{guideLine.location[field]}</strong></div>)}
+      {locationFields.filter(field=>guideLine.location[field]&&!(guideLine.selected?.synthetic&&field==='facility')).map(field=><div className="sf-location-level" key={field}><small>{t(field.charAt(0).toUpperCase()+field.slice(1))}</small><strong>{guideLine.location[field]}</strong></div>)}
     </div>
   </div>:<p>{t('Choose a variant to add its location here.')}</p>}
   <details className="sf-shelf-all-locations sf-route-details">
