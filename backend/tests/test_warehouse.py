@@ -2285,7 +2285,7 @@ def test_speech_language_switch_preserves_paused_worklist_and_task_ownership(set
 @pytest.mark.parametrize('language,report,repeat',[
  ('hi-IN','गलत लोकेशन','लोकेशन दोबारा बताओ'),
  ('hi-en','galat jagah','location dobara batao'),
- ('en-IN','wrong loaction','repeat location'),
+ ('en-IN','wrong locaton','repeat location'),
  ('te-IN','తప్పు లొకేషన్','స్థానాన్ని మళ్లీ చెప్పండి')
 ])
 def test_safe_spoken_navigation_variants_never_verify_or_save(setup,language,report,repeat):
