@@ -181,11 +181,12 @@ export default function WarehouseApp({user,preferences,logout}){
    L(nextLanguage);T(next);
    N(t('Speech language changed. Picking progress is saved.'));
    if(previous&&!modal&&page==='find'&&voice){
-    const index=nextPendingPickIndex(next.lines);
+    const currentLine=next.lines[activeLine];
+    const index=currentLine&&!currentLine.complete&&!currentLine.deferred_reason&&!currentLine.location_report_open&&!currentLine.stale_catalogue?activeLine:nextPendingPickIndex(next.lines);
     if(index>=0){
      AL(index);voiceFlowStopped.current=false;
-     await playPickGuidance('repeat',next,index,true);
-     VGP(!handsFree);
+     const played=await playPickGuidance('repeat',next,index,true);
+     if(played)VGP(!handsFree);
     }
    }
   }catch(e){E(e.message)}
@@ -486,8 +487,8 @@ export default function WarehouseApp({user,preferences,logout}){
    audioURL.current=URL.createObjectURL(blob);
    audio.current=new Audio(audioURL.current);
    audio.current.onended=()=>{if(serial===playbackSerial.current)SP(false)};
-   await audio.current.play();
-  }catch(err){if(err.name!=='AbortError'&&serial===playbackSerial.current){VGP(true);E(err.name==='NotAllowedError'?t('Tap Read guidance to allow audio playback. Then start listening when ready.'):err.message)}if(serial===playbackSerial.current)SP(false)}
+   await audio.current.play();return true;
+  }catch(err){if(err.name!=='AbortError'&&serial===playbackSerial.current){VGP(true);E(err.name==='NotAllowedError'?t('Tap Read guidance to allow audio playback. Then start listening when ready.'):err.message)}if(serial===playbackSerial.current)SP(false);return false}
   finally{if(audioRequest.current===controller)audioRequest.current=null}
  }
  async function applyNextChoice(source,line,choice){
@@ -847,6 +848,7 @@ export default function WarehouseApp({user,preferences,logout}){
  {page==='catalogue'&&<section className="wh-panel wh-catalogue">{items.some(item=>item.synthetic)&&<p className="sf-catalogue-provenance"><strong>{t('Starter catalogue')}</strong> · {t('Locations in starter records are not physically verified. Import or verify your store records before operational picking.')}</p>}<div className="wh-toolbar"><label className="wh-filter"><Glyph name="search"/><input aria-label={t('Filter catalogue')} placeholder={t('Search name, size, SKU or location')} value={filter} onChange={e=>F(e.target.value)}/></label><select aria-label={t('Category')} value={category} onChange={e=>CAT(e.target.value)}><option value="">{t('All categories')}</option>{[...new Set(items.map(p=>p.category))].map(c=><option key={c}>{c}</option>)}</select><a className="wh-button" href={'/api/warehouse/export?collection='+collection+'&format=xlsx'}>{t('Export Excel')}</a>{owner&&<button className="primary" onClick={()=>D({type:'edit',item:null})}><Glyph name="plus"/>{t('Add item')}</button>}</div><div className="wh-table-wrap"><table><thead><tr><th>{t('Item')}</th><th>{t('Specifications')}</th><th>{t('Storage')}</th><th>{t('Last updated')}</th><th><span className="sr-only">{t('Open')}</span></th></tr></thead><tbody>{filtered.map(p=><tr key={p.collection+':'+p.sku}><td><div className="wh-table-item"><ItemArt collection={p.collection} photo={p.photo_url} name={p.name}/><div><b>{p.name}</b><small>{p.sku} · {p.category}{p.brand?' · '+p.brand:''}</small></div></div></td><td><Specs item={p} labels={labels}/></td><td>{p.placements.length>1?<b>{p.placements.length} {t('locations')}</b>:<><b>{pathText(p.placements[0],!!p.synthetic)}</b><small>{p.placements[0].quantity==null?t('Not counted'):p.placements[0].quantity+t(' units')}</small></>}</td><td><small>{new Date(p.updated_at).toLocaleDateString()}<br/>{p.updated_by}</small></td><td><button aria-label={t('Open')+' '+p.sku} onClick={()=>D({type:'detail',item:p})}><Glyph name="arrow"/></button></td></tr>)}</tbody></table>{!filtered.length&&<p className="wh-empty">{t('No items match this filter.')}</p>}</div><div className="wh-table-footer">{filtered.length} {t('items')}<span>{t('Recorded counts update only after a confirmed stock operation.')}</span></div></section>}
  {page==='locations'&&<><div className="wh-toolbar"><label className="wh-filter"><Glyph name="search"/><input placeholder={t('Filter locations')} aria-label={t('Filter locations')} value={filter} onChange={e=>F(e.target.value)}/></label></div><div className="wh-location-grid">{locations.filter(l=>pathText(l).toLowerCase().includes(filter.toLowerCase())).map(l=><article className="wh-panel" key={l.code}><Place location={l} example={items.some(p=>p.synthetic&&p.placements.some(x=>x.code===l.code))}/><div className="wh-location-items">{items.filter(p=>p.placements.some(x=>x.code===l.code)).map(p=><button key={p.collection+':'+p.sku} onClick={()=>D({type:'detail',item:p})}><b>{p.name}</b><small>{p.sku}</small><Glyph name="arrow"/></button>)}</div><button onClick={()=>D({type:'label',location:l})}><Glyph name="scan"/>{t('Shelf label')}</button></article>)}</div></>}
  {page==='import'&&owner&&<ImportPanel key={collection} {...{collection,pack,labels,run,busy,reload}} onSuccess={text=>N(t(text))}/>}
+ {page==='review'&&<div className="sf-review-speech-language"><label htmlFor="sf-review-speech-language">{t('Speech language')}</label><select id="sf-review-speech-language" value={task?.language||language} disabled={busy||speechSwitching} onChange={e=>void changeSpeechLanguage(e.target.value)}>{VOICE_INPUT_LANGUAGES.map(([code,name])=><option key={code} value={code}>{name}</option>)}</select></div>}
  {page==='review'&&<ReviewPanel key={collection+'-'+reviewNonce} {...{collection,owner,run,busy,language,voice}} onError={E} onSaved={result=>{if(voice)playFixedVoice(result.status==='resolved'?'review_verified_saved':'review_pending_saved',language,false,true)}} onCorrectLocation={issue=>{const item=items.find(p=>p.collection===issue.collection&&p.sku===issue.sku);const location=item?.placements.find(p=>p.code===issue.location_code);if(!item||!location){E(t('Recorded location changed. Refresh the catalogue before correcting.'));return}D({type:'move',item,location})}}/>}
  {page==='more'&&user.is_demo&&<section className="sf-preview-banner"><div><strong>Have feedback?</strong><p>{t('You can help us improve it.')}</p></div><button type="button" onClick={()=>navigate('feedback')}>Share feedback</button></section>}
  {page==='more'&&<section className="sf-more-page" aria-label={t('More')}>
@@ -879,7 +881,7 @@ export default function WarehouseApp({user,preferences,logout}){
  {modal?.type==='stock'&&<Modal title="Update recorded stock" onClose={()=>D(null)} wide><StockEditor {...{owner,locations,run,busy,voice,language}} fields={meta.settings.location_fields} item={modal.item} source={modal.location} onError={E} onSave={async()=>{D(null);T(null);await reload();N('Stock updated. The change is recorded in history.')}}/></Modal>}
  {modal?.type==='edit'&&<Modal title={t(modal.item?'Edit item':'Add item')} onClose={()=>D(null)} wide><ItemEditor item={modal.item} collection={modal.item?.collection||(collection==='all'?meta.settings.collections[0]:collection)} pack={meta.collections.find(c=>c.id===(modal.item?.collection||(collection==='all'?meta.settings.collections[0]:collection)))} collections={meta.collections.filter(c=>meta.settings.collections.includes(c.id))} settings={meta.settings} {...{labels,run,busy}} onSave={async()=>{D(null);await reload();N(t('Item saved.'))}}/></Modal>}
  {modal?.type==='move'&&<Modal title={t('Correct location')} onClose={()=>D(null)} wide><MoveEditor collection={modal.item.collection} fields={meta.settings.location_fields} {...{run,busy,language,voice}} item={modal.item} source={modal.location} onError={E} onSave={async()=>{const previous=task?.query;D(null);await reload();RV(v=>v+1);if(previous&&page==='find'){await search(previous,false);N(t('Location saved. Search results now show the updated shelf. Review the new list before picking.'))}else{T(null);N(t('Verified location saved and shown in future searches.'))}if(voice)await playFixedVoice('move_saved',language,false,true)}}/></Modal>}
- {modal?.type==='report'&&<Modal title={t('Report an issue')} onClose={()=>{reportResumeRef.current=false;D(null);VGP(true)}}><Report item={modal.item} location={modal.location} collection={modal.item.collection} userId={user.id} autoGuide={!!modal.autoGuide} {...{run,busy,voice,language,speaking}} onStopSpeaking={stopSpeech} onError={E} onSave={async report=>{
+ {modal?.type==='report'&&<Modal title={t('Report an issue')} onClose={()=>{reportResumeRef.current=false;D(null);VGP(true)}}><Report item={modal.item} location={modal.location} collection={modal.item.collection} userId={user.id} autoGuide={!!modal.autoGuide} {...{run,busy,voice,language,speaking}} speechSwitching={speechSwitching} onLanguageChange={changeSpeechLanguage} onStopSpeaking={stopSpeech} onError={E} onSave={async report=>{
  const index=modal.index,active=task?.picking?.status==='active'&&!task.picking?.paused;
  const shouldResume=reportResumeRef.current;
  reportResumeRef.current=false;
@@ -900,7 +902,7 @@ export default function WarehouseApp({user,preferences,logout}){
  {modal?.type==='label'&&<Modal title={t('Print labels')} onClose={()=>D(null)} wide><div className="wh-print-area">{modal.item&&<Label value={'ITEM:'+modal.item.collection+':'+modal.item.sku} name={modal.item.name} subtitle={modal.item.sku+' · '+Object.values(modal.item.specs).join(' / ')}/>}<Label value={modal.location.code} name={t('Storage location')} subtitle={pathText(modal.location)}/></div><button className="primary" onClick={()=>window.print()}>{t('Print labels')}</button></Modal>}
  </div></Feedback.Provider>
 }
-function Report({item,location,collection,userId,run,busy,speaking=false,voice,language,autoGuide=false,onError,onStopSpeaking,onSave}){
+function Report({item,location,collection,userId,run,busy,speaking=false,voice,language,autoGuide=false,onError,onStopSpeaking,onSave,onLanguageChange,speechSwitching=false}){
  const t=useT(),appLanguage=useContext(Locale);
  // UI copy follows the app language. Actual voice input and TTS use language.
  const copy=key=>reportUiCopy(appLanguage,key);
@@ -915,6 +917,7 @@ function Report({item,location,collection,userId,run,busy,speaking=false,voice,l
  const [suggested,S]=useState(draft?.suggested||''),[heard,H]=useState(''),[heardField,HF]=useState('');
  useEffect(()=>{try{sessionStorage.setItem(draftKey,JSON.stringify({reason,suggested,request_id:requestId,at:Date.now()}))}catch{}},[draftKey,reason,suggested,requestId]);
  const [pendingSubmit,PS]=useState(false),[guideStage,SetGuideStage]=useState('report_reason');
+ useEffect(()=>{PS(false);H('');HF('')},[language]);
  const [guidedActive,SetGuidedActive]=useState(false);
  const submittingRef=useRef(false),submittedRef=useRef(false);
  async function submitReport(){
@@ -991,6 +994,7 @@ function Report({item,location,collection,userId,run,busy,speaking=false,voice,l
  return <div className="sf-report-flow">
  <p><b>{item.name}</b> · {item.sku}</p>
  {location&&<p>{t('Recorded location:')} <strong>{pathText(location)}</strong></p>}
+ {voice&&onLanguageChange&&<label className="sf-report-speech-language">{t('Speech language')}<select aria-label={t('Speech language')} value={language} disabled={busy||speechSwitching} onChange={e=>void onLanguageChange(e.target.value)}>{VOICE_INPUT_LANGUAGES.map(([code,name])=><option key={code} value={code}>{name}</option>)}</select></label>}
  <div className="sf-report-step-note" role="status">
   <strong>{copy('paused')}</strong>
   <span>{copy('steps')}</span>
