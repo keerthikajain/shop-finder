@@ -1,0 +1,146 @@
+/* Finder phone-only corrections. This file must be imported last.
+   Do not affect desktop/tablet widths or modify picking/voice behavior. */
+@media (max-width:700px) {
+  /* Search bar microphone: one centered icon, same purple square and position. */
+  .sf-compact-app.sf-find-page .wh-ask form .wh-composer-actions > button.wh-voice:not(.sf-mobile-speak) {
+    box-sizing:border-box;
+    display:grid;
+    place-items:center;
+    align-items:center;
+    justify-content:center;
+    justify-items:center;
+    align-content:center;
+    width:100%;
+    height:100%;
+    min-height:48px;
+    max-height:74px;
+    min-width:0;
+    margin:0;
+    padding:0!important;
+    font-size:0!important;
+    line-height:1;
+    gap:0;
+    text-align:center;
+  }
+  .sf-compact-app.sf-find-page .wh-ask form .wh-composer-actions > button.wh-voice:not(.sf-mobile-speak) > svg {
+    display:block;
+    position:static;
+    place-self:center;
+    flex:none;
+    width:26px;
+    height:26px;
+    margin:0;
+    padding:0;
+    transform:none;
+    color:inherit;
+    stroke:currentColor;
+    vertical-align:middle;
+  }
+  .sf-compact-app.sf-find-page .wh-ask form .wh-composer-actions > button.wh-voice:not(.sf-mobile-speak) > .wh-wave {
+    display:none;
+  }
+
+  /* All worklist cards, including an odd final card, use the same
+     content-sized vertical layout on phones. No card can fill a grid row. */
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list {
+    align-items:start;
+    align-content:start;
+    grid-auto-rows:max-content;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > article.wh-task,
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > article.wh-task:last-child:nth-child(odd):not(:first-child) {
+    box-sizing:border-box;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+    align-content:flex-start;
+    align-items:stretch;
+    align-self:start;
+    flex:none;
+    gap:0;
+    width:100%;
+    max-width:100%;
+    height:auto;
+    min-height:0;
+    grid-column:auto;
+    grid-row:auto;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > article.wh-task > :is(.wh-task-heading,.wh-item-meta,.wh-place,.sf-deferred-pick,.sf-location-check,.wh-task-footer) {
+    box-sizing:border-box;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    height:auto;
+    min-height:0;
+    flex:0 0 auto;
+    grid-column:auto;
+    grid-row:auto;
+    align-self:stretch;
+    justify-self:stretch;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > article.wh-task > .sf-location-check {
+    margin:10px 0 0;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > article.wh-task > .wh-task-footer {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-auto-flow:row;
+    grid-auto-rows:max-content;
+    align-items:start;
+    align-content:start;
+    justify-content:stretch;
+    gap:8px;
+    margin:10px 0 0;
+    padding:0;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > article.wh-task > .wh-task-footer > button {
+    box-sizing:border-box;
+    display:inline-flex;
+    justify-content:center;
+    align-items:center;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    min-height:44px;
+    height:auto;
+    margin:0;
+    padding:8px 7px;
+    font-size:13px;
+    line-height:1.25;
+    text-align:center;
+    white-space:normal;
+    grid-column:auto;
+    grid-row:auto;
+    align-self:stretch;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > article.wh-task > .wh-task-footer > div {
+    display:block;
+    box-sizing:border-box;
+    grid-column:1 / -1;
+    grid-row:auto;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    height:auto;
+    min-height:0;
+    margin:0;
+    padding:0;
+    align-self:start;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > article.wh-task > .wh-task-footer > div > button {
+    box-sizing:border-box;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    height:auto;
+    min-height:44px;
+    margin:0;
+    padding:9px 12px;
+    line-height:1.3;
+    text-align:center;
+    white-space:normal;
+  }
+}
