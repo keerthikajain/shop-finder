@@ -8,6 +8,7 @@ import './activity-settings-polish.css';
 import './control-alignment.css';
 import './product-polish.css';
 import './responsive-guardrails.css';
+import './auth-mobile-restoration.css';
 import {startRecording} from './recording.js';
 import {TestLog} from './test-log.jsx';
 import {getThemePreference, resolveTheme} from './theme.js';
