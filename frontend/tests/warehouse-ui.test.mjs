@@ -968,3 +968,24 @@ test('speech language can change mid picking without losing state or accepting s
  assert.match(src,/Speech language changed\. Picking progress is saved\./);
  assert.doesNotMatch(src,/onChange=\{e=>\{L\(e\.target\.value\);DSL\(null\)\}\}/);
 });
+
+test('guided picking keeps voice controls, commands and session footer in separate responsive rows',async()=>{
+ const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ const toolbar=ui.indexOf('className="sf-voice-toolbar"');
+ const commands=ui.indexOf('className="sf-voice-command-row"');
+ const choices=ui.indexOf('className="sf-voice-guide-choices"',commands);
+ const secondary=ui.indexOf('className="sf-voice-guide-secondary"',choices);
+ assert.ok(toolbar>0&&commands>toolbar&&choices>commands&&secondary>choices);
+ assert.ok(ui.indexOf('className="sf-picking-language"',toolbar)<commands);
+ assert.ok(ui.indexOf('className="sf-voice-guide-actions"',toolbar)<commands);
+ assert.match(ui,/voiceGuideText&&!pendingVoicePick&&!pendingNextPick/);
+ const rules=css.slice(css.lastIndexOf('/* Stable, explicitly grouped guided-picking controls.'));
+ assert.match(rules,/\.sf-voice-toolbar\{/);
+ assert.match(rules,/\.sf-voice-command-row\{/);
+ assert.match(rules,/\.sf-picking-actions>div\{/);
+ assert.match(rules,/\.wh-task:last-child:nth-child\(odd\):not\(:first-child\)\{/);
+ assert.match(rules,/grid-column:auto;grid-row:auto/);
+ assert.match(rules,/@media\(max-width:900px\)/);
+ assert.match(rules,/grid-template-columns:minmax\(0,1fr\)/);
+});
