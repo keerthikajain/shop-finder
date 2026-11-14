@@ -310,7 +310,7 @@ export default function WarehouseApp({user,preferences,logout}){
   await run(async()=>{
    const next=await api('/tasks/'+source.id+'/picking/undo',{line:index,reason:'Worker corrected a lookup-only pick confirmation'});
    T(next);SetLookupPendingSafe(null);
-   N(t('Confirmation undone. This item is ready to verify again.'));
+   N(t('Confirmation undone.'));
    R(await request('/warehouse/tasks'));
   });
   return false;
@@ -433,7 +433,7 @@ export default function WarehouseApp({user,preferences,logout}){
    VGP(true);PV(null);PN(null);AL(0);
    if(!deferred&&next.lines.every(line=>line.complete)){
     const finished=await api('/tasks/'+next.id+'/picking/finish',{});
-    T(finished);N(t('All done! Your picking list is complete.'));
+    T(finished);N(t('Picking complete.'));
     if(voice&&auto&&!voiceFlowStopped.current)await playFixedVoice('pick_done',finished.language);
    }else{
     const retryable=next.lines.some(line=>['later','declined','reported'].includes(line.deferred_reason));
@@ -445,7 +445,7 @@ export default function WarehouseApp({user,preferences,logout}){
   }
   AL(index);
   if(voice&&handsFree&&auto&&!voiceFlowStopped.current&&!next.picking?.paused)VGP(false);
-  N(completed?pickingUiCopy(appLanguage,'confirmed'):t('Moving to the next item. The previous item is saved as unresolved.'));
+  N(completed?pickingUiCopy(appLanguage,'confirmed'):t('Next item ready.'));
   if(window.matchMedia('(max-width:700px)').matches)
    requestAnimationFrame(()=>document.getElementById('sf-picking-line-'+index)?.scrollIntoView({behavior:'smooth',block:'center'}));
   if(voice&&auto&&!voiceFlowStopped.current)await playPickGuidance('next',next,index);
@@ -462,7 +462,7 @@ export default function WarehouseApp({user,preferences,logout}){
   await run(async()=>{
    const next=await api('/tasks/'+task.id+'/picking/retry',{line});
    T(next);AL(line);PV(null);VGP(!(voice&&handsFree));
-   N(t('Item returned to picking. Finder will repeat its saved location.'));
+   N(t('Item ready to pick again.'));
    if(voice&&auto&&!voiceFlowStopped.current)await playPickGuidance('repeat',next,line);
    R(await request('/warehouse/tasks'));
   });
@@ -472,7 +472,7 @@ export default function WarehouseApp({user,preferences,logout}){
   await run(async()=>{
    const next=await api('/tasks/'+task.id+'/picking/undo',{line,reason:'Worker corrected an accidental confirmation'});
    T(next);AL(line);PV(null);
-   N(t('Confirmation undone. This item is ready to verify again.'));
+   N(t('Confirmation undone.'));
    R(await request('/warehouse/tasks'));
    if(voice&&!voiceFlowStopped.current){
     await playFixedVoice('pick_undo',next.language,true);
@@ -690,9 +690,9 @@ export default function WarehouseApp({user,preferences,logout}){
   VGC('');VGT('');
   const guided=voice&&PICKING_VOICE_LANGUAGES.includes(next.language);
   VGP(!(guided&&handsFree));
-  N(t('Search confirmed. Finder will read the first location, then listen for your command. Manual controls are always available.'));
+  N(t('Picking started.'));
   if(guided)await playPickGuidance('start',next,Math.max(0,nextPendingPickIndex(next.lines)));
- }else{VGP(true);VGT('');N(t('Picking completed. No stock quantities were changed.'));if(voice&&!voiceFlowStopped.current)await playFixedVoice('pick_done',next.language)}void request('/warehouse/tasks').then(R).catch(()=>{});})}
+ }else{VGP(true);VGT('');N(t('Picking complete.'));if(voice&&!voiceFlowStopped.current)await playFixedVoice('pick_done',next.language)}void request('/warehouse/tasks').then(R).catch(()=>{});})}
  async function togglePickPause(){
   if(!task||task.picking?.status!=='active'||busy)return;
   stopVoiceFlow();PV(null);
@@ -704,9 +704,9 @@ export default function WarehouseApp({user,preferences,logout}){
     voiceFlowStopped.current=false;
     const guided=voice&&PICKING_VOICE_LANGUAGES.includes(next.language);
     VGP(!(guided&&handsFree));
-    N(t('Picking resumed. Finder will repeat the current shelf, then listen again.'));
+    N(t('Picking resumed.'));
     if(guided)await playPickGuidance('repeat',next,Math.max(0,nextPendingPickIndex(next.lines)));
-   }else N(t('Picking paused. Your verified progress is saved.'));
+   }else N(t('Picking paused.'));
    R(await request('/warehouse/tasks'));
   });
  }
@@ -793,8 +793,8 @@ export default function WarehouseApp({user,preferences,logout}){
    <small className="sf-lookup-phrase">{lookupCopy(appLanguage,'voiceHint')} <span lang={task.language==='hi-en'?'hi-Latn':task.language}>{pickVoicePhrase(task.language,'verify')} / {pickVoicePhrase(task.language,'report')} / {pickVoicePhrase(task.language,'repeat')}</span></small>
   </>}
  </section>}
- {(picking.status!=='ready'||lookupMode==='guided')&&<section className="wh-panel sf-guided-picking" aria-label={t('Guided picking')}>
-  <div className="sf-picking-head"><div><span className="wh-eyebrow">{t('Guided picking')}</span><h3>{t(picking.status==='completed'?'Picking completed':pickPaused?'Picking paused':picking.status==='active'?'Picking in progress':'Ready to pick')}</h3><small>{pickingUiCopy(appLanguage,picking.status==='ready'?'ready':'active')}</small></div><b>{verifiedCount}/{task.lines.length}</b></div>
+ {(picking.status!=='completed'&&(picking.status!=='ready'||lookupMode==='guided')&&(picking.status!=='active'||nextPickIndex>=0))&&<section className="wh-panel sf-guided-picking" aria-label={t('Guided picking')}>
+  <div className="sf-picking-head"><div><h3>{t(picking.status==='completed'?'Picking completed':pickPaused?'Picking paused':picking.status==='active'?'Picking in progress':'Ready to pick')}</h3>{picking.status==='ready'&&<small>{pickingUiCopy(appLanguage,'ready')}</small>}</div><b>{verifiedCount}/{task.lines.length}</b></div>
   <progress aria-label={t('Picking progress')} max={task.lines.length} value={verifiedCount}/>
   {lastConfirmedIndex>=0&&<div className="sf-picking-undo"><button type="button" disabled={busy||pickPaused} onClick={()=>undoPick(lastConfirmedIndex)}>{pickingUiCopy(appLanguage,'undo')}</button></div>}
   {picking.status!=='completed'&&<div className="sf-voice-guide">
@@ -837,7 +837,13 @@ export default function WarehouseApp({user,preferences,logout}){
   {picking.status==='ready'?<div className="sf-picking-actions"><button className="primary" type="button" disabled={busy||!canStartPick} onClick={()=>pickAction('start')}><Glyph name="check"/>{t('Confirm search and begin picking')}</button>{voice&&PICKING_START_VOICE_LANGUAGES.includes(task.language)&&<VoiceButton small autoStop enabled={!busy&&canStartPick} language={task.language} label={t('Confirm search by voice')} onError={E} onText={voiceStartPicking}/>} {!canStartPick&&unresolvedLines.length>0&&<div className="sf-pick-review-needed" role="status"><strong>{unresolvedLines.length} {t('item(s) still need your choice before picking can start.')}</strong><button type="button" disabled={busy} onClick={()=>{const index=task.lines.findIndex(line=>!line.selected||!line.location);if(index>=0){AL(index);document.getElementById('sf-picking-line-'+index)?.scrollIntoView({behavior:'smooth',block:'center'});document.getElementById('sf-picking-line-'+index)?.focus({preventScroll:true})}}}>{t('Review unresolved items')} <Glyph name="arrow"/></button></div>} {reportedLines.length>0&&<small className="sf-pick-reported-note" role="status">{reportedLines.length} {t('reported shelf location(s) are excluded from picking until owner review. They remain unconfirmed.')}</small>}{!canStartPick&&!unresolvedLines.length&&<small role="status">{t('No eligible items remain. Ask the owner to verify the reported locations.')}</small>}</div>:
    picking.status==='active'?<div className="sf-picking-actions"><span>{nextPickIndex<0?t(verifiedCount===task.lines.length?'All items verified. Finish the pick.':'No more pending picks. Review deferred items below.'):pickingUiCopy(appLanguage,'current')+': '+task.lines[nextPickIndex].selected.name+' · '+pathText(task.lines[nextPickIndex].location,!!task.lines[nextPickIndex].selected.synthetic)}</span><div><button type="button" className="sf-pick-pause-toggle" aria-pressed={pickPaused} disabled={busy} onClick={togglePickPause}>{pickingUiCopy(appLanguage,pickPaused?'resumePicking':'pause')}</button><button className="primary" type="button" disabled={busy||pickPaused||!task.lines.every(line=>line.complete||['skipped','cancelled'].includes(line.deferred_reason))} onClick={()=>pickAction('finish')}>{pickingUiCopy(appLanguage,'finish')}</button></div></div>:
    <p className="sf-picking-done">{task.lines.some(line=>['skipped','cancelled'].includes(line.deferred_reason))?nextItemUi(appLanguage,'finishedWithExceptions'):t('All requested items were verified. Picking is recorded without changing stock.')}</p>}
- </section>}</>:<section className="wh-panel sf-no-picking-results" role="status"><h3>{t('No items ready to pick')}</h3><p>{t('We could not find a saved product for this request. Try another product name, browse the catalogue or ask the owner to add it. You can start picking when an item is found.')}</p></section>}
+ </section>}
+ {picking.status==='active'&&nextPickIndex<0&&<div className="sf-picking-remaining" role="status">
+   <span>{task.lines.filter(line=>!line.complete).length} {t('items remaining')}</span>
+   {task.lines.every(line=>line.complete||['skipped','cancelled'].includes(line.deferred_reason))
+    ?<button type="button" className="primary" disabled={busy||pickPaused} onClick={()=>pickAction('finish')}>{pickingUiCopy(appLanguage,'finish')}</button>
+    :<button type="button" onClick={()=>{const index=task.lines.findIndex(line=>!line.complete);if(index>=0)document.getElementById('sf-picking-line-'+index)?.scrollIntoView({behavior:'smooth',block:'center'})}}>{t('Review items')}</button>}
+ </div>}</>:<section className="wh-panel sf-no-picking-results" role="status"><h3>{t('No items ready to pick')}</h3><p>{t('We could not find a saved product for this request. Try another product name, browse the catalogue or ask the owner to add it. You can start picking when an item is found.')}</p></section>}
  <div className="wh-work-grid"><div className="wh-task-list">{ordered.map(line=><article id={'sf-picking-line-'+line.index} className={'wh-panel wh-task '+(line.complete?'complete':'')+(activeLine===line.index?' sf-task-active':'')+(!line.selected?' sf-task-unresolved':'')+(line.location_report_open?' sf-task-reported':'')+(line.deferred_reason==='declined'?' sf-task-skipped':'')} tabIndex={-1} key={line.index}><div className="wh-task-heading">{(line.selected||line.candidates[0])&&<ItemArt collection={(line.selected||line.candidates[0]).collection} photo={(line.selected||line.candidates[0]).photo_url} name={(line.selected||line.candidates[0]).name}/> }<span className="wh-step">{line.complete?<Glyph name="check"/>:String(line.index+1).padStart(2,'0')}</span><div><small>{line.query}</small><h3>{line.selected?<button type="button" className="sf-item-name-guide" aria-label={t('Shelf guide')+': '+line.selected.name} onClick={()=>{AL(line.index);document.getElementById('sf-shelf-guide')?.scrollIntoView({behavior:'smooth',block:'nearest'})}}>{line.selected.name}</button>:t(line.candidates.length?'Choose the right variant':'Item not found')}</h3></div><span className={'wh-status '+(line.location_report_open?'amber':line.complete||line.location_feedback?.status==='correct'?'green':line.selected?'purple':'amber')}>{t(line.location_report_open?'Location reported':line.deferred_reason==='later'?nextItemUi(appLanguage,'laterStatus'):line.deferred_reason==='skipped'?nextItemUi(appLanguage,'skippedStatus'):line.deferred_reason==='cancelled'?nextItemUi(appLanguage,'cancelledStatus'):line.deferred_reason==='declined'?'Not confirmed — skipped':line.complete?(line.confirmation==='barcode'?'Scan confirmed':'Manually confirmed'):line.location_feedback?.status==='correct'?'Shelf location checked':line.selected?'Recorded location':line.candidates.length?'Needs a detail':'Not found')}</span></div>{line.selected?<><div className="wh-item-meta"><code>{line.selected.sku}</code><span>{line.selected.brand} · {meta.collections.find(c=>c.id===line.selected.collection)?.name}</span><Specs item={line.selected} labels={labels}/></div><Place location={line.location} example={!!line.selected?.synthetic}/>{line.deferred_reason&&picking.status==='active'&&<div className="sf-deferred-pick" role="status"><span>{line.deferred_reason==='later'?nextItemUi(appLanguage,'laterStatus'):line.deferred_reason==='skipped'?nextItemUi(appLanguage,'skippedStatus'):line.deferred_reason==='cancelled'?nextItemUi(appLanguage,'cancelledStatus'):t(line.deferred_reason==='reported'?'Reported — awaiting location verification. This item is not marked picked.':'Not confirmed. Finder is guiding you to the remaining items.')}</span>{['later','skipped','declined'].includes(line.deferred_reason)&&<button type="button" disabled={busy||pickPaused} onClick={()=>retryPick(line.index)}>{nextItemUi(appLanguage,'retry')}</button>}</div>}<details className="sf-location-check"><summary>{line.location_feedback?.status==='correct'?t('Shelf location checked'):t('Verify location (optional)')}</summary><div className="sf-location-check-actions"><button type="button" className="sf-location-yes" disabled={busy||pickPaused||line.complete||picking.status==='completed'||!!line.deferred_reason||line.location_report_open||line.location_feedback?.status==='correct'} onClick={()=>run(async()=>{const next=await api('/tasks/'+task.id+'/location-check',{line:line.index});T(next);N(t('Location checked for this visit.'))})}><Glyph name="check"/>{t('Shelf matches')}</button></div></details><div className="wh-task-footer"><button onClick={()=>D({type:'detail',item:line.selected})}>{t('Item details')}</button><button type="button" className="sf-item-report-link" disabled={busy||pickPaused||line.complete||picking.status==='completed'||!!line.deferred_reason||line.location_report_open} onClick={()=>{reportResumeRef.current=handsFree&&!voiceGuidePaused;VGP(true);D({type:'report',item:line.selected,location:line.location,index:line.index,autoGuide:true})}}>{t('Report issue')}</button><div><button className="primary" disabled={busy||pickPaused||picking.status==='completed'||line.complete||!!line.deferred_reason||line.location_report_open} onClick={()=>D({type:'scan',index:line.index})}><Glyph name={line.complete?'check':'scan'}/>{t(line.complete?'Picked and verified':'Confirm picked item')}</button></div></div>{picking.status==='ready'&&line.location_report_open&&task.lines.length>1&&<button type="button" className="wh-text-button" disabled={busy} onClick={()=>removeUnresolvedLine(line.index)}>{t('Remove reported item from this worklist')}</button>}{picking.status==='ready'&&line.candidates.length>1&&<button className="wh-text-button" onClick={()=>T({...task,lines:task.lines.map((l,i)=>i===line.index?{...l,selected:null}:l)})}>{t('Choose another variant')}</button>}</>:line.candidates.length?<div className="wh-candidates"><p>{t('Choose the correct size or version. We will not choose one for you.')}</p>{voice&&picking.status==='ready'&&line.index===firstVoiceClarification&&<VariantVoiceClarifier key={task.id+'-'+line.index} taskId={task.id} index={line.index} language={task.language} enabled={!busy&&page==='find'&&!modal} onError={E} onReply={reply=>run(async()=>{const next=await api('/tasks/'+task.id+'/clarify',{line:line.index,reply});T(next);if(next.lines.every(x=>x.selected&&x.location))pendingModePrompt.current=next.id;})}/>}<Clarification key={task.id+'-'+line.index} {...{voice,language,busy}} onError={E} onReply={reply=>run(async()=>{const next=await api('/tasks/'+task.id+'/clarify',{line:line.index,reply});T(next);if(next.lines.every(x=>x.selected&&x.location))pendingModePrompt.current=next.id;})}/>{line.candidates.map(p=><div className="wh-candidate" key={p.collection+':'+p.sku}><ItemArt collection={p.collection} photo={p.photo_url} name={p.name}/><div><small>{p.brand} · {meta.collections.find(c=>c.id===p.collection)?.name}</small><b>{p.name}</b><code>{p.sku}</code><Specs item={p} labels={labels}/><div className="wh-candidate-places">{p.placements.map(l=><button disabled={busy} key={l.code} onClick={()=>choose(line.index,p,l)}><Glyph name="pin"/>{friendlyPath(l,!!p.synthetic)}<Glyph name="arrow"/></button>)}</div></div></div>)}</div>:<div className="wh-no-match"><p>{items.length===0?t(owner?'No catalogue items are saved yet. In Import items, review the column mapping, select Preview changes, then Confirm import to save the spreadsheet.':'No catalogue items are available yet. Ask your owner to finish importing the spreadsheet.'):t('This exact item is not in your saved catalogue. Check the name or size, or browse saved items. Nothing has been reported.')}</p>{items.length===0&&owner&&<button type="button" disabled={busy} onClick={()=>navigate('import')}>{t('Go to Import items')}</button>}{picking.status==='ready'&&task.lines.length>1&&<div className="sf-unmatched-tools"><p>{/^\d+(?:[.\/-]\d+)?$/.test(line.query.trim())?t('This looks like a size rather than an item. Add it to the product name in your search, or remove it.'):t('This item was not found. Remove it to continue with the items we did find.')}</p><button type="button" disabled={busy} onClick={()=>removeUnresolvedLine(line.index)}>{t('Remove from worklist')}</button></div>}<button type="button" disabled={busy} onClick={()=>run(async()=>{const report=await api('/issues',{collection,sku:'',reason:('Missing catalogue item: '+line.query).slice(0,400),kind:'general'});N(t('Missing-item report sent to review.')+' #'+report.id)})}>{t('Report missing item')}</button><button type="button" onClick={()=>navigate('catalogue')}>{t('Browse saved items')}</button></div>}</article>)}</div><aside id="sf-shelf-guide" className="wh-route wh-panel sf-location-navigator">
   <div className="sf-location-navigator-head">
     <div><h3>{t('Current item location')}</h3><small>{guideLine?.selected?.name||t('Choose a variant to add its location here.')}</small></div>
@@ -1007,10 +1013,7 @@ function Report({item,location,collection,userId,run,busy,speaking=false,voice,l
  <p><b>{item.name}</b> · {item.sku}</p>
  {location&&<p>{t('Recorded location:')} <strong>{pathText(location)}</strong></p>}
  {voice&&onLanguageChange&&<label className="sf-report-speech-language">{t('Speech language')}<select aria-label={t('Speech language')} value={language} disabled={busy||speechSwitching} onChange={e=>void onLanguageChange(e.target.value)}>{VOICE_INPUT_LANGUAGES.map(([code,name])=><option key={code} value={code}>{name}</option>)}</select></label>}
- <div className="sf-report-step-note" role="status">
-  <strong>{copy('paused')}</strong>
-  <span>{copy('steps')}</span>
- </div>
+
  {voice&&<GuidedVoiceTurn language={language} stage={guideStage} context="Automatic wrong-location report" disabled={busy||speechSwitching} autoStart={autoGuide}
   retryStep={guideStage+'_retry'}
   promptEndpoint={guideStage==='report_confirm'?'voice/report-preview-audio':null}
