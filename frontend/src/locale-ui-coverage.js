@@ -659,3 +659,12 @@ const locationNavigatorLabels={
 for(const [language,entries] of Object.entries(locationNavigatorLabels)){
  if(uiLanguageCoverage[language])Object.assign(uiLanguageCoverage[language],entries);
 }
+
+const completedPickRouteLabels={
+ hi:"उठाया और सत्यापित किया",te:"తీసుకుని ధృవీకరించబడింది",kn:"ತೆಗೆದುಕೊಂಡು ಪರಿಶೀಲಿಸಲಾಗಿದೆ",
+ ta:"எடுக்கப்பட்டு சரிபார்க்கப்பட்டது",ml:"എടുത്ത് സ്ഥിരീകരിച്ചു",mr:"उचलले आणि पडताळले",
+ bn:"সংগ্রহ ও যাচাই করা হয়েছে",gu:"લેવામાં અને ચકાસવામાં આવ્યું",pa:"ਚੁੱਕਿਆ ਅਤੇ ਤਸਦੀਕ ਕੀਤਾ"
+};
+for(const [language,value] of Object.entries(completedPickRouteLabels)){
+ if(uiLanguageCoverage[language])uiLanguageCoverage[language]["Picked and verified"]=value;
+}
