@@ -3051,3 +3051,97 @@ html,body,#root{max-width:100%;overflow-x:clip}
 @media(max-width:990px){
  .sf-find-page .sf-lookup-mode-choice{padding:12px;gap:10px}
 }
+
+/* Structured picking controls: stable toolbar, commands, feedback, and footer. */
+.sf-find-page .sf-guided-picking .sf-voice-guide{
+  display:flex;flex-direction:column;align-items:stretch;gap:10px;
+  padding:12px 14px;
+}
+.sf-find-page .sf-guided-picking .sf-guided-toolbar{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0;
+}
+.sf-find-page .sf-guided-picking .sf-guided-toolbar>.sf-voice-current-status{
+  flex:1 1 210px;min-width:180px;margin:0;padding:5px 8px;
+}
+.sf-find-page .sf-guided-picking .sf-guided-toolbar>.sf-picking-language{
+  display:flex;align-items:center;gap:8px;flex:0 0 auto;margin:0;
+}
+.sf-find-page .sf-guided-picking .sf-guided-toolbar>.sf-voice-guide-actions{
+  display:flex;align-items:center;gap:8px;flex:0 1 auto;flex-wrap:wrap;margin:0;
+}
+.sf-find-page .sf-guided-picking .sf-guided-commands{
+  display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;
+  border-top:1px solid var(--wh-border);padding-top:10px;
+}
+.sf-find-page .sf-guided-picking .sf-guided-commands>.sf-voice-guide-choices{
+  display:flex;align-items:center;gap:8px;flex:0 1 auto;flex-wrap:wrap;
+  margin:0;padding:0;border:0;
+}
+.sf-find-page .sf-guided-picking .sf-guided-commands>.sf-voice-guide-secondary{
+  display:flex;align-items:center;gap:8px;flex:0 1 auto;flex-wrap:wrap;
+  margin:0;padding:0;
+}
+.sf-find-page .sf-guided-picking .sf-guided-commands button,
+.sf-find-page .sf-guided-picking .sf-guided-toolbar button{
+  min-height:40px;height:40px;padding:7px 12px;
+  align-self:center;white-space:nowrap;
+}
+.sf-find-page .sf-guided-picking .sf-voice-pick-confirm{
+  display:flex;flex-direction:column;align-items:flex-start;gap:8px;
+  width:100%;min-width:0;flex:none;margin:0;
+}
+.sf-find-page .sf-guided-picking .sf-voice-pick-confirm>div{
+  display:flex;align-items:center;flex-wrap:wrap;gap:8px;
+}
+.sf-find-page .sf-guided-picking .sf-guide-reply{
+  width:100%;margin:0;flex:none;padding:9px 12px;
+}
+.sf-find-page .sf-guided-picking .sf-picking-actions{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:10px;
+}
+.sf-find-page .sf-guided-picking .sf-picking-actions>span{
+  flex:1 1 240px;min-width:0;
+}
+.sf-find-page .sf-guided-picking .sf-picking-actions>div{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.sf-find-page .sf-guided-picking .sf-picking-actions>div button{min-height:40px;height:40px}
+/* No odd-numbered item is allowed to stretch into a full-width empty card. */
+@media(min-width:991px){
+ .sf-find-page .wh-work-grid>.wh-task-list{
+   display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+   gap:14px;align-items:start;
+ }
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task:last-child:nth-child(odd):not(:first-child){
+   grid-column:auto;grid-row:auto;
+ }
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task{
+   display:flex;flex-direction:column;min-width:0;
+   height:auto;align-self:start;
+ }
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task .wh-task-heading,
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task .wh-item-meta,
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task .wh-place{
+   width:100%;min-width:0;
+ }
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task .wh-task-footer{
+   display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+   margin-top:10px;grid-column:auto;grid-row:auto;
+ }
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task .sf-location-check{
+   grid-column:auto;grid-row:auto;align-self:stretch;
+ }
+}
+@media(max-width:990px){
+ .sf-find-page .wh-work-grid>.wh-task-list{
+   display:grid;grid-template-columns:1fr;gap:12px;
+ }
+}
+@media(max-width:700px){
+ .sf-find-page .sf-guided-picking .sf-guided-toolbar>.sf-voice-current-status{flex:1 1 100%;min-width:0}
+ .sf-find-page .sf-guided-picking .sf-guided-toolbar>.sf-picking-language{flex:1 1 100%;justify-content:space-between}
+ .sf-find-page .sf-guided-picking .sf-guided-commands>.sf-voice-guide-choices{display:flex;flex:1 1 100%}
+ .sf-find-page .sf-guided-picking .sf-guided-commands button{min-height:40px}
+ .sf-find-page .sf-guided-picking .sf-picking-actions>div{width:100%;justify-content:flex-end}
+}

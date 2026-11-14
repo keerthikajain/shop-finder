@@ -968,3 +968,18 @@ test('speech language can change mid picking without losing state or accepting s
  assert.match(src,/Speech language changed\. Picking progress is saved\./);
  assert.doesNotMatch(src,/onChange=\{e=>\{L\(e\.target\.value\);DSL\(null\)\}\}/);
 });
+
+test('guided picking presents stable toolbar and command rows and odd cards retain one grid column',async()=>{
+ const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(ui,/className="sf-guided-toolbar"/);
+ assert.match(ui,/className="sf-guided-commands"/);
+ assert.match(ui,/className="sf-voice-guide-choices"/);
+ assert.match(ui,/className="sf-voice-guide-secondary"/);
+ assert.match(ui,/className="sf-picking-actions"/);
+ assert.match(css,/\.sf-guided-picking \.sf-guided-toolbar/);
+ assert.match(css,/\.sf-guided-picking \.sf-guided-commands/);
+ assert.match(css,/\.sf-guided-picking \.sf-picking-actions/);
+ assert.ok(css.includes('.wh-task:last-child:nth-child(odd):not(:first-child){\n   grid-column:auto'));
+ assert.match(css,/@media\(max-width:990px\)/);
+});
