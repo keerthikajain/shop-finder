@@ -512,3 +512,66 @@
     padding-inline:5px;
   }
 }
+
+
+/* Find search options: compact, left-aligned and clearly grouped on phones. */
+@media(max-width:700px){
+ .sf-compact-app.sf-find-page .wh-ask-bottom{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:9px;
+  width:100%;
+  min-width:0;
+  margin:12px 0 12px;
+ }
+ .sf-compact-app.sf-find-page .wh-ask-bottom>label{
+  display:flex;
+  align-items:flex-start;
+  justify-content:flex-start;
+  gap:9px;
+  padding:0 2px;
+  margin:0;
+  width:100%;
+  min-height:28px;
+  font-size:12px;
+  line-height:1.4;
+  text-align:left;
+ }
+ .sf-compact-app.sf-find-page .wh-ask-bottom input[type=checkbox]{
+  flex:0 0 18px;
+  width:18px;
+  height:18px;
+  min-width:18px;
+  min-height:18px;
+  margin:1px 0 0;
+ }
+ .sf-compact-app.sf-find-page .wh-ask-bottom>.sf-prisma-options{
+  display:flex;
+  align-items:center;
+  width:100%;
+  margin:0;
+  padding:0;
+ }
+ .sf-compact-app.sf-find-page .wh-ask-bottom .sf-prisma-options>.sf-live-mode{
+  display:inline-flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:9px;
+  width:auto;
+  min-width:0;
+  max-width:100%;
+  min-height:44px;
+  padding:8px 12px;
+  margin:0;
+  border-radius:10px;
+  text-align:left;
+  font-size:12px;
+  line-height:1.35;
+  white-space:normal;
+ }
+ .sf-compact-app.sf-find-page .wh-ask-bottom .sf-live-mode input[type=checkbox]{
+  flex:0 0 18px;
+  margin:0;
+ }
+}

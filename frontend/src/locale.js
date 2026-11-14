@@ -397,3 +397,7 @@ Object.assign(hindi,pickingHindiCoverage);
 for(const [code,words] of Object.entries(uiLanguageCoverage)){
  if(code!=='hi'&&additionalLocales[code])Object.assign(additionalLocales[code],words);
 }
+
+// Clear label for the optional live voice transcription setting.
+Object.assign(hindi,{'Show words as I speak':'बोलते समय शब्द दिखाएँ'});
+if(additionalLocales.te)Object.assign(additionalLocales.te,{'Show words as I speak':'మాట్లాడుతున్నప్పుడు పదాలను చూపించు'});
