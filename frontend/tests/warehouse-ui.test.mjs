@@ -983,3 +983,22 @@ test('guided picking presents stable toolbar and command rows and odd cards reta
  assert.ok(css.includes('.wh-task:last-child:nth-child(odd):not(:first-child){\n   grid-column:auto'));
  assert.match(css,/@media\(max-width:990px\)/);
 });
+
+test('mobile Find keeps query full width and separates mic language and submit controls',async()=>{
+ const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(ui,/className="sf-search-input-wrap"/);
+ assert.match(ui,/className="wh-composer-actions"/);
+ assert.match(ui,/className="sf-work-summary"/);
+ assert.match(ui,/className="wh-toolbar sf-worklist-controls"/);
+ const rules=css.slice(css.lastIndexOf('/* Mobile Finder: one clear search field'));
+ assert.ok(rules.length>1000);
+ assert.match(rules,/@media\(max-width:700px\)/);
+ assert.match(rules,/\.wh-ask form>\.sf-search-input-wrap\{/);
+ assert.match(rules,/\.wh-ask form>\.wh-composer-actions\{/);
+ assert.match(rules,/grid-template-columns:54px minmax\(0,1fr\) minmax\(118px,0\.95fr\)/);
+ assert.match(rules,/\.wh-ask form \.sf-search-input-wrap>input#wh-query\{/);
+ assert.match(rules,/\.wh-results \.wh-section-title h2 \.sf-work-summary\{/);
+ assert.match(rules,/\.sf-worklist-controls select,/);
+ assert.match(rules,/padding-bottom:calc\(112px \+ env\(safe-area-inset-bottom\)\)/);
+});
