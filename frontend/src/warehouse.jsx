@@ -172,7 +172,12 @@ export default function WarehouseApp({user,preferences,logout}){
  }
  async function changeSpeechLanguage(nextLanguage){
   if(!ACTIVE_VOICE_CODES.has(nextLanguage)||busy||speechSwitchRef.current||nextLanguage===(task?.language||language))return;
-  const shouldResumeHandsFree=handsFree&&!voiceGuidePaused;
+  // Switching while Finder is speaking is an active voice turn, even if
+  // its microphone was paused for playback. Preserve deliberate user pauses.
+  const wasSpeaking=speaking;
+  const wasVoiceTurnActive=wasSpeaking||(!voiceGuidePaused&&!voiceFlowStopped.current);
+  const shouldReplay=wasVoiceTurnActive&&!pickPaused;
+  const shouldResumeHandsFree=handsFree&&shouldReplay;
   speechSwitchRef.current=true;SetSpeechSwitching(true);
   modeChoiceSerial.current++;pendingModePrompt.current=null;
   SetModeListening(false);SetLookupVoicePaused(true);stopVoiceFlow();
@@ -184,13 +189,16 @@ export default function WarehouseApp({user,preferences,logout}){
    const next=await api('/tasks/'+current.id+'/speech-language',{language:nextLanguage});
    L(nextLanguage);T(next);
    N(t('Speech language changed. Picking progress is saved.'));
-   if(previous&&shouldResumeHandsFree&&!modal&&page==='find'&&voice){
+   if(previous&&shouldReplay&&!modal&&page==='find'&&voice){
     const currentLine=next.lines[activeLine];
     const index=currentLine&&!currentLine.complete&&!currentLine.deferred_reason&&!currentLine.location_report_open&&!currentLine.stale_catalogue?activeLine:nextPendingPickIndex(next.lines);
     if(index>=0){
-     AL(index);voiceFlowStopped.current=false;
+     AL(index);
+     voiceFlowStopped.current=false;
+     // Unpause only the automatic turn we interrupted, not a manually
+     // stopped/paused session. The mic stays gated until audio finishes.
      const played=await playPickGuidance('repeat',next,index,true);
-     if(played)VGP(!handsFree);
+     if(played&&shouldResumeHandsFree)VGP(false);
     }
    }
   }catch(e){E(e.message)}
