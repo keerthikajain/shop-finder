@@ -9,6 +9,7 @@ import {modeChoiceIntent,lookupVoiceIntent,modeChoicePhrases} from './lookup-mod
 import {lookupCopy} from './lookup-mode-copy.js';
 import GuidedVoiceTurn from './guided-voice-turn.jsx';
 import WorkspaceGreeting from './workspace-greeting.jsx';
+import {voiceClock,recordVoiceTiming,noteVoiceResponseStarted} from './voice-performance.js';
 import {pickConfirmationIntent} from './picking-confirmations.js';
 import {nextItemChoice,nextItemPhrase,nextItemUi} from './pick-next-intent.js';
 import {voiceAction,actionPhrases,dialogueControl,plausibleShelfSuggestion,reportSubmitCommand,unclearReportSubmit} from './voice-review-commands.js';
@@ -216,6 +217,7 @@ export default function WarehouseApp({user,preferences,logout}){
   stopSpeech();
   const serial=playbackSerial.current,controller=new AbortController();
   audioRequest.current=controller;SP(true);
+  const ttsStart=voiceClock();
   try{
    // Reuse only fixed wording: item-specific messages still request fresh audio.
    const blob=await fixedVoicePrompt(step,spokenLanguage,{
@@ -230,6 +232,8 @@ export default function WarehouseApp({user,preferences,logout}){
    audio.current.onended=()=>{playbackSucceeded=true;if(serial===playbackSerial.current)SP(false);done()};
    audio.current.onerror=()=>{if(serial===playbackSerial.current)SP(false);E('Voice playback failed. Choose a mode on screen or try the microphone.');done()};
    await audio.current.play();
+   recordVoiceTiming('fixed-audio-ready',ttsStart);
+   noteVoiceResponseStarted();
    if(waitForEnd)await ended;
    return serial===playbackSerial.current&&(!waitForEnd||playbackSucceeded);
   }catch(e){
@@ -489,6 +493,7 @@ export default function WarehouseApp({user,preferences,logout}){
   if(!voice||!source||(!manual&&voiceFlowStopped.current))return;
   stopSpeech();const serial=playbackSerial.current,controller=new AbortController();
   audioRequest.current=controller;SP(true);
+  const ttsStart=voiceClock();
   try{
    const response=await fetch('/api/warehouse/tasks/'+encodeURIComponent(source.id)+'/picking/guide-audio',{
     method:'POST',headers:{'X-Shop-Request':'1','Content-Type':'application/json'},
@@ -501,7 +506,10 @@ export default function WarehouseApp({user,preferences,logout}){
    audioURL.current=URL.createObjectURL(blob);
    audio.current=new Audio(audioURL.current);
    audio.current.onended=()=>{if(serial===playbackSerial.current)SP(false)};
-   await audio.current.play();return true;
+   await audio.current.play();
+   recordVoiceTiming('picking-audio-ready',ttsStart);
+   noteVoiceResponseStarted();
+   return true;
   }catch(err){if(err.name!=='AbortError'&&serial===playbackSerial.current){VGP(true);E(err.name==='NotAllowedError'?t('Tap Read guidance to allow audio playback. Then start listening when ready.'):err.message)}if(serial===playbackSerial.current)SP(false);return false}
   finally{if(audioRequest.current===controller)audioRequest.current=null}
  }
