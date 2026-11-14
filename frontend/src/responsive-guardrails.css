@@ -1,0 +1,311 @@
+/* Final responsive guardrails. Loaded last so existing page design remains authoritative.
+   Avoid clipping whole-page overflow: fix children at the layout boundary instead. */
+#root, .sf-compact-app, .sf-compact-app main,
+.sf-compact-app .wh-workspace, .sf-compact-app .wh-results,
+.sf-compact-app .wh-task, .sf-compact-app .wh-review-row,
+.sf-compact-app .sf-guided-picking, .sf-compact-app .sf-report-flow,
+.sf-compact-app .sf-settings-page {
+  min-width: 0;
+  max-width: 100%;
+}
+.sf-compact-app :is(h1,h2,h3,h4,p,strong,small,span,label) {
+  overflow-wrap: break-word;
+}
+.sf-compact-app :is(input,textarea,select) {
+  max-width: 100%;
+  min-width: 0;
+}
+.sf-compact-app img, .sf-compact-app video, .sf-compact-app canvas {
+  max-width: 100%;
+  height: auto;
+}
+.sf-compact-app :is(.sf-guide-transcript,.sf-guide-reply,.sf-team-report-transcript,
+.sf-voice-detail-transcript,.sf-report-voice-panel,.wh-place,.wh-item-meta) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.sf-compact-app :is(.sf-voice-guide-actions,.sf-voice-guide-choices,
+.sf-picking-actions,.sf-team-report-submit,.sf-team-report-verify) {
+  min-width: 0;
+}
+.sf-compact-app :is(.sf-voice-guide-actions,.sf-voice-guide-choices,
+.sf-team-report-verify) > button {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+}
+.sf-compact-app :is(.wh-task-list,.wh-work-grid,.sf-worklist-controls) > * {
+  min-width: 0;
+}
+/* Keep dense catalogue data accessible without making the entire page scroll sideways. */
+.sf-compact-app :is(.table-wrap,.wh-table-wrap,.sf-table-wrap) {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+@media (max-width: 990px) {
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list {
+    grid-template-columns: minmax(0,1fr);
+  }
+}
+@media (max-width: 700px) {
+  .sf-compact-app :is(.sf-guided-toolbar,.sf-picking-head,.sf-voice-guide-heading,
+  .wh-section-title,.sf-team-report-header,.sf-review-header,.section-heading) {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .sf-compact-app .sf-guided-picking .sf-guided-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 9px;
+  }
+  .sf-compact-app .sf-guided-picking .sf-guided-toolbar > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .sf-compact-app .sf-guided-picking .sf-guided-toolbar > .sf-voice-guide-actions {
+    flex: 1 1 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .sf-compact-app .sf-guided-picking .sf-guided-toolbar > .sf-voice-guide-actions button {
+    min-height: 44px;
+    flex: 1 1 135px;
+  }
+  .sf-compact-app .sf-guided-picking .sf-guided-commands > .sf-voice-guide-choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+  }
+  .sf-compact-app .sf-guided-picking .sf-guided-commands button {
+    min-width: 0;
+    min-height: 44px;
+    white-space: normal;
+  }
+  .sf-compact-app :is(.sf-report-flow,.sf-team-report-card,.sf-clarify,.wh-clarify)
+    :is(input,textarea,select) {
+    font-size: 16px;
+  }
+  .sf-compact-app .sf-picking-actions > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+  .sf-compact-app .sf-picking-actions > div button {
+    min-height: 44px;
+    flex: 1 1 135px;
+    width: auto;
+    max-width: 100%;
+  }
+  .sf-compact-app .sf-team-report-submit button {
+    min-height: 44px;
+  }
+}
+@media (max-width: 370px) {
+  .sf-compact-app .sf-guided-picking .sf-guided-commands button,
+  .sf-compact-app .sf-guided-picking .sf-picking-actions > div button {
+    flex: 1 1 100%;
+  }
+  .sf-compact-app .sf-guided-picking .sf-guided-toolbar > .sf-voice-guide-actions button {
+    flex: 1 1 100%;
+  }
+  .sf-compact-app.sf-find-page .wh-results .wh-section-title .sf-worklist-controls {
+    display: grid;
+    grid-template-columns: minmax(0,1fr);
+    width: 100%;
+  }
+  .sf-compact-app.sf-find-page .wh-results .wh-section-title .sf-worklist-controls > * {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+
+/* Screenshot follow-up: search has an input WRAPPER, not a bare input.
+   Place wrapper in the grid; the previous #wh-query positioning could not apply. */
+@media (max-width:700px) {
+  .sf-compact-app.sf-find-page .wh-ask form {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 50px;
+    grid-auto-flow:row;
+    gap:9px;
+    align-items:stretch;
+  }
+  .sf-compact-app.sf-find-page .wh-ask form > .sf-search-input-wrap {
+    grid-column:1;
+    grid-row:1;
+    width:100%;
+    min-width:0;
+    margin:0;
+    display:flex;
+    align-items:stretch;
+  }
+  .sf-compact-app.sf-find-page .wh-ask form .sf-search-input-wrap #wh-query {
+    width:100%;
+    min-width:0;
+    height:48px;
+    min-height:48px;
+    margin:0;
+    font-size:16px;
+  }
+  .sf-compact-app.sf-find-page .wh-ask form > .wh-composer-actions {
+    display:contents;
+  }
+  .sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice {
+    grid-column:2;
+    grid-row:1;
+    width:50px;
+    min-width:50px;
+    height:48px;
+    min-height:48px!important;
+    margin:0;
+  }
+  .sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice-lang {
+    grid-column:1;
+    grid-row:2;
+    width:100%;
+    max-width:none;
+    min-width:0;
+    height:46px;
+    margin:0;
+  }
+  .sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice-lang > select {
+    height:46px;
+    min-height:46px;
+    width:100%;
+  }
+  .sf-compact-app.sf-find-page .wh-composer-actions > .wh-search-submit {
+    grid-column:2;
+    grid-row:2;
+    margin:0;
+    width:100%;
+    min-width:0;
+    min-height:46px;
+    height:46px;
+    padding:8px 7px;
+    font-size:12px;
+    white-space:normal;
+  }
+  /* Search row two needs useful space for both the language and the action. */
+  .sf-compact-app.sf-find-page .wh-ask form {
+    grid-template-columns:minmax(112px,1fr) minmax(140px,1.35fr);
+  }
+  .sf-compact-app.sf-find-page .wh-ask form > .sf-search-input-wrap {
+    grid-column:1 / -1;
+    padding-right:59px;
+  }
+  .sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice {
+    grid-column:2;
+    grid-row:1;
+    justify-self:end;
+    position:relative;
+    z-index:1;
+  }
+  .sf-compact-app.sf-find-page .wh-composer-actions > .wh-search-submit {
+    grid-column:2;
+    font-size:13px;
+  }
+  /* Task actions must be natural height; flex/grid inherited stretching made
+     the purple confirmation control nearly square in the screenshot. */
+  .sf-compact-app.sf-find-page .wh-task .wh-task-footer {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    align-items:center;
+    align-content:start;
+    gap:8px;
+    min-height:0;
+    height:auto;
+  }
+  .sf-compact-app.sf-find-page .wh-task .wh-task-footer > button {
+    width:100%;
+    min-width:0;
+    min-height:44px;
+    height:auto;
+    align-self:center;
+    margin:0;
+    white-space:normal;
+    padding:9px 8px;
+    font-size:12px;
+  }
+  .sf-compact-app.sf-find-page .wh-task .wh-task-footer > div {
+    grid-column:1 / -1;
+    display:block;
+    flex:none;
+    width:100%;
+    min-width:0;
+    min-height:0;
+    height:auto;
+    margin:0;
+    align-self:start;
+  }
+  .sf-compact-app.sf-find-page .wh-task .wh-task-footer > div > button {
+    display:inline-flex;
+    width:100%;
+    height:auto;
+    min-height:48px;
+    max-height:none;
+    aspect-ratio:auto;
+    padding:11px 12px;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    white-space:normal;
+    line-height:1.3;
+    font-size:13px;
+  }
+  .sf-compact-app.sf-find-page .wh-task .sf-location-check {
+    align-self:stretch;
+    width:100%;
+  }
+  /* Allow scrolling past fixed mobile navigation while keeping all commands reachable. */
+  .sf-compact-app .wh-main-wrap main {
+    padding-bottom:max(118px, calc(105px + env(safe-area-inset-bottom,0px)));
+  }
+  .sf-compact-app .wh-sidebar nav button {
+    min-width:0;
+  }
+  .sf-compact-app .sf-guided-picking .sf-voice-guide {
+    min-width:0;
+    overflow:visible;
+  }
+  .sf-compact-app .sf-guided-picking .sf-voice-guide-choices {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+    width:100%;
+  }
+  .sf-compact-app .sf-guided-picking .sf-voice-guide-choices button {
+    width:100%;
+    min-width:0;
+    height:auto;
+    min-height:44px;
+    padding:10px 8px;
+  }
+}
+@media (max-width:370px) {
+  .sf-compact-app.sf-find-page .wh-ask form {
+    grid-template-columns:minmax(105px,1fr) minmax(125px,1.2fr);
+    gap:7px;
+  }
+  .sf-compact-app.sf-find-page .wh-ask form > .sf-search-input-wrap {
+    padding-right:53px;
+  }
+  .sf-compact-app.sf-find-page .wh-composer-actions > .wh-voice {
+    width:46px;
+    min-width:46px;
+  }
+  .sf-compact-app .sf-guided-picking .sf-picking-language {
+    display:flex;
+    align-items:stretch;
+    flex-direction:column;
+    gap:6px;
+  }
+  .sf-compact-app .sf-guided-picking .sf-picking-language select {
+    width:100%;
+    min-width:0;
+  }
+}
