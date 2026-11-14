@@ -2998,3 +2998,40 @@ html,body,#root{max-width:100%;overflow-x:clip}
  .sf-find-page .sf-guided-picking .sf-picking-language{flex:1 1 100%;justify-content:space-between}
  .sf-find-page .sf-guided-picking .sf-picking-language select{width:150px;max-width:56%}
 }
+
+/* Avoid oversized cards and repeated path tiles on large worklist screens. */
+@media(min-width:991px){
+ .sf-find-page .wh-work-grid{width:100%;max-width:1430px;margin:0 auto}
+ .sf-find-page .wh-work-grid>.sf-location-navigator{
+  display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 18px;
+  padding:10px 14px;min-height:unset
+ }
+ .sf-find-page .wh-work-grid>.sf-location-navigator>.sf-location-navigator-head{
+  flex:0 1 auto;min-width:170px;width:auto
+ }
+ .sf-find-page .wh-work-grid>.sf-location-navigator>.sf-location-navigator-detail{
+  flex:1 1 280px;display:flex;align-items:center;min-width:0
+ }
+ .sf-find-page .wh-work-grid>.sf-location-navigator>.sf-route-details{
+  flex:0 1 auto;min-width:150px;padding:0;margin:0;border:0
+ }
+ .sf-find-page .wh-work-grid>.sf-location-navigator>.sf-route-details[open]{flex-basis:100%}
+ .sf-find-page .wh-work-grid>.sf-location-navigator>.sf-route-details[open] .sf-route-list{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px
+ }
+ .sf-find-page .wh-work-grid>.wh-task-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+ .sf-find-page .wh-work-grid>.sf-location-navigator .sf-location-navigator-path{
+  font-size:13px;min-width:0;font-weight:600;color:var(--wh-text)
+ }
+}
+.sf-find-page .sf-location-navigator-head h3{font-size:14px!important}
+.sf-find-page .sf-location-navigator-head small{font-size:12px}
+.sf-find-page .sf-location-navigator-count{font-size:11px}
+.sf-find-page .sf-location-navigator-detail{gap:5px}
+@media(max-width:700px){
+ .sf-find-page .wh-work-grid>.sf-location-navigator{
+  padding:11px 12px;gap:8px
+ }
+ .sf-find-page .sf-location-navigator-head{gap:8px}
+ .sf-find-page .sf-location-navigator-detail{margin:0}
+}
