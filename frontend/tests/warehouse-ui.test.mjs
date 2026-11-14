@@ -424,7 +424,8 @@ test('synthetic provenance stays in catalogue and not in speech or picking scree
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(ui,/className="sf-catalogue-provenance"/);
  assert.match(ui,/Locations in starter records are not physically verified/);
- assert.match(ui,/friendlyPath\(ls\[0\]\.location,!!ls\[0\]\.selected\?\.synthetic\)/);
+ assert.match(ui,/friendlyPath\(line\.location,!!line\.selected\?\.synthetic\)/);
+ assert.match(ui,/guideLine\.selected\?\.synthetic&&field==='facility'/);
  assert.doesNotMatch(backend,/Sample catalogue locations, not verified for your store/);
  assert.doesNotMatch(ui,/Sample catalogue: these shelf locations are illustrative/);
  assert.doesNotMatch(ui,/className="sf-sample-info"/);
@@ -607,7 +608,11 @@ test('completed picks do not show redundant shelf-check or pick verification act
   assert.match(src,/sf-item-report-link/);
   assert.doesNotMatch(src,/className="sf-guide-jump"/);
   assert.doesNotMatch(src,/line\.location\.quantity==null\?t\('Quantity not added yet'\)/);
-  assert.match(src,/sf-shelf-all-locations/);
+  assert.match(src,/sf-location-navigator/);
+  assert.match(src,/sf-location-navigator-levels/);
+  assert.match(src,/sf-route-details/);
+  assert.doesNotMatch(src,/<ShelfGuide/);
+  assert.match(src,/task\.lines\.indexOf\(line\)/);
  assert.match(src,/disabled=\{busy\|\|pickPaused\|\|picking\.status==='completed'\|\|line\.complete\|\|!!line\.deferred_reason\|\|line\.location_report_open\}/);
  assert.match(src,/line\.complete\?\(line\.confirmation==='barcode'\?'Scan confirmed':'Manually confirmed'\):line\.location_feedback/);
 });

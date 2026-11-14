@@ -644,3 +644,27 @@ for(const [language,value] of Object.entries({
  ta:"குரல் விவரங்கள்",ml:"ശബ്ദ വിവരങ്ങൾ",mr:"आवाज तपशील",
  bn:"ভয়েস বিবরণ",gu:"વૉઇસ વિગતો",pa:"ਆਵਾਜ਼ ਵੇਰਵੇ"
 }))if(uiLanguageCoverage[language])uiLanguageCoverage[language]["Voice details"]=value;
+
+const locationNavigatorLabels={
+ hi:{"Current item location":"वर्तमान सामान की जगह","View all locations":"सभी जगहें देखें","Pending":"बाकी","Item":"सामान","Facility":"परिसर","Floor":"मंज़िल","Zone":"क्षेत्र","Aisle":"गलियारा","Rack":"रैक","Shelf":"शेल्फ़","Bin":"डिब्बा"},
+ te:{"Current item location":"ప్రస్తుత వస్తువు స్థానం","View all locations":"అన్ని స్థానాలు చూడండి","Pending":"పెండింగ్","Item":"వస్తువు","Facility":"ప్రాంగణం","Floor":"అంతస్తు","Zone":"ప్రాంతం","Aisle":"నడవ","Rack":"రాక్","Shelf":"షెల్ఫ్","Bin":"బిన్"},
+ kn:{"Current item location":"ಪ್ರಸ್ತುತ ವಸ್ತುವಿನ ಸ್ಥಳ","View all locations":"ಎಲ್ಲ ಸ್ಥಳಗಳನ್ನು ನೋಡಿ","Pending":"ಬಾಕಿ","Item":"ವಸ್ತು","Facility":"ಆವರಣ","Floor":"ಮಹಡಿ","Zone":"ವಲಯ","Aisle":"ಹಜಾರ","Rack":"ರ್ಯಾಕ್","Shelf":"ಶೆಲ್ಫ್","Bin":"ಬಿನ್"},
+ ta:{"Current item location":"தற்போதைய பொருளின் இடம்","View all locations":"அனைத்து இடங்களையும் காண்க","Pending":"நிலுவை","Item":"பொருள்","Facility":"வளாகம்","Floor":"தளம்","Zone":"மண்டலம்","Aisle":"பாதை","Rack":"ரேக்","Shelf":"அலமாரி","Bin":"பெட்டி"},
+ ml:{"Current item location":"നിലവിലെ സാധനത്തിന്റെ സ്ഥലം","View all locations":"എല്ലാ സ്ഥലങ്ങളും കാണുക","Pending":"ബാക്കി","Item":"സാധനം","Facility":"സ്ഥാപനം","Floor":"നില","Zone":"മേഖല","Aisle":"നടപ്പാത","Rack":"റാക്ക്","Shelf":"ഷെൽഫ്","Bin":"ബിൻ"},
+ mr:{"Current item location":"सध्याच्या वस्तूचे ठिकाण","View all locations":"सर्व ठिकाणे पहा","Pending":"प्रलंबित","Item":"वस्तू","Facility":"परिसर","Floor":"मजला","Zone":"विभाग","Aisle":"मार्ग","Rack":"रॅक","Shelf":"शेल्फ","Bin":"बिन"},
+ bn:{"Current item location":"বর্তমান পণ্যের অবস্থান","View all locations":"সব অবস্থান দেখুন","Pending":"বাকি","Item":"পণ্য","Facility":"প্রাঙ্গণ","Floor":"তলা","Zone":"অঞ্চল","Aisle":"সারি","Rack":"র‍্যাক","Shelf":"তাক","Bin":"বিন"},
+ gu:{"Current item location":"હાલની વસ્તુનું સ્થાન","View all locations":"બધા સ્થળો જુઓ","Pending":"બાકી","Item":"વસ્તુ","Facility":"પરિસર","Floor":"માળ","Zone":"વિભાગ","Aisle":"રસ્તો","Rack":"રેક","Shelf":"શેલ્ફ","Bin":"બિન"},
+ pa:{"Current item location":"ਮੌਜੂਦਾ ਵਸਤੂ ਦੀ ਥਾਂ","View all locations":"ਸਾਰੀਆਂ ਥਾਵਾਂ ਵੇਖੋ","Pending":"ਬਾਕੀ","Item":"ਵਸਤੂ","Facility":"ਇਮਾਰਤ","Floor":"ਮੰਜ਼ਿਲ","Zone":"ਖੇਤਰ","Aisle":"ਰਸਤਾ","Rack":"ਰੈਕ","Shelf":"ਸ਼ੈਲਫ਼","Bin":"ਬਿਨ"}
+};
+for(const [language,entries] of Object.entries(locationNavigatorLabels)){
+ if(uiLanguageCoverage[language])Object.assign(uiLanguageCoverage[language],entries);
+}
+
+const completedPickRouteLabels={
+ hi:"उठाया और सत्यापित किया",te:"తీసుకుని ధృవీకరించబడింది",kn:"ತೆಗೆದುಕೊಂಡು ಪರಿಶೀಲಿಸಲಾಗಿದೆ",
+ ta:"எடுக்கப்பட்டு சரிபார்க்கப்பட்டது",ml:"എടുത്ത് സ്ഥിരീകരിച്ചു",mr:"उचलले आणि पडताळले",
+ bn:"সংগ্রহ ও যাচাই করা হয়েছে",gu:"લેવામાં અને ચકાસવામાં આવ્યું",pa:"ਚੁੱਕਿਆ ਅਤੇ ਤਸਦੀਕ ਕੀਤਾ"
+};
+for(const [language,value] of Object.entries(completedPickRouteLabels)){
+ if(uiLanguageCoverage[language])uiLanguageCoverage[language]["Picked and verified"]=value;
+}
