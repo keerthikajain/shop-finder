@@ -1,0 +1,125 @@
+/* Final responsive guardrails. Loaded last so existing page design remains authoritative.
+   Avoid clipping whole-page overflow: fix children at the layout boundary instead. */
+#root, .sf-compact-app, .sf-compact-app main,
+.sf-compact-app .wh-workspace, .sf-compact-app .wh-results,
+.sf-compact-app .wh-task, .sf-compact-app .wh-review-row,
+.sf-compact-app .sf-guided-picking, .sf-compact-app .sf-report-flow,
+.sf-compact-app .sf-settings-page {
+  min-width: 0;
+  max-width: 100%;
+}
+.sf-compact-app :is(h1,h2,h3,h4,p,strong,small,span,label) {
+  overflow-wrap: break-word;
+}
+.sf-compact-app :is(input,textarea,select) {
+  max-width: 100%;
+  min-width: 0;
+}
+.sf-compact-app img, .sf-compact-app video, .sf-compact-app canvas {
+  max-width: 100%;
+  height: auto;
+}
+.sf-compact-app :is(.sf-guide-transcript,.sf-guide-reply,.sf-team-report-transcript,
+.sf-voice-detail-transcript,.sf-report-voice-panel,.wh-place,.wh-item-meta) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.sf-compact-app :is(.sf-voice-guide-actions,.sf-voice-guide-choices,
+.sf-picking-actions,.sf-team-report-submit,.sf-team-report-verify) {
+  min-width: 0;
+}
+.sf-compact-app :is(.sf-voice-guide-actions,.sf-voice-guide-choices,
+.sf-team-report-verify) > button {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+}
+.sf-compact-app :is(.wh-task-list,.wh-work-grid,.sf-worklist-controls) > * {
+  min-width: 0;
+}
+/* Keep dense catalogue data accessible without making the entire page scroll sideways. */
+.sf-compact-app :is(.table-wrap,.wh-table-wrap,.sf-table-wrap) {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+@media (max-width: 990px) {
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list {
+    grid-template-columns: minmax(0,1fr);
+  }
+}
+@media (max-width: 700px) {
+  .sf-compact-app :is(.sf-guided-toolbar,.sf-picking-head,.sf-voice-guide-heading,
+  .wh-section-title,.sf-team-report-header,.sf-review-header,.section-heading) {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .sf-compact-app .sf-guided-picking .sf-guided-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 9px;
+  }
+  .sf-compact-app .sf-guided-picking .sf-guided-toolbar > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .sf-compact-app .sf-guided-picking .sf-guided-toolbar > .sf-voice-guide-actions {
+    flex: 1 1 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .sf-compact-app .sf-guided-picking .sf-guided-toolbar > .sf-voice-guide-actions button {
+    min-height: 44px;
+    flex: 1 1 135px;
+  }
+  .sf-compact-app .sf-guided-picking .sf-guided-commands > .sf-voice-guide-choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+  }
+  .sf-compact-app .sf-guided-picking .sf-guided-commands button {
+    min-width: 0;
+    min-height: 44px;
+    white-space: normal;
+  }
+  .sf-compact-app :is(.sf-report-flow,.sf-team-report-card,.sf-clarify,.wh-clarify)
+    :is(input,textarea,select) {
+    font-size: 16px;
+  }
+  .sf-compact-app .sf-picking-actions > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+  .sf-compact-app .sf-picking-actions > div button {
+    min-height: 44px;
+    flex: 1 1 135px;
+    width: auto;
+    max-width: 100%;
+  }
+  .sf-compact-app .sf-team-report-submit button {
+    min-height: 44px;
+  }
+}
+@media (max-width: 370px) {
+  .sf-compact-app .sf-guided-picking .sf-guided-commands button,
+  .sf-compact-app .sf-guided-picking .sf-picking-actions > div button {
+    flex: 1 1 100%;
+  }
+  .sf-compact-app .sf-guided-picking .sf-guided-toolbar > .sf-voice-guide-actions button {
+    flex: 1 1 100%;
+  }
+  .sf-compact-app.sf-find-page .wh-results .wh-section-title .sf-worklist-controls {
+    display: grid;
+    grid-template-columns: minmax(0,1fr);
+    width: 100%;
+  }
+  .sf-compact-app.sf-find-page .wh-results .wh-section-title .sf-worklist-controls > * {
+    width: 100%;
+    max-width: 100%;
+  }
+}
