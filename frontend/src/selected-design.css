@@ -3035,3 +3035,19 @@ html,body,#root{max-width:100%;overflow-x:clip}
  .sf-find-page .sf-location-navigator-head{gap:8px}
  .sf-find-page .sf-location-navigator-detail{margin:0}
 }
+
+/* Use width purposefully: prompt left, actions and microphone right. */
+@media(min-width:991px){
+ .sf-find-page .sf-lookup-mode-choice{
+  display:grid;grid-template-columns:minmax(240px,1fr) minmax(250px,max-content);
+  column-gap:20px;row-gap:8px;align-items:center;padding:14px 18px
+ }
+ .sf-find-page .sf-lookup-mode-choice>h3{grid-column:1;grid-row:1}
+ .sf-find-page .sf-lookup-mode-choice>p:not(.sf-lookup-phrase){grid-column:1;grid-row:2}
+ .sf-find-page .sf-lookup-mode-choice>.sf-lookup-actions{grid-column:2;grid-row:1 / span 2;justify-content:flex-end}
+ .sf-find-page .sf-lookup-mode-choice>.sf-lookup-phrase{grid-column:1;grid-row:3;font-size:12px}
+ .sf-find-page .sf-lookup-mode-choice>.sf-lookup-voice{grid-column:2;grid-row:3;justify-content:flex-end}
+}
+@media(max-width:990px){
+ .sf-find-page .sf-lookup-mode-choice{padding:12px;gap:10px}
+}
