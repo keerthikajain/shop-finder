@@ -3051,3 +3051,153 @@ html,body,#root{max-width:100%;overflow-x:clip}
 @media(max-width:990px){
  .sf-find-page .sf-lookup-mode-choice{padding:12px;gap:10px}
 }
+
+/* Stable, explicitly grouped guided-picking controls. The toolbar and commands
+   never compete for the same flex line, even as status wording changes. */
+.sf-find-page .sf-guided-picking .sf-voice-guide{
+ display:flex;flex-direction:column;align-items:stretch;gap:10px;
+ padding:12px 14px
+}
+.sf-find-page .sf-guided-picking .sf-voice-toolbar{
+ display:flex;align-items:center;gap:10px 12px;min-width:0;width:100%;
+ justify-content:flex-start;flex-wrap:wrap
+}
+.sf-find-page .sf-guided-picking .sf-voice-current-status{
+ flex:1 1 220px;min-width:145px;max-width:none;line-height:1.35;
+ white-space:normal;margin:0;padding:6px 8px
+}
+.sf-find-page .sf-guided-picking .sf-picking-language{
+ flex:0 0 auto;display:flex;align-items:center;gap:8px;min-width:0;
+ margin:0
+}
+.sf-find-page .sf-guided-picking .sf-picking-language select{
+ min-width:132px;max-width:170px;height:38px
+}
+.sf-find-page .sf-guided-picking .sf-voice-guide-actions{
+ display:flex;flex:0 0 auto;align-items:center;justify-content:flex-end;
+ gap:8px;min-width:0;margin:0;flex-wrap:wrap
+}
+.sf-find-page .sf-guided-picking .sf-voice-guide-actions button{
+ min-height:38px;white-space:nowrap;margin:0
+}
+.sf-find-page .sf-guided-picking .sf-voice-command-row{
+ display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;
+ border-top:1px solid var(--wh-border);padding-top:10px;width:100%
+}
+.sf-find-page .sf-guided-picking .sf-voice-command-row .sf-voice-guide-choices,
+.sf-find-page .sf-guided-picking .sf-voice-command-row .sf-voice-guide-secondary{
+ display:flex;flex:0 0 auto;align-items:center;gap:8px;
+ margin:0;padding:0;width:auto;min-width:0;flex-wrap:wrap
+}
+.sf-find-page .sf-guided-picking .sf-voice-command-row button{
+ display:inline-flex;align-items:center;justify-content:center;
+ width:auto;min-width:0;min-height:40px;padding:8px 13px;
+ font-size:12px;line-height:1.25;white-space:normal;text-align:center
+}
+.sf-find-page .sf-guided-picking .sf-voice-command-row .sf-voice-guide-secondary{
+ padding-left:12px;border-left:1px solid var(--wh-border)
+}
+.sf-find-page .sf-guided-picking .sf-voice-pick-confirm,
+.sf-find-page .sf-guided-picking .sf-next-choice,
+.sf-find-page .sf-guided-picking .sf-guide-reply,
+.sf-find-page .sf-guided-picking .sf-voice-details{
+ width:100%;flex:0 1 auto;margin:0
+}
+.sf-find-page .sf-guided-picking .sf-picking-actions{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:10px;flex-wrap:wrap;width:100%
+}
+.sf-find-page .sf-guided-picking .sf-picking-actions>span{
+ flex:1 1 260px;min-width:0;overflow-wrap:anywhere
+}
+.sf-find-page .sf-guided-picking .sf-picking-actions>div{
+ display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+ margin-left:auto
+}
+.sf-find-page .sf-guided-picking .sf-picking-actions>div button{
+ min-height:40px
+}
+/* A single or odd last product remains in a normal two-column card, instead
+   of receiving the old wide-card, side-by-side location treatment. */
+@media(min-width:901px){
+ .sf-find-page .wh-work-grid>.wh-task-list{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:start;gap:14px
+ }
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task:last-child:nth-child(odd):not(:first-child){
+  grid-column:auto;grid-row:auto
+ }
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task{
+  display:flex;flex-direction:column;align-self:start;
+  min-width:0;height:auto;min-height:0
+ }
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task:last-child:nth-child(odd):not(:first-child) .wh-task-heading,
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task .wh-task-heading{
+  display:flex;align-items:center;gap:10px;min-width:0
+ }
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task:last-child:nth-child(odd):not(:first-child) .wh-task-heading>.sf-product-art,
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task .wh-task-heading>.sf-product-art{
+  flex:0 0 115px;width:115px;height:115px;min-width:0;margin:0;
+  grid-column:auto;grid-row:auto
+ }
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task:last-child:nth-child(odd):not(:first-child) .wh-task-heading>div:not(.sf-product-art),
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task .wh-task-heading>div:not(.sf-product-art){
+  flex:1 1 auto;min-width:0;grid-column:auto;grid-row:auto
+ }
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task:last-child:nth-child(odd):not(:first-child) .wh-task-heading>.wh-status,
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task .wh-task-heading>.wh-status{
+  align-self:flex-start;flex:0 0 auto;max-width:30%;
+  white-space:normal;grid-column:auto;grid-row:auto
+ }
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task:last-child:nth-child(odd):not(:first-child) :is(.wh-item-meta,.wh-place,.sf-location-check,.wh-task-footer),
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task :is(.wh-item-meta,.wh-place,.sf-location-check,.wh-task-footer){
+  width:100%;grid-column:auto;grid-row:auto;margin-left:0;
+  margin-right:0;max-width:100%
+ }
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task .wh-task-footer{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin-top:10px
+ }
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task .wh-task-footer>div{
+  display:flex;align-items:center;gap:8px;margin-left:auto
+ }
+}
+@media(max-width:900px){
+ .sf-find-page .wh-work-grid>.wh-task-list{
+  grid-template-columns:minmax(0,1fr)
+ }
+ .sf-find-page .wh-work-grid>.wh-task-list>.wh-task:last-child:nth-child(odd):not(:first-child){
+  grid-column:auto;grid-row:auto
+ }
+ .sf-find-page .sf-guided-picking .sf-voice-toolbar{
+  flex-direction:column;align-items:stretch
+ }
+ .sf-find-page .sf-guided-picking .sf-voice-current-status{
+  flex:0 0 auto;min-width:0;width:100%
+ }
+ .sf-find-page .sf-guided-picking .sf-picking-language{
+  flex:0 0 auto;justify-content:space-between;width:100%
+ }
+ .sf-find-page .sf-guided-picking .sf-voice-guide-actions{
+  flex:0 0 auto;justify-content:flex-start;width:100%
+ }
+ .sf-find-page .sf-guided-picking .sf-voice-command-row{
+  align-items:stretch
+ }
+ .sf-find-page .sf-guided-picking .sf-voice-command-row .sf-voice-guide-choices{
+  flex:1 1 100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))
+ }
+ .sf-find-page .sf-guided-picking .sf-voice-command-row .sf-voice-guide-secondary{
+  border:0;padding:0;flex:1 1 100%
+ }
+ .sf-find-page .sf-guided-picking .sf-voice-command-row button{
+  width:100%;min-height:42px;padding:7px 5px
+ }
+ .sf-find-page .sf-guided-picking .sf-voice-command-row .sf-voice-guide-secondary button{
+  width:auto;padding:7px 12px
+ }
+ .sf-find-page .sf-guided-picking .sf-picking-actions>span{flex-basis:100%}
+ .sf-find-page .sf-guided-picking .sf-picking-actions>div{
+  width:100%;justify-content:flex-end
+ }
+}
