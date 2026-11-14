@@ -801,7 +801,7 @@ export default function WarehouseApp({user,preferences,logout}){
    
    {PICKING_VOICE_LANGUAGES.includes(task.language)?<>
     <div className="sf-voice-toolbar">
-    {picking.status==='active'&&voice&&handsFree&&<div className="sf-voice-current-status" role="status" aria-live="polite">{pickingUiCopy(appLanguage,pickPaused||voiceGuidePaused?'paused':speaking?'speaking':'listening')}</div>}
+    {picking.status==='active'&&voice&&handsFree&&<div className="sf-voice-current-status" role="status" aria-live="polite">{pickingUiCopy(appLanguage,speaking?'speaking':pickPaused||voiceGuidePaused?'paused':'listening')}</div>}
     <label className="sf-picking-language"><span>{t('Speech language')}</span><select aria-label={t('Speech language')} value={task.language} disabled={speechSwitching||busy} onChange={e=>void changeSpeechLanguage(e.target.value)}>{VOICE_INPUT_LANGUAGES.map(([code,name])=><option key={code} value={code}>{name}</option>)}</select></label>
     <div className="sf-voice-guide-actions">
       {speaking&&<button type="button" className="sf-voice-stop-audio" onClick={stopVoiceFlow}>{pickingUiCopy(appLanguage,'stopAudio')}</button>}
