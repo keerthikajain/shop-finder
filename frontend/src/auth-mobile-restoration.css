@@ -142,3 +142,49 @@
     backdrop-filter:none;
   }
 }
+
+
+/* Undo the old mobile flex-basis:185px subtitle rule. With the welcome row
+   stacked on phones it became a tall empty flex item above App language. */
+@media (max-width:760px) {
+  .login-shell .login-card .sf-auth-welcome-row {
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+    align-items:stretch;
+    flex:0 0 auto;
+    width:100%;
+    height:auto;
+    min-height:0;
+    gap:0;
+    margin:0 0 14px;
+    padding:0;
+  }
+  .login-shell .login-card .sf-auth-page-subtitle {
+    display:block;
+    flex:0 0 auto;
+    flex-basis:auto;
+    width:100%;
+    height:auto;
+    min-height:0;
+    max-height:none;
+    margin:0;
+    padding:0;
+    font-size:13px;
+    line-height:1.5;
+  }
+  .login-shell .login-card > h1 {
+    margin:0 0 12px;
+  }
+  .login-shell .login-card > .sf-login-language {
+    margin:0 0 16px;
+  }
+}
+@media (max-width:480px) {
+  .login-shell .login-card .sf-auth-welcome-row {
+    margin-bottom:13px;
+  }
+  .login-shell .login-card > h1 {
+    margin-bottom:10px;
+  }
+}
