@@ -980,6 +980,6 @@ test('guided picking presents stable toolbar and command rows and odd cards reta
  assert.match(css,/\.sf-guided-picking \.sf-guided-toolbar/);
  assert.match(css,/\.sf-guided-picking \.sf-guided-commands/);
  assert.match(css,/\.sf-guided-picking \.sf-picking-actions/);
- assert.match(css,/\.wh-task:last-child:nth-child\(odd\):not\(:first-child\)\{\s*grid-column:auto/);
+ assert.ok(css.includes('.wh-task:last-child:nth-child(odd):not(:first-child){\n   grid-column:auto'));
  assert.match(css,/@media\(max-width:990px\)/);
 });
