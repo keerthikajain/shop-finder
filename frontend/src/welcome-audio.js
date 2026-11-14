@@ -7,9 +7,31 @@ const LOCALES={'en-IN':'en-IN','hi-IN':'hi-IN','hi-en':'en-IN','te-IN':'te-IN','
 export function stopWelcome(playback){
  if(!playback)return;
  playback.controller.abort();
+ playback.blocked=false;
+ playback.finished=true;
  try{playback.audio?.pause()}catch{}
- if(playback.url)URL.revokeObjectURL(playback.url);
+ playback.audio=null;
+ if(playback.url){URL.revokeObjectURL(playback.url);playback.url=null}
  try{window.speechSynthesis?.cancel()}catch{}
+}
+
+// Call synchronously from a genuine user gesture. A mobile browser may reject
+// autoplay, but it can allow this already-loaded Gnani audio on the next tap.
+// Never fetch or synthesize a different voice inside this gesture.
+export function resumeWelcome(playback){
+ if(!playback?.blocked||!playback.audio||playback.controller.signal.aborted||playback.finished)return false;
+ playback.blocked=false;
+ try{
+  const result=playback.audio.play();
+  Promise.resolve(result).catch(error=>{
+   if(!playback.controller.signal.aborted&&!playback.finished)
+    playback.blocked=error?.name==='NotAllowedError';
+  });
+  return true;
+ }catch(error){
+  playback.blocked=error?.name==='NotAllowedError';
+  return false;
+ }
 }
 
 function localVoice(text,language,controller){
@@ -45,18 +67,33 @@ export async function playWelcomeOnce({url,language,text,controller,playback,bod
   const audio=new Audio(objectURL);
   playback.audio=audio;
   const clear=()=>{
+   playback.finished=true;
+   playback.blocked=false;
    if(playback.url===objectURL){URL.revokeObjectURL(objectURL);playback.url=null;}
    if(playback.audio===audio)playback.audio=null;
   };
   audio.onended=clear;
   audio.onerror=clear;
-  await audio.play();
+  try{
+   await audio.play();
+   return 'playing';
+  }catch(error){
+   if(error?.name==='NotAllowedError'&&!controller.signal.aborted){
+    // Retain exactly this Gnani clip for a later user-initiated play().
+    playback.blocked=true;
+    return 'blocked';
+   }
+   throw error;
+  }
  }catch(error){
-  if(controller.signal.aborted)return;
+  if(controller.signal.aborted)return 'cancelled';
   try{playback.audio?.pause()}catch{}
   if(playback.url){URL.revokeObjectURL(playback.url);playback.url=null;}
   playback.audio=null;
+  playback.blocked=false;
+  playback.finished=true;
   // Finder greetings must use Gnani's voice rather than a different browser voice.
   if(!gnaniOnly)localVoice(text,language,controller);
+  return 'failed';
  }
 }
