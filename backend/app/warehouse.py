@@ -110,6 +110,9 @@ class ReportPreviewAudio(ReviewAudio):
 class PickGuideAudio(Strict):
  command:Literal['start','next','repeat','verify','report','stop','help','unknown']
  line:int=Field(default=0,ge=0,le=9)
+class TaskSpeechLanguage(Strict):
+ language:Literal['en-IN','hi-IN','hi-en','te-IN']
+
 class Move(Strict):
  collection:str=Field(max_length=40)
  sku:str=Field(max_length=40)
@@ -550,6 +553,17 @@ def install_warehouse(app,path):
  def get_task(tid:str,request:Request):
   u=identity(request)
   with connect(path) as c:return task_get(c,tid,u)
+ @app.post('/api/warehouse/tasks/{tid}/speech-language')
+ def set_task_speech_language(tid:str,body:TaskSpeechLanguage,request:Request):
+  """Update only the task speech locale, preserving picking and inventory state."""
+  u=identity(request)
+  if body.language not in SUPPORTED_PICKING_LANGUAGES:
+   raise HTTPException(422,'Unsupported picking language.')
+  with connect(path) as c:
+   c.execute('BEGIN IMMEDIATE')
+   task=task_get(c,tid,u)
+   task['language']=body.language
+   return task_put(c,task)
  @app.post('/api/warehouse/tasks/{tid}/picking/start')
  def start_picking(tid:str,request:Request):
   u=identity(request)
