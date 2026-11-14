@@ -47,11 +47,12 @@ export default function WorkspaceGreeting({user,appLanguage='en',interrupt=false
    if(interruptRef.current){stopGreeting();return}
    const playback=activeSpeech.current;
    if(!playback)return;
-   // Recording, navigation and forms take precedence over the greeting.
-   const interactive=event.target?.closest?.(
-    'button,a,input,textarea,select,[role="button"],[contenteditable="true"]'
+   // Audio recording and text entry take precedence. Ordinary navigation
+   // taps can unlock a greeting that the phone initially blocked.
+   const busyControl=event.target?.closest?.(
+    'input,textarea,select,[contenteditable="true"],.wh-voice,.sf-voice-listen-toggle,.sf-guided-owner-voice,.sf-voice-guide-actions,.sf-report-voice-panel'
    );
-   if(interactive){stopGreeting();return}
+   if(busyControl){stopGreeting();return}
    // Resume synchronously during user activation (not after another fetch).
    if(playback.blocked){resumeWelcome(playback);return}
    if(playback.audio&&!playback.finished)stopGreeting();
