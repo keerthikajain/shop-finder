@@ -1016,7 +1016,7 @@ function Report({item,location,collection,userId,run,busy,speaking=false,voice,l
   promptEndpoint={guideStage==='report_confirm'?'voice/report-preview-audio':null}
   promptBody={guideStage==='report_confirm'?{collection,sku:item.sku,reason,suggested_location:suggested,location_code:location?.code||''}:null}
   onTranscript={guidedReportAnswer} onBack={guidedReportBack} onActiveChange={SetGuidedActive} onError={onError}/>}
- {voice&&<div className="sf-report-voice-panel" aria-label={copy('reportTitle')}>
+ {voice&&!guidedActive&&<div className="sf-report-voice-panel" aria-label={copy('reportTitle')}>
    <strong>{copy('tell')}</strong>
    <small>{copy('hint')}</small>
    {speaking&&<button type="button" className="sf-report-stop-audio" onClick={onStopSpeaking}>{copy('guideStop')}</button>}
