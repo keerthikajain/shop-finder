@@ -955,3 +955,119 @@
     font-weight:600;
   }
 }
+
+
+/* Phone-only visual corrections: do not change tablet/desktop or voice logic.
+   The search microphone has anonymous button text for accessibility; place
+   its SVG at the true geometric center rather than flex-centering text+icon. */
+@media (max-width:700px) {
+  .sf-compact-app.sf-find-page .wh-ask .wh-composer-actions > button.wh-voice {
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-sizing:border-box;
+    padding:0!important;
+    gap:0!important;
+    font-size:0!important;
+    line-height:0;
+    overflow:hidden;
+  }
+  .sf-compact-app.sf-find-page .wh-ask .wh-composer-actions > button.wh-voice > svg {
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    display:block;
+    width:24px;
+    height:24px;
+    margin:0;
+    flex:none;
+    pointer-events:none;
+  }
+  .sf-compact-app.sf-find-page .wh-ask .wh-composer-actions > button.wh-voice > .wh-wave {
+    display:none;
+  }
+
+  /* The odd last card must use exactly the same natural-height phone
+     composition as the preceding cards, never the legacy desktop spanning
+     grid. This only applies to a trailing card in a multi-item worklist. */
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > .wh-task:last-child:nth-child(odd):not(:first-child) {
+    display:flex!important;
+    flex-direction:column;
+    justify-content:flex-start!important;
+    align-items:stretch;
+    align-self:start;
+    grid-column:auto!important;
+    grid-row:auto!important;
+    grid-template-columns:none;
+    grid-template-rows:none;
+    width:100%;
+    min-width:0;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none;
+    gap:0;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > .wh-task:last-child:nth-child(odd):not(:first-child) > :is(.wh-task-heading,.wh-item-meta,.wh-place,.sf-stock-badge,.sf-location-check,.wh-task-footer) {
+    box-sizing:border-box;
+    flex:0 0 auto;
+    align-self:stretch;
+    width:100%;
+    min-width:0;
+    height:auto;
+    min-height:0;
+    grid-column:auto;
+    grid-row:auto;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > .wh-task:last-child:nth-child(odd):not(:first-child) > .sf-location-check {
+    margin:10px 0 0!important;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > .wh-task:last-child:nth-child(odd):not(:first-child) > .wh-task-footer {
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-template-rows:auto auto;
+    grid-auto-flow:row;
+    justify-content:stretch;
+    align-content:start;
+    align-items:center;
+    gap:8px;
+    margin:8px 0 0!important;
+    padding:0;
+    height:auto!important;
+    min-height:0!important;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > .wh-task:last-child:nth-child(odd):not(:first-child) > .wh-task-footer > button {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    align-self:center;
+    width:100%;
+    min-width:0;
+    margin:0!important;
+    min-height:44px;
+    height:auto!important;
+    padding:8px;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > .wh-task:last-child:nth-child(odd):not(:first-child) > .wh-task-footer > div {
+    display:block;
+    grid-column:1/-1;
+    grid-row:auto;
+    align-self:start;
+    justify-self:stretch;
+    width:100%;
+    min-width:0;
+    margin:0!important;
+    padding:0;
+  }
+  .sf-compact-app.sf-find-page .wh-work-grid > .wh-task-list > .wh-task:last-child:nth-child(odd):not(:first-child) > .wh-task-footer > div > button {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    min-height:44px;
+    height:auto!important;
+    margin:0!important;
+    padding:9px 12px;
+  }
+}
