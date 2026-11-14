@@ -154,3 +154,25 @@ test('Telugu speech in Hindi script and small spelling variation only opens a re
   assert.notEqual(lookupVoiceIntent('te-IN',transcript).action,'verify');
  }
 });
+
+test('natural voice mode choices tolerate bounded Hindi and Hinglish wording without accidental approval',()=>{
+ const cases=[
+  ['hi-IN','पिकिंग में मदद चाहिए','सिर्फ लोकेशन बताओ'],
+  ['hi-IN','पिकिंग में हेल्प चाहिए','सिर्फ जगह बताओ'],
+  ['hi-en','picking mein help chahiye','sirf location batao'],
+  ['hi-en','picking mein madad','sirf jagah batao'],
+  ['te-IN','పికింగ్ సహాయం','స్థానాలు మాత్రమే'],
+  ['en-IN','guided picking','just locations']
+ ];
+ for(const [language,guided,locations] of cases){
+  assert.equal(modeChoiceIntent(language,guided),'guided',language+': '+guided);
+  assert.equal(modeChoiceIntent(language,locations),'locations',language+': '+locations);
+  assert.equal(modeChoiceIntent(language,locations+' and confirm'),null);
+ }
+ for(const language of ['en-IN','hi-IN','hi-en','te-IN']){
+  for(const phrase of ['yes','confirm picked','wrong location','cancel','no','not guided picking']){
+   assert.equal(modeChoiceIntent(language,phrase),null,language+': '+phrase);
+  }
+ }
+ assert.equal(modeChoiceIntent('hi-IN','पिकिंग में मदद चाहिये'),'guided');
+});
