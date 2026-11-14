@@ -342,6 +342,13 @@ export default function WarehouseApp({user,preferences,logout}){
   D({type:'report',item:line.selected,location:line.location,index,autoGuide:true});
   return false;
  }
+ function handleModeVoiceError(message){
+  SetModeSpeechResult(null);SetModeListening(false);N('');
+  // Service failures are not pronunciation mistakes or permission to pick.
+  E(/Invalid transcription response/i.test(String(message||''))?
+    t('Speech service did not return usable words. Try again or use the buttons.'):
+    String(message||t('Speech recognition failed. Try again or use the buttons.')));
+ }
  async function handleModeSpeech(transcript,source=task){
   if(!source)return false;
   const choice=modeChoiceIntent(source.language,transcript);
@@ -350,8 +357,9 @@ export default function WarehouseApp({user,preferences,logout}){
   SetModeSpeechResult({taskId:source.id,transcript:String(transcript||'').trim(),choice,language:source.language});
   VGC(transcript);
   if(choice)return chooseSearchMode(choice,source);
-  N(lookupCopy(appLanguage,'unknown'));
-  if(voice)await playFixedVoice('choose_mode',source.language,true,true);
+  E('');N(lookupCopy(appLanguage,'unknown'));
+  // Keep manual choices active; retry only on an explicit request.
+  return true;
   return true;
  }
  async function handleLookupSpeech(transcript,source=task){
@@ -741,8 +749,8 @@ export default function WarehouseApp({user,preferences,logout}){
   </div>
   {voice&&PICKING_VOICE_LANGUAGES.includes(task.language)&&canStartPick&&<>
    <p className="sf-lookup-phrase" role="status">{lookupCopy(appLanguage,'voiceHint')} <span lang={task.language==='hi-en'?'hi-Latn':task.language}>{modeChoicePhrases(task.language).guided} / {modeChoicePhrases(task.language).locations}</span></p>
-   {modeListening?<div className="sf-lookup-voice"><HandsFreePicking appLanguage={appLanguage} enabled={!speechSwitching&&!busy&&!speaking&&!modal&&page==='find'} language={task.language} collection={collection} onError={E} onCommand={text=>handleModeSpeech(text)}/><button type="button" onClick={()=>SetModeListening(false)}>{lookupCopy(appLanguage,'stopVoice')}</button></div>:
-    <div className="sf-lookup-voice"><VoiceButton small autoStop enabled={!busy&&!speaking} language={task.language} onText={text=>handleModeSpeech(text)} onError={E} label={lookupCopy(appLanguage,'speakChoice')}/><button type="button" disabled={busy||speaking} onClick={()=>void offerSearchMode(task)}>{lookupCopy(appLanguage,'listen')}</button></div>}
+   {modeListening?<div className="sf-lookup-voice"><HandsFreePicking appLanguage={appLanguage} enabled={!speechSwitching&&!busy&&!speaking&&!modal&&page==='find'} language={task.language} collection={collection} onError={handleModeVoiceError} onCommand={text=>handleModeSpeech(text)}/><button type="button" onClick={()=>SetModeListening(false)}>{lookupCopy(appLanguage,'stopVoice')}</button></div>:
+    <div className="sf-lookup-voice"><VoiceButton small autoStop enabled={!busy&&!speaking} language={task.language} onText={text=>handleModeSpeech(text)} onError={handleModeVoiceError} label={lookupCopy(appLanguage,'speakChoice')}/><button type="button" disabled={busy||speaking} onClick={()=>void offerSearchMode(task)}>{lookupCopy(appLanguage,'listen')}</button></div>}
   </>}
  </section>}
  {picking.status==='ready'&&lookupMode==='locations'&&<section className="wh-panel sf-lookup-mode" aria-label={lookupCopy(appLanguage,'locationsTitle')}>
