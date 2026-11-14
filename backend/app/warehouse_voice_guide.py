@@ -205,4 +205,17 @@ def guide(task,action,requested_line,check_line):
   text=('Wrong location report khol rahe hain. Batao kya galat hai, phir confirm karke report bhejo.' if language=='hi-en' else
         'बताने के लिए धन्यवाद। सही जगह की जानकारी दीजिए, हम मैनेजर को भेज देंगे।' if hi else
         'Thanks for checking. Tell us where you found it so we can inform your manager.')
+ # A location-only reply can sound like the guide has finished. Give workers
+ # a short, localized handoff to the next hands-free microphone turn.
+ # Verification still requires the existing separate yes/no confirmation.
+ if action in ('start','next','repeat'):
+  followups={
+   'en-IN':'Tell me when you find it. Say found it, repeat location, or wrong location.',
+   'hi-IN':'सामान मिल जाए तो बताइए। कहें मिल गया, जगह दोहराओ, या गलत जगह।',
+   'hi-en':'Mil jaye to bolo. Kaho mil gaya, location dobara batao, ya galat jagah.',
+   'te-IN':'వస్తువు దొరికినప్పుడు చెప్పండి. దొరికింది, స్థానం మళ్లీ చెప్పండి, లేదా తప్పు లొకేషన్ అని చెప్పండి.',
+   'kn-IN':'ವಸ್ತು ಸಿಕ್ಕಿದಾಗ ಹೇಳಿ. ಸಿಕ್ಕಿತು, ಸ್ಥಳ ಮತ್ತೆ ಹೇಳಿ, ಅಥವಾ ತಪ್ಪು ಸ್ಥಳ ಎಂದು ಹೇಳಿ.'
+  }
+  followup=followups.get(language)
+  if followup:text+=' '+followup
  return {'action':action,'line':index,'text':text,'language':language}
