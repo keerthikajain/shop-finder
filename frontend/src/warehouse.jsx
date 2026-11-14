@@ -799,6 +799,7 @@ export default function WarehouseApp({user,preferences,logout}){
   {lastConfirmedIndex>=0&&<div className="sf-picking-undo"><button type="button" disabled={busy||pickPaused} onClick={()=>undoPick(lastConfirmedIndex)}>{pickingUiCopy(appLanguage,'undo')}</button></div>}
   {picking.status!=='completed'&&<div className="sf-voice-guide">
     {picking.status==='ready'&&<p className="sf-voice-guide-preview" role="status">{unresolvedLines.length>0?t('Choose or remove the unresolved variants below before starting. Finder will not guess a size or version.'):reportedLines.length>0?t('Reported shelf locations are skipped until verified. Confirm to guide the remaining items automatically.'):t('All items are ready. Confirm search once; Finder will speak the first location and then listen automatically.')}</p>}
+   <div className="sf-guided-toolbar">
    {picking.status==='active'&&voice&&handsFree&&<div className="sf-voice-current-status" role="status" aria-live="polite">{pickingUiCopy(appLanguage,pickPaused||voiceGuidePaused?'paused':speaking?'speaking':'listening')}</div>}
    {PICKING_VOICE_LANGUAGES.includes(task.language)?<>
     <label className="sf-picking-language"><span>{t('Speech language')}</span><select aria-label={t('Speech language')} value={task.language} disabled={speechSwitching||busy} onChange={e=>void changeSpeechLanguage(e.target.value)}>{VOICE_INPUT_LANGUAGES.map(([code,name])=><option key={code} value={code}>{name}</option>)}</select></label>
@@ -808,6 +809,8 @@ export default function WarehouseApp({user,preferences,logout}){
       {picking.status==='active'&&voice&&handsFree&&!voiceGuidePaused&&!pickPaused&&<HandsFreePicking appLanguage={appLanguage} enabled={!speechSwitching&&!busy&&!speaking&&!modal&&page==='find'} language={task.language} collection={collection} onError={message=>{E(message)}} onCommand={transcript=>voicePickCommand(transcript)}/>}
       {picking.status==='active'&&voice&&handsFree&&<button type="button" className="sf-voice-listen-toggle" aria-pressed={!voiceGuidePaused} disabled={voiceGuidePaused&&(busy||speaking||pickPaused)} onClick={()=>{if(!voiceGuidePaused){PV(null);stopVoiceFlow();return}voiceFlowStopped.current=false;VGP(false);if(task&&nextPickIndex>=0&&auto)playPickGuidance('repeat',task,nextPickIndex)}}>{pickingUiCopy(appLanguage,voiceGuidePaused?'resume':'stop')}</button>}
     </div>
+   </div>
+    <div className="sf-guided-commands">
     <div className="sf-voice-guide-choices" aria-label={pickingUiCopy(appLanguage,'secondary')}>
       {['verify','report','next'].map(action=><button key={action} type="button" disabled={picking.status!=='active'||busy||pickPaused||(action==='next'&&nextPickIndex<0)} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,action))}>
         <span className="sf-voice-command-label">{pickingCommandLabel(appLanguage,action)}</span>
@@ -816,6 +819,7 @@ export default function WarehouseApp({user,preferences,logout}){
     <div className="sf-voice-guide-secondary">
       <button type="button" disabled={picking.status!=='active'||busy||pickPaused} onClick={()=>playPickGuidance('repeat',task,activeLine,true)}>{pickingCommandLabel(appLanguage,'repeat')}</button>
       <button type="button" disabled={!voice||busy} onClick={()=>voicePickCommand(pickVoicePhrase(task.language,'help'))}>{pickingCommandLabel(appLanguage,'help')}</button>
+    </div>
     </div>
    </>:<small>{t('This language is not supported for spoken picking commands. Use scanning or manual verification.')}</small>}
    {voiceGuideCommand&&<details className="sf-voice-details"><summary>{t('Voice details')}</summary><div className="sf-guide-transcript"><strong>{pickingUiCopy(appLanguage,'recognized')}:</strong> {voiceGuideCommand}</div></details>}{pendingNextPick?.taskId===task.id&&<div className="sf-voice-pick-confirm sf-next-choice" role="status" aria-live="polite">
