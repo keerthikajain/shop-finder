@@ -60,9 +60,11 @@ export default function HandsFreePicking({enabled,language,appLanguage=null,coll
  const hint=halted?uiText('noMic'):
   !enabled?uiText('paused'):
   status==='transcribing'?uiText('transcribing'):
-  status==='listening'?uiText('listening'):uiText('speaking');
+  status==='listening'?uiText('listening'):uiText('listening');
+ // While Finder is talking, the parent already announces that state.
+ // Do not render a misleading "paused" message or a detached status dot.
+ if(!enabled&&!halted)return null;
  return <div className="sf-hands-free-status" role="status" aria-live="polite">
-  <span className={'sf-listen-dot '+(enabled&&!halted&&status==='listening'?'active':'')} aria-hidden="true"/>
   <span>{hint}</span>
   {halted&&<button type="button" onClick={()=>{silenceRef.current=0;Halt(false);Next(n=>n+1)}}>{uiText('retry')}</button>}
  </div>;
