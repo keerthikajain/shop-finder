@@ -968,3 +968,25 @@ test('speech language can change mid picking without losing state or accepting s
  assert.match(src,/Speech language changed\. Picking progress is saved\./);
  assert.doesNotMatch(src,/onChange=\{e=>\{L\(e\.target\.value\);DSL\(null\)\}\}/);
 });
+
+test('guided picking groups live voice controls and keeps odd worklist cards uniform',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const css=await readFile(new URL('../src/selected-design.css',import.meta.url),'utf8');
+ assert.match(src,/className="sf-voice-toolbar"/);
+ assert.match(src,/className="sf-voice-command-row"/);
+ assert.match(src,/className="sf-voice-guide-choices"/);
+ assert.match(src,/className="sf-voice-guide-secondary"/);
+ assert.match(src,/className="sf-picking-undo-inline"/);
+ assert.match(src,/className="sf-pick-pause-toggle"/);
+ assert.match(src,/className="sf-voice-stop-audio"/);
+ assert.match(src,/className="sf-voice-listen-toggle"/);
+ assert.match(src,/className="sf-voice-pick-confirm"/);
+ assert.match(src,/voiceGuideText&&!pendingVoicePick&&!pendingNextPick/);
+ assert.doesNotMatch(src,/className="sf-picking-undo"/);
+ assert.match(css,/\.sf-find-page \.sf-guided-picking \.sf-voice-toolbar\{/);
+ assert.match(css,/\.sf-find-page \.sf-guided-picking \.sf-voice-command-row\{/);
+ assert.match(css,/\.sf-find-page \.sf-guided-picking \.sf-picking-actions>div\{/);
+ assert.match(css,/\.sf-find-page \.wh-work-grid>\.wh-task-list>\.wh-task:last-child:nth-child\(odd\):not\(:first-child\)\{/);
+ assert.match(css,/grid-column:auto;display:flex;flex-direction:column/);
+ assert.match(css,/@media\(max-width:600px\)/);
+});
