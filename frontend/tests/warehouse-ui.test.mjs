@@ -525,7 +525,7 @@ test('hands-free picking is bounded and pauses while sound, modals or work is ac
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const listener=await readFile(new URL('../src/hands-free-picking.jsx',import.meta.url),'utf8');
  const recording=await readFile(new URL('../src/recording.js',import.meta.url),'utf8');
- assert.match(source,/HandsFreePicking appLanguage=\{appLanguage\} enabled=\{!busy&&!speaking&&!modal&&page==='find'\}/);
+ assert.match(source,/HandsFreePicking appLanguage=\{appLanguage\} enabled=\{!speechSwitching&&!busy&&!speaking&&!modal&&page==='find'\}/);
  assert.match(source,/\[handsFree,HF\]=useState\(true\)/);
  assert.match(source,/\[voiceGuidePaused,VGP\]=useState\(true\)/);
  assert.ok(source.includes("pickingUiCopy(appLanguage,voiceGuidePaused?'resume':'stop')"));
@@ -682,7 +682,7 @@ test('pink disabled and recording buttons have readable, high-contrast foregroun
 test('report mic waits until spoken guidance stops to avoid transcribing itself',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/function Report\(\{item,location,collection,userId,run,busy,speaking=false/);
- assert.ok(src.includes("VoiceButton small autoStop enabled={!busy&&!speaking&&!guidedActive}"));
+ assert.ok(src.includes("VoiceButton key={language+'-'+(speechSwitching?'switching':'ready')} small autoStop enabled={!busy&&!speechSwitching&&!speaking&&!guidedActive}"));
  assert.match(src,/collection=\{modal\.item\.collection\} userId=\{user\.id\} autoGuide=\{!!modal\.autoGuide\} \{\.\.\.\{run,busy,voice,language,speaking\}\}/);
 });
 
@@ -882,7 +882,7 @@ test('voice picking keeps speaker and microphone turn-taking automatic but respe
  assert.match(ui,/if\(!voice\|\|!source\|\|\(!manual&&voiceFlowStopped\.current\)\)return/);
  assert.match(ui,/serial!==playbackSerial\.current\|\|\(!manual&&voiceFlowStopped\.current\)/);
  assert.match(ui,/audio\.current\.onended=\(\)=>\{if\(serial===playbackSerial\.current\)SP\(false\)\}/);
- assert.match(ui,/enabled=\{!busy&&!speaking&&!modal&&page==='find'\}/);
+ assert.match(ui,/enabled=\{!speechSwitching&&!busy&&!speaking&&!modal&&page==='find'\}/);
  assert.match(ui,/function stopVoiceFlow\(\)/);
  assert.match(ui,/voiceFlowStopped\.current=true/);
  assert.match(ui,/if\(!voiceGuidePaused\)\{PV\(null\);stopVoiceFlow\(\);return\}/);
