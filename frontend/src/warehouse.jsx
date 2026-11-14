@@ -360,7 +360,6 @@ export default function WarehouseApp({user,preferences,logout}){
   E('');N(lookupCopy(appLanguage,'unknown'));
   // Keep manual choices active; retry only on an explicit request.
   return true;
-  return true;
  }
  async function handleLookupSpeech(transcript,source=task){
   if(!source)return false;
