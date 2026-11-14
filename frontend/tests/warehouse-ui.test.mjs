@@ -424,7 +424,8 @@ test('synthetic provenance stays in catalogue and not in speech or picking scree
  const ui=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(ui,/className="sf-catalogue-provenance"/);
  assert.match(ui,/Locations in starter records are not physically verified/);
- assert.match(ui,/friendlyPath\(ls\[0\]\.location,!!ls\[0\]\.selected\?\.synthetic\)/);
+ assert.match(ui,/friendlyPath\(line\.location,!!line\.selected\?\.synthetic\)/);
+ assert.match(ui,/guideLine\.selected\?\.synthetic&&field==='facility'/);
  assert.doesNotMatch(backend,/Sample catalogue locations, not verified for your store/);
  assert.doesNotMatch(ui,/Sample catalogue: these shelf locations are illustrative/);
  assert.doesNotMatch(ui,/className="sf-sample-info"/);
