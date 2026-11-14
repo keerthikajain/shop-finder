@@ -8,13 +8,13 @@ import {safeNavigationVariant} from './safe-navigation-variants.js';
 const norm=value=>String(value||'').normalize('NFC').toLocaleLowerCase().replace(/[.,!?।॥]/g,' ').trim().replace(/\s+/g,' ');
 const CHOICES={
  'en-IN':{guided:['guided picking','help me pick','help with picking','start picking','begin picking','picking help'],locations:['just locations','locations only','just the locations','only locations','show locations','tell me the locations']},
- 'hi-IN':{guided:['पिकिंग में मदद','सामान उठाने में मदद','पिकिंग शुरू करो','मदद से सामान उठाना'],locations:['सिर्फ जगह','केवल जगह','बस जगह बताओ','सिर्फ लोकेशन','जगह बताओ']},
- 'hi-en':{guided:['guided picking','help me pick','picking shuru karo','picking mein help','पिकिंग शुरू करो'],locations:['just locations','only location','sirf location','sirf jagah','बस जगह बताओ','लोकेशन बताओ']},
+ 'hi-IN':{guided:['पिकिंग में मदद','पिकिंग में मदद चाहिए','पिकिंग के लिए मदद चाहिए','मुझे पिकिंग में मदद चाहिए','सामान उठाने में मदद','सामान उठाने में मदद चाहिए','पिकिंग शुरू करो','मदद से सामान उठाना','गाइडेड पिकिंग','गाइडेड पिकिंग चाहिए','पिकिंग में हेल्प','पिकिंग में हेल्प चाहिए','picking mein madad','picking mein madad chahiye','picking mein help','picking mein help chahiye'],locations:['सिर्फ जगह','केवल जगह','बस जगह बताओ','सिर्फ जगह बताओ','मुझे सिर्फ जगह बताओ','सिर्फ लोकेशन','सिर्फ लोकेशन बताओ','बस लोकेशन','जगह बताओ','केवल लोकेशन','मुझे लोकेशन बताओ','sirf location','sirf jagah','location batao','sirf location batao']},
+ 'hi-en':{guided:['guided picking','help me pick','picking shuru karo','picking mein help','picking mein help chahiye','picking me madad chahiye','picking mein madad','guided picking chahiye','पिकिंग शुरू करो','पिकिंग में मदद चाहिए'],locations:['just locations','only location','sirf location','sirf jagah','sirf location batao','sirf jagah batao','location batao','बस जगह बताओ','सिर्फ लोकेशन बताओ','लोकेशन बताओ']},
  'te-IN':{guided:['పికింగ్ సహాయం','వస్తువులు తీసుకోవడానికి సహాయం','పికింగ్ ప్రారంభించండి','సహాయం కావాలి','పికింగ్ లో సహాయం కావాలి','పికింగ్ చేయడానికి సహాయం కావాలి','వస్తువులు తీసుకోవడానికి సహాయం కావాలి','నాకు సహాయం కావాలి','పికింగ్ సహాయం కావాలి','picking sahayam kavali','picking lo help kavali','naaku picking help kavali','గైడెడ్ పికింగ్','గైడెడ్ పికింగ్ కావాలి','హెల్ప్ కావాలి','guided picking','start picking','help me pick','picking help','पिकिंग सहायता','पिकिंग में मदद चाहिए'],locations:['స్థానాలు మాత్రమే','స్థానాలు చెప్పండి','లొకేషన్లు మాత్రమే','లొకేషన్ మాత్రమే','లొకేషన్ చెప్పండి','లొకేషన్ మాత్రమే చెప్పండి','location matrame','locations matrame','location matrame cheppandi','naaku locations matrame kavali','లొకేషన్స్ మాత్రమే','నాకు లొకేషన్ మాత్రమే కావాలి','స్థానం మాత్రమే చెప్పండి','స్థానాలు మాత్రమే చెప్పండి','కేవలం స్థానాలు','కేవలం లొకేషన్','జస్ట్ లొకేషన్','జస్ట్ లొకేషన్స్','just locations','locations only','only location','just location','लोकेशन मात्र','सिर्फ लोकेशन']}
 };
 const EXTRA={
  'en-IN':{report:['wrong location'],verify:['found it','i picked it'],repeat:['repeat location','repeat locations'],help:['help'],stop:['stop']},
- 'hi-IN':{report:['गलत जगह'],verify:['मिल गया'],repeat:['जगह दोहराओ','लोकेशन दोबारा बताओ'],help:['मदद'],stop:['रुको']},
+ 'hi-IN':{report:['गलत जगह','गलत लोकेशन','लोकेशन गलत है','यह जगह गलत है'],verify:['मिल गया'],repeat:['जगह दोहराओ','लोकेशन दोबारा बताओ'],help:['मदद'],stop:['रुको']},
  'hi-en':{report:['galat jagah','wrong location'],verify:['mil gaya','found it'],repeat:['location dobara batao','location दोबारा बताओ'],help:['help','मदद'],stop:['ruko','stop']},
  'te-IN':{report:['తప్పు స్థానం','తప్పు స్థానమ','తప్పు స్థానము','తప్పు లొకేషన్','तप्पु स्थानम','तप्पु स्थानम्','wrong location'],verify:['దొరికింది','found it'],repeat:['స్థానాన్ని మళ్లీ చెప్పండి','స్థానాన్ని మళ్ళీ చెప్పండి','location दोबारा बताओ','repeat location'],help:['సహాయం','help'],stop:['ఆపు','stop']}
 };
@@ -40,9 +40,9 @@ export function modeChoiceIntent(language,text){
  if(/\b(?:not|no|don't|dont|cancel|never|without|nahi|mat)\b|(?:కాదు|వద్దు|లేదు|नहीं|मत)/iu.test(phrase))return null;
  for(const [action,variants] of Object.entries(choices))
   if(variants.some(x=>norm(x)===phrase))return action;
- // Only Telugu choice prompts need tolerance for small Prisma spelling variants.
- // No fuzzy matching of action/approval commands elsewhere in the application.
- if(language==='te-IN'){
+ // Only informational mode selection can use bounded typo recovery.
+ // Never apply this to item confirmations, report submission, or owner approval.
+ if(['en-IN','hi-IN','hi-en','te-IN'].includes(language)){
   const matches=Object.entries(choices).filter(([,variants])=>safeNavigationVariant(phrase,variants));
   if(matches.length===1)return matches[0][0];
  }

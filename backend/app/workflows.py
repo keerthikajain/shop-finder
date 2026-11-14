@@ -143,10 +143,18 @@ def install(app,path,SearchRequest,Constraints):
         async for chunk in request.stream():
             data.extend(chunk)
             if len(data)>6_000_000:raise HTTPException(413,'Audio too large.')
-        # Inventory context remains on the authenticated backend. Only bounded product
-        # names and aliases are provided as STT accuracy hints, never shelf locations.
+        # Small language-aware command hints help Prisma recognize short mode responses.
+        # They do not imply intent: frontend/backend command validation remains strict
+        # for item confirmation, reporting and owner approval.
+        command_hints={
+            'en-IN':['guided picking','just locations','wrong location','repeat location'],
+            'hi-IN':['पिकिंग में मदद','सिर्फ जगह','सिर्फ लोकेशन','गलत जगह','जगह दोहराओ'],
+            'hi-en':['picking mein help','sirf location','guided picking','just locations','गलत जगह'],
+            'te-IN':['పికింగ్ సహాయం','స్థానాలు మాత్రమే','తప్పు స్థానం','స్థానాన్ని మళ్లీ చెప్పండి']
+        }
         keywords=[]
         if voice.stt_model()=='prisma-v3.0':
+            keywords.extend(command_hints.get(language,[]))
             with connect(path) as c:
                 catalogue_items=warehouse_rows(c,collection)
             for item in catalogue_items:

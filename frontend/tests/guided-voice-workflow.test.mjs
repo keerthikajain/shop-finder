@@ -148,7 +148,7 @@ test('manual form and spoken guide cannot record a second report while submittin
  assert.ok(source.includes("if(submittedRef.current)return true"));
  assert.ok(source.includes("if(submittingRef.current||busy||reason.trim().length<3)return false"));
  assert.ok(source.includes("submittedRef.current=true"));
- assert.ok(source.includes("context=\"Automatic wrong-location report\" disabled={busy}"));
+ assert.ok(source.includes("context=\"Automatic wrong-location report\" disabled={busy||speechSwitching}"));
  assert.ok(source.includes("unclearReportSubmit(language,recognized)"));
  assert.ok(source.includes("unclearReportSubmit(language,transcript)"));
 });

@@ -425,7 +425,8 @@ test('synthetic provenance stays in catalogue and not in speech or picking scree
  assert.match(ui,/className="sf-catalogue-provenance"/);
  assert.match(ui,/Locations in starter records are not physically verified/);
  assert.match(ui,/friendlyPath\(line\.location,!!line\.selected\?\.synthetic\)/);
- assert.match(ui,/guideLine\.selected\?\.synthetic&&field==='facility'/);
+ assert.match(ui,/friendlyPath\(guideLine\.location,!!guideLine\.selected\?\.synthetic\)/);
+ assert.doesNotMatch(ui,/className="sf-location-navigator-levels"/);
  assert.doesNotMatch(backend,/Sample catalogue locations, not verified for your store/);
  assert.doesNotMatch(ui,/Sample catalogue: these shelf locations are illustrative/);
  assert.doesNotMatch(ui,/className="sf-sample-info"/);
@@ -483,7 +484,9 @@ test('voice-first search requires transcript review before matching products',as
  assert.match(source,/className="sf-search-details"/);
   assert.match(source,/className="sf-clear-query"/);
   assert.match(source,/aria-label=\{t\('Clear search'\)\}/);
-  assert.match(source,/className="sf-unrecognized-voice"/);
+  assert.match(source,/className="sf-search-details"/);
+  assert.match(source,/handleModeVoiceError/);
+  assert.doesNotMatch(source,/className="sf-unrecognized-voice"/);
  assert.match(source,/task\.query/);
  assert.match(source,/language,\s*brand:/);
  assert.doesNotMatch(source,/language:language==='auto'/);
@@ -525,7 +528,7 @@ test('hands-free picking is bounded and pauses while sound, modals or work is ac
  const source=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  const listener=await readFile(new URL('../src/hands-free-picking.jsx',import.meta.url),'utf8');
  const recording=await readFile(new URL('../src/recording.js',import.meta.url),'utf8');
- assert.match(source,/HandsFreePicking appLanguage=\{appLanguage\} enabled=\{!busy&&!speaking&&!modal&&page==='find'\}/);
+ assert.match(source,/HandsFreePicking appLanguage=\{appLanguage\} enabled=\{!speechSwitching&&!busy&&!speaking&&!modal&&page==='find'\}/);
  assert.match(source,/\[handsFree,HF\]=useState\(true\)/);
  assert.match(source,/\[voiceGuidePaused,VGP\]=useState\(true\)/);
  assert.ok(source.includes("pickingUiCopy(appLanguage,voiceGuidePaused?'resume':'stop')"));
@@ -609,7 +612,8 @@ test('completed picks do not show redundant shelf-check or pick verification act
   assert.doesNotMatch(src,/className="sf-guide-jump"/);
   assert.doesNotMatch(src,/line\.location\.quantity==null\?t\('Quantity not added yet'\)/);
   assert.match(src,/sf-location-navigator/);
-  assert.match(src,/sf-location-navigator-levels/);
+  assert.match(src,/sf-location-navigator-path/);
+  assert.doesNotMatch(src,/className="sf-location-navigator-levels"/);
   assert.match(src,/sf-route-details/);
   assert.doesNotMatch(src,/<ShelfGuide/);
   assert.match(src,/task\.lines\.indexOf\(line\)/);
@@ -682,7 +686,7 @@ test('pink disabled and recording buttons have readable, high-contrast foregroun
 test('report mic waits until spoken guidance stops to avoid transcribing itself',async()=>{
  const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
  assert.match(src,/function Report\(\{item,location,collection,userId,run,busy,speaking=false/);
- assert.ok(src.includes("VoiceButton small autoStop enabled={!busy&&!speaking&&!guidedActive}"));
+ assert.ok(src.includes("VoiceButton key={language+'-'+(speechSwitching?'switching':'ready')} small autoStop enabled={!busy&&!speechSwitching&&!speaking&&!guidedActive}"));
  assert.match(src,/collection=\{modal\.item\.collection\} userId=\{user\.id\} autoGuide=\{!!modal\.autoGuide\} \{\.\.\.\{run,busy,voice,language,speaking\}\}/);
 });
 
@@ -882,7 +886,7 @@ test('voice picking keeps speaker and microphone turn-taking automatic but respe
  assert.match(ui,/if\(!voice\|\|!source\|\|\(!manual&&voiceFlowStopped\.current\)\)return/);
  assert.match(ui,/serial!==playbackSerial\.current\|\|\(!manual&&voiceFlowStopped\.current\)/);
  assert.match(ui,/audio\.current\.onended=\(\)=>\{if\(serial===playbackSerial\.current\)SP\(false\)\}/);
- assert.match(ui,/enabled=\{!busy&&!speaking&&!modal&&page==='find'\}/);
+ assert.match(ui,/enabled=\{!speechSwitching&&!busy&&!speaking&&!modal&&page==='find'\}/);
  assert.match(ui,/function stopVoiceFlow\(\)/);
  assert.match(ui,/voiceFlowStopped\.current=true/);
  assert.match(ui,/if\(!voiceGuidePaused\)\{PV\(null\);stopVoiceFlow\(\);return\}/);
@@ -940,4 +944,27 @@ test('reported location is distinguished from an unresolved variant and cannot b
  assert.match(server,/line\['deferred_reason'\]='reported'/);
  assert.match(server,/picking_check\(c,task,allow_deferred=True\)/);
  assert.match(server,/This location has an open report\. Owner verification is required before picking/);
+});
+
+
+test('speech language can change mid picking without losing state or accepting stale commands',async()=>{
+ const src=await readFile(new URL('../src/warehouse.jsx',import.meta.url),'utf8');
+ const backend=await readFile(new URL('../../backend/app/warehouse.py',import.meta.url),'utf8');
+ assert.match(backend,/class TaskSpeechLanguage\(Strict\)/);
+ assert.match(backend,/\/tasks\/\{tid\}\/speech-language/);
+ assert.match(backend,/task\['language'\]=body\.language/);
+ assert.match(backend,/return task_put\(c,task\)/);
+ assert.match(src,/async function changeSpeechLanguage\(nextLanguage\)/);
+ assert.match(src,/stopVoiceFlow\(\)/);
+ assert.match(src,/SetModeListening\(false\)/);
+ assert.match(src,/speechSwitchRef\.current/);
+ assert.match(src,/source\.language!==task\?\.language/);
+ assert.match(src,/nextPendingPickIndex\(next\.lines\)/);
+ assert.match(src,/playPickGuidance\('repeat',next,index,true\)/);
+ assert.match(src,/sf-picking-language/);
+ assert.match(src,/sf-report-speech-language/);
+ assert.match(src,/sf-review-speech-language/);
+ assert.match(src,/disabled=\{speechSwitching\|\|busy\}/);
+ assert.match(src,/Speech language changed\. Picking progress is saved\./);
+ assert.doesNotMatch(src,/onChange=\{e=>\{L\(e\.target\.value\);DSL\(null\)\}\}/);
 });
