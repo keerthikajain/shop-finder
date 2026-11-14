@@ -739,7 +739,7 @@ export default function WarehouseApp({user,preferences,logout}){
  {task?<><details className="sf-search-details"><summary>{t('Search details')}</summary><div className="sf-search-details-body"><p><strong>{t('Requested items')}:</strong> {task.query}</p><p>{task.display_text||task.spoken_text}</p>{modeSpeechResult?.taskId===task.id&&<div className="sf-guide-transcript sf-mode-speech-result" data-voice-language={modeSpeechResult.language}><strong>{lookupCopy(appLanguage,'heardChoice')}:</strong> <span lang={modeSpeechResult.language==='hi-en'?'hi-Latn':modeSpeechResult.language}>{modeSpeechResult.transcript||'—'}</span><p><strong>{lookupCopy(appLanguage,'interpretedChoice')}:</strong> {modeSpeechResult.choice?lookupCopy(appLanguage,modeSpeechResult.choice):lookupCopy(appLanguage,'notRecognizedChoice')}</p></div>}</div></details>
  
  {hasSearchCandidates?<>
- {picking.status==='ready'&&lookupMode==='choice'&&<section className="wh-panel sf-lookup-mode" aria-label={lookupCopy(appLanguage,'heading')}>
+ {picking.status==='ready'&&lookupMode==='choice'&&<section className="wh-panel sf-lookup-mode sf-lookup-mode-choice" aria-label={lookupCopy(appLanguage,'heading')}>
   <h3>{lookupCopy(appLanguage,'heading')}</h3>
   <p>{lookupCopy(appLanguage,unresolvedLines.length?'resolve':'question')}</p>
   <div className="sf-lookup-actions">
