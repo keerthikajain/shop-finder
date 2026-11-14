@@ -905,3 +905,53 @@
   min-height:44px;
  }
 }
+
+
+/* A picking session with no eligible next item should not leave a large
+   inactive voice panel on the screen. Keep the remaining-items action compact. */
+.sf-compact-app.sf-find-page .sf-picking-remaining {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:12px 14px;
+  border:1px solid var(--wh-border,#e2dce8);
+  border-radius:12px;
+  background:var(--wh-surface,#fff);
+  color:var(--wh-text,#29242f);
+  font-size:13px;
+  font-weight:400;
+  line-height:1.35;
+}
+.sf-compact-app.sf-find-page .sf-picking-remaining button {
+  min-height:44px;
+  width:auto;
+  flex:0 0 auto;
+  font-size:13px;
+  font-weight:500;
+  padding:8px 14px;
+}
+@media(max-width:700px){
+  .sf-compact-app.sf-find-page .sf-picking-remaining {
+    margin:0 0 12px;
+    padding:10px 12px;
+  }
+  .sf-compact-app.sf-find-page .sf-picking-remaining span {
+    flex:1 1 100px;
+    min-width:0;
+    overflow-wrap:anywhere;
+  }
+  .sf-compact-app.sf-find-page :is(.sf-voice-guide-choices,.sf-voice-guide-secondary) button,
+  .sf-compact-app.sf-find-page .sf-voice-command-label,
+  .sf-compact-app.sf-find-page .sf-voice-guide-actions button,
+  .sf-compact-app.sf-find-page .sf-picking-undo button,
+  .sf-compact-app.sf-find-page .sf-picking-actions button,
+  .sf-compact-app .sf-report-flow :is(button,strong),
+  .sf-compact-app.sf-find-page .sf-picking-head>b {
+    font-weight:500;
+  }
+  .sf-compact-app.sf-find-page .sf-picking-head h3 {
+    font-weight:600;
+  }
+}
