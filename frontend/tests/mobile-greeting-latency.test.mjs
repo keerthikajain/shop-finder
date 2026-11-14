@@ -44,7 +44,7 @@ test('mobile recovery is limited to safe page interactions and keeps voice-workf
  const src=await readFile(new URL('../src/workspace-greeting.jsx',import.meta.url),'utf8');
  assert.match(src,/if\(interrupt\)return/);
  assert.match(src,/if\(interrupt\)stopGreeting\(\)/);
- assert.match(src,/if\(interactive\)\{stopGreeting\(\);return\}/);
+ assert.match(src,/if\(busyControl\)\{stopGreeting\(\);return\}/);
  assert.match(src,/if\(playback\.blocked\)\{resumeWelcome\(playback\);return\}/);
  assert.match(src,/document\.addEventListener\('pointerdown',yieldToUser,true\)/);
  assert.doesNotMatch(src,/Hear greeting|Play greeting|Stop greeting/);
