@@ -5,7 +5,7 @@ RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-FROM python:3.13-slim
+FROM python:3.15-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 SHOP_FINDER_DB=/data/shop_finder.sqlite3 SHOP_FINDER_SERVE_WEB=true PORT=8080
 WORKDIR /app
 COPY backend/requirements.txt ./backend/requirements.txt
